@@ -1,0 +1,6 @@
+.tailwind-component-source
+node_modules
+dist
+*.local
+.env
+.DS_Store
