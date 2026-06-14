@@ -6,6 +6,15 @@ import * as faSolid from "@fortawesome/free-solid-svg-icons";
 
 type RawGlobMap = Record<string, string>;
 
+/** Icons used in docs/examples that no longer exist in current Maki; map to iD/schema equivalents. */
+export const PRESET_ICON_ALIASES: Record<string, string> = {
+  "maki-bench": "temaki-bench",
+};
+
+export function resolvePresetIconName(iconName: string): string {
+  return PRESET_ICON_ALIASES[iconName] ?? iconName;
+}
+
 function normalizeIconBase(name: string): string {
   // Maki ships some icons with size suffixes, keep canonical names.
   return name.replace(/-(11|15)$/, "");
@@ -37,6 +46,12 @@ const temakiSvgs = import.meta.glob("/node_modules/@rapideditor/temaki/icons/*.s
 }) as RawGlobMap;
 
 const roentgenSvgs = import.meta.glob("/node_modules/@enzet/roentgen/icons/*.svg", {
+  eager: true,
+  import: "default",
+  query: "?raw",
+}) as RawGlobMap;
+
+const idPresetSvgs = import.meta.glob("../../icons/id-sprite-presets/*.svg", {
   eager: true,
   import: "default",
   query: "?raw",
@@ -82,6 +97,7 @@ export function getIconRegistry(): Map<string, IconRegistryEntry> {
     ...buildSetEntries("maki", makiSvgs),
     ...buildSetEntries("temaki", temakiSvgs),
     ...buildSetEntries("roentgen", roentgenSvgs),
+    ...buildSetEntries("iD", idPresetSvgs),
     ...buildFontAwesomeEntries("fas", faSolid),
     ...buildFontAwesomeEntries("far", faRegular),
     ...buildFontAwesomeEntries("fab", faBrands),
@@ -94,17 +110,18 @@ export function getIconRegistry(): Map<string, IconRegistryEntry> {
 
 export function getIconSvgDataUrl(iconName?: string): string | null {
   if (!iconName) return null;
+  const canonical = resolvePresetIconName(iconName);
   if (!dataUrlCache) dataUrlCache = new Map();
-  const cached = dataUrlCache.get(iconName);
+  const cached = dataUrlCache.get(canonical);
   if (cached !== undefined) return cached;
 
-  const entry = getIconRegistry().get(iconName);
+  const entry = getIconRegistry().get(canonical);
   if (!entry?.svgRaw) {
-    dataUrlCache.set(iconName, null);
+    dataUrlCache.set(canonical, null);
     return null;
   }
 
   const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(entry.svgRaw)}`;
-  dataUrlCache.set(iconName, dataUrl);
+  dataUrlCache.set(canonical, dataUrl);
   return dataUrl;
 }

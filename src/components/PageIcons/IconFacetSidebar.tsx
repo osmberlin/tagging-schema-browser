@@ -16,24 +16,23 @@ function FacetButton({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={clsx(
-        "relative flex w-full cursor-pointer items-center justify-between gap-2 rounded-md py-1 pr-1 pl-4 text-left text-sm transition",
-        active
-          ? "bg-zinc-900/5 font-medium text-zinc-900 dark:bg-white/10 dark:text-white"
-          : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white",
-      )}
-    >
-      {active ? (
-        <span className="absolute left-2 h-4 w-px bg-emerald-500" aria-hidden="true" />
-      ) : null}
-      <span className="truncate">{label}</span>
-      <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 text-2xs font-semibold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-        {count}
-      </span>
-    </button>
+    <li className="relative">
+      <button
+        type="button"
+        onClick={onClick}
+        className={clsx(
+          "flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",
+          active
+            ? "font-medium text-sky-600 before:block before:bg-sky-500"
+            : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
+        )}
+      >
+        <span className="truncate">{label}</span>
+        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+          {count}
+        </span>
+      </button>
+    </li>
   );
 }
 
@@ -46,8 +45,7 @@ export function IconFacetSidebar() {
   return (
     <div className="mt-4 flex flex-col gap-4">
       <SidebarSection title="Supplier">
-        <div className="relative mt-2 pl-2">
-          <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/10" />
+        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
             active={state.i_supplier === "all"}
             label="All suppliers"
@@ -63,12 +61,11 @@ export function IconFacetSidebar() {
               onClick={() => setState({ i_supplier: prefix })}
             />
           ))}
-        </div>
+        </ul>
       </SidebarSection>
 
       <SidebarSection title="Usage">
-        <div className="relative mt-2 pl-2">
-          <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/10" />
+        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
             active={state.i_usage === "all"}
             label="All"
@@ -87,12 +84,11 @@ export function IconFacetSidebar() {
             count={meta.unusedCount}
             onClick={() => setState({ i_usage: "unused" })}
           />
-        </div>
+        </ul>
       </SidebarSection>
 
       <SidebarSection title="Asset status">
-        <div className="relative mt-2 pl-2">
-          <div className="absolute inset-y-0 left-2 w-px bg-zinc-900/10 dark:bg-white/10" />
+        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
             active={state.i_hasSvg === "all"}
             label="All"
@@ -111,14 +107,14 @@ export function IconFacetSidebar() {
             count={meta.missingSvg}
             onClick={() => setState({ i_hasSvg: "missing" })}
           />
-        </div>
+        </ul>
       </SidebarSection>
 
       <SidebarSection title="Sort">
         <select
           value={state.i_sort}
           onChange={(e) => setState({ i_sort: e.target.value as never })}
-          className="w-full rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
         >
           <option value="name">Name</option>
           <option value="usage_desc">Usage (high to low)</option>

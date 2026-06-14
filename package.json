@@ -1,7 +1,13 @@
 {
-  "name": "tagging-schema-preview",
+  "name": "tagging-schema-browser",
   "private": true,
   "type": "module",
+  "license": "ISC",
+  "homepage": "https://osmberlin.github.io/tagging-schema-browser/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/osmberlin/tagging-schema-browser.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,6 +18,8 @@
   },
   "dependencies": {
     "@enzet/roentgen": "^0.13.0",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/lexend": "^5.2.11",
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
     "@fortawesome/free-regular-svg-icons": "^7.2.0",
@@ -19,14 +27,14 @@
     "@headlessui/react": "^2.2.0",
     "@mapbox/maki": "^8.2.0",
     "@rapideditor/temaki": "^5.12.0",
-    "@tanstack/hotkeys": "^0.4.1",
+    "@tanstack/react-hotkeys": "^0.10.0",
     "@tanstack/react-router": "^1.94.0",
     "clsx": "^2.1.0",
     "itemsjs": "^2.4.4",
-    "nuqs": "^2.2.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.0"
+    "tailwind-merge": "^3.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
@@ -34,6 +42,7 @@
     "@playwright/test": "^1.58.2",
     "@rolldown/plugin-babel": "^0.2.0",
     "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/itemsjs": "^2.1.8",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

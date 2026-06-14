@@ -1,0 +1,14 @@
+# Bun configuration. This project is bun-only — use `bun install` / `bun run`,
+# not npm or npx. See https://bun.com/docs/runtime/bunfig
+
+[install]
+# Supply-chain posture: never install a package version published within the
+# last 5 days. minimumReleaseAge is in seconds, so 5 days = 432000.
+# (Replaces the old `min-release-age=5` in .npmrc, which neither npm nor bun
+# actually read — so the delay was never being enforced.)
+minimumReleaseAge = 432000
+
+[run]
+# Run scripts (vite, tsc, biome, playwright) on the bun runtime instead of
+# node, so the project is genuinely bun-only and CI needs nothing but bun.
+bun = true

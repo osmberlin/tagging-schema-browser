@@ -1,14 +1,78 @@
+import { iconFacetDefaults } from "@/components/PageIcons/useIconFacetState";
+import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
+import { Kbd } from "@/components/ui/Kbd";
+import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
-import { getHotkeyManager } from "@tanstack/hotkeys";
-import { Link, useLocation } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useHotkey, useHotkeySequence } from "@tanstack/react-hotkeys";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { PAGE_SEARCH_INPUT_ID } from "./HeaderSearch";
-import { Sidebar, SidebarBody, SidebarHeader } from "./Sidebar";
 
-const navItems = [
-  { to: "/", label: "Presets" },
-  { to: "/icons", label: "Icons" },
-];
+function navLinkClass(active: boolean): string {
+  return active
+    ? "rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 ring-1 ring-sky-100 ring-inset"
+    : "rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900";
+}
+
+// Reset each page's own params to defaults on navigation, but keep `dataUrl`.
+function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const { pathname } = useLocation();
+  return (
+    <>
+      <Link
+        to="/"
+        search={(prev) => ({ ...presetSearchDefaults, dataUrl: prev.dataUrl ?? "" })}
+        onClick={onNavigate}
+        className={navLinkClass(pathname === "/")}
+      >
+        Presets
+      </Link>
+      <Link
+        to="/icons"
+        search={(prev) => ({ ...iconFacetDefaults, dataUrl: prev.dataUrl ?? "" })}
+        onClick={onNavigate}
+        className={navLinkClass(pathname === "/icons")}
+      >
+        Icons
+      </Link>
+      <Link
+        to="/about"
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? "" })}
+        onClick={onNavigate}
+        className={navLinkClass(pathname === "/about")}
+      >
+        About
+      </Link>
+    </>
+  );
+}
+
+function FiltersIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M4 6h16M6 12h12M9 18h6"
+      />
+    </svg>
+  );
+}
+
+function HelpButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="ml-1 flex h-8 items-center rounded-lg px-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+      aria-label="Keyboard shortcuts"
+      title="Keyboard shortcuts"
+    >
+      <Kbd>?</Kbd>
+    </button>
+  );
+}
 
 export function SidebarLayout({
   children,
@@ -20,156 +84,150 @@ export function SidebarLayout({
   topSearch?: React.ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const showSidebar = location.pathname === "/" || location.pathname === "/icons";
 
-  useEffect(() => {
-    const manager = getHotkeyManager();
-    const hotkey = manager.register("Mod+K", () => {
-      const input = document.getElementById(PAGE_SEARCH_INPUT_ID) as HTMLInputElement | null;
-      input?.focus();
-      input?.select();
-    });
+  const focusSearch = () => {
+    const input = document.getElementById(PAGE_SEARCH_INPUT_ID) as HTMLInputElement | null;
+    input?.focus();
+    input?.select();
+  };
 
-    return () => {
-      hotkey.unregister();
-    };
-  }, []);
+  // Mod+K / "/" focus search; "?" opens help; "g" then p/i/a navigates.
+  // The library auto-ignores single-key/sequence hotkeys while typing in inputs.
+  useHotkey("Mod+K", focusSearch);
+  useHotkey("/", focusSearch);
+  useHotkey({ key: "?", shift: true }, () => setHelpOpen(true));
+  useHotkeySequence(["G", "P"], () =>
+    navigate({
+      to: "/",
+      search: (prev) => ({ ...presetSearchDefaults, dataUrl: prev.dataUrl ?? "" }),
+    }),
+  );
+  useHotkeySequence(["G", "I"], () =>
+    navigate({
+      to: "/icons",
+      search: (prev) => ({ ...iconFacetDefaults, dataUrl: prev.dataUrl ?? "" }),
+    }),
+  );
+  useHotkeySequence(["G", "A"], () =>
+    navigate({ to: "/about", search: (prev) => ({ dataUrl: prev.dataUrl ?? "" }) }),
+  );
 
   return (
-    <div className="relative min-h-svh w-full bg-zinc-50 dark:bg-zinc-950">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-zinc-900/10 bg-white/90 backdrop-blur-xs dark:border-white/10 dark:bg-zinc-900/80">
-        <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
-          <div className="hidden shrink-0 lg:block">
-            <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-              iD Tagging Schema Browser
-            </span>
-          </div>
-
-          {topSearch}
-
-          <div className="flex items-center gap-3">
-            <nav className="hidden items-center gap-1 md:flex">
-              {navItems.map(({ to, label }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  className={`rounded-full px-3 py-1 text-sm font-medium transition ${
-                    location.pathname === to
-                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                      : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
-            </nav>
+    <div className="flex min-h-svh w-full flex-col bg-white text-slate-900">
+      <header className="sticky top-0 z-40 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
+          {showSidebar ? (
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="rounded-md p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 md:hidden"
+              className="-ml-1 rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 md:hidden"
               aria-label="Open filters"
             >
-              <svg
-                aria-hidden="true"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+              <FiltersIcon className="h-5 w-5" />
+            </button>
+          ) : null}
+
+          <Link
+            to="/"
+            search={(prev) => ({ ...presetSearchDefaults, dataUrl: prev.dataUrl ?? "" })}
+            className="flex shrink-0 items-center gap-2.5"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm shadow-sky-500/30">
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none">
                 <path
-                  strokeLinecap="round"
+                  d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
+                  stroke="currentColor"
+                  strokeWidth={1.6}
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
+                />
+                <path
+                  d="M11 3v18M3 7.5 11 12l8-4.5"
+                  stroke="currentColor"
+                  strokeWidth={1.6}
+                  strokeLinejoin="round"
                 />
               </svg>
-            </button>
-          </div>
-        </div>
+            </span>
+            <span className="hidden font-display text-base font-semibold whitespace-nowrap text-slate-900 sm:inline">
+              Tagging Schema <span className="text-sky-600">Browser</span>
+            </span>
+          </Link>
 
-        <div className="border-t border-zinc-900/10 px-4 py-2 dark:border-white/10 md:hidden">
-          <div className="mb-2 text-sm font-semibold text-zinc-900 dark:text-white">
-            iD Tagging Schema Browser
-          </div>
-          <nav className="flex items-center gap-1 overflow-x-auto">
-            {navItems.map(({ to, label }) => (
-              <Link
-                key={to}
-                to={to}
-                className={`rounded-full px-3 py-1 text-sm font-medium ${
-                  location.pathname === to
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
+          <div className="flex min-w-0 flex-1 justify-center">{topSearch}</div>
+
+          <nav className="hidden shrink-0 items-center gap-1 sm:flex">
+            <NavLinks />
+            <HelpButton onClick={() => setHelpOpen(true)} />
           </nav>
         </div>
+
+        {/* Mobile page nav */}
+        <nav className="flex items-center gap-1 overflow-x-auto border-t border-slate-100 px-4 py-2 sm:hidden">
+          <NavLinks />
+          <HelpButton onClick={() => setHelpOpen(true)} />
+        </nav>
       </header>
 
-      <div className="relative mx-auto flex max-w-[1400px] pt-24 md:bg-zinc-100">
-        {/* Desktop sidebar */}
-        <aside className="fixed bottom-0 left-0 top-14 z-30 hidden w-72 md:block">
-          <Sidebar>
-            <SidebarHeader>
-              <span className="text-sm font-semibold text-zinc-900 dark:text-white">
-                Faceted Search
-              </span>
-            </SidebarHeader>
-            <SidebarBody>{sidebar}</SidebarBody>
-          </Sidebar>
-        </aside>
+      <div className="mx-auto flex w-full max-w-[1400px] flex-auto">
+        {showSidebar ? (
+          <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-slate-50 md:block">
+            <div className="sticky top-16 max-h-[calc(100svh-4rem)] overflow-y-auto px-5 py-6">
+              <h2 className="mb-4 font-display text-sm font-semibold text-slate-900">
+                Faceted search
+              </h2>
+              {sidebar}
+            </div>
+          </aside>
+        ) : null}
 
-        {/* Mobile sidebar dialog */}
+        {/* Mobile filters dialog */}
         <Dialog
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
           className="relative z-50 md:hidden"
         >
-          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm" aria-hidden="true" />
           <div className="fixed inset-0 flex">
-            <DialogPanel className="ml-0 w-full max-w-xs bg-white dark:bg-zinc-900">
-              <DialogTitle className="sr-only">Faceted Search</DialogTitle>
-              <Sidebar>
-                <SidebarHeader className="flex flex-row items-center justify-between">
-                  <span className="text-sm font-semibold">Faceted Search</span>
-                  <button
-                    type="button"
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    aria-label="Close filters"
+            <DialogPanel className="flex w-full max-w-xs flex-col bg-white shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                <DialogTitle className="font-display text-sm font-semibold text-slate-900">
+                  Faceted search
+                </DialogTitle>
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                  aria-label="Close filters"
+                >
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <svg
-                      aria-hidden="true"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </SidebarHeader>
-                <SidebarBody>{sidebar}</SidebarBody>
-              </Sidebar>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.8}
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 py-4">{sidebar}</div>
             </DialogPanel>
           </div>
         </Dialog>
 
-        {/* Main content */}
-        <main className="min-w-0 flex-1 pb-6 md:pl-72 md:pr-6">
-          <div className="mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-sm ring-1 ring-zinc-900/10 dark:bg-zinc-900 dark:ring-white/10 lg:p-8">
-            {children}
-          </div>
-        </main>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
+
+      <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

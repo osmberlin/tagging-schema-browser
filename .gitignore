@@ -1,6 +1,18 @@
-.tailwind-component-source
+# Dependencies & build
 node_modules
 dist
+tsconfig.tsbuildinfo
 *.local
 .env
 .DS_Store
+
+# Local editor / agent tooling
+.claude
+
+# Reference-only (large upstream UI kits)
+.tailwind-component-source
+
+# Playwright / tests
+test-results
+playwright-report
+playwright/.cache

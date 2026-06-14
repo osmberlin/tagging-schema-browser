@@ -1,3 +1,4 @@
+import { resolvePresetIconName } from "@/components/PageIcons/iconRegistry";
 import type {
   DenormalizedPreset,
   RawCategories,
@@ -98,12 +99,15 @@ function resolveFieldIds(
   }
 }
 
-function iconPrefix(icon: string | undefined): string | undefined {
-  if (!icon) return undefined;
-  if (icon.startsWith("fas-") || icon.startsWith("far-") || icon.startsWith("fab-"))
-    return icon.slice(0, 3);
-  const idx = icon.indexOf("-");
-  return idx > 0 ? icon.slice(0, idx) : undefined;
+function iconPrefix(icon: string | undefined, imageURL?: string): string | undefined {
+  if (icon) {
+    if (icon.startsWith("fas-") || icon.startsWith("far-") || icon.startsWith("fab-"))
+      return icon.slice(0, 3);
+    const idx = icon.indexOf("-");
+    return idx > 0 ? icon.slice(0, idx) : undefined;
+  }
+  if (imageURL) return "imageURL";
+  return undefined;
 }
 
 function tagsToSearchString(tags: Record<string, string>): string {
@@ -128,6 +132,7 @@ export function denormalize(
   for (const [id, raw] of Object.entries(presets)) {
     const r = raw as RawPresetRecord & {
       icon?: string;
+      imageURL?: string;
       fields?: string[];
       moreFields?: string[];
       geometry?: string[];
@@ -143,7 +148,12 @@ export function denormalize(
     const primaryTagKey = tagEntries[0]?.[0];
     const primaryTagValue = tagEntries[0]?.[1];
     const geometry = r.geometry ?? [];
-    const icon = r.icon;
+    const icon =
+      typeof r.icon === "string" && r.icon.trim()
+        ? resolvePresetIconName(r.icon.trim())
+        : undefined;
+    const imageURL =
+      typeof r.imageURL === "string" && r.imageURL.trim() ? r.imageURL.trim() : undefined;
     const fieldSet = new Set<string>();
     resolveFieldIds(r.fields, presets, fields, fieldSet, new Set());
     const resolvedFields = Array.from(fieldSet);
@@ -162,7 +172,8 @@ export function denormalize(
       terms,
       aliases,
       icon,
-      iconPrefix: iconPrefix(icon),
+      imageURL,
+      iconPrefix: iconPrefix(icon, imageURL),
       geometry,
       tags,
       tagString: tagsToSearchString(tags),
@@ -173,7 +184,7 @@ export function denormalize(
       fields: resolvedFields.length ? resolvedFields : (r.fields ?? []),
       moreFields: resolvedMore.length ? resolvedMore : (r.moreFields ?? []),
       matchScore: r.matchScore ?? 1,
-      hasIcon: Boolean(icon),
+      hasIcon: Boolean(icon || imageURL),
       searchable: r.searchable !== false,
     });
   }

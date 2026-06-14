@@ -1,1 +1,34 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* White-only app (no dark mode). Inspired by the Tailwind "Syntax" theme:
+   Inter for body, Lexend for display headings, slate neutrals, sky accent.
+   Fonts are self-hosted via Fontsource (imported in main.tsx) — no CDN. */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Lexend Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display--font-feature-settings: "ss01";
+}
+
+@layer base {
+  html {
+    background-color: white;
+    color-scheme: light;
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Requirement: every link-like interaction shows a pointer cursor.
+     Tailwind v4 no longer applies this to <button> by default. */
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  select:not(:disabled),
+  label:has(> input[type="checkbox"], > input[type="radio"]) {
+    cursor: pointer;
+  }
+}

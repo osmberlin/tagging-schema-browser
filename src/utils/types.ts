@@ -1,6 +1,8 @@
 export type RawPresets = Record<string, RawPreset>;
 export type RawPreset = {
   icon?: string;
+  /** Remote bitmap (or any image URL); shown in the preview like iD when third-party images are enabled. */
+  imageURL?: string;
   fields?: string[];
   moreFields?: string[];
   geometry?: string[];
@@ -29,6 +31,7 @@ export type DenormalizedPreset = {
   terms: string[];
   aliases: string[];
   icon?: string;
+  imageURL?: string;
   iconPrefix?: string;
   geometry: string[];
   tags: Record<string, string>;

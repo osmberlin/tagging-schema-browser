@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/Input";
-import { useEffect, useMemo, useState } from "react";
+import { Kbd, modLabel } from "@/components/ui/Kbd";
 
 export const PAGE_SEARCH_INPUT_ID = "page-search-input";
 
@@ -25,18 +25,11 @@ export function HeaderSearch({
   onChange: (value: string) => void;
   placeholder: string;
 }) {
-  const [modifierLabel, setModifierLabel] = useState("Ctrl");
-  const shortcutLabel = useMemo(() => `${modifierLabel} K`, [modifierLabel]);
-
-  useEffect(() => {
-    setModifierLabel(/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl");
-  }, []);
-
   return (
-    <div className="hidden md:block md:max-w-md md:flex-auto">
+    <div className="w-full max-w-md">
       <div className="relative">
-        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
-          <SearchIcon className="h-5 w-5" />
+        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+          <SearchIcon className="h-4.5 w-4.5" />
         </span>
         <Input
           id={PAGE_SEARCH_INPUT_ID}
@@ -44,11 +37,12 @@ export function HeaderSearch({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-8 rounded-full border-zinc-900/10 bg-white pl-10 pr-20 shadow-none ring-1 ring-zinc-900/10 hover:ring-zinc-900/20 focus:ring-2 focus:ring-zinc-900/20 dark:border-white/10 dark:bg-white/5 dark:ring-white/10 dark:hover:ring-white/20"
+          className="h-10 rounded-full border-transparent bg-slate-100 pl-11 pr-16 text-sm shadow-none ring-1 ring-transparent transition hover:bg-slate-200/70 focus:bg-white focus:ring-2 focus:ring-sky-500/60"
         />
-        <kbd className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-2xs text-zinc-400 dark:text-zinc-500">
-          {shortcutLabel}
-        </kbd>
+        <span className="pointer-events-none absolute inset-y-0 right-2.5 hidden items-center gap-1 sm:flex">
+          <Kbd>{modLabel()}</Kbd>
+          <Kbd>K</Kbd>
+        </span>
       </div>
     </div>
   );

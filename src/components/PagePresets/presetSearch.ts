@@ -17,6 +17,7 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     aliasesText: p.aliases.join(" "),
     fieldText: [...p.fields, ...p.moreFields].join(" "),
     fieldIds: Array.from(new Set([...p.fields, ...p.moreFields])),
+    categoryFacet: p.categoryNames.length > 0 ? p.categoryNames : (["No Category"] as string[]),
     primaryTagKey: p.primaryTagKey ?? "",
     iconName: p.icon ?? "",
     iconPrefix: p.iconPrefix ?? "none",
@@ -27,11 +28,11 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
 const itemsJsConfig = {
   searchableFields: ["name", "termsText", "aliasesText", "id", "tagString", "fieldText"],
   aggregations: {
+    categoryFacet: { title: "Category", size: 50, conjunction: false },
     primaryTagKey: { title: "Primary tag", size: 50, sort: "count", order: "desc" },
     geometry: { title: "Geometry", size: 10, conjunction: false },
     iconPrefix: { title: "Icon set", size: 15 },
     fieldIds: { title: "Fields", size: 100, sort: "count", order: "desc", conjunction: false },
-    categoryNames: { title: "Category", size: 20, conjunction: false },
     hasIconFacet: { title: "Has icon", size: 2 },
   },
   sortings: {

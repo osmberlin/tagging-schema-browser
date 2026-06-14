@@ -1,26 +1,35 @@
 import type { IconViewModel } from "@/utils/types";
-import { useQueryStates } from "nuqs";
-import { parseAsString, parseAsStringLiteral } from "nuqs/server";
-import { useMemo } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useCallback, useMemo } from "react";
+import { z } from "zod";
 
-export const iconFacetParsers = {
-  i_q: parseAsString.withDefault(""),
-  i_supplier: parseAsString.withDefault("all"),
-  i_usage: parseAsStringLiteral(["all", "used", "unused"]).withDefault("all"),
-  i_hasSvg: parseAsStringLiteral(["all", "with", "missing"]).withDefault("all"),
-  i_sort: parseAsStringLiteral(["name", "usage_desc", "usage_asc"]).withDefault("name"),
-};
+/** Search params for the icons page (route "/icons"), validated with Zod 4. */
+export const iconFacetSchema = z.object({
+  i_q: z.string().catch(""),
+  i_supplier: z.string().catch("all"),
+  i_usage: z.enum(["all", "used", "unused"]).catch("all"),
+  i_hasSvg: z.enum(["all", "with", "missing"]).catch("all"),
+  i_sort: z.enum(["name", "usage_desc", "usage_asc"]).catch("name"),
+});
 
-export type IconFacetState = {
-  i_q: string;
-  i_supplier: string;
-  i_usage: "all" | "used" | "unused";
-  i_hasSvg: "all" | "with" | "missing";
-  i_sort: "name" | "usage_desc" | "usage_asc";
-};
+export type IconFacetState = z.infer<typeof iconFacetSchema>;
+
+/** Fully-defaulted icon search — used to strip default params from the URL. */
+export const iconFacetDefaults: IconFacetState = iconFacetSchema.parse({});
 
 export function useIconFacetState() {
-  return useQueryStates(iconFacetParsers, { shallow: true });
+  // Non-strict (the bar/sidebar render in the root layout, so a strict route
+  // match isn't guaranteed mid-navigation), and parsed through the schema so
+  // default-stripped params come back with their defaults.
+  const state = useSearch({ strict: false, select: (raw) => iconFacetSchema.parse(raw) });
+  const navigate = useNavigate();
+  const setState = useCallback(
+    (patch: Partial<IconFacetState>) => {
+      void navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }), replace: true });
+    },
+    [navigate],
+  );
+  return [state, setState] as const;
 }
 
 export function applyIconFacets(icons: IconViewModel[], state: IconFacetState): IconViewModel[] {
