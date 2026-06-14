@@ -1,5 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Schema Browser">
-  <rect width="64" height="64" rx="12" fill="#0f172a"/>
-  <path d="M14 18h36v8H14zm0 12h20v8H14zm0 12h36v8H14z" fill="#38bdf8"/>
-  <circle cx="46" cy="34" r="8" fill="#22c55e"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Tagging Schema Browser">
+  <rect width="32" height="32" rx="7" fill="#0ea5e9"/>
+  <g transform="translate(5 5) scale(0.9167)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"/>
+    <path d="M11 3v18M3 7.5 11 12l8-4.5"/>
+  </g>
 </svg>
