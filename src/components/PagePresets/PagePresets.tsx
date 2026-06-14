@@ -1,15 +1,18 @@
+import { CountPill } from "@/components/ui/CountPill";
 import { Input } from "@/components/ui/Input";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
 import { PresetDetailModal } from "./PresetDetailModal";
 import { PresetGrid } from "./PresetGrid";
 import { getExpectedFilesHelp } from "./dataLoader";
+import { usePresetSearch } from "./usePresetSearch";
 import { useSearchState, useSetPreset } from "./useSearchState";
 
 export function PagePresets() {
   const { dataUrl, setDataUrl, load, loading, error, data } = useSchema();
   const [searchState, setSearchState] = useSearchState();
   const setPreset = useSetPreset();
+  const totalCount = usePresetSearch()?.data.total ?? 0;
   const presetParam = searchState.preset ?? null;
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
@@ -130,35 +133,25 @@ export function PagePresets() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="space-y-2">
-          <h1 className="font-display text-2xl font-semibold text-slate-900">Presets</h1>
-          {activePills.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {activePills.map((pill) => (
-                <button
-                  key={pill.key}
-                  type="button"
-                  onClick={pill.onRemove}
-                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 "
-                >
-                  <span>{pill.label}</span>
-                  <span aria-hidden>×</span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
-            value={searchState.sort}
-            onChange={(e) => setSearchState({ sort: e.target.value as "name_asc" | "name_desc" })}
-          >
-            <option value="name_asc">Name A-Z</option>
-            <option value="name_desc">Name Z-A</option>
-          </select>
-        </div>
+      <div className="space-y-2">
+        <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+          Presets <CountPill className="text-sm">{totalCount}</CountPill>
+        </h1>
+        {activePills.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {activePills.map((pill) => (
+              <button
+                key={pill.key}
+                type="button"
+                onClick={pill.onRemove}
+                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+              >
+                <span>{pill.label}</span>
+                <span aria-hidden>×</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
       <PresetGrid />
       <PresetDetailModal

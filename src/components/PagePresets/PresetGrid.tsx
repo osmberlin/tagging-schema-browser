@@ -24,9 +24,6 @@ export function PresetGrid() {
   const items = result.data.items;
   return (
     <div className="space-y-5">
-      <div className="text-sm text-slate-600">
-        {total} preset{total !== 1 ? "s" : ""}
-      </div>
       {items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
           No presets match. Try clearing filters or changing the search query.

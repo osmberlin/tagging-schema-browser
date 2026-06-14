@@ -17,17 +17,19 @@ export function PresetCard({ preset }: { preset: DenormalizedPreset }) {
   const moreFields = Array.isArray(preset.moreFields) ? preset.moreFields : [];
   return (
     <article
-      className="group flex min-h-[180px] flex-col rounded-2xl border border-slate-200 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg hover:shadow-slate-900/5"
+      className="group relative flex min-h-[180px] flex-col rounded-2xl border border-slate-200 bg-white p-4 transition duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-lg hover:shadow-slate-900/5"
       data-preset-id={preset.id}
     >
       <div className="flex items-start gap-3">
         <PresetIconBox preset={preset} size="sm" />
         <div className="min-w-0 flex-1">
           <h3 className="font-display font-medium text-slate-900">
+            {/* Stretched link: the whole card opens the preset, so the hover + pointer
+                are warranted, while the title stays a real, focusable button. */}
             <button
               type="button"
               onClick={() => setPreset(preset.id)}
-              className="text-left transition group-hover:text-sky-600 hover:underline"
+              className="text-left group-hover:text-sky-600 before:absolute before:inset-0 before:rounded-2xl focus-visible:outline-none focus-visible:before:ring-2 focus-visible:before:ring-sky-500/40"
             >
               {preset.name}
             </button>
@@ -36,7 +38,7 @@ export function PresetCard({ preset }: { preset: DenormalizedPreset }) {
         </div>
       </div>
       {(aliases.length > 0 || terms.length > 0) && (
-        <p className="mt-2 line-clamp-2 text-sm text-slate-600 ">
+        <p className="mt-2 line-clamp-2 text-sm text-slate-600">
           {aliases.length ? `Aliases: ${aliases.join(", ")}. ` : ""}
           {terms.length
             ? `Terms: ${terms.slice(0, 5).join(", ")}${terms.length > 5 ? "…" : ""}`
@@ -45,7 +47,7 @@ export function PresetCard({ preset }: { preset: DenormalizedPreset }) {
       )}
       <div className="mt-2 flex flex-wrap gap-1">
         {tagEntries.map(([k, v]) => (
-          <Badge key={k} variant="zinc">
+          <Badge key={k} variant="zinc" className="font-mono">
             {k}={v === "*" ? "*" : v}
           </Badge>
         ))}
@@ -65,12 +67,12 @@ export function PresetCard({ preset }: { preset: DenormalizedPreset }) {
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="mt-2 self-start text-xs font-medium text-sky-600 hover:underline "
+        className="relative z-10 mt-2 self-start text-xs font-medium text-sky-600 hover:underline"
       >
         {expanded ? "Hide details" : "Fields & more"}
       </button>
       {expanded && (
-        <div className="mt-2 border-t border-slate-200 pt-2 text-xs ">
+        <div className="relative z-10 mt-2 border-t border-slate-200 pt-2 text-xs">
           <p>
             <strong>Fields:</strong> {fields.join(", ") || "—"}
           </p>

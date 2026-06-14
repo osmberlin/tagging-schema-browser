@@ -151,7 +151,7 @@ function PresetDetailContent({
       <CatalystDialogBody className="max-h-[70vh] overflow-y-auto">
         <div className="flex flex-wrap gap-1">
           {tagEntries.map(([k, v]) => (
-            <Badge key={k} variant="zinc">
+            <Badge key={k} variant="zinc" className="font-mono">
               {k}={v}
             </Badge>
           ))}
