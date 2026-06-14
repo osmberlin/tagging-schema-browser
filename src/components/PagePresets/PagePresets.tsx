@@ -2,11 +2,75 @@ import { CountPill } from "@/components/ui/CountPill";
 import { Input } from "@/components/ui/Input";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
+import { clsx } from "clsx";
 import { PresetDetailModal } from "./PresetDetailModal";
 import { PresetGrid } from "./PresetGrid";
+import { PresetTable } from "./PresetTable";
 import { getExpectedFilesHelp } from "./dataLoader";
 import { usePresetSearch } from "./usePresetSearch";
-import { useSearchState, useSetPreset } from "./useSearchState";
+import { type SearchState, useSearchState, useSetPreset } from "./useSearchState";
+
+const VIEWS: { value: SearchState["view"]; label: string; icon: React.ReactNode }[] = [
+  {
+    value: "cards",
+    label: "Cards",
+    icon: (
+      <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+        <rect x="1" y="1" width="6" height="6" rx="1.2" />
+        <rect x="9" y="1" width="6" height="6" rx="1.2" />
+        <rect x="1" y="9" width="6" height="6" rx="1.2" />
+        <rect x="9" y="9" width="6" height="6" rx="1.2" />
+      </svg>
+    ),
+  },
+  {
+    value: "table",
+    label: "Table",
+    icon: (
+      <svg
+        viewBox="0 0 16 16"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        aria-hidden="true"
+      >
+        <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.25" />
+        <path d="M1.75 6.25h12.5M1.75 9.75h12.5M6 2.75v10.5" />
+      </svg>
+    ),
+  },
+];
+
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: SearchState["view"];
+  onChange: (view: SearchState["view"]) => void;
+}) {
+  return (
+    <div className="inline-flex shrink-0 self-start rounded-lg border border-slate-300 bg-white p-0.5 text-sm">
+      {VIEWS.map(({ value, label, icon }) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => onChange(value)}
+          aria-pressed={view === value}
+          className={clsx(
+            "flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition",
+            view === value
+              ? "bg-sky-50 text-sky-700"
+              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+          )}
+        >
+          {icon}
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function PagePresets() {
   const { dataUrl, setDataUrl, load, loading, error, data } = useSchema();
@@ -133,27 +197,30 @@ export function PagePresets() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
-          Presets <CountPill className="text-sm">{totalCount}</CountPill>
-        </h1>
-        {activePills.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {activePills.map((pill) => (
-              <button
-                key={pill.key}
-                type="button"
-                onClick={pill.onRemove}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
-              >
-                <span>{pill.label}</span>
-                <span aria-hidden>×</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-2">
+          <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+            Presets <CountPill className="text-sm">{totalCount}</CountPill>
+          </h1>
+          {activePills.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {activePills.map((pill) => (
+                <button
+                  key={pill.key}
+                  type="button"
+                  onClick={pill.onRemove}
+                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+                >
+                  <span>{pill.label}</span>
+                  <span aria-hidden>×</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <ViewToggle view={searchState.view} onChange={(view) => setSearchState({ view })} />
       </div>
-      <PresetGrid />
+      {searchState.view === "table" ? <PresetTable /> : <PresetGrid />}
       <PresetDetailModal
         open={Boolean(presetParam)}
         presetId={presetParam}

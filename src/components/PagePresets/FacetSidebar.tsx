@@ -23,20 +23,30 @@ function FacetGroup({
       <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
         {buckets.map(({ key, doc_count }) => {
           const isSelected = selected.includes(key);
+          // Adding this facet would yield no results — disable it.
+          const disabled = doc_count === 0 && !isSelected;
           return (
             <li key={key} className="relative">
               <button
                 type="button"
+                disabled={disabled}
                 onClick={() => onToggle(key)}
                 className={clsx(
                   "flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",
                   isSelected
                     ? "font-medium text-sky-600 before:block before:bg-sky-500"
-                    : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
+                    : disabled
+                      ? "text-slate-300 before:hidden"
+                      : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
                 )}
               >
                 <span className="truncate">{key || "(empty)"}</span>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                <span
+                  className={clsx(
+                    "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                    disabled ? "bg-slate-50 text-slate-300" : "bg-slate-100 text-slate-500",
+                  )}
+                >
                   {doc_count}
                 </span>
               </button>
@@ -60,27 +70,21 @@ export function FacetSidebar() {
   }
 
   const agg = result.aggregations ?? {};
-  const orderedBuckets = (facetKey: string, buckets: Bucket[]) => {
-    const existing = orderRef.current[facetKey];
-    if (!existing || existing.length === 0) {
-      orderRef.current[facetKey] = buckets.map((bucket) => bucket.key);
-      return buckets;
-    }
-
-    const known = new Set(existing);
-    const nextOrder = [...existing];
+  // Keep a stable order of every bucket ever seen, and re-include ones that have
+  // dropped to 0 under the current filters (with doc_count 0) so they render as
+  // disabled rather than disappearing.
+  const orderedBuckets = (facetKey: string, buckets: Bucket[]): Bucket[] => {
+    const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+    const known = new Set(orderRef.current[facetKey] ?? []);
+    const order = [...(orderRef.current[facetKey] ?? [])];
     for (const bucket of buckets) {
       if (!known.has(bucket.key)) {
-        nextOrder.push(bucket.key);
+        order.push(bucket.key);
         known.add(bucket.key);
       }
     }
-    orderRef.current[facetKey] = nextOrder;
-
-    const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
-    return nextOrder
-      .map((key) => bucketMap.get(key))
-      .filter((bucket): bucket is Bucket => Boolean(bucket));
+    orderRef.current[facetKey] = order;
+    return order.map((key) => bucketMap.get(key) ?? { key, doc_count: 0 });
   };
 
   const toggle = (facet: keyof typeof state) => (key: string) => {

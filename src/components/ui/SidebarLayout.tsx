@@ -117,7 +117,7 @@ export function SidebarLayout({
   );
 
   return (
-    <div className="flex min-h-svh w-full flex-col bg-white text-slate-900">
+    <div className="flex min-h-svh w-full flex-col overflow-x-clip bg-white text-slate-900">
       <header className="sticky top-0 z-40 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
           {showSidebar ? (
@@ -174,7 +174,7 @@ export function SidebarLayout({
 
       <div className="mx-auto flex w-full max-w-[1400px] flex-auto">
         {showSidebar ? (
-          <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-slate-50 md:block">
+          <aside className="relative hidden w-72 shrink-0 md:block before:absolute before:inset-y-0 before:right-0 before:w-screen before:border-r before:border-slate-200 before:bg-slate-50">
             <div className="sticky top-16 max-h-[calc(100svh-4rem)] overflow-y-auto px-5 py-6">
               <h2 className="mb-4 font-display text-sm font-semibold text-slate-900">
                 Faceted search

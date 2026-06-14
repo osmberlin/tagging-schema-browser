@@ -16,6 +16,8 @@ export const presetSearchSchema = z.object({
   page: z.number().int().positive().catch(1),
   per_page: z.number().int().positive().catch(PER_PAGE),
   sort: z.enum(["name_asc", "name_desc"]).catch("name_asc"),
+  /** Result layout: "cards" (default) or the "table" comparison view. */
+  view: z.enum(["cards", "table"]).catch("cards"),
   primaryTagKey: stringArray,
   geometry: stringArray,
   iconPrefix: stringArray,
