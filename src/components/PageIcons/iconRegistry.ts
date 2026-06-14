@@ -74,8 +74,14 @@ function buildFontAwesomeEntries(
       continue;
     }
     try {
-      const rendered = icon(maybe as IconDefinition).html?.[0];
+      let rendered = icon(maybe as IconDefinition).html?.[0];
       if (!rendered) continue;
+      // FontAwesome renders inline SVG without the xmlns namespace, which makes
+      // the resulting `data:image/svg+xml` URL an invalid standalone document
+      // (the <img> renders broken). Inject the namespace so it loads.
+      if (!rendered.includes("xmlns")) {
+        rendered = rendered.replace(/^<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
       entries.push({
         name: `${prefix}-${maybe.iconName}`,
         prefix,
