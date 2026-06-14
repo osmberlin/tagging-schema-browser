@@ -6,6 +6,10 @@ import { FacetSidebar } from "@/components/PagePresets/FacetSidebar";
 import { PagePresets } from "@/components/PagePresets/PagePresets";
 import { SearchBar } from "@/components/PagePresets/SearchBar";
 import { presetSearchDefaults, presetSearchSchema } from "@/components/PagePresets/useSearchState";
+import {
+  translationsSearchDefaults,
+  translationsSearchSchema,
+} from "@/components/PageTranslations/translationsSearch";
 import { SidebarLayout } from "@/components/ui/SidebarLayout";
 import { SchemaProvider } from "@/contexts/SchemaContext";
 import { DEFAULT_DATA_URL } from "@/utils/constants";
@@ -25,6 +29,12 @@ import { z } from "zod";
 
 const LazyPageIcons = lazy(() =>
   import("@/components/PageIcons/PageIcons").then((m) => ({ default: m.PageIcons })),
+);
+
+const LazyPageTranslations = lazy(() =>
+  import("@/components/PageTranslations/PageTranslations").then((m) => ({
+    default: m.PageTranslations,
+  })),
 );
 
 function routerBasepath(): string {
@@ -111,13 +121,25 @@ const iconsRoute = createRoute({
   ),
 });
 
+const translationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/translations",
+  validateSearch: translationsSearchSchema,
+  search: { middlewares: [stripSearchParams(translationsSearchDefaults)] },
+  component: () => (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading translations...</p>}>
+      <LazyPageTranslations />
+    </Suspense>
+  ),
+});
+
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/about",
   component: PageAbout,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, iconsRoute, aboutRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, iconsRoute, translationsRoute, aboutRoute]);
 
 export const router = createRouter({
   routeTree,

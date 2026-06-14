@@ -1,5 +1,6 @@
 import { iconFacetDefaults } from "@/components/PageIcons/useIconFacetState";
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
+import { translationsSearchDefaults } from "@/components/PageTranslations/translationsSearch";
 import { Kbd } from "@/components/ui/Kbd";
 import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
@@ -34,6 +35,14 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         className={navLinkClass(pathname === "/icons")}
       >
         Icons
+      </Link>
+      <Link
+        to="/translations"
+        search={(prev) => ({ ...translationsSearchDefaults, dataUrl: prev.dataUrl ?? "" })}
+        onClick={onNavigate}
+        className={navLinkClass(pathname === "/translations")}
+      >
+        Translations
       </Link>
       <Link
         to="/about"
@@ -110,6 +119,12 @@ export function SidebarLayout({
     navigate({
       to: "/icons",
       search: (prev) => ({ ...iconFacetDefaults, dataUrl: prev.dataUrl ?? "" }),
+    }),
+  );
+  useHotkeySequence(["G", "T"], () =>
+    navigate({
+      to: "/translations",
+      search: (prev) => ({ ...translationsSearchDefaults, dataUrl: prev.dataUrl ?? "" }),
     }),
   );
   useHotkeySequence(["G", "A"], () =>
