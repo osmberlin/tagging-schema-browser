@@ -9,7 +9,8 @@ export const iconFacetSchema = z.object({
   i_supplier: z.string().catch("all"),
   i_usage: z.enum(["all", "used", "unused"]).catch("used"),
   i_hasSvg: z.enum(["all", "with", "missing"]).catch("all"),
-  i_sort: z.enum(["name", "usage_desc", "usage_asc"]).catch("name"),
+  // Default to most-used first — multi-usage icons are the focus.
+  i_sort: z.enum(["name", "usage_desc", "usage_asc"]).catch("usage_desc"),
 });
 
 export type IconFacetState = z.infer<typeof iconFacetSchema>;
@@ -51,8 +52,10 @@ export function applyIconFacets(icons: IconViewModel[], state: IconFacetState): 
   }
 
   const sorted = [...filtered];
-  if (state.i_sort === "usage_desc") sorted.sort((a, b) => b.usageCount - a.usageCount);
-  else if (state.i_sort === "usage_asc") sorted.sort((a, b) => a.usageCount - b.usageCount);
+  if (state.i_sort === "usage_desc")
+    sorted.sort((a, b) => b.usageCount - a.usageCount || a.name.localeCompare(b.name));
+  else if (state.i_sort === "usage_asc")
+    sorted.sort((a, b) => a.usageCount - b.usageCount || a.name.localeCompare(b.name));
   else sorted.sort((a, b) => a.name.localeCompare(b.name));
 
   return sorted;

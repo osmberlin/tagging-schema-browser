@@ -1,8 +1,11 @@
 import { iconFacetDefaults } from "@/components/PageIcons/useIconFacetState";
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { translationsSearchDefaults } from "@/components/PageTranslations/translationsSearch";
+import { DataSourceBanner } from "@/components/ui/DataSourceBanner";
 import { Kbd } from "@/components/ui/Kbd";
+import { LanguagePicker } from "@/components/ui/LanguagePicker";
 import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
+import { useComparison } from "@/contexts/ComparisonContext";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useHotkey, useHotkeySequence } from "@tanstack/react-hotkeys";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
@@ -15,14 +18,28 @@ function navLinkClass(active: boolean): string {
     : "rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900";
 }
 
+function comparisonNavClass(active: boolean): string {
+  return active
+    ? "rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 ring-1 ring-violet-200 ring-inset"
+    : "rounded-lg px-3 py-1.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50 hover:text-violet-700";
+}
+
 // Reset each page's own params to defaults on navigation, but keep `dataUrl`.
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
+  const { isRelease, result } = useComparison();
+  const changeCount = result
+    ? result.added.length + result.removed.length + result.modified.length
+    : null;
   return (
     <>
       <Link
         to="/"
-        search={(prev) => ({ ...presetSearchDefaults, dataUrl: prev.dataUrl ?? "" })}
+        search={(prev) => ({
+          ...presetSearchDefaults,
+          dataUrl: prev.dataUrl ?? "",
+          locale: prev.locale ?? "",
+        })}
         onClick={onNavigate}
         className={navLinkClass(pathname === "/")}
       >
@@ -30,7 +47,11 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       </Link>
       <Link
         to="/icons"
-        search={(prev) => ({ ...iconFacetDefaults, dataUrl: prev.dataUrl ?? "" })}
+        search={(prev) => ({
+          ...iconFacetDefaults,
+          dataUrl: prev.dataUrl ?? "",
+          locale: prev.locale ?? "",
+        })}
         onClick={onNavigate}
         className={navLinkClass(pathname === "/icons")}
       >
@@ -38,15 +59,39 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       </Link>
       <Link
         to="/translations"
-        search={(prev) => ({ ...translationsSearchDefaults, dataUrl: prev.dataUrl ?? "" })}
+        search={(prev) => ({
+          ...translationsSearchDefaults,
+          dataUrl: prev.dataUrl ?? "",
+          locale: prev.locale ?? "",
+        })}
         onClick={onNavigate}
         className={navLinkClass(pathname === "/translations")}
       >
         Translations
       </Link>
+      {!isRelease ? (
+        <Link
+          to="/comparison"
+          search={(prev) => ({
+            ...presetSearchDefaults,
+            dataUrl: prev.dataUrl ?? "",
+            locale: prev.locale ?? "",
+          })}
+          onClick={onNavigate}
+          className={comparisonNavClass(pathname === "/comparison")}
+          title="What changed vs the release"
+        >
+          Comparison
+          {changeCount != null ? (
+            <span className="ml-1.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700">
+              {changeCount}
+            </span>
+          ) : null}
+        </Link>
+      ) : null}
       <Link
         to="/about"
-        search={(prev) => ({ dataUrl: prev.dataUrl ?? "" })}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
         onClick={onNavigate}
         className={navLinkClass(pathname === "/about")}
       >
@@ -96,7 +141,11 @@ export function SidebarLayout({
   const [helpOpen, setHelpOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const showSidebar = location.pathname === "/" || location.pathname === "/icons";
+  const { releaseVersion } = useComparison();
+  const showSidebar =
+    location.pathname === "/" ||
+    location.pathname === "/icons" ||
+    location.pathname === "/translations";
 
   const focusSearch = () => {
     const input = document.getElementById(PAGE_SEARCH_INPUT_ID) as HTMLInputElement | null;
@@ -112,29 +161,45 @@ export function SidebarLayout({
   useHotkeySequence(["G", "P"], () =>
     navigate({
       to: "/",
-      search: (prev) => ({ ...presetSearchDefaults, dataUrl: prev.dataUrl ?? "" }),
+      search: (prev) => ({
+        ...presetSearchDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
     }),
   );
   useHotkeySequence(["G", "I"], () =>
     navigate({
       to: "/icons",
-      search: (prev) => ({ ...iconFacetDefaults, dataUrl: prev.dataUrl ?? "" }),
+      search: (prev) => ({
+        ...iconFacetDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
     }),
   );
   useHotkeySequence(["G", "T"], () =>
     navigate({
       to: "/translations",
-      search: (prev) => ({ ...translationsSearchDefaults, dataUrl: prev.dataUrl ?? "" }),
+      search: (prev) => ({
+        ...translationsSearchDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
     }),
   );
   useHotkeySequence(["G", "A"], () =>
-    navigate({ to: "/about", search: (prev) => ({ dataUrl: prev.dataUrl ?? "" }) }),
+    navigate({
+      to: "/about",
+      search: (prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" }),
+    }),
   );
 
   return (
     <div className="flex min-h-svh w-full flex-col overflow-x-clip bg-white text-slate-900">
       <header className="sticky top-0 z-40 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur-sm">
-        <div className="flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        {/* Wraps to two rows when cramped: logo on the first row, all actions on the second. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:h-16 lg:py-0 lg:px-8">
           {showSidebar ? (
             <button
               type="button"
@@ -148,7 +213,11 @@ export function SidebarLayout({
 
           <Link
             to="/"
-            search={(prev) => ({ ...presetSearchDefaults, dataUrl: prev.dataUrl ?? "" })}
+            search={(prev) => ({
+              ...presetSearchDefaults,
+              dataUrl: prev.dataUrl ?? "",
+              locale: prev.locale ?? "",
+            })}
             className="flex shrink-0 items-center gap-2.5"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm shadow-sky-500/30">
@@ -167,24 +236,31 @@ export function SidebarLayout({
                 />
               </svg>
             </span>
-            <span className="hidden font-display text-base font-semibold whitespace-nowrap text-slate-900 sm:inline">
-              Tagging Schema <span className="text-sky-600">Browser</span>
+            <span className="hidden flex-col leading-tight sm:flex">
+              <span className="font-display text-base font-semibold whitespace-nowrap text-slate-900">
+                Tagging Schema <span className="text-sky-600">Browser</span>
+              </span>
+              {releaseVersion ? (
+                <span className="text-[11px] font-medium text-slate-400">
+                  Release {releaseVersion}
+                </span>
+              ) : null}
             </span>
           </Link>
 
-          <div className="flex min-w-0 flex-1 justify-center">{topSearch}</div>
-
-          <nav className="hidden shrink-0 items-center gap-1 sm:flex">
-            <NavLinks />
-            <HelpButton onClick={() => setHelpOpen(true)} />
-          </nav>
+          {/* Actions: stay inline next to the logo on wide screens, wrap to their own full row below lg. */}
+          <div className="order-last flex w-full min-w-0 items-center gap-3 lg:order-none lg:w-auto lg:flex-1">
+            <div className="flex min-w-0 flex-1 justify-center">{topSearch}</div>
+            <nav className="flex shrink-0 items-center gap-1 overflow-x-auto">
+              <NavLinks />
+              <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden />
+              <LanguagePicker />
+              <HelpButton onClick={() => setHelpOpen(true)} />
+            </nav>
+          </div>
         </div>
 
-        {/* Mobile page nav */}
-        <nav className="flex items-center gap-1 overflow-x-auto border-t border-slate-100 px-4 py-2 sm:hidden">
-          <NavLinks />
-          <HelpButton onClick={() => setHelpOpen(true)} />
-        </nav>
+        <DataSourceBanner />
       </header>
 
       <div className="flex w-full flex-auto">

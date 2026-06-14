@@ -14,6 +14,7 @@ type SchemaContextValue = {
   data: SchemaData | null;
   presets: DenormalizedPreset[];
   presetsById: Map<string, DenormalizedPreset>;
+  fields: SchemaData["fields"];
 };
 
 const SchemaContext = createContext<SchemaContextValue | null>(null);
@@ -65,6 +66,7 @@ export function SchemaProvider({
           presetsById,
           categories: raw.categories,
           categoryNames,
+          fields: raw.fields,
           loadError: null,
           diagnostics,
         });
@@ -105,6 +107,7 @@ export function SchemaProvider({
       data,
       presets: data?.presets ?? [],
       presetsById: data?.presetsById ?? new Map(),
+      fields: data?.fields ?? {},
     }),
     [dataUrl, setDataUrl, load, loading, error, data],
   );

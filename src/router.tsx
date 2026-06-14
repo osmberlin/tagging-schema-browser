@@ -6,11 +6,14 @@ import { FacetSidebar } from "@/components/PagePresets/FacetSidebar";
 import { PagePresets } from "@/components/PagePresets/PagePresets";
 import { SearchBar } from "@/components/PagePresets/SearchBar";
 import { presetSearchDefaults, presetSearchSchema } from "@/components/PagePresets/useSearchState";
+import { TranslationsSidebar } from "@/components/PageTranslations/TranslationsSidebar";
 import {
   translationsSearchDefaults,
   translationsSearchSchema,
 } from "@/components/PageTranslations/translationsSearch";
 import { SidebarLayout } from "@/components/ui/SidebarLayout";
+import { ComparisonProvider } from "@/contexts/ComparisonContext";
+import { LocaleProvider } from "@/contexts/LocaleContext";
 import { SchemaProvider } from "@/contexts/SchemaContext";
 import { DEFAULT_DATA_URL } from "@/utils/constants";
 import {
@@ -37,6 +40,12 @@ const LazyPageTranslations = lazy(() =>
   })),
 );
 
+const LazyPageComparison = lazy(() =>
+  import("@/components/PageComparison/PageComparison").then((m) => ({
+    default: m.PageComparison,
+  })),
+);
+
 function routerBasepath(): string {
   const trimmed = import.meta.env.BASE_URL.replace(/^\/+|\/+$/g, "");
   return trimmed ? `/${trimmed}` : "/";
@@ -49,28 +58,36 @@ function routerBasepath(): string {
  */
 const rootSearchSchema = z.object({
   dataUrl: z.string().catch(""),
+  /** Global comparison locale (used by the Translations page + preset details). */
+  locale: z.string().catch(""),
 });
 type RootSearch = z.infer<typeof rootSearchSchema>;
 
 function RootContent() {
   const navigate = useNavigate();
   const dataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? "" });
+  const locale = useSearch({ strict: false, select: (s) => s.locale ?? "" });
   const location = useLocation();
 
   const setDataUrl = (url: string | null) => {
     void navigate({ to: ".", search: (prev) => ({ ...prev, dataUrl: url ?? "" }) });
+  };
+  const setLocale = (next: string) => {
+    void navigate({ to: ".", search: (prev) => ({ ...prev, locale: next || undefined }) });
   };
 
   const resolvedDataUrl = (dataUrl.trim() || DEFAULT_DATA_URL).trim();
   const topSearch =
     location.pathname === "/icons" ? (
       <IconSearchBar />
-    ) : location.pathname === "/" ? (
+    ) : location.pathname === "/" || location.pathname === "/translations" ? (
       <SearchBar />
     ) : null;
   const sidebar =
     location.pathname === "/icons" ? (
       <IconFacetSidebar />
+    ) : location.pathname === "/translations" ? (
+      <TranslationsSidebar />
     ) : location.pathname === "/" ? (
       <FacetSidebar />
     ) : (
@@ -81,9 +98,13 @@ function RootContent() {
 
   return (
     <SchemaProvider dataUrl={resolvedDataUrl} setDataUrl={setDataUrl}>
-      <SidebarLayout sidebar={sidebar} topSearch={topSearch}>
-        <Outlet />
-      </SidebarLayout>
+      <ComparisonProvider dataUrl={resolvedDataUrl}>
+        <LocaleProvider dataUrl={resolvedDataUrl} locale={locale} setLocale={setLocale}>
+          <SidebarLayout sidebar={sidebar} topSearch={topSearch}>
+            <Outlet />
+          </SidebarLayout>
+        </LocaleProvider>
+      </ComparisonProvider>
     </SchemaProvider>
   );
 }
@@ -97,7 +118,10 @@ const rootRoute = createRootRoute({
   // Keep dataUrl across navigation, but drop it from the URL when it's the
   // default ("") so shared links stay clean.
   search: {
-    middlewares: [retainSearchParams<RootSearch>(["dataUrl"]), stripSearchParams({ dataUrl: "" })],
+    middlewares: [
+      retainSearchParams<RootSearch>(["dataUrl", "locale"]),
+      stripSearchParams({ dataUrl: "", locale: "" }),
+    ],
   },
 });
 
@@ -133,13 +157,32 @@ const translationsRoute = createRoute({
   ),
 });
 
+const comparisonRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/comparison",
+  // Reuses the presets schema so the shared detail modal (`preset` param) works.
+  validateSearch: presetSearchSchema,
+  search: { middlewares: [stripSearchParams(presetSearchDefaults)] },
+  component: () => (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading comparison...</p>}>
+      <LazyPageComparison />
+    </Suspense>
+  ),
+});
+
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/about",
   component: PageAbout,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, iconsRoute, translationsRoute, aboutRoute]);
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  iconsRoute,
+  translationsRoute,
+  comparisonRoute,
+  aboutRoute,
+]);
 
 export const router = createRouter({
   routeTree,

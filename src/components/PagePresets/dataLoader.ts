@@ -21,11 +21,29 @@ function ensureTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
 
+/**
+ * Public CORS proxy used only as a fallback. Some hosts (notably netlify PR
+ * previews) serve the schema JSON without an `Access-Control-Allow-Origin`
+ * header, so a browser-side fetch is blocked. The proxy re-serves it with CORS.
+ */
+const CORS_PROXY = "https://corsproxy.io/?url=";
+
 async function fetchJson<T>(baseUrl: string, path: string): Promise<T> {
   const url = `${baseUrl}${path}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  return res.json() as Promise<T>;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+    return (await res.json()) as T;
+  } catch (err) {
+    // A CORS/network failure surfaces as a TypeError ("Failed to fetch") with no
+    // response. Retry once through a CORS proxy so non-CORS hosts still load.
+    if (err instanceof TypeError) {
+      const res = await fetch(`${CORS_PROXY}${encodeURIComponent(url)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status} (via CORS proxy): ${url}`);
+      return (await res.json()) as T;
+    }
+    throw err;
+  }
 }
 
 export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload> {

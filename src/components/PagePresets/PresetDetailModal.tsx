@@ -3,10 +3,14 @@ import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { Badge } from "@/components/ui/Badge";
 import { CountPill } from "@/components/ui/CountPill";
 import { CatalystDialog, CatalystDialogBody, CatalystDialogTitle } from "@/components/ui/Dialog";
+import { useComparison } from "@/contexts/ComparisonContext";
+import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { useUiStore } from "@/stores/uiStore";
 import type { DenormalizedPreset } from "@/utils/types";
+import { clsx } from "clsx";
 
-type RelatedItem = { id: string; name: string; count?: number };
+type RelatedItem = { id: string; name: string };
 
 export function PresetDetailModal({
   presetId,
@@ -68,26 +72,26 @@ function PresetDetailContent({
   onApplyFilter: (update: PresetFilterUpdate) => void;
   onOpenPreset: (id: string) => void;
 }) {
+  const { locale, localeMap } = useLocale();
+  const loc = locale ? localeMap?.get(preset.id) : undefined;
+
+  const { result: comparison } = useComparison();
+  const changeStatus = comparison?.statusById.get(preset.id);
+  const modified = comparison?.modified.find((m) => m.current.id === preset.id);
+
   const allFields = Array.from(
     new Set([...(preset.fields ?? []), ...(preset.moreFields ?? [])]),
   ).sort((a, b) => a.localeCompare(b));
   const tagEntries = Object.entries(preset.tags ?? {});
 
-  // How many presets share each field / primary-tag-key — used for the count pills.
+  // How many presets share each field — used for the Fields count pills.
   const fieldCounts = new Map<string, number>();
-  const tagKeyCounts = new Map<string, number>();
   for (const p of presets) {
-    if (p.primaryTagKey)
-      tagKeyCounts.set(p.primaryTagKey, (tagKeyCounts.get(p.primaryTagKey) ?? 0) + 1);
     for (const f of new Set([...p.fields, ...p.moreFields])) {
       fieldCounts.set(f, (fieldCounts.get(f) ?? 0) + 1);
     }
   }
-  const toItem = (c: DenormalizedPreset): RelatedItem => ({
-    id: c.id,
-    name: c.name,
-    count: c.primaryTagKey ? tagKeyCounts.get(c.primaryTagKey) : undefined,
-  });
+  const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name });
 
   const categorySections = preset.categoryNames.map((categoryName, index) => {
     const categoryId = preset.categoryIds[index];
@@ -157,6 +161,62 @@ function PresetDetailContent({
           ))}
         </div>
 
+        {changeStatus === "added" || changeStatus === "modified" ? (
+          <div className="mt-6 rounded-xl border border-violet-200 bg-violet-50/60 p-3">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-violet-800">
+              <span className="h-2 w-2 rounded-full bg-violet-500" aria-hidden />
+              {changeStatus === "added" ? "Added vs release" : "Changes vs release"}
+            </h2>
+            {changeStatus === "added" ? (
+              <p className="text-sm text-violet-700">This preset does not exist in the release.</p>
+            ) : (
+              <ul className="space-y-1 text-xs">
+                {modified?.diffs.map((d) => (
+                  <li key={d.label} className="grid grid-cols-[5rem_1fr] gap-x-3">
+                    <span className="font-semibold tracking-wide text-violet-500 uppercase">
+                      {d.label}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="text-rose-600 line-through">{d.before || "—"}</span>
+                      <span className="mx-1 text-slate-400">→</span>
+                      <span className="text-emerald-700">{d.after || "—"}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : null}
+
+        {locale ? (
+          <div className="mt-6">
+            <h2 className="mb-2 text-sm font-semibold text-slate-900">
+              Translation{" "}
+              <span className="font-normal text-slate-400">
+                EN ↔ <span className="font-mono">{locale}</span>
+              </span>
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-slate-200">
+              <TranslationRow
+                label="Name"
+                en={preset.name}
+                localized={loc?.name}
+                same={Boolean(loc?.name && loc.name === preset.name)}
+              />
+              <TranslationRow
+                label="Terms"
+                en={preset.terms.join(", ")}
+                localized={loc?.terms.join(", ")}
+              />
+              <TranslationRow
+                label="Aliases"
+                en={preset.aliases.join(", ")}
+                localized={loc?.aliases.join(", ")}
+              />
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-6">
           <h2 className="mb-2 text-sm font-semibold text-slate-900">Fields</h2>
           <div className="flex flex-wrap gap-1.5">
@@ -174,6 +234,8 @@ function PresetDetailContent({
             ))}
           </div>
         </div>
+
+        <PresetJsonPanel preset={preset} />
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {categorySections.map((section) => (
@@ -210,6 +272,88 @@ function PresetDetailContent({
   );
 }
 
+/**
+ * Collapsible raw-JSON view of the full preset, with each field reference
+ * expanded to its full definition (key, type, options, …) so you see the whole
+ * picture. The open/closed state lives in the global zustand store, so toggling
+ * it once keeps it open as you browse from preset to preset.
+ */
+function PresetJsonPanel({ preset }: { preset: DenormalizedPreset }) {
+  const { fields } = useSchema();
+  const open = useUiStore((s) => s.presetJsonOpen);
+  const toggle = useUiStore((s) => s.togglePresetJson);
+
+  const expandFields = (ids: string[] | undefined) =>
+    Object.fromEntries((ids ?? []).map((id) => [id, fields[id] ?? null]));
+  const expanded = {
+    ...preset,
+    fields: expandFields(preset.fields),
+    moreFields: expandFields(preset.moreFields),
+  };
+  const json = JSON.stringify(expanded, null, 2);
+
+  return (
+    <div className="mt-6">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 rounded-lg bg-slate-100 px-3 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-slate-200"
+      >
+        <span className="flex min-w-0 flex-wrap items-center gap-x-2">
+          <span>Full preset (JSON, fields expanded)</span>
+          <code className="truncate font-mono text-xs font-normal text-slate-400">
+            data/presets/{preset.id}.json
+          </code>
+        </span>
+        <span aria-hidden className="text-slate-500">
+          {open ? "▾" : "▸"}
+        </span>
+      </button>
+      {open ? (
+        <pre className="mt-2 max-h-96 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-700">
+          {json}
+        </pre>
+      ) : null}
+    </div>
+  );
+}
+
+function TranslationRow({
+  label,
+  en,
+  localized,
+  same,
+}: {
+  label: string;
+  en: string;
+  localized?: string;
+  same?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-[5rem_1fr_1fr] gap-x-4 border-t border-slate-100 px-3 py-2 text-sm first:border-t-0">
+      <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
+      <div className="min-w-0 text-slate-900">
+        {en || <span className="text-slate-300">—</span>}
+      </div>
+      <div className="min-w-0">
+        {localized ? (
+          <span
+            className={clsx("text-slate-900", same && "text-amber-700")}
+            title={same ? "Same as English" : undefined}
+          >
+            {localized}
+          </span>
+        ) : (
+          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
+            untranslated
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function RelatedBlock({
   title,
   count,
@@ -234,27 +378,22 @@ function RelatedBlock({
       {presets.length === 0 ? (
         <p className="text-sm text-slate-500">No related presets.</p>
       ) : (
-        <ul className="space-y-1">
-          {presets.slice(0, 10).map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => onOpenPreset(p.id)}
-                className="min-w-0 truncate text-left text-sm text-slate-700 hover:underline"
-              >
-                {p.name}
-              </button>
-              {p.count !== undefined ? (
-                <CountPill title={`${p.count} presets share this preset's primary tag`}>
-                  {p.count}
-                </CountPill>
-              ) : null}
-            </li>
+        <div className="flex flex-wrap gap-1.5">
+          {presets.slice(0, 30).map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onOpenPreset(p.id)}
+              title={p.id}
+              className="max-w-full truncate rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200 ring-inset hover:bg-slate-100"
+            >
+              {p.name}
+            </button>
           ))}
-          {presets.length > 10 ? (
-            <li className="pt-1 text-xs text-slate-400">+{presets.length - 10} more</li>
+          {presets.length > 30 ? (
+            <span className="self-center text-xs text-slate-400">+{presets.length - 30} more</span>
           ) : null}
-        </ul>
+        </div>
       )}
     </section>
   );

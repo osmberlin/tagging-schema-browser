@@ -1,3 +1,4 @@
+import { CountPill } from "@/components/ui/CountPill";
 import { useSchema } from "@/contexts/SchemaContext";
 import { IconCard } from "./IconCard";
 import { applyIconFacets, useIconFacetState } from "./useIconFacetState";
@@ -31,7 +32,9 @@ export function PageIcons() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-semibold text-slate-900">Icons</h1>
+        <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+          Icons <CountPill className="text-sm">{filtered.length}</CountPill>
+        </h1>
         <label className="flex items-center gap-2 text-sm text-slate-500">
           Sort
           <select
@@ -47,10 +50,6 @@ export function PageIcons() {
           </select>
         </label>
       </div>
-      <p className="text-sm text-slate-500">
-        Showing {filtered.length} of {icons.length} icon(s). Reference sizes: 60px (sidebar), 12px
-        (map pin).
-      </p>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         {filtered.map((icon) => (
           <li key={icon.name}>

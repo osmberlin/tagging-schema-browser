@@ -52,6 +52,8 @@ export type SchemaData = {
   presetsById: Map<string, DenormalizedPreset>;
   categories: RawCategories;
   categoryNames: Record<string, string>;
+  /** Raw field definitions (keyed by field id) — used to expand a preset's field references. */
+  fields: RawFields;
   loadError: string | null;
   diagnostics: string[];
 };

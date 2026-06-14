@@ -1,4 +1,5 @@
 import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
+import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
@@ -16,11 +17,28 @@ const MAX_COLUMNS = 25;
 
 const dash = <span className="text-slate-300">—</span>;
 
+/** "Expand / open modal" affordance shown on the column headers. */
+function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 4H5a1 1 0 0 0-1 1v4m11-5h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4m11 5h4a1 1 0 0 0 1-1v-4"
+      />
+    </svg>
+  );
+}
+
 function uniqueSorted(values: string[]): string[] {
   return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
 }
 
-type CellLink = { search: (prev: { dataUrl?: string }) => Record<string, unknown>; title: string };
+type CellLink = {
+  search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>;
+  title: string;
+};
 
 type Row = {
   label: string;
@@ -39,6 +57,7 @@ type Section = { title: string; rows: Row[] };
 
 export function PresetTable() {
   const { data } = useSchema();
+  const { result: comparison } = useComparison();
   const [state] = useSearchState();
   const setPreset = useSetPreset();
 
@@ -52,6 +71,16 @@ export function PresetTable() {
       sort: state.sort,
     });
   }, [data, state]);
+
+  // Usage count per icon across the whole schema — the Icon cell only becomes a
+  // click-through when more than one preset shares the icon (otherwise it's a no-op).
+  const iconCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of data?.presets ?? []) {
+      if (p.icon) m.set(p.icon, (m.get(p.icon) ?? 0) + 1);
+    }
+    return m;
+  }, [data]);
 
   const sections = useMemo<Section[]>(() => {
     const presets = result?.data.items ?? [];
@@ -86,9 +115,10 @@ export function PresetTable() {
                     search: (prev) => ({
                       ...presetSearchDefaults,
                       dataUrl: prev.dataUrl ?? "",
+                      locale: prev.locale ?? "",
                       categoryNames: p.categoryNames,
                     }),
-                    title: `Show all presets in category "${p.categoryNames.join(", ")}"`,
+                    title: "Show all presets of this category",
                   }
                 : null,
           },
@@ -105,14 +135,15 @@ export function PresetTable() {
               );
             },
             link: (p) =>
-              p.icon
+              p.icon && (iconCounts.get(p.icon) ?? 0) > 1
                 ? {
                     search: (prev) => ({
                       ...presetSearchDefaults,
                       dataUrl: prev.dataUrl ?? "",
+                      locale: prev.locale ?? "",
                       iconName: [p.icon as string],
                     }),
-                    title: `Show all presets using the icon "${p.icon}"`,
+                    title: "Show all presets of this icon",
                   }
                 : null,
           },
@@ -156,7 +187,7 @@ export function PresetTable() {
         })),
       },
     ];
-  }, [result]);
+  }, [result, iconCounts]);
 
   if (!result) return null;
   const presets = result.data.items;
@@ -185,26 +216,43 @@ export function PresetTable() {
               <th className="sticky top-0 left-0 z-30 border-r border-b border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-500">
                 Property
               </th>
-              {presets.map((p) => (
-                <th
-                  key={p.id}
-                  className="sticky top-0 z-20 min-w-40 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setPreset(p.id)}
-                    className="group/col block h-full w-full px-3 py-2 text-left transition hover:bg-sky-50"
-                    title={`Open ${p.name} details`}
+              {presets.map((p) => {
+                const status = comparison?.statusById.get(p.id);
+                const changed = status === "added" || status === "modified";
+                return (
+                  <th
+                    key={p.id}
+                    className="sticky top-0 z-20 min-w-40 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
                   >
-                    <span className="block max-w-50 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
-                      {p.name}
-                    </span>
-                    <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
-                      {p.id}
-                    </span>
-                  </button>
-                </th>
-              ))}
+                    <button
+                      type="button"
+                      onClick={() => setPreset(p.id)}
+                      className="group/col relative block h-full w-full px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
+                      title="Show details of preset"
+                    >
+                      <span className="flex max-w-50 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
+                        {changed ? (
+                          <span
+                            className="h-2 w-2 shrink-0 rounded-full bg-violet-500"
+                            title={status === "added" ? "Added vs release" : "Modified vs release"}
+                          />
+                        ) : null}
+                        <span className="truncate">{p.name}</span>
+                      </span>
+                      <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
+                        {p.id}
+                      </span>
+                      <span
+                        aria-hidden
+                        className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/col:bg-sky-100 group-hover/col:text-sky-700"
+                        title="Open modal"
+                      >
+                        <ExpandIcon className="h-3 w-3" />
+                      </span>
+                    </button>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -238,7 +286,9 @@ export function PresetTable() {
                           className={clsx(
                             "border-r border-b border-slate-100 align-top text-slate-700",
                             row.mono && "font-mono text-xs",
-                            row.link ? "p-0" : "px-3 py-1.5",
+                            // h-0 lets the link/span child resolve `h-full` against the row
+                            // height (table-cell percentage-height quirk) so the hover fills.
+                            row.link ? "h-0 p-0" : "px-3 py-1.5",
                             !row.link && row.highlight?.(p)
                               ? "bg-sky-50/70"
                               : !row.link && "group-hover:bg-slate-50",
@@ -250,9 +300,9 @@ export function PresetTable() {
                                 to="/"
                                 search={cellLink.search as never}
                                 title={cellLink.title}
-                                className="group/ac relative block px-3 py-1.5 transition hover:bg-sky-50"
+                                className="group/ac relative flex h-full items-start px-3 py-1.5 pr-8 transition hover:bg-sky-50"
                               >
-                                {row.render(p)}
+                                <span className="min-w-0">{row.render(p)}</span>
                                 <span
                                   aria-hidden
                                   className="absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
@@ -261,7 +311,7 @@ export function PresetTable() {
                                 </span>
                               </Link>
                             ) : (
-                              <span className="block px-3 py-1.5">{row.render(p)}</span>
+                              <span className="block h-full px-3 py-1.5">{row.render(p)}</span>
                             )
                           ) : (
                             row.render(p)
