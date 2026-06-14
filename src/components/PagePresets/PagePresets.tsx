@@ -2,6 +2,7 @@ import { CountPill } from "@/components/ui/CountPill";
 import { Input } from "@/components/ui/Input";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
+import { Fragment } from "react";
 import { PresetDetailModal } from "./PresetDetailModal";
 import { PresetTable } from "./PresetTable";
 import { getExpectedFilesHelp } from "./dataLoader";
@@ -32,36 +33,43 @@ export function PagePresets() {
   const activePills = [
     ...searchState.primaryTagKey.map((value) => ({
       key: `primary-${value}`,
+      facet: "primaryTagKey",
       label: `Primary: ${value}`,
       onRemove: () => removeValue("primaryTagKey", value),
     })),
     ...searchState.geometry.map((value) => ({
       key: `geometry-${value}`,
+      facet: "geometry",
       label: `Geometry: ${value}`,
       onRemove: () => removeValue("geometry", value),
     })),
     ...searchState.iconPrefix.map((value) => ({
       key: `iconPrefix-${value}`,
+      facet: "iconPrefix",
       label: `Icon set: ${value}`,
       onRemove: () => removeValue("iconPrefix", value),
     })),
     ...searchState.fieldIds.map((value) => ({
       key: `field-${value}`,
+      facet: "fieldIds",
       label: `Field: ${value}`,
       onRemove: () => removeValue("fieldIds", value),
     })),
     ...searchState.categoryNames.map((value) => ({
       key: `category-${value}`,
+      facet: "categoryNames",
       label: `Category: ${value}`,
       onRemove: () => removeValue("categoryNames", value),
     })),
     ...searchState.hasIcon.map((value) => ({
       key: `hasIcon-${value}`,
+      facet: "hasIcon",
       label: `Has icon: ${value}`,
       onRemove: () => removeValue("hasIcon", value),
     })),
     ...searchState.iconName.map((value) => ({
       key: `iconName-${value}`,
+      facet: "iconName",
       label: `Icon: ${value}`,
       onRemove: () => removeValue("iconName", value),
     })),
@@ -69,6 +77,7 @@ export function PagePresets() {
       ? [
           {
             key: "query",
+            facet: "query",
             label: `Search: ${searchState.q}`,
             onRemove: () => setSearchState({ q: "", page: 1 }),
           },
@@ -134,17 +143,23 @@ export function PagePresets() {
           Presets <CountPill className="text-sm">{totalCount}</CountPill>
         </h1>
         {activePills.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {activePills.map((pill) => (
-              <button
-                key={pill.key}
-                type="button"
-                onClick={pill.onRemove}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
-              >
-                <span>{pill.label}</span>
-                <span aria-hidden>×</span>
-              </button>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {activePills.map((pill, i) => (
+              <Fragment key={pill.key}>
+                {i > 0 ? (
+                  <span className="text-[11px] font-medium text-slate-400">
+                    {activePills[i - 1].facet === pill.facet ? "or" : "and"}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={pill.onRemove}
+                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+                >
+                  <span>{pill.label}</span>
+                  <span aria-hidden>×</span>
+                </button>
+              </Fragment>
             ))}
           </div>
         ) : null}

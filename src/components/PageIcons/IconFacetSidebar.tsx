@@ -44,26 +44,6 @@ export function IconFacetSidebar() {
 
   return (
     <div className="mt-4 flex flex-col gap-4">
-      <SidebarSection title="Supplier">
-        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
-          <FacetButton
-            active={state.i_supplier === "all"}
-            label="All suppliers"
-            count={icons.length}
-            onClick={() => setState({ i_supplier: "all" })}
-          />
-          {prefixes.map((prefix) => (
-            <FacetButton
-              key={prefix}
-              active={state.i_supplier === prefix}
-              label={prefix}
-              count={meta.supplierCounts.get(prefix) ?? 0}
-              onClick={() => setState({ i_supplier: prefix })}
-            />
-          ))}
-        </ul>
-      </SidebarSection>
-
       <SidebarSection title="Usage">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
@@ -84,6 +64,26 @@ export function IconFacetSidebar() {
             count={meta.unusedCount}
             onClick={() => setState({ i_usage: "unused" })}
           />
+        </ul>
+      </SidebarSection>
+
+      <SidebarSection title="Supplier">
+        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
+          <FacetButton
+            active={state.i_supplier === "all"}
+            label="All suppliers"
+            count={icons.length}
+            onClick={() => setState({ i_supplier: "all" })}
+          />
+          {prefixes.map((prefix) => (
+            <FacetButton
+              key={prefix}
+              active={state.i_supplier === prefix}
+              label={prefix}
+              count={meta.supplierCounts.get(prefix) ?? 0}
+              onClick={() => setState({ i_supplier: prefix })}
+            />
+          ))}
         </ul>
       </SidebarSection>
 

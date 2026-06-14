@@ -7,7 +7,7 @@ import { z } from "zod";
 export const iconFacetSchema = z.object({
   i_q: z.string().catch(""),
   i_supplier: z.string().catch("all"),
-  i_usage: z.enum(["all", "used", "unused"]).catch("all"),
+  i_usage: z.enum(["all", "used", "unused"]).catch("used"),
   i_hasSvg: z.enum(["all", "with", "missing"]).catch("all"),
   i_sort: z.enum(["name", "usage_desc", "usage_asc"]).catch("name"),
 });

@@ -51,10 +51,15 @@ export function PageIcons() {
         Showing {filtered.length} of {icons.length} icon(s). Reference sizes: 60px (sidebar), 12px
         (map pin).
       </p>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         {filtered.map((icon) => (
           <li key={icon.name}>
-            <IconCard iconName={icon.name} svgRaw={icon.svgRaw} usageCount={icon.usageCount} />
+            <IconCard
+              iconName={icon.name}
+              svgRaw={icon.svgRaw}
+              usageCount={icon.usageCount}
+              presets={icon.presets}
+            />
           </li>
         ))}
       </ul>
