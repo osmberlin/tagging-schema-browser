@@ -1,6 +1,6 @@
 import { SidebarSection } from "@/components/ui/Sidebar";
 import { clsx } from "clsx";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { usePresetSearch } from "./usePresetSearch";
 import { useSearchState } from "./useSearchState";
 
@@ -17,11 +17,17 @@ function FacetGroup({
   selected: string[];
   onToggle: (key: string) => void;
 }) {
+  // Hide the no-result options by default so the list stays short.
+  const [showEmpty, setShowEmpty] = useState(false);
   if (!buckets?.length) return null;
+  const hiddenCount = buckets.filter((b) => b.doc_count === 0 && !selected.includes(b.key)).length;
+  const visible = showEmpty
+    ? buckets
+    : buckets.filter((b) => b.doc_count > 0 || selected.includes(b.key));
   return (
     <SidebarSection title={title}>
       <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
-        {buckets.map(({ key, doc_count }) => {
+        {visible.map(({ key, doc_count }) => {
           const isSelected = selected.includes(key);
           // Adding this facet would yield no results — disable it.
           const disabled = doc_count === 0 && !isSelected;
@@ -54,6 +60,15 @@ function FacetGroup({
           );
         })}
       </ul>
+      {hiddenCount > 0 ? (
+        <button
+          type="button"
+          onClick={() => setShowEmpty((v) => !v)}
+          className="mt-1 pl-4 text-left text-xs font-medium text-sky-600 hover:underline"
+        >
+          {showEmpty ? "Hide empty" : `Show ${hiddenCount} with no results`}
+        </button>
+      ) : null}
     </SidebarSection>
   );
 }

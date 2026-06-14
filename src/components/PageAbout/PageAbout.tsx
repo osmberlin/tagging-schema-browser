@@ -1,6 +1,6 @@
 export function PageAbout() {
   return (
-    <article className="prose prose-slate max-w-none prose-headings:scroll-mt-24 prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline ">
+    <article className="prose prose-slate prose-headings:scroll-mt-24 prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline">
       <h1>About</h1>
       <p>
         <strong>Tagging Schema Browser</strong> loads OpenStreetMap preset data from an

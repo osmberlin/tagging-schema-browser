@@ -30,10 +30,6 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
         { label: "About", keys: [["g", "a"]] },
       ],
     },
-    {
-      title: "Presets list",
-      items: [{ label: "Previous / next page", keys: [["["], ["]"]] }],
-    },
   ];
 
   return (

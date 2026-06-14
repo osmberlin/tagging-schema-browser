@@ -1,3 +1,4 @@
+import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
 import { useSchema } from "@/contexts/SchemaContext";
 import type { DenormalizedPreset } from "@/utils/types";
 import { clsx } from "clsx";
@@ -13,7 +14,13 @@ function uniqueSorted(values: string[]): string[] {
   return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
 }
 
-type Row = { label: string; mono?: boolean; render: (p: DenormalizedPreset) => ReactNode };
+type Row = {
+  label: string;
+  mono?: boolean;
+  render: (p: DenormalizedPreset) => ReactNode;
+  /** Cells where this returns true get a subtle highlight background. */
+  highlight?: (p: DenormalizedPreset) => boolean;
+};
 type Section = { title: string; rows: Row[] };
 
 /**
@@ -54,7 +61,19 @@ export function PresetTable() {
             label: "Category",
             render: (p) => (p.categoryNames.length ? p.categoryNames.join(", ") : dash),
           },
-          { label: "Icon", mono: true, render: (p) => p.icon ?? dash },
+          {
+            label: "Icon",
+            render: (p) => {
+              if (!p.icon) return dash;
+              const src = getIconSvgDataUrl(p.icon);
+              return (
+                <span className="flex items-center gap-1.5">
+                  {src ? <img src={src} alt="" className="h-5 w-5 shrink-0" /> : null}
+                  <span className="font-mono text-xs">{p.icon}</span>
+                </span>
+              );
+            },
+          },
           {
             label: "imageURL",
             mono: true,
@@ -75,11 +94,12 @@ export function PresetTable() {
         rows: fieldIds.map((f) => ({
           label: f,
           mono: true,
+          highlight: (p) => p.fields.includes(f) || p.moreFields.includes(f),
           render: (p) =>
             p.fields.includes(f) ? (
-              <span className="font-semibold text-sky-600">✓</span>
+              <span className="font-semibold text-sky-700">✓</span>
             ) : p.moreFields.includes(f) ? (
-              <span className="text-slate-400" title="more field">
+              <span className="text-sky-500" title="more field (secondary)">
                 ○
               </span>
             ) : (
@@ -120,19 +140,22 @@ export function PresetTable() {
               {presets.map((p) => (
                 <th
                   key={p.id}
-                  className="sticky top-0 z-20 min-w-40 border-r border-b border-slate-200 bg-white px-3 py-2 text-left align-bottom"
+                  className="sticky top-0 z-20 min-w-40 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
                 >
+                  {/* The whole header cell opens the preset's details. */}
                   <button
                     type="button"
                     onClick={() => setPreset(p.id)}
-                    className="block max-w-50 truncate font-display font-medium text-slate-900 hover:text-sky-600"
-                    title={`Open ${p.name}`}
+                    className="group/col block h-full w-full px-3 py-2 text-left transition hover:bg-sky-50"
+                    title={`Open ${p.name} details`}
                   >
-                    {p.name}
+                    <span className="block max-w-50 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
+                      {p.name}
+                    </span>
+                    <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
+                      {p.id}
+                    </span>
                   </button>
-                  <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
-                    {p.id}
-                  </span>
                 </th>
               ))}
             </tr>
@@ -162,8 +185,9 @@ export function PresetTable() {
                       <td
                         key={p.id}
                         className={clsx(
-                          "border-r border-b border-slate-100 px-3 py-1.5 align-top text-slate-700 group-hover:bg-slate-50",
+                          "border-r border-b border-slate-100 px-3 py-1.5 align-top text-slate-700",
                           row.mono && "font-mono text-xs",
+                          row.highlight?.(p) ? "bg-sky-50/70" : "group-hover:bg-slate-50",
                         )}
                       >
                         {row.render(p)}
