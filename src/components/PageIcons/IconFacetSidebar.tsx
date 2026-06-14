@@ -109,18 +109,6 @@ export function IconFacetSidebar() {
           />
         </ul>
       </SidebarSection>
-
-      <SidebarSection title="Sort">
-        <select
-          value={state.i_sort}
-          onChange={(e) => setState({ i_sort: e.target.value as never })}
-          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
-        >
-          <option value="name">Name</option>
-          <option value="usage_desc">Usage (high to low)</option>
-          <option value="usage_asc">Usage (low to high)</option>
-        </select>
-      </SidebarSection>
     </div>
   );
 }

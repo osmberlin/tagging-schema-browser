@@ -32,6 +32,8 @@ const itemsJsConfig = {
     primaryTagKey: { title: "Primary tag", size: 50, sort: "count", order: "desc" },
     geometry: { title: "Geometry", size: 10, conjunction: false },
     iconPrefix: { title: "Icon set", size: 15 },
+    // Filterable so "Show presets" from an icon (and the iconName pill) works.
+    iconName: { title: "Icon", size: 2000, conjunction: false },
     fieldIds: { title: "Fields", size: 100, sort: "count", order: "desc", conjunction: false },
     hasIconFacet: { title: "Has icon", size: 2 },
   },

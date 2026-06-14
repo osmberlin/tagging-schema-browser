@@ -1,21 +1,15 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
-import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
 
 export function IconCard({
   iconName,
   svgRaw,
   usageCount,
-  presets,
 }: {
   iconName: string;
   svgRaw?: string;
   usageCount: number;
-  presets: DenormalizedPreset[];
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const prefix = iconName.split("-")[0] ?? "";
   const svgDataUrl = svgRaw ? `data:image/svg+xml;utf8,${encodeURIComponent(svgRaw)}` : null;
   return (
     <article
@@ -44,42 +38,21 @@ export function IconCard({
           )}
         </div>
       </div>
-      <p className="mt-2 font-mono text-xs font-medium text-slate-900 ">{iconName}</p>
-      <p className="text-xs text-slate-500 ">
-        {prefix} · used by {usageCount} preset{usageCount !== 1 ? "s" : ""}
-      </p>
-      {presets.length > 0 && (
-        <>
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="mt-2 self-start text-xs text-sky-600 hover:underline "
-          >
-            {expanded ? "Hide" : "Show"} presets
-          </button>
-          {expanded && (
-            <ul className="mt-1 space-y-0.5 text-xs">
-              {presets.slice(0, 10).map((p) => (
-                <li key={p.id}>
-                  <Link
-                    to="/"
-                    search={(prev) => ({
-                      ...presetSearchDefaults,
-                      dataUrl: prev.dataUrl ?? "",
-                      iconPrefix: [p.iconPrefix ?? ""],
-                    })}
-                    className="text-sky-600 hover:underline "
-                  >
-                    {p.name}
-                  </Link>
-                </li>
-              ))}
-              {presets.length > 10 && (
-                <li className="text-slate-500">+{presets.length - 10} more</li>
-              )}
-            </ul>
-          )}
-        </>
+      <p className="mt-2 font-mono text-xs font-medium text-slate-900">{iconName}</p>
+      {usageCount > 0 ? (
+        <Link
+          to="/"
+          search={(prev) => ({
+            ...presetSearchDefaults,
+            dataUrl: prev.dataUrl ?? "",
+            iconName: [iconName],
+          })}
+          className="mt-2 inline-flex w-fit items-center rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100 ring-inset transition hover:bg-sky-100"
+        >
+          Show presets ({usageCount})
+        </Link>
+      ) : (
+        <p className="mt-2 text-xs text-slate-400">Unused</p>
       )}
     </article>
   );
