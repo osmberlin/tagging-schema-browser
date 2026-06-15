@@ -16,6 +16,7 @@ import { ComparisonProvider } from "@/contexts/ComparisonContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
 import { SchemaProvider } from "@/contexts/SchemaContext";
 import { DEFAULT_DATA_URL } from "@/utils/constants";
+import { routerSearch } from "@/utils/routerSearch";
 import {
   Outlet,
   createRootRoute,
@@ -187,6 +188,8 @@ const routeTree = rootRoute.addChildren([
 export const router = createRouter({
   routeTree,
   basepath: routerBasepath(),
+  parseSearch: routerSearch.parse,
+  stringifySearch: routerSearch.stringify,
 });
 
 declare module "@tanstack/react-router" {
