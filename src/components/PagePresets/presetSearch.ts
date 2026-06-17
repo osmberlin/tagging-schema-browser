@@ -7,7 +7,7 @@ type PresetSearchRecord = DenormalizedPreset & {
   fieldText: string;
   fieldIds: string[];
   iconName: string;
-  hasIconFacet: "yes" | "no";
+  hasIconFacet: "yes" | "no" | "broken";
 };
 
 function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown>[] {
@@ -21,7 +21,7 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     primaryTagKey: p.primaryTagKey ?? "",
     iconName: p.icon ?? "",
     iconPrefix: p.iconPrefix ?? "none",
-    hasIconFacet: p.hasIcon ? "yes" : "no",
+    hasIconFacet: p.iconBroken ? "broken" : p.hasIcon ? "yes" : "no",
   }));
 }
 
@@ -35,7 +35,7 @@ const itemsJsConfig = {
     // Filterable so "Show presets" from an icon (and the iconName pill) works.
     iconName: { title: "Icon", size: 2000, conjunction: false },
     fieldIds: { title: "Fields", size: 100, sort: "count", order: "desc", conjunction: false },
-    hasIconFacet: { title: "Has icon", size: 2 },
+    hasIconFacet: { title: "Has icon", size: 3 },
   },
   sortings: {
     name_asc: { field: "name", order: "asc" },
