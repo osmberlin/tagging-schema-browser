@@ -129,11 +129,28 @@ export function PresetTable() {
               const src = getIconSvgDataUrl(p.icon);
               return (
                 <span className="flex items-center gap-1.5">
-                  {src ? <img src={src} alt="" className="h-5 w-5 shrink-0" /> : null}
-                  <span className="font-mono text-xs">{p.icon}</span>
+                  {src ? (
+                    <img src={src} alt="" className="h-5 w-5 shrink-0" />
+                  ) : p.iconBroken ? (
+                    <span
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
+                      title="Missing icon asset"
+                    >
+                      !
+                    </span>
+                  ) : null}
+                  <span
+                    className={clsx(
+                      "font-mono text-xs",
+                      p.iconBroken && "font-medium text-red-700",
+                    )}
+                  >
+                    {p.icon}
+                  </span>
                 </span>
               );
             },
+            highlight: (p) => p.iconBroken,
             link: (p) =>
               p.icon && (iconCounts.get(p.icon) ?? 0) > 1
                 ? {
