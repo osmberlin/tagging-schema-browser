@@ -1,6 +1,5 @@
-import { PresetDetailModal } from "@/components/PagePresets/PresetDetailModal";
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
-import { useSearchState, useSetPreset } from "@/components/PagePresets/useSearchState";
+import { useSetPreset } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
@@ -88,9 +87,7 @@ function Section({
 export function PageComparison() {
   const { isRelease, result, loading, error, domain, releaseVersion } = useComparison();
   const { dataUrl, data } = useSchema();
-  const [state, setState] = useSearchState();
   const setPreset = useSetPreset();
-  const presetParam = state.preset ?? null;
 
   if (!dataUrl && !data) {
     return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;
@@ -144,14 +141,6 @@ export function PageComparison() {
           </Section>
         </div>
       ) : null}
-
-      <PresetDetailModal
-        open={Boolean(presetParam)}
-        presetId={presetParam}
-        onClose={() => setState({ preset: undefined })}
-        onApplyFilter={(u) => setState({ ...u, preset: undefined, page: 1 })}
-        onOpenPreset={(id) => setPreset(id)}
-      />
     </div>
   );
 }

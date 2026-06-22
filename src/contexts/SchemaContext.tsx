@@ -2,7 +2,7 @@ import { loadSchemaData } from "@/components/PagePresets/dataLoader";
 import { denormalize } from "@/components/PagePresets/denormalize";
 import { buildPresetSearchIndex } from "@/components/PagePresets/presetSearch";
 import { DEFAULT_DATA_URL } from "@/utils/constants";
-import type { DenormalizedPreset, SchemaData } from "@/utils/types";
+import type { DenormalizedPreset, RawPresets, SchemaData } from "@/utils/types";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 type SchemaContextValue = {
@@ -14,6 +14,7 @@ type SchemaContextValue = {
   data: SchemaData | null;
   presets: DenormalizedPreset[];
   presetsById: Map<string, DenormalizedPreset>;
+  rawPresets: RawPresets;
   fields: SchemaData["fields"];
 };
 
@@ -64,6 +65,7 @@ export function SchemaProvider({
         setData({
           presets,
           presetsById,
+          rawPresets: raw.presets,
           categories: raw.categories,
           categoryNames,
           fields: raw.fields,
@@ -107,6 +109,7 @@ export function SchemaProvider({
       data,
       presets: data?.presets ?? [],
       presetsById: data?.presetsById ?? new Map(),
+      rawPresets: data?.rawPresets ?? {},
       fields: data?.fields ?? {},
     }),
     [dataUrl, setDataUrl, load, loading, error, data],

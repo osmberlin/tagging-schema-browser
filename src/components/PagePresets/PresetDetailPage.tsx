@@ -1,77 +1,64 @@
 import type { PresetFilterUpdate } from "@/components/PagePresets/PresetDetailModal.types";
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
+import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
+import { presetSearchDefaults, useSetPreset } from "@/components/PagePresets/useSearchState";
 import { Badge } from "@/components/ui/Badge";
 import { CountPill } from "@/components/ui/CountPill";
-import { CatalystDialog, CatalystDialogBody, CatalystDialogTitle } from "@/components/ui/Dialog";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
-import { useUiStore } from "@/stores/uiStore";
+import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset } from "@/utils/types";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { clsx } from "clsx";
 
 type RelatedItem = { id: string; name: string };
 
-export function PresetDetailModal({
-  presetId,
-  open,
-  onClose,
-  onApplyFilter,
-  onOpenPreset,
-}: {
-  presetId: string | null;
-  open: boolean;
-  onClose: () => void;
-  onApplyFilter: (update: PresetFilterUpdate) => void;
-  onOpenPreset: (id: string) => void;
-}) {
-  const { presetsById, presets } = useSchema();
+export function PresetDetailPage() {
+  const { _splat: presetId } = useParams({ strict: false });
+  const { presetsById, presets, rawPresets, dataUrl } = useSchema();
   const preset = presetId ? presetsById.get(presetId) : undefined;
+  const raw = presetId ? rawPresets[presetId] : undefined;
+
+  if (!presetId) {
+    return <p className="text-sm text-slate-600">No preset id in URL.</p>;
+  }
+
+  if (!preset || !raw) {
+    return (
+      <div className="space-y-2">
+        <h1 className="font-display text-xl font-semibold text-slate-900">Preset not found</h1>
+        <p className="text-sm text-slate-600">
+          No preset matches <code className="font-mono text-xs">{presetId}</code> for the loaded
+          schema.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <CatalystDialog open={open} onClose={onClose} size="4xl">
-      {!preset ? (
-        <>
-          <CatalystDialogTitle>Preset not found</CatalystDialogTitle>
-          <CatalystDialogBody>
-            <p className="text-sm text-slate-600">
-              No preset matches this link for the loaded schema.
-            </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-4 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
-            >
-              Close
-            </button>
-          </CatalystDialogBody>
-        </>
-      ) : (
-        <PresetDetailContent
-          preset={preset}
-          presets={presets}
-          onClose={onClose}
-          onApplyFilter={onApplyFilter}
-          onOpenPreset={onOpenPreset}
-        />
-      )}
-    </CatalystDialog>
+    <PresetDetailContent
+      preset={preset}
+      raw={raw as Record<string, unknown>}
+      presets={presets}
+      dataUrl={dataUrl ?? ""}
+    />
   );
 }
 
 function PresetDetailContent({
   preset,
+  raw,
   presets,
-  onClose,
-  onApplyFilter,
-  onOpenPreset,
+  dataUrl,
 }: {
   preset: DenormalizedPreset;
+  raw: Record<string, unknown>;
   presets: DenormalizedPreset[];
-  onClose: () => void;
-  onApplyFilter: (update: PresetFilterUpdate) => void;
-  onOpenPreset: (id: string) => void;
+  dataUrl: string;
 }) {
+  const navigate = useNavigate();
+  const setPreset = useSetPreset();
   const { locale, localeMap } = useLocale();
   const loc = locale ? localeMap?.get(preset.id) : undefined;
 
@@ -79,19 +66,24 @@ function PresetDetailContent({
   const changeStatus = comparison?.statusById.get(preset.id);
   const modified = comparison?.modified.find((m) => m.current.id === preset.id);
 
-  const allFields = Array.from(
-    new Set([...(preset.fields ?? []), ...(preset.moreFields ?? [])]),
-  ).sort((a, b) => a.localeCompare(b));
   const tagEntries = Object.entries(preset.tags ?? {});
+  const filePath = schemaRepoPath("preset", preset.id);
+  const githubUrl = githubFileUrl(dataUrl, filePath);
 
-  // How many presets share each field — used for the Fields count pills.
-  const fieldCounts = new Map<string, number>();
-  for (const p of presets) {
-    for (const f of new Set([...p.fields, ...p.moreFields])) {
-      fieldCounts.set(f, (fieldCounts.get(f) ?? 0) + 1);
-    }
-  }
   const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name });
+
+  const onApplyFilter = (update: PresetFilterUpdate) => {
+    void navigate({
+      to: "/",
+      search: (prev) => ({
+        ...presetSearchDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+        ...update,
+        page: 1,
+      }),
+    });
+  };
 
   const categorySections = preset.categoryNames.map((categoryName, index) => {
     const categoryId = preset.categoryIds[index];
@@ -116,13 +108,12 @@ function PresetDetailContent({
     : [];
 
   return (
-    <>
-      <div className="flex items-start justify-between gap-4">
-        <CatalystDialogTitle className="sr-only">{preset.name}</CatalystDialogTitle>
+    <div className="mx-auto max-w-5xl space-y-8 pb-12">
+      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
         <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
           <PresetIconBox preset={preset} size="md" />
           <div className="min-w-0">
-            <p className="font-display text-xl font-semibold text-slate-950">{preset.name}</p>
+            <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
             <p className="mt-1 font-mono text-xs text-slate-500">{preset.id}</p>
             <p className="mt-2 text-sm text-slate-600">
               {preset.aliases.length > 0 ? `Aliases: ${preset.aliases.join(", ")}` : "No aliases"}
@@ -142,31 +133,44 @@ function PresetDetailContent({
             ) : null}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-          aria-label="Close"
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
         >
-          ×
-        </button>
-      </div>
+          View source ↗
+        </a>
+      </header>
 
-      <CatalystDialogBody className="max-h-[70vh] overflow-y-auto">
-        <div className="flex flex-wrap gap-1">
-          {tagEntries.map(([k, v]) => (
-            <Badge key={k} variant="zinc" className="font-mono">
-              {k}={v}
-            </Badge>
-          ))}
-        </div>
+      <PresetSourceTree presetId={preset.id} raw={raw} />
 
-        {changeStatus === "added" || changeStatus === "modified" ? (
-          <div className="mt-6 rounded-xl border border-violet-200 bg-violet-50/60 p-3">
-            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-violet-800">
-              <span className="h-2 w-2 rounded-full bg-violet-500" aria-hidden />
-              {changeStatus === "added" ? "Added vs release" : "Changes vs release"}
-            </h2>
+      {tagEntries.length > 0 ? (
+        <details className="group rounded-xl border border-slate-200 bg-slate-50/50">
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+            <span className="text-slate-400 group-open:inline hidden">▾</span>
+            <span className="text-slate-400 group-open:hidden inline">▸</span> Tags
+          </summary>
+          <div className="flex flex-wrap gap-1 border-t border-slate-200 px-4 py-3">
+            {tagEntries.map(([k, v]) => (
+              <Badge key={k} variant="zinc" className="font-mono">
+                {k}={v}
+              </Badge>
+            ))}
+          </div>
+        </details>
+      ) : null}
+
+      {changeStatus === "added" || changeStatus === "modified" ? (
+        <details className="group rounded-xl border border-violet-200 bg-violet-50/60" open>
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-violet-800 marker:content-none [&::-webkit-details-marker]:hidden">
+            <span
+              className="mr-1 inline-block h-2 w-2 rounded-full bg-violet-500 align-middle"
+              aria-hidden
+            />
+            {changeStatus === "added" ? "Added vs release" : "Changes vs release"}
+          </summary>
+          <div className="border-t border-violet-200 px-4 py-3">
             {changeStatus === "added" ? (
               <p className="text-sm text-violet-700">This preset does not exist in the release.</p>
             ) : (
@@ -186,58 +190,43 @@ function PresetDetailContent({
               </ul>
             )}
           </div>
-        ) : null}
+        </details>
+      ) : null}
 
-        {locale ? (
-          <div className="mt-6">
-            <h2 className="mb-2 text-sm font-semibold text-slate-900">
-              Translation{" "}
-              <span className="font-normal text-slate-400">
-                EN ↔ <span className="font-mono">{locale}</span>
-              </span>
-            </h2>
-            <div className="overflow-hidden rounded-xl border border-slate-200">
-              <TranslationRow
-                label="Name"
-                en={preset.name}
-                localized={loc?.name}
-                same={Boolean(loc?.name && loc.name === preset.name)}
-              />
-              <TranslationRow
-                label="Terms"
-                en={preset.terms.join(", ")}
-                localized={loc?.terms.join(", ")}
-              />
-              <TranslationRow
-                label="Aliases"
-                en={preset.aliases.join(", ")}
-                localized={loc?.aliases.join(", ")}
-              />
-            </div>
+      {locale ? (
+        <details className="group rounded-xl border border-slate-200">
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+            Translation{" "}
+            <span className="font-normal text-slate-400">
+              EN ↔ <span className="font-mono">{locale}</span>
+            </span>
+          </summary>
+          <div className="overflow-hidden border-t border-slate-200">
+            <TranslationRow
+              label="Name"
+              en={preset.name}
+              localized={loc?.name}
+              same={Boolean(loc?.name && loc.name === preset.name)}
+            />
+            <TranslationRow
+              label="Terms"
+              en={preset.terms.join(", ")}
+              localized={loc?.terms.join(", ")}
+            />
+            <TranslationRow
+              label="Aliases"
+              en={preset.aliases.join(", ")}
+              localized={loc?.aliases.join(", ")}
+            />
           </div>
-        ) : null}
+        </details>
+      ) : null}
 
-        <div className="mt-6">
-          <h2 className="mb-2 text-sm font-semibold text-slate-900">Fields</h2>
-          <div className="flex flex-wrap gap-1.5">
-            {allFields.map((fieldId) => (
-              <button
-                key={fieldId}
-                type="button"
-                onClick={() => onApplyFilter({ fieldIds: [fieldId] })}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-100 py-1 pr-1.5 pl-3 text-xs font-medium text-slate-700 hover:bg-slate-200"
-                title={`${fieldCounts.get(fieldId) ?? 0} presets use this field`}
-              >
-                <span>{fieldId}</span>
-                <CountPill className="bg-white">{fieldCounts.get(fieldId) ?? 0}</CountPill>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <PresetJsonPanel preset={preset} />
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <details className="group rounded-xl border border-slate-200">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+          Related presets
+        </summary>
+        <div className="grid gap-4 border-t border-slate-200 p-4 sm:grid-cols-2">
           {categorySections.map((section) => (
             <RelatedBlock
               key={section.title}
@@ -245,7 +234,7 @@ function PresetDetailContent({
               count={section.related.length}
               onTitleClick={section.onListClick}
               presets={section.related}
-              onOpenPreset={onOpenPreset}
+              onOpenPreset={setPreset}
             />
           ))}
           {preset.categoryNames.length === 0 && (
@@ -254,7 +243,7 @@ function PresetDetailContent({
               count={uncategorizedRelated.length}
               onTitleClick={() => onApplyFilter({ categoryNames: ["No Category"] })}
               presets={uncategorizedRelated}
-              onOpenPreset={onOpenPreset}
+              onOpenPreset={setPreset}
             />
           )}
           {iconId ? (
@@ -263,58 +252,11 @@ function PresetDetailContent({
               count={iconRelated.length}
               onTitleClick={() => onApplyFilter({ iconName: [iconId] })}
               presets={iconRelated}
-              onOpenPreset={onOpenPreset}
+              onOpenPreset={setPreset}
             />
           ) : null}
         </div>
-      </CatalystDialogBody>
-    </>
-  );
-}
-
-/**
- * Collapsible raw-JSON view of the full preset, with each field reference
- * expanded to its full definition (key, type, options, …) so you see the whole
- * picture. The open/closed state lives in the global zustand store, so toggling
- * it once keeps it open as you browse from preset to preset.
- */
-function PresetJsonPanel({ preset }: { preset: DenormalizedPreset }) {
-  const { fields } = useSchema();
-  const open = useUiStore((s) => s.presetJsonOpen);
-  const toggle = useUiStore((s) => s.togglePresetJson);
-
-  const expandFields = (ids: string[] | undefined) =>
-    Object.fromEntries((ids ?? []).map((id) => [id, fields[id] ?? null]));
-  const expanded = {
-    ...preset,
-    fields: expandFields(preset.fields),
-    moreFields: expandFields(preset.moreFields),
-  };
-  const json = JSON.stringify(expanded, null, 2);
-
-  return (
-    <div className="mt-6">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 rounded-lg bg-slate-100 px-3 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-slate-200"
-      >
-        <span className="flex min-w-0 flex-wrap items-center gap-x-2">
-          <span>Full preset (JSON, fields expanded)</span>
-          <code className="truncate font-mono text-xs font-normal text-slate-400">
-            data/presets/{preset.id}.json
-          </code>
-        </span>
-        <span aria-hidden className="text-slate-500">
-          {open ? "▾" : "▸"}
-        </span>
-      </button>
-      {open ? (
-        <pre className="mt-2 max-h-96 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 font-mono text-xs leading-relaxed text-slate-700">
-          {json}
-        </pre>
-      ) : null}
+      </details>
     </div>
   );
 }

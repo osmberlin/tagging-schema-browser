@@ -1,4 +1,3 @@
-import { PresetDetailModal } from "@/components/PagePresets/PresetDetailModal";
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { searchPresets } from "@/components/PagePresets/presetSearch";
 import {
@@ -78,7 +77,6 @@ export function PageTranslations() {
   const [translationStatus] = useTranslationStatus();
   const setPreset = useSetPreset();
   const { locale, localeMap, loading, error } = useLocale();
-  const presetParam = state.preset ?? null;
 
   const filters = useMemo(() => filtersFromState(state), [state]);
 
@@ -313,14 +311,6 @@ export function PageTranslations() {
           ) : null}
         </>
       )}
-
-      <PresetDetailModal
-        open={Boolean(presetParam)}
-        presetId={presetParam}
-        onClose={() => setState({ preset: undefined })}
-        onApplyFilter={(u) => setState({ ...u, preset: undefined, page: 1 })}
-        onOpenPreset={(id) => setPreset(id)}
-      />
     </div>
   );
 }

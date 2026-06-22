@@ -23,8 +23,6 @@ export const presetSearchSchema = z.object({
   fieldIds: stringArray,
   categoryNames: stringArray,
   hasIcon: stringArray,
-  /** Currently-open preset detail modal. Omitted from the URL when closed. */
-  preset: z.string().optional().catch(undefined),
 });
 
 export type SearchState = z.infer<typeof presetSearchSchema>;
@@ -53,12 +51,16 @@ export function useSearchState() {
   return [state, setState] as const;
 }
 
-/** Open/close the preset detail modal via the `preset` search param (pushes history). */
+/** Navigate to the full-page preset detail route (pushes history). */
 export function useSetPreset() {
   const navigate = useNavigate();
   return useCallback(
-    (id: string | null) => {
-      void navigate({ to: ".", search: (prev) => ({ ...prev, preset: id ?? undefined }) });
+    (id: string) => {
+      void navigate({
+        to: "/preset/$",
+        params: { _splat: id },
+        search: (prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" }),
+      });
     },
     [navigate],
   );

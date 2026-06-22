@@ -50,6 +50,8 @@ export type DenormalizedPreset = {
 export type SchemaData = {
   presets: DenormalizedPreset[];
   presetsById: Map<string, DenormalizedPreset>;
+  /** Source preset entries as authored in `data/presets/{id}.json`. */
+  rawPresets: RawPresets;
   categories: RawCategories;
   categoryNames: Record<string, string>;
   /** Raw field definitions (keyed by field id) — used to expand a preset's field references. */
