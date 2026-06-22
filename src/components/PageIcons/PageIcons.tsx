@@ -7,7 +7,7 @@ import { useIconSearch } from "./useIconSearch";
 export function PageIcons() {
   const { data, loading, dataUrl } = useSchema();
   const [facetState, setFacetState] = useIconFacetState();
-  const { icons } = useIconSearch(data?.presets ?? []);
+  const { icons } = useIconSearch(data?.presets ?? [], data?.fields ?? {});
 
   if (!dataUrl && !data) {
     return (
@@ -56,8 +56,10 @@ export function PageIcons() {
             <IconCard
               iconName={icon.name}
               svgRaw={icon.svgRaw}
-              usageCount={icon.usageCount}
+              presetUsageCount={icon.presetUsageCount}
+              optionUsageCount={icon.optionUsageCount}
               presets={icon.presets}
+              optionUsages={icon.optionUsages}
             />
           </li>
         ))}

@@ -1,3 +1,4 @@
+import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
 import type { PresetFilterUpdate } from "@/components/PagePresets/PresetDetailModal.types";
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { Badge } from "@/components/ui/Badge";
@@ -7,6 +8,7 @@ import { useComparison } from "@/contexts/ComparisonContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { useUiStore } from "@/stores/uiStore";
+import { getPresetOptionRows } from "@/utils/fieldOptions";
 import type { DenormalizedPreset } from "@/utils/types";
 import { clsx } from "clsx";
 
@@ -72,8 +74,10 @@ function PresetDetailContent({
   onApplyFilter: (update: PresetFilterUpdate) => void;
   onOpenPreset: (id: string) => void;
 }) {
-  const { locale, localeMap } = useLocale();
+  const { locale, localeMap, fieldLocaleMap } = useLocale();
   const loc = locale ? localeMap?.get(preset.id) : undefined;
+  const { fields, fieldTranslations } = useSchema();
+  const optionRows = getPresetOptionRows(preset, fields, fieldTranslations, presets);
 
   const { result: comparison } = useComparison();
   const changeStatus = comparison?.statusById.get(preset.id);
@@ -235,6 +239,86 @@ function PresetDetailContent({
           </div>
         </div>
 
+        {optionRows.length > 0 ? (
+          <div className="mt-6">
+            <h2 className="mb-2 text-sm font-semibold text-slate-900">
+              Options
+              {locale ? (
+                <span className="font-normal text-slate-400">
+                  {" "}
+                  EN ↔ <span className="font-mono">{locale}</span>
+                </span>
+              ) : null}
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-slate-200">
+              {optionRows.map((row) => {
+                const labelLocale = fieldLocaleMap?.[row.fieldId]?.options?.[row.optionValue];
+                const childPreset = row.childPreset;
+                return (
+                  <div
+                    key={`${row.fieldId}:${row.optionValue}`}
+                    className="border-t border-slate-100 px-3 py-2 first:border-t-0"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex shrink-0 items-center justify-center pt-0.5">
+                        {row.icon ? (
+                          row.iconBroken ? (
+                            <span
+                              className="flex h-5 w-5 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
+                              title={`Missing icon: ${row.icon}`}
+                            >
+                              !
+                            </span>
+                          ) : (
+                            <img
+                              src={getIconSvgDataUrl(row.icon) ?? undefined}
+                              alt=""
+                              className="h-5 w-5"
+                              title={row.icon}
+                            />
+                          )
+                        ) : (
+                          <span className="flex h-5 w-5 items-center justify-center text-slate-300">
+                            —
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="truncate font-mono text-xs text-slate-500"
+                          title={`${row.fieldId} · ${row.fieldKey}=${row.optionValue}`}
+                        >
+                          {row.fieldId} · {row.optionValue}
+                        </p>
+                        {locale ? (
+                          <TranslationRow
+                            label=""
+                            en={row.labelEn}
+                            localized={labelLocale}
+                            same={Boolean(labelLocale && labelLocale === row.labelEn)}
+                            compact
+                          />
+                        ) : (
+                          <p className="mt-0.5 text-sm text-slate-900">{row.labelEn}</p>
+                        )}
+                        {childPreset ? (
+                          <button
+                            type="button"
+                            onClick={() => onOpenPreset(childPreset.id)}
+                            className="mt-1 text-xs font-medium text-sky-600 hover:underline"
+                          >
+                            → {childPreset.name}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
         <PresetJsonPanel preset={preset} />
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -324,15 +408,24 @@ function TranslationRow({
   en,
   localized,
   same,
+  compact,
 }: {
   label: string;
   en: string;
   localized?: string;
   same?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[5rem_1fr_1fr] gap-x-4 border-t border-slate-100 px-3 py-2 text-sm first:border-t-0">
-      <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
+    <div
+      className={clsx(
+        "grid gap-x-4 border-t border-slate-100 text-sm first:border-t-0",
+        compact ? "grid-cols-[1fr_1fr]" : "grid-cols-[5rem_1fr_1fr] px-3 py-2",
+      )}
+    >
+      {!compact ? (
+        <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
+      ) : null}
       <div className="min-w-0 text-slate-900">
         {en || <span className="text-slate-300">—</span>}
       </div>
@@ -343,6 +436,10 @@ function TranslationRow({
             title={same ? "Same as English" : undefined}
           >
             {localized}
+          </span>
+        ) : compact ? (
+          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
+            untranslated
           </span>
         ) : (
           <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">

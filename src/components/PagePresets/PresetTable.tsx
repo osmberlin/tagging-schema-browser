@@ -1,6 +1,7 @@
-import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
+import { getIconSvgDataUrl, isPresetIconBroken } from "@/components/PageIcons/iconRegistry";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { getPresetOptionIconNames } from "@/utils/fieldOptions";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 import { clsx } from "clsx";
@@ -17,7 +18,6 @@ const MAX_COLUMNS = 25;
 
 const dash = <span className="text-slate-300">—</span>;
 
-/** "Expand / open modal" affordance shown on the column headers. */
 function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
@@ -28,6 +28,30 @@ function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
         d="M9 4H5a1 1 0 0 0-1 1v4m11-5h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4m11 5h4a1 1 0 0 0 1-1v-4"
       />
     </svg>
+  );
+}
+
+function IconNameCell({ iconName, broken }: { iconName: string; broken: boolean }) {
+  const src = getIconSvgDataUrl(iconName);
+  return (
+    <span className="flex min-w-0 items-center gap-1.5">
+      {src ? (
+        <img src={src} alt="" className="h-5 w-5 shrink-0" />
+      ) : broken ? (
+        <span
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
+          title="Missing icon asset"
+        >
+          !
+        </span>
+      ) : null}
+      <span
+        className={clsx("min-w-0 truncate font-mono text-xs", broken && "font-medium text-red-700")}
+        title={iconName}
+      >
+        {iconName}
+      </span>
+    </span>
   );
 }
 
@@ -42,15 +66,12 @@ type CellLink = {
 
 type Row = {
   label: string;
-  /** Tooltip for the row label (explains the dimension). */
   labelTitle?: string;
   mono?: boolean;
   render: (p: DenormalizedPreset) => ReactNode;
-  /** Native tooltip for the value cell. */
   title?: (p: DenormalizedPreset) => string | undefined;
-  /** Cells where this returns true get a subtle highlight background. */
   highlight?: (p: DenormalizedPreset) => boolean;
-  /** Turns the cell into a click-through that filters presets (with a `›` affordance). */
+  errorHighlight?: (p: DenormalizedPreset) => boolean;
   link?: (p: DenormalizedPreset) => CellLink | null;
 };
 type Section = { title: string; rows: Row[] };
@@ -72,8 +93,6 @@ export function PresetTable() {
     });
   }, [data, state]);
 
-  // Usage count per icon across the whole schema — the Icon cell only becomes a
-  // click-through when more than one preset shares the icon (otherwise it's a no-op).
   const iconCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const p of data?.presets ?? []) {
@@ -84,6 +103,7 @@ export function PresetTable() {
 
   const sections = useMemo<Section[]>(() => {
     const presets = result?.data.items ?? [];
+    const fields = data?.fields ?? {};
     const tagKeys = uniqueSorted(presets.flatMap((p) => Object.keys(p.tags ?? {})));
     const fieldIds = uniqueSorted(presets.flatMap((p) => [...p.fields, ...p.moreFields]));
     return [
@@ -126,14 +146,10 @@ export function PresetTable() {
             label: "Icon",
             render: (p) => {
               if (!p.icon) return dash;
-              const src = getIconSvgDataUrl(p.icon);
-              return (
-                <span className="flex items-center gap-1.5">
-                  {src ? <img src={src} alt="" className="h-5 w-5 shrink-0" /> : null}
-                  <span className="font-mono text-xs">{p.icon}</span>
-                </span>
-              );
+              return <IconNameCell iconName={p.icon} broken={p.iconBroken} />;
             },
+            highlight: (p) => p.iconBroken,
+            errorHighlight: (p) => p.iconBroken,
             link: (p) =>
               p.icon && (iconCounts.get(p.icon) ?? 0) > 1
                 ? {
@@ -146,6 +162,29 @@ export function PresetTable() {
                     title: "Show all presets of this icon",
                   }
                 : null,
+          },
+          {
+            label: "Options icons",
+            labelTitle: "Icons used by field options on this preset",
+            render: (p) => {
+              const icons = getPresetOptionIconNames(p, fields);
+              if (icons.length === 0) return dash;
+              return (
+                <span className="flex flex-col gap-1">
+                  {icons.map((iconName) => (
+                    <IconNameCell
+                      key={iconName}
+                      iconName={iconName}
+                      broken={isPresetIconBroken(iconName)}
+                    />
+                  ))}
+                </span>
+              );
+            },
+            highlight: (p) =>
+              getPresetOptionIconNames(p, fields).some((icon) => isPresetIconBroken(icon)),
+            errorHighlight: (p) =>
+              getPresetOptionIconNames(p, fields).some((icon) => isPresetIconBroken(icon)),
           },
           {
             label: "imageURL",
@@ -187,7 +226,7 @@ export function PresetTable() {
         })),
       },
     ];
-  }, [result, iconCounts]);
+  }, [result, iconCounts, data?.fields]);
 
   if (!result) return null;
   const presets = result.data.items;
@@ -279,6 +318,8 @@ export function PresetTable() {
                     </th>
                     {presets.map((p) => {
                       const cellLink = row.link?.(p);
+                      const errorHighlighted = row.errorHighlight?.(p);
+                      const infoHighlighted = !errorHighlighted && row.highlight?.(p);
                       return (
                         <td
                           key={p.id}
@@ -286,12 +327,12 @@ export function PresetTable() {
                           className={clsx(
                             "border-r border-b border-slate-100 align-top text-slate-700",
                             row.mono && "font-mono text-xs",
-                            // h-0 lets the link/span child resolve `h-full` against the row
-                            // height (table-cell percentage-height quirk) so the hover fills.
                             row.link ? "h-0 p-0" : "px-3 py-1.5",
-                            !row.link && row.highlight?.(p)
-                              ? "bg-sky-50/70"
-                              : !row.link && "group-hover:bg-slate-50",
+                            errorHighlighted
+                              ? "bg-red-50/70"
+                              : infoHighlighted
+                                ? "bg-sky-50/70"
+                                : !row.link && "group-hover:bg-slate-50",
                           )}
                         >
                           {row.link ? (
@@ -300,7 +341,10 @@ export function PresetTable() {
                                 to="/"
                                 search={cellLink.search as never}
                                 title={cellLink.title}
-                                className="group/ac relative flex h-full items-start px-3 py-1.5 pr-8 transition hover:bg-sky-50"
+                                className={clsx(
+                                  "group/ac relative flex h-full items-start px-3 py-1.5 pr-8 transition hover:bg-sky-50",
+                                  errorHighlighted && "bg-red-50/70",
+                                )}
                               >
                                 <span className="min-w-0">{row.render(p)}</span>
                                 <span
@@ -311,7 +355,14 @@ export function PresetTable() {
                                 </span>
                               </Link>
                             ) : (
-                              <span className="block h-full px-3 py-1.5">{row.render(p)}</span>
+                              <span
+                                className={clsx(
+                                  "block h-full px-3 py-1.5",
+                                  errorHighlighted && "bg-red-50/70",
+                                )}
+                              >
+                                {row.render(p)}
+                              </span>
                             )
                           ) : (
                             row.render(p)

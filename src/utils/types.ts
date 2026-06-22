@@ -12,18 +12,35 @@ export type RawPreset = {
   suggestion?: boolean;
 };
 
+export type RawFieldTranslation = {
+  label?: string;
+  options?: Record<string, string>;
+};
+
 export type RawTranslations = {
   en?: {
     presets?: {
       presets?: Record<string, { name?: string; terms?: string; aliases?: string }>;
       categories?: Record<string, { name?: string }>;
+      fields?: Record<string, RawFieldTranslation>;
     };
   };
 };
 
 export type RawCategories = Record<string, { icon?: string; members?: string[] }>;
 
-export type RawFields = Record<string, { key?: string; type?: string; geometry?: string[] }>;
+export type RawField = {
+  key?: string;
+  type?: string;
+  geometry?: string[];
+  options?: string[];
+  icons?: Record<string, string>;
+  iconsCrossReference?: string;
+};
+
+export type RawFields = Record<string, RawField>;
+
+export type FieldTranslations = Record<string, RawFieldTranslation>;
 
 export type DenormalizedPreset = {
   id: string;
@@ -44,6 +61,8 @@ export type DenormalizedPreset = {
   moreFields: string[];
   matchScore: number;
   hasIcon: boolean;
+  /** Preset has an `icon` field but no matching asset in the icon library. */
+  iconBroken: boolean;
   searchable?: boolean;
 };
 
@@ -54,6 +73,8 @@ export type SchemaData = {
   categoryNames: Record<string, string>;
   /** Raw field definitions (keyed by field id) — used to expand a preset's field references. */
   fields: RawFields;
+  /** English field labels and option strings from translations/en.min.json. */
+  fieldTranslations: FieldTranslations;
   loadError: string | null;
   diagnostics: string[];
 };
@@ -64,7 +85,17 @@ export type IconRegistryEntry = {
   svgRaw?: string;
 };
 
+export type OptionIconUsageRef = {
+  fieldId: string;
+  fieldKey: string;
+  optionValue: string;
+};
+
 export type IconViewModel = IconRegistryEntry & {
+  presetUsageCount: number;
+  optionUsageCount: number;
+  /** Total references (presets + option entries) — used for sorting. */
   usageCount: number;
   presets: DenormalizedPreset[];
+  optionUsages: OptionIconUsageRef[];
 };

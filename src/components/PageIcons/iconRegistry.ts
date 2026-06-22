@@ -114,6 +114,12 @@ export function getIconRegistry(): Map<string, IconRegistryEntry> {
   return map;
 }
 
+/** True when an icon name is not in the bundled icon library. */
+export function isPresetIconBroken(iconName?: string): boolean {
+  if (!iconName) return false;
+  return getIconSvgDataUrl(iconName) === null;
+}
+
 export function getIconSvgDataUrl(iconName?: string): string | null {
   if (!iconName) return null;
   const canonical = resolvePresetIconName(iconName);

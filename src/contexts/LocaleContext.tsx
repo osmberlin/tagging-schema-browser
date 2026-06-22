@@ -3,6 +3,7 @@ import {
   useLocaleTranslations,
   useLocales,
 } from "@/components/PageTranslations/useLocaleData";
+import type { FieldTranslations } from "@/utils/types";
 import { createContext, useContext, useMemo } from "react";
 
 type LocaleContextValue = {
@@ -11,6 +12,7 @@ type LocaleContextValue = {
   setLocale: (locale: string) => void;
   locales: string[];
   localeMap: LocaleMap | null;
+  fieldLocaleMap: FieldTranslations | null;
   loading: boolean;
   error: string | null;
 };
@@ -35,10 +37,18 @@ export function LocaleProvider({
   children: React.ReactNode;
 }) {
   const locales = useLocales(dataUrl);
-  const { map, loading, error } = useLocaleTranslations(dataUrl, locale);
+  const { map, fieldMap, loading, error } = useLocaleTranslations(dataUrl, locale);
   const value = useMemo<LocaleContextValue>(
-    () => ({ locale, setLocale, locales, localeMap: map, loading, error }),
-    [locale, setLocale, locales, map, loading, error],
+    () => ({
+      locale,
+      setLocale,
+      locales,
+      localeMap: map,
+      fieldLocaleMap: fieldMap,
+      loading,
+      error,
+    }),
+    [locale, setLocale, locales, map, fieldMap, loading, error],
   );
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

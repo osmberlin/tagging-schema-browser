@@ -1,21 +1,34 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
-import type { DenormalizedPreset } from "@/utils/types";
+import type { DenormalizedPreset, OptionIconUsageRef } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
+
+function formatOptionUsages(usages: OptionIconUsageRef[]): string {
+  return usages
+    .map((u) => `${u.fieldId}=${u.optionValue}`)
+    .slice(0, 8)
+    .join(", ");
+}
 
 export function IconCard({
   iconName,
   svgRaw,
-  usageCount,
+  presetUsageCount,
+  optionUsageCount,
   presets,
+  optionUsages,
 }: {
   iconName: string;
   svgRaw?: string;
-  usageCount: number;
+  presetUsageCount: number;
+  optionUsageCount: number;
   presets: DenormalizedPreset[];
+  optionUsages: OptionIconUsageRef[];
 }) {
   const svgDataUrl = svgRaw ? `data:image/svg+xml;utf8,${encodeURIComponent(svgRaw)}` : null;
-  const names = presets.map((p) => p.name).join(", ");
+  const presetNames = presets.map((p) => p.name).join(", ");
+  const optionSummary = formatOptionUsages(optionUsages);
+  const isUsed = presetUsageCount > 0 || optionUsageCount > 0;
 
   const body = (
     <>
@@ -44,19 +57,26 @@ export function IconCard({
       <p className="mt-2 truncate font-mono text-xs font-medium text-slate-900" title={iconName}>
         {iconName}
       </p>
-      {usageCount > 0 ? (
+      {presetUsageCount > 0 ? (
         <p className="mt-1 line-clamp-2 text-xs text-slate-500">
           <span className="font-medium text-slate-700">Presets</span>{" "}
-          <CountPill className="bg-slate-100 align-text-bottom">{usageCount}</CountPill>: {names}
+          <CountPill className="bg-slate-100 align-text-bottom">{presetUsageCount}</CountPill>:{" "}
+          {presetNames}
         </p>
-      ) : (
-        <p className="mt-1 text-xs text-slate-400">Unused</p>
-      )}
+      ) : null}
+      {optionUsageCount > 0 ? (
+        <p className="mt-1 line-clamp-2 text-xs text-slate-500">
+          <span className="font-medium text-slate-700">Options</span>{" "}
+          <CountPill className="bg-slate-100 align-text-bottom">{optionUsageCount}</CountPill>:{" "}
+          {optionSummary}
+          {optionUsages.length > 8 ? "…" : ""}
+        </p>
+      ) : null}
+      {!isUsed ? <p className="mt-1 text-xs text-slate-400">Unused</p> : null}
     </>
   );
 
-  // When the icon is used, the whole card is the click-through to its presets.
-  if (usageCount > 0) {
+  if (presetUsageCount > 0) {
     return (
       <Link
         to="/"
@@ -66,7 +86,7 @@ export function IconCard({
           locale: prev.locale ?? "",
           iconName: [iconName],
         })}
-        title={`Show all ${usageCount} presets using "${iconName}"`}
+        title={`Show all ${presetUsageCount} presets using "${iconName}"`}
         data-icon={iconName}
         className="group/ac relative flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 transition duration-200 hover:border-sky-300 hover:bg-sky-50/40 hover:shadow-md hover:shadow-slate-900/5"
       >

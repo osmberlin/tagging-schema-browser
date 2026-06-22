@@ -1,3 +1,4 @@
+import type { FieldTranslations } from "@/utils/types";
 import { useEffect, useState } from "react";
 
 export type LocaleEntry = { name?: string; terms: string[]; aliases: string[] };
@@ -110,12 +111,20 @@ export function useLocales(dataUrl: string | null) {
   return locales;
 }
 
-async function loadLocale(dataUrl: string, locale: string): Promise<LocaleMap> {
+async function loadLocale(
+  dataUrl: string,
+  locale: string,
+): Promise<{ presets: LocaleMap; fields: FieldTranslations }> {
   const res = await fetch(`${ensureSlash(dataUrl)}translations/${locale}.min.json`);
   if (!res.ok) throw new Error(`No translations for "${locale}" (HTTP ${res.status})`);
   const json = (await res.json()) as Record<
     string,
-    { presets?: { presets?: Record<string, { name?: string; terms?: string; aliases?: string }> } }
+    {
+      presets?: {
+        presets?: Record<string, { name?: string; terms?: string; aliases?: string }>;
+        fields?: FieldTranslations;
+      };
+    }
   >;
   const presets = json[locale]?.presets?.presets ?? {};
   const map: LocaleMap = new Map();
@@ -126,30 +135,32 @@ async function loadLocale(dataUrl: string, locale: string): Promise<LocaleMap> {
       aliases: parseAliases(value.aliases),
     });
   }
-  return map;
+  return { presets: map, fields: json[locale]?.presets?.fields ?? {} };
 }
 
 export function useLocaleTranslations(dataUrl: string | null, locale: string) {
   const [state, setState] = useState<{
     map: LocaleMap | null;
+    fieldMap: FieldTranslations | null;
     loading: boolean;
     error: string | null;
-  }>({ map: null, loading: false, error: null });
+  }>({ map: null, fieldMap: null, loading: false, error: null });
   useEffect(() => {
     if (!dataUrl || !locale) {
-      setState({ map: null, loading: false, error: null });
+      setState({ map: null, fieldMap: null, loading: false, error: null });
       return;
     }
     let cancelled = false;
-    setState({ map: null, loading: true, error: null });
+    setState({ map: null, fieldMap: null, loading: true, error: null });
     loadLocale(dataUrl, locale)
-      .then((map) => {
-        if (!cancelled) setState({ map, loading: false, error: null });
+      .then(({ presets, fields }) => {
+        if (!cancelled) setState({ map: presets, fieldMap: fields, loading: false, error: null });
       })
       .catch((e) => {
         if (!cancelled) {
           setState({
             map: null,
+            fieldMap: null,
             loading: false,
             error: e instanceof Error ? e.message : String(e),
           });

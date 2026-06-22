@@ -38,7 +38,7 @@ function FacetButton({
 
 export function IconFacetSidebar() {
   const { data } = useSchema();
-  const { icons, prefixes } = useIconSearch(data?.presets ?? []);
+  const { icons, prefixes } = useIconSearch(data?.presets ?? [], data?.fields ?? {});
   const [state, setState] = useIconFacetState();
   const meta = useIconFacetMeta(icons);
 
@@ -53,10 +53,22 @@ export function IconFacetSidebar() {
             onClick={() => setState({ i_usage: "all" })}
           />
           <FacetButton
-            active={state.i_usage === "used"}
+            active={state.i_usage === "any"}
+            label="Used by presets or options"
+            count={meta.anyCount}
+            onClick={() => setState({ i_usage: "any" })}
+          />
+          <FacetButton
+            active={state.i_usage === "presets"}
             label="Used by presets"
-            count={meta.usedCount}
-            onClick={() => setState({ i_usage: "used" })}
+            count={meta.presetsCount}
+            onClick={() => setState({ i_usage: "presets" })}
+          />
+          <FacetButton
+            active={state.i_usage === "options"}
+            label="Used by options"
+            count={meta.optionsCount}
+            onClick={() => setState({ i_usage: "options" })}
           />
           <FacetButton
             active={state.i_usage === "unused"}
