@@ -50,6 +50,8 @@ type Row = {
   title?: (p: DenormalizedPreset) => string | undefined;
   /** Cells where this returns true get a subtle highlight background. */
   highlight?: (p: DenormalizedPreset) => boolean;
+  /** Tailwind background class when `highlight` is true (default `bg-sky-50/70`). */
+  highlightClass?: string;
   /** Turns the cell into a click-through that filters presets (with a `›` affordance). */
   link?: (p: DenormalizedPreset) => CellLink | null;
 };
@@ -151,6 +153,7 @@ export function PresetTable() {
               );
             },
             highlight: (p) => p.iconBroken,
+            highlightClass: "bg-red-50/70",
             link: (p) =>
               p.icon && (iconCounts.get(p.icon) ?? 0) > 1
                 ? {
@@ -296,6 +299,8 @@ export function PresetTable() {
                     </th>
                     {presets.map((p) => {
                       const cellLink = row.link?.(p);
+                      const highlighted = row.highlight?.(p);
+                      const highlightClass = row.highlightClass ?? "bg-sky-50/70";
                       return (
                         <td
                           key={p.id}
@@ -306,9 +311,7 @@ export function PresetTable() {
                             // h-0 lets the link/span child resolve `h-full` against the row
                             // height (table-cell percentage-height quirk) so the hover fills.
                             row.link ? "h-0 p-0" : "px-3 py-1.5",
-                            !row.link && row.highlight?.(p)
-                              ? "bg-sky-50/70"
-                              : !row.link && "group-hover:bg-slate-50",
+                            highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
                           )}
                         >
                           {row.link ? (
