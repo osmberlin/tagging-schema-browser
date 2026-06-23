@@ -17,12 +17,25 @@ type RelatedItem = { id: string; name: string };
 
 export function PresetDetailPage() {
   const { _splat: presetId } = useParams({ strict: false });
-  const { presetsById, presets, rawPresets, dataUrl } = useSchema();
+  const { presetsById, presets, rawPresets, dataUrl, loading, error } = useSchema();
   const preset = presetId ? presetsById.get(presetId) : undefined;
   const raw = presetId ? rawPresets[presetId] : undefined;
 
   if (!presetId) {
     return <p className="text-sm text-slate-600">No preset id in URL.</p>;
+  }
+
+  if (loading) {
+    return <p className="text-sm text-slate-600">Loading schema…</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <h1 className="font-display text-xl font-semibold text-slate-900">Schema failed to load</h1>
+        <p className="text-sm text-slate-600">{error}</p>
+      </div>
+    );
   }
 
   if (!preset || !raw) {
@@ -189,7 +202,7 @@ function PresetDetailContent({
         }
         defaultOpen
       >
-        <PresetSourceTree presetId={preset.id} raw={raw} />
+        <PresetSourceTree key={preset.id} presetId={preset.id} raw={raw} />
       </DetailDisclosure>
 
       {changeStatus === "added" || changeStatus === "modified" ? (

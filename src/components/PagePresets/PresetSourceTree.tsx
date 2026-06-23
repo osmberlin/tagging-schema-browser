@@ -101,8 +101,7 @@ function RefDisclosure({
 }) {
   const [open, setOpen] = useState(false);
   const { fields, rawPresets } = useSchema();
-  const fieldListKey =
-    parentKey === "fields" || parentKey === "moreFields" ? parentKey : undefined;
+  const fieldListKey = parentKey === "fields" || parentKey === "moreFields" ? parentKey : undefined;
   const inheritPresetFields = ref.kind === "preset" && fieldListKey;
   const expandedRaw =
     ref.kind === "field"
@@ -201,14 +200,14 @@ function PresetRefInheritedFields({
 
   return (
     <>
-      {inheritedItems.map((item, i) => (
+      {inheritedItems.map((item) => (
         <JsonNode
-          key={`${fieldListKey}-${item}-${i}`}
+          key={`${fieldListKey}-${item}`}
           value={item}
           level={level}
           parentKey={fieldListKey}
           dataUrl={dataUrl}
-          trailingComma={i < inheritedItems.length - 1 ? true : trailingComma}
+          trailingComma={item !== inheritedItems[inheritedItems.length - 1] ? true : trailingComma}
           host={host}
         />
       ))}
@@ -427,12 +426,13 @@ function JsonObjectEntry({
 }
 
 export function PresetSourceTree({
-  presetId: _presetId,
+  presetId,
   raw,
 }: {
   presetId: string;
   raw: Record<string, unknown>;
 }) {
+  void presetId;
   const { dataUrl } = useSchema();
   const host: HostPresetContext = {
     hostPreset: raw as RawPreset,

@@ -44,7 +44,10 @@ test("preset ref in fields shows inherited fields not parent metadata", async ({
 
 test("preset ref in moreFields inherits moreFields from parent preset", async ({ page }) => {
   await page.goto("/preset/amenity/clinic/abortion?dataUrl=/test-schema");
-  await page.getByRole("button", { name: /"\{amenity\/clinic\}"/ }).nth(1).click();
+  await page
+    .getByRole("button", { name: /"\{amenity\/clinic\}"/ })
+    .nth(1)
+    .click();
   await expect(page.getByText("data/fields/wheelchair.json")).toBeVisible();
   await expect(page.getByText("data/fields/operator.json")).toHaveCount(0);
 });

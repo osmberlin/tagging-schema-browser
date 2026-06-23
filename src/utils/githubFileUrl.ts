@@ -14,10 +14,6 @@ export function githubBranchFromDataUrl(dataUrl: string): string {
 
   try {
     const host = new URL(dataUrl).hostname;
-    const branchDeploy = host.match(/^(.+)--.+\.netlify\.app$/);
-    if (branchDeploy && !host.startsWith("deploy-preview-")) {
-      return branchDeploy[1];
-    }
     const prMatch = host.match(/^deploy-preview-(\d+)--/);
     if (prMatch) return `refs/pull/${prMatch[1]}/head`;
   } catch {
