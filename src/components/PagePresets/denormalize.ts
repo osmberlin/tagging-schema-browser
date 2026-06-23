@@ -1,4 +1,5 @@
 import { isPresetIconBroken, resolvePresetIconName } from "@/components/PageIcons/iconRegistry";
+import { nameRefFromRaw } from "@/components/PagePresets/presetLabelInheritance";
 import type {
   DenormalizedPreset,
   RawCategories,
@@ -37,6 +38,15 @@ function getTerms(
   translations: RawTranslations,
   allPresets: RawPresets,
 ): string[] {
+  const nameRefId = nameRefFromRaw(raw);
+  if (nameRefId) {
+    const resolved = allPresets[nameRefId] as RawPresetRecord | undefined;
+    if (resolved) {
+      const inherited = getTerms(nameRefId, resolved, translations, allPresets);
+      if (inherited.length) return inherited;
+    }
+  }
+
   const t = translations.en?.presets?.presets?.[presetId]?.terms;
   const str = (t ?? (raw as { terms?: string }).terms ?? "").trim();
   if (REF_REGEX.test(str)) {
@@ -59,6 +69,15 @@ function getAliases(
   translations: RawTranslations,
   allPresets: RawPresets,
 ): string[] {
+  const nameRefId = nameRefFromRaw(raw);
+  if (nameRefId) {
+    const resolved = allPresets[nameRefId] as RawPresetRecord | undefined;
+    if (resolved) {
+      const inherited = getAliases(nameRefId, resolved, translations, allPresets);
+      if (inherited.length) return inherited;
+    }
+  }
+
   const t = translations.en?.presets?.presets?.[presetId]?.aliases;
   const str = (t ?? (raw as { aliases?: string }).aliases ?? "").trim();
   if (REF_REGEX.test(str)) {

@@ -3,18 +3,15 @@ import { Input } from "@/components/ui/Input";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
 import { Fragment, useMemo } from "react";
-import { PresetDetailModal } from "./PresetDetailModal";
 import { PresetTable } from "./PresetTable";
 import { getExpectedFilesHelp } from "./dataLoader";
 import { usePresetSearch } from "./usePresetSearch";
-import { useSearchState, useSetPreset } from "./useSearchState";
+import { useSearchState } from "./useSearchState";
 
 export function PagePresets() {
   const { dataUrl, setDataUrl, load, loading, error, data } = useSchema();
   const [searchState, setSearchState] = useSearchState();
-  const setPreset = useSetPreset();
   const totalCount = usePresetSearch()?.data.total ?? 0;
-  const presetParam = searchState.preset ?? null;
   const brokenIconCount = useMemo(
     () => data?.presets.filter((preset) => preset.iconBroken).length ?? 0,
     [data],
@@ -183,13 +180,6 @@ export function PagePresets() {
         </p>
       ) : null}
       <PresetTable />
-      <PresetDetailModal
-        open={Boolean(presetParam)}
-        presetId={presetParam}
-        onClose={() => setSearchState({ preset: undefined })}
-        onApplyFilter={(u) => setSearchState({ ...u, preset: undefined, page: 1 })}
-        onOpenPreset={(id) => setPreset(id)}
-      />
     </div>
   );
 }

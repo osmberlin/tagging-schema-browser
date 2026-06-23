@@ -4,6 +4,7 @@ import { IconSearchBar } from "@/components/PageIcons/IconSearchBar";
 import { iconFacetDefaults, iconFacetSchema } from "@/components/PageIcons/useIconFacetState";
 import { FacetSidebar } from "@/components/PagePresets/FacetSidebar";
 import { PagePresets } from "@/components/PagePresets/PagePresets";
+import { PresetDetailPage } from "@/components/PagePresets/PresetDetailPage";
 import { SearchBar } from "@/components/PagePresets/SearchBar";
 import { presetSearchDefaults, presetSearchSchema } from "@/components/PagePresets/useSearchState";
 import { TranslationsSidebar } from "@/components/PageTranslations/TranslationsSidebar";
@@ -84,6 +85,7 @@ function RootContent() {
     ) : location.pathname === "/" || location.pathname === "/translations" ? (
       <SearchBar />
     ) : null;
+  const isPresetDetail = location.pathname.startsWith("/preset/");
   const sidebar =
     location.pathname === "/icons" ? (
       <IconFacetSidebar />
@@ -91,7 +93,7 @@ function RootContent() {
       <TranslationsSidebar />
     ) : location.pathname === "/" ? (
       <FacetSidebar />
-    ) : (
+    ) : isPresetDetail ? null : (
       <p className="mt-4 px-2 text-sm text-slate-500 ">
         Open <strong>Presets</strong> or <strong>Icons</strong> to use faceted search.
       </p>
@@ -161,14 +163,17 @@ const translationsRoute = createRoute({
 const comparisonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/comparison",
-  // Reuses the presets schema so the shared detail modal (`preset` param) works.
-  validateSearch: presetSearchSchema,
-  search: { middlewares: [stripSearchParams(presetSearchDefaults)] },
   component: () => (
     <Suspense fallback={<p className="text-sm text-slate-500">Loading comparison...</p>}>
       <LazyPageComparison />
     </Suspense>
   ),
+});
+
+const presetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/preset/$",
+  component: PresetDetailPage,
 });
 
 const aboutRoute = createRoute({
@@ -182,6 +187,7 @@ const routeTree = rootRoute.addChildren([
   iconsRoute,
   translationsRoute,
   comparisonRoute,
+  presetRoute,
   aboutRoute,
 ]);
 

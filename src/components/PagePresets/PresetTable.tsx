@@ -1,4 +1,5 @@
 import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
+import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import type { DenormalizedPreset } from "@/utils/types";
@@ -106,7 +107,8 @@ export function PresetTable() {
           },
           {
             label: "Geometry",
-            render: (p) => (p.geometry.length ? p.geometry.join(", ") : dash),
+            render: (p) => (p.geometry.length ? <GeometryIcons geometry={p.geometry} /> : dash),
+            title: (p) => (p.geometry.length ? p.geometry.join(", ") : undefined),
           },
           {
             label: "Category",
