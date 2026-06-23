@@ -58,9 +58,9 @@ function DataUrlGenerator() {
           <p className="text-xs text-slate-500">
             The test link should show JSON. If it shows an HTML page (starting with{" "}
             <code className="font-mono">&lt;!doctype</code>), the URL points at an app/editor, not a
-            schema <code className="font-mono">dist/</code> folder. Hosts that don’t send CORS
-            headers (e.g. netlify PR previews) are fetched through a public CORS proxy
-            automatically.
+            schema <code className="font-mono">dist/</code> folder. The host must send CORS
+            headers (e.g. <code className="font-mono">Access-Control-Allow-Origin</code>); hosts
+            without them (such as some Netlify PR previews) will not load in the browser.
           </p>
         </div>
       ) : null}
