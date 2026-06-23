@@ -2,7 +2,7 @@ import { useSchema } from "@/contexts/SchemaContext";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import { Link } from "@tanstack/react-router";
 import { clsx } from "clsx";
-import { type ReactNode, useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 
 const REF_REGEX = /^\{(.+)\}$/;
 
@@ -20,8 +20,13 @@ function refInFieldList(value: string): RefInfo | null {
   return { kind: "field", id: value, repoPath: schemaRepoPath("field", value) };
 }
 
-function indent(level: number): string {
-  return "  ".repeat(level);
+function isScalar(value: unknown): value is string | number | boolean | null {
+  return (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  );
 }
 
 function GithubLink({ href, label = "GitHub" }: { href: string; label?: string }) {
@@ -38,107 +43,23 @@ function GithubLink({ href, label = "GitHub" }: { href: string; label?: string }
   );
 }
 
-function DisclosureRow({
-  label,
-  repoPath,
-  githubHref,
-  presetLinkId,
+function JsonLine({
+  level,
   children,
+  trailingComma,
 }: {
-  label: string;
-  repoPath: string;
-  githubHref: string;
-  presetLinkId?: string;
+  level: number;
   children: ReactNode;
+  trailingComma?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className="group">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="inline-flex min-w-0 items-center gap-1 text-left hover:text-sky-700"
-        >
-          <span aria-hidden className="w-3 shrink-0 text-slate-400">
-            {open ? "▾" : "▸"}
-          </span>
-          <span className="text-amber-800">"{label}"</span>
-        </button>
-        <code className="truncate text-[10px] text-slate-400">{repoPath}</code>
-        <GithubLink href={githubHref} />
-        {presetLinkId ? (
-          <Link
-            to="/preset/$"
-            params={{ _splat: presetLinkId }}
-            search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
-            className="text-[10px] font-medium text-violet-600 hover:underline"
-          >
-            open preset
-          </Link>
-        ) : null}
-      </div>
-      {open ? (
-        <div className="mt-1 mb-1 ml-5 rounded-md border border-slate-200 bg-white/80 p-2 text-slate-700">
-          {children}
-        </div>
-      ) : null}
+    <div
+      className="flex min-w-0 flex-wrap items-baseline gap-x-1.5"
+      style={{ paddingLeft: level > 0 ? `${level * 1.25}rem` : undefined }}
+    >
+      {children}
+      {trailingComma ? <span className="text-slate-500">,</span> : null}
     </div>
-  );
-}
-
-function FieldSummary({ fieldId }: { fieldId: string }) {
-  const { fields } = useSchema();
-  const field = fields[fieldId];
-  if (!field) return <p className="text-slate-500">Field definition not loaded.</p>;
-  return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[11px]">
-      <dt className="font-semibold text-slate-500">key</dt>
-      <dd className="font-mono">{field.key ?? fieldId}</dd>
-      {field.type ? (
-        <>
-          <dt className="font-semibold text-slate-500">type</dt>
-          <dd className="font-mono">{field.type}</dd>
-        </>
-      ) : null}
-      {field.geometry?.length ? (
-        <>
-          <dt className="font-semibold text-slate-500">geometry</dt>
-          <dd className="font-mono">{field.geometry.join(", ")}</dd>
-        </>
-      ) : null}
-    </dl>
-  );
-}
-
-function PresetRefSummary({ presetId }: { presetId: string }) {
-  const { rawPresets, presetsById } = useSchema();
-  const denorm = presetsById.get(presetId);
-  const raw = rawPresets[presetId];
-  if (!raw && !denorm) return <p className="text-slate-500">Preset not found in loaded schema.</p>;
-  return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[11px]">
-      {denorm ? (
-        <>
-          <dt className="font-semibold text-slate-500">name</dt>
-          <dd>{denorm.name}</dd>
-        </>
-      ) : null}
-      {typeof raw?.icon === "string" ? (
-        <>
-          <dt className="font-semibold text-slate-500">icon</dt>
-          <dd className="font-mono">{raw.icon}</dd>
-        </>
-      ) : null}
-      {Array.isArray(raw?.fields) ? (
-        <>
-          <dt className="font-semibold text-slate-500">fields</dt>
-          <dd className="font-mono">{raw.fields.join(", ")}</dd>
-        </>
-      ) : null}
-    </dl>
   );
 }
 
@@ -149,92 +70,273 @@ function JsonScalar({ value }: { value: string | number | boolean | null }) {
   return <span className="text-emerald-800">"{value}"</span>;
 }
 
+function JsonKey({ name }: { name: string }) {
+  return <span className="text-sky-800">"{name}"</span>;
+}
+
+function RefDisclosure({
+  label,
+  ref,
+  level,
+  dataUrl,
+  trailingComma,
+}: {
+  label: string;
+  ref: RefInfo;
+  level: number;
+  dataUrl: string;
+  trailingComma?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const { fields, rawPresets } = useSchema();
+  const expandedRaw =
+    ref.kind === "field"
+      ? (fields[ref.id] as Record<string, unknown> | undefined)
+      : (rawPresets[ref.id] as Record<string, unknown> | undefined);
+
+  return (
+    <>
+      <JsonLine level={level} trailingComma={!open && trailingComma}>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="inline-flex min-w-0 items-center gap-1 text-left hover:text-sky-700"
+        >
+          <span aria-hidden className="w-3 shrink-0 text-slate-400">
+            {open ? "▾" : "▸"}
+          </span>
+          <span className="text-emerald-800">"{label}"</span>
+        </button>
+        <code className="truncate text-[10px] text-slate-400">{ref.repoPath}</code>
+        <GithubLink href={githubFileUrl(dataUrl, ref.repoPath)} />
+        {ref.kind === "preset" ? (
+          <Link
+            to="/preset/$"
+            params={{ _splat: ref.id }}
+            search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+            className="text-[10px] font-medium text-violet-600 hover:underline"
+          >
+            open preset
+          </Link>
+        ) : null}
+      </JsonLine>
+      {open ? (
+        expandedRaw ? (
+          <JsonNode
+            value={expandedRaw}
+            level={level + 1}
+            dataUrl={dataUrl}
+            trailingComma={trailingComma}
+          />
+        ) : (
+          <JsonLine level={level + 1} trailingComma={trailingComma}>
+            <span className="text-slate-400 italic">{"/* not loaded */"}</span>
+          </JsonLine>
+        )
+      ) : null}
+    </>
+  );
+}
+
 function JsonNode({
   value,
   level,
   parentKey,
   dataUrl,
+  trailingComma,
 }: {
   value: unknown;
   level: number;
   parentKey?: string;
   dataUrl: string;
+  trailingComma?: boolean;
 }) {
-  if (value === null || typeof value === "boolean" || typeof value === "number") {
-    return <JsonScalar value={value} />;
-  }
-
-  if (typeof value === "string") {
-    if (parentKey === "fields" || parentKey === "moreFields") {
+  if (isScalar(value)) {
+    if (typeof value === "string" && (parentKey === "fields" || parentKey === "moreFields")) {
       const ref = refInFieldList(value);
       if (ref) {
         return (
-          <DisclosureRow
+          <RefDisclosure
             label={value}
-            repoPath={ref.repoPath}
-            githubHref={githubFileUrl(dataUrl, ref.repoPath)}
-            presetLinkId={ref.kind === "preset" ? ref.id : undefined}
-          >
-            {ref.kind === "field" ? (
-              <FieldSummary fieldId={ref.id} />
-            ) : (
-              <PresetRefSummary presetId={ref.id} />
-            )}
-          </DisclosureRow>
+            ref={ref}
+            level={level}
+            dataUrl={dataUrl}
+            trailingComma={trailingComma}
+          />
         );
       }
     }
-    return <JsonScalar value={value} />;
+    return (
+      <JsonLine level={level} trailingComma={trailingComma}>
+        <JsonScalar value={value} />
+      </JsonLine>
+    );
   }
 
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return <span className="text-slate-500">[]</span>;
+      return (
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <span className="text-slate-500">[]</span>
+        </JsonLine>
+      );
     }
     return (
       <>
-        <span className="text-slate-500">[</span>
+        <JsonLine level={level}>
+          <span className="text-slate-500">[</span>
+        </JsonLine>
         {value.map((item, i) => (
-          <div key={typeof item === "string" ? item : `item-${i}-${JSON.stringify(item)}`}>
-            {indent(level + 1)}
-            <JsonNode value={item} level={level + 1} parentKey={parentKey} dataUrl={dataUrl} />
-            {i < value.length - 1 ? <span className="text-slate-500">,</span> : null}
-          </div>
+          <JsonNode
+            key={typeof item === "string" ? item : `item-${i}-${JSON.stringify(item)}`}
+            value={item}
+            level={level + 1}
+            parentKey={parentKey}
+            dataUrl={dataUrl}
+            trailingComma={i < value.length - 1}
+          />
         ))}
-        <div>
-          {indent(level)}
+        <JsonLine level={level} trailingComma={trailingComma}>
           <span className="text-slate-500">]</span>
-        </div>
+        </JsonLine>
       </>
     );
   }
 
-  if (typeof value === "object") {
+  if (typeof value === "object" && value !== null) {
     const entries = Object.entries(value as Record<string, unknown>);
     if (entries.length === 0) {
-      return <span className="text-slate-500">{"{}"}</span>;
+      return (
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <span className="text-slate-500">{"{}"}</span>
+        </JsonLine>
+      );
     }
     return (
       <>
-        <span className="text-slate-500">{"{"}</span>
+        <JsonLine level={level}>
+          <span className="text-slate-500">{"{"}</span>
+        </JsonLine>
         {entries.map(([key, child], i) => (
-          <div key={key}>
-            {indent(level + 1)}
-            <span className="text-sky-800">"{key}"</span>
-            <span className="text-slate-500">: </span>
-            <JsonNode value={child} level={level + 1} parentKey={key} dataUrl={dataUrl} />
-            {i < entries.length - 1 ? <span className="text-slate-500">,</span> : null}
-          </div>
+          <JsonObjectEntry
+            key={key}
+            keyName={key}
+            value={child}
+            level={level + 1}
+            dataUrl={dataUrl}
+            trailingComma={i < entries.length - 1}
+          />
         ))}
-        <div>
-          {indent(level)}
+        <JsonLine level={level} trailingComma={trailingComma}>
           <span className="text-slate-500">{"}"}</span>
-        </div>
+        </JsonLine>
       </>
     );
   }
 
-  return <span className="text-slate-400">undefined</span>;
+  return (
+    <JsonLine level={level} trailingComma={trailingComma}>
+      <span className="text-slate-400">undefined</span>
+    </JsonLine>
+  );
+}
+
+function JsonObjectEntry({
+  keyName,
+  value,
+  level,
+  dataUrl,
+  trailingComma,
+}: {
+  keyName: string;
+  value: unknown;
+  level: number;
+  dataUrl: string;
+  trailingComma?: boolean;
+}) {
+  if (isScalar(value)) {
+    return (
+      <JsonLine level={level} trailingComma={trailingComma}>
+        <JsonKey name={keyName} />
+        <span className="text-slate-500">: </span>
+        <JsonScalar value={value} />
+      </JsonLine>
+    );
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return (
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <JsonKey name={keyName} />
+          <span className="text-slate-500">: []</span>
+        </JsonLine>
+      );
+    }
+    return (
+      <Fragment>
+        <JsonLine level={level}>
+          <JsonKey name={keyName} />
+          <span className="text-slate-500">: [</span>
+        </JsonLine>
+        {value.map((item, i) => (
+          <JsonNode
+            key={typeof item === "string" ? item : `item-${i}-${JSON.stringify(item)}`}
+            value={item}
+            level={level + 1}
+            parentKey={keyName}
+            dataUrl={dataUrl}
+            trailingComma={i < value.length - 1}
+          />
+        ))}
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <span className="text-slate-500">]</span>
+        </JsonLine>
+      </Fragment>
+    );
+  }
+
+  if (typeof value === "object" && value !== null) {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) {
+      return (
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <JsonKey name={keyName} />
+          <span className="text-slate-500">: {"{}"}</span>
+        </JsonLine>
+      );
+    }
+    return (
+      <Fragment>
+        <JsonLine level={level}>
+          <JsonKey name={keyName} />
+          <span className="text-slate-500">: {"{"}</span>
+        </JsonLine>
+        {entries.map(([key, child], i) => (
+          <JsonObjectEntry
+            key={key}
+            keyName={key}
+            value={child}
+            level={level + 1}
+            dataUrl={dataUrl}
+            trailingComma={i < entries.length - 1}
+          />
+        ))}
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <span className="text-slate-500">{"}"}</span>
+        </JsonLine>
+      </Fragment>
+    );
+  }
+
+  return (
+    <JsonLine level={level} trailingComma={trailingComma}>
+      <JsonKey name={keyName} />
+      <span className="text-slate-500">: </span>
+      <span className="text-slate-400">undefined</span>
+    </JsonLine>
+  );
 }
 
 export function PresetSourceTree({
@@ -257,14 +359,14 @@ export function PresetSourceTree({
           <GithubLink href={githubUrl} />
         </div>
       </div>
-      <pre
+      <div
         className={clsx(
           "overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4",
           "font-mono text-xs leading-relaxed text-slate-800",
         )}
       >
         <JsonNode value={raw} level={0} dataUrl={dataUrl ?? ""} />
-      </pre>
+      </div>
     </section>
   );
 }
