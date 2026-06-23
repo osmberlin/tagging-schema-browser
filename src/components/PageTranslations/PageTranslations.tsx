@@ -1,4 +1,5 @@
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
+import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslationTable";
 import { searchPresets } from "@/components/PagePresets/presetSearch";
 import {
   filtersFromState,
@@ -9,67 +10,10 @@ import { CountPill } from "@/components/ui/CountPill";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import type { DenormalizedPreset } from "@/utils/types";
-import { clsx } from "clsx";
 import { useMemo } from "react";
 import { useTranslationStatus } from "./translationsSearch";
 
 const PER_PAGE = 50;
-
-/** Google Translate deep link (no API). Strip the region for the target except for zh. */
-function gtUrl(locale: string, text: string): string {
-  const tl = locale.startsWith("zh") ? locale : locale.split("-")[0] || locale;
-  return `https://translate.google.com/?sl=en&tl=${encodeURIComponent(tl)}&text=${encodeURIComponent(text)}&op=translate`;
-}
-
-function TermChips({ terms, shared }: { terms: string[]; shared: Set<string> }) {
-  if (!terms.length) return <span className="text-slate-300">—</span>;
-  return (
-    <span className="flex flex-wrap gap-1">
-      {terms.map((t) => (
-        <span
-          key={t}
-          className={clsx(
-            "rounded-full px-2 py-0.5 text-xs",
-            shared.has(t)
-              ? "bg-sky-50 text-sky-700 ring-1 ring-sky-100 ring-inset"
-              : "bg-slate-100 text-slate-600",
-          )}
-          title={shared.has(t) ? "Identical in both languages" : undefined}
-        >
-          {t}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-/** One labelled row inside a preset entry: subheadline + English + locale columns. */
-function AttrRow({
-  label,
-  english,
-  localized,
-  showLocale,
-}: {
-  label: string;
-  english: React.ReactNode;
-  localized?: React.ReactNode;
-  showLocale: boolean;
-}) {
-  return (
-    <div
-      className={clsx(
-        "grid items-start gap-x-4 gap-y-1 border-t border-slate-100 px-3 py-2",
-        showLocale ? "grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr_1fr]" : "grid-cols-[5rem_1fr]",
-      )}
-    >
-      <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
-      <div className="min-w-0 text-sm text-slate-900 sm:col-start-2">{english}</div>
-      {showLocale ? (
-        <div className="col-start-2 min-w-0 text-sm text-slate-900 sm:col-start-3">{localized}</div>
-      ) : null}
-    </div>
-  );
-}
 
 export function PageTranslations() {
   const { data, dataUrl } = useSchema();
@@ -167,10 +111,7 @@ export function PageTranslations() {
           <ul className="space-y-3">
             {pageRows.map((p) => {
               const loc = localeMap?.get(p.id);
-              const enTermSet = new Set(p.terms);
-              const locTermSet = new Set(loc?.terms ?? []);
               const untranslated = showLocale && !loc?.name;
-              const sameName = Boolean(loc?.name && loc.name === p.name);
               return (
                 <li
                   key={p.id}
@@ -204,72 +145,13 @@ export function PageTranslations() {
                     </span>
                   </button>
 
-                  {/* Header row labelling the two compared columns; GT translates the English source. */}
-                  {showLocale ? (
-                    <div className="grid grid-cols-[5rem_1fr] gap-x-4 px-3 pt-2 text-[11px] font-medium text-slate-400 sm:grid-cols-[6rem_1fr_1fr]">
-                      <div />
-                      <div className="flex items-center gap-2 sm:col-start-2">
-                        <span>English</span>
-                        <a
-                          href={gtUrl(
-                            locale,
-                            [p.name, ...p.terms, ...p.aliases].filter(Boolean).join("\n"),
-                          )}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-medium text-sky-600 hover:underline"
-                          title="Translate the English name, terms & aliases (one per line) via Google Translate"
-                        >
-                          GT ↗
-                        </a>
-                      </div>
-                      <div className="col-start-2 font-mono sm:col-start-3">{locale}</div>
-                    </div>
-                  ) : null}
-
-                  <AttrRow
-                    label="Name"
-                    showLocale={showLocale}
-                    english={<span>{p.name}</span>}
+                  <PresetTranslationTable
+                    preset={p}
+                    locale={locale}
                     localized={
-                      untranslated ? (
-                        <span className="text-slate-400">—</span>
-                      ) : (
-                        <span
-                          className={clsx(sameName && "text-amber-700")}
-                          title={sameName ? "Same as English" : undefined}
-                        >
-                          {loc?.name}
-                        </span>
-                      )
+                      loc ? { name: loc.name, terms: loc.terms, aliases: loc.aliases } : undefined
                     }
                   />
-                  <AttrRow
-                    label="Terms"
-                    showLocale={showLocale}
-                    english={<TermChips terms={p.terms} shared={locTermSet} />}
-                    localized={<TermChips terms={loc?.terms ?? []} shared={enTermSet} />}
-                  />
-                  {p.aliases.length || loc?.aliases.length ? (
-                    <AttrRow
-                      label="Aliases"
-                      showLocale={showLocale}
-                      english={
-                        p.aliases.length ? (
-                          <span className="text-slate-600">{p.aliases.join(", ")}</span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )
-                      }
-                      localized={
-                        loc?.aliases.length ? (
-                          <span className="text-slate-600">{loc.aliases.join(", ")}</span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )
-                      }
-                    />
-                  ) : null}
                 </li>
               );
             })}

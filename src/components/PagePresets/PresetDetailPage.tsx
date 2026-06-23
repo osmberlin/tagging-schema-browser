@@ -1,6 +1,7 @@
 import type { PresetFilterUpdate } from "@/components/PagePresets/PresetDetailModal.types";
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
+import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslationTable";
 import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
 import { presetSearchDefaults, useSetPreset } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
@@ -11,7 +12,6 @@ import { useSchema } from "@/contexts/SchemaContext";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset } from "@/utils/types";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { clsx } from "clsx";
 
 type RelatedItem = { id: string; name: string };
 
@@ -60,7 +60,7 @@ function PresetDetailContent({
 }) {
   const navigate = useNavigate();
   const setPreset = useSetPreset();
-  const { locale, localeMap } = useLocale();
+  const { locale, localeMap, loading: localeLoading, error: localeError } = useLocale();
   const loc = locale ? localeMap?.get(preset.id) : undefined;
 
   const { result: comparison } = useComparison();
@@ -157,27 +157,19 @@ function PresetDetailContent({
         }
         defaultOpen
       >
-        <div className="overflow-hidden">
-          <TranslationRow
-            label="Name"
-            en={preset.name}
-            localized={loc?.name}
-            showLocale={Boolean(locale)}
-            same={Boolean(loc?.name && loc.name === preset.name)}
+        {locale && localeLoading ? (
+          <p className="px-4 py-3 text-sm text-slate-500">Loading {locale}…</p>
+        ) : locale && localeError ? (
+          <p className="mx-4 my-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {localeError}
+          </p>
+        ) : (
+          <PresetTranslationTable
+            preset={preset}
+            locale={locale}
+            localized={loc ? { name: loc.name, terms: loc.terms, aliases: loc.aliases } : undefined}
           />
-          <TranslationRow
-            label="Terms"
-            en={preset.terms.join(", ")}
-            localized={loc?.terms.join(", ")}
-            showLocale={Boolean(locale)}
-          />
-          <TranslationRow
-            label="Aliases"
-            en={preset.aliases.join(", ")}
-            localized={loc?.aliases.join(", ")}
-            showLocale={Boolean(locale)}
-          />
-        </div>
+        )}
       </DetailDisclosure>
 
       <DetailDisclosure
@@ -261,50 +253,6 @@ function PresetDetailContent({
           ) : null}
         </div>
       </DetailDisclosure>
-    </div>
-  );
-}
-
-function TranslationRow({
-  label,
-  en,
-  localized,
-  showLocale,
-  same,
-}: {
-  label: string;
-  en: string;
-  localized?: string;
-  showLocale: boolean;
-  same?: boolean;
-}) {
-  return (
-    <div
-      className={clsx(
-        "grid items-start gap-x-4 gap-y-1 border-t border-slate-100 px-4 py-2 text-sm first:border-t-0",
-        showLocale ? "grid-cols-[5rem_1fr_1fr]" : "grid-cols-[5rem_1fr]",
-      )}
-    >
-      <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
-      <div className="min-w-0 text-slate-900">
-        {en || <span className="text-slate-300">—</span>}
-      </div>
-      {showLocale ? (
-        <div className="min-w-0">
-          {localized ? (
-            <span
-              className={clsx("text-slate-900", same && "text-amber-700")}
-              title={same ? "Same as English" : undefined}
-            >
-              {localized}
-            </span>
-          ) : (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
-              untranslated
-            </span>
-          )}
-        </div>
-      ) : null}
     </div>
   );
 }
