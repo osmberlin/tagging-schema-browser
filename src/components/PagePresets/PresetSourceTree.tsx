@@ -1,5 +1,7 @@
+import { getInheritedFieldItems } from "@/components/PagePresets/presetFieldInheritance";
 import { useSchema } from "@/contexts/SchemaContext";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
+import type { RawPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 import { clsx } from "clsx";
 import { Fragment, type ReactNode, useState } from "react";
@@ -74,6 +76,12 @@ function JsonKey({ name }: { name: string }) {
   return <span className="text-sky-800">"{name}"</span>;
 }
 
+type HostPresetContext = {
+  hostPreset: RawPreset;
+  hostOriginalFields: string[];
+  hostOriginalMoreFields: string[];
+};
+
 function RefDisclosure({
   label,
   ref,
@@ -81,6 +89,7 @@ function RefDisclosure({
   dataUrl,
   trailingComma,
   parentKey,
+  host,
 }: {
   label: string;
   ref: RefInfo;
@@ -88,15 +97,17 @@ function RefDisclosure({
   dataUrl: string;
   trailingComma?: boolean;
   parentKey?: string;
+  host: HostPresetContext;
 }) {
   const [open, setOpen] = useState(false);
   const { fields, rawPresets } = useSchema();
+  const fieldListKey =
+    parentKey === "fields" || parentKey === "moreFields" ? parentKey : undefined;
+  const inheritPresetFields = ref.kind === "preset" && fieldListKey;
   const expandedRaw =
     ref.kind === "field"
       ? (fields[ref.id] as Record<string, unknown> | undefined)
       : (rawPresets[ref.id] as Record<string, unknown> | undefined);
-  const unnestPresetFields =
-    ref.kind === "preset" && (parentKey === "fields" || parentKey === "moreFields") && expandedRaw;
 
   return (
     <>
@@ -126,23 +137,23 @@ function RefDisclosure({
         ) : null}
       </JsonLine>
       {open ? (
-        expandedRaw ? (
-          unnestPresetFields ? (
-            <PresetRefUnnested
-              raw={expandedRaw}
-              fieldListKey={parentKey as "fields" | "moreFields"}
-              level={level + 1}
-              dataUrl={dataUrl}
-              trailingComma={trailingComma}
-            />
-          ) : (
-            <JsonNode
-              value={expandedRaw}
-              level={level + 1}
-              dataUrl={dataUrl}
-              trailingComma={trailingComma}
-            />
-          )
+        inheritPresetFields ? (
+          <PresetRefInheritedFields
+            presetRef={label}
+            fieldListKey={fieldListKey}
+            level={level + 1}
+            dataUrl={dataUrl}
+            trailingComma={trailingComma}
+            host={host}
+          />
+        ) : expandedRaw ? (
+          <JsonNode
+            value={expandedRaw}
+            level={level + 1}
+            dataUrl={dataUrl}
+            trailingComma={trailingComma}
+            host={host}
+          />
         ) : (
           <JsonLine level={level + 1} trailingComma={trailingComma}>
             <span className="text-slate-400 italic">{"/* not loaded */"}</span>
@@ -153,52 +164,56 @@ function RefDisclosure({
   );
 }
 
-/** When a preset ref is expanded inside a fields/moreFields list, inline that list's items. */
-function PresetRefUnnested({
-  raw,
+/** Inherited field ids when a preset ref is expanded inside fields or moreFields. */
+function PresetRefInheritedFields({
+  presetRef,
   fieldListKey,
   level,
   dataUrl,
   trailingComma,
+  host,
 }: {
-  raw: Record<string, unknown>;
+  presetRef: string;
   fieldListKey: "fields" | "moreFields";
   level: number;
   dataUrl: string;
   trailingComma?: boolean;
+  host: HostPresetContext;
 }) {
-  const metaEntries = Object.entries(raw).filter(([k]) => k !== "fields" && k !== "moreFields");
-  const listToUnnest = Array.isArray(raw[fieldListKey]) ? (raw[fieldListKey] as unknown[]) : [];
-  const lines: ReactNode[] = [];
+  const { fields: allFields, rawPresets } = useSchema();
+  const inheritedItems = getInheritedFieldItems(
+    host.hostPreset,
+    presetRef,
+    fieldListKey,
+    host.hostOriginalFields,
+    host.hostOriginalMoreFields,
+    rawPresets,
+    allFields,
+  );
 
-  for (let i = 0; i < metaEntries.length; i++) {
-    const [key, child] = metaEntries[i];
-    lines.push(
-      <JsonObjectEntry
-        key={key}
-        keyName={key}
-        value={child}
-        level={level}
-        dataUrl={dataUrl}
-        trailingComma={i < metaEntries.length - 1 || listToUnnest.length > 0 || trailingComma}
-      />,
+  if (inheritedItems.length === 0) {
+    return (
+      <JsonLine level={level} trailingComma={trailingComma}>
+        <span className="text-slate-400 italic">{"/* no inherited fields */"}</span>
+      </JsonLine>
     );
   }
 
-  for (let i = 0; i < listToUnnest.length; i++) {
-    lines.push(
-      <JsonNode
-        key={`${fieldListKey}-${i}-${String(listToUnnest[i])}`}
-        value={listToUnnest[i]}
-        level={level}
-        parentKey={fieldListKey}
-        dataUrl={dataUrl}
-        trailingComma={i < listToUnnest.length - 1 ? true : trailingComma}
-      />,
-    );
-  }
-
-  return <>{lines}</>;
+  return (
+    <>
+      {inheritedItems.map((item, i) => (
+        <JsonNode
+          key={`${fieldListKey}-${item}-${i}`}
+          value={item}
+          level={level}
+          parentKey={fieldListKey}
+          dataUrl={dataUrl}
+          trailingComma={i < inheritedItems.length - 1 ? true : trailingComma}
+          host={host}
+        />
+      ))}
+    </>
+  );
 }
 
 function JsonNode({
@@ -207,12 +222,14 @@ function JsonNode({
   parentKey,
   dataUrl,
   trailingComma,
+  host,
 }: {
   value: unknown;
   level: number;
   parentKey?: string;
   dataUrl: string;
   trailingComma?: boolean;
+  host: HostPresetContext;
 }) {
   if (isScalar(value)) {
     if (typeof value === "string" && (parentKey === "fields" || parentKey === "moreFields")) {
@@ -226,6 +243,7 @@ function JsonNode({
             dataUrl={dataUrl}
             trailingComma={trailingComma}
             parentKey={parentKey}
+            host={host}
           />
         );
       }
@@ -258,6 +276,7 @@ function JsonNode({
             parentKey={parentKey}
             dataUrl={dataUrl}
             trailingComma={i < value.length - 1}
+            host={host}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -289,6 +308,7 @@ function JsonNode({
             level={level + 1}
             dataUrl={dataUrl}
             trailingComma={i < entries.length - 1}
+            host={host}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -311,12 +331,14 @@ function JsonObjectEntry({
   level,
   dataUrl,
   trailingComma,
+  host,
 }: {
   keyName: string;
   value: unknown;
   level: number;
   dataUrl: string;
   trailingComma?: boolean;
+  host: HostPresetContext;
 }) {
   if (isScalar(value)) {
     return (
@@ -351,6 +373,7 @@ function JsonObjectEntry({
             parentKey={keyName}
             dataUrl={dataUrl}
             trailingComma={i < value.length - 1}
+            host={host}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -384,6 +407,7 @@ function JsonObjectEntry({
             level={level + 1}
             dataUrl={dataUrl}
             trailingComma={i < entries.length - 1}
+            host={host}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -403,12 +427,22 @@ function JsonObjectEntry({
 }
 
 export function PresetSourceTree({
+  presetId: _presetId,
   raw,
 }: {
   presetId: string;
   raw: Record<string, unknown>;
 }) {
   const { dataUrl } = useSchema();
+  const host: HostPresetContext = {
+    hostPreset: raw as RawPreset,
+    hostOriginalFields: Array.isArray(raw.fields)
+      ? (raw.fields as string[]).filter((f) => typeof f === "string")
+      : [],
+    hostOriginalMoreFields: Array.isArray(raw.moreFields)
+      ? (raw.moreFields as string[]).filter((f) => typeof f === "string")
+      : [],
+  };
 
   return (
     <div
@@ -417,7 +451,7 @@ export function PresetSourceTree({
         "font-mono text-xs leading-relaxed text-slate-800",
       )}
     >
-      <JsonNode value={raw} level={0} dataUrl={dataUrl ?? ""} />
+      <JsonNode value={raw} level={0} dataUrl={dataUrl ?? ""} host={host} />
     </div>
   );
 }

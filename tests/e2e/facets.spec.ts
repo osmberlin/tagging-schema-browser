@@ -29,4 +29,22 @@ test("preset template ref unnests fields inside fields array", async ({ page }) 
   await expect(page.getByText("data/fields/operator.json")).toBeVisible();
   await expect(page.getByText("data/fields/opening_hours.json")).toBeVisible();
   await expect(page.getByText('"fields": [')).toHaveCount(1);
+  await expect(page.getByText('"geometry"')).toHaveCount(1);
+});
+
+test("preset ref in fields shows inherited fields not parent metadata", async ({ page }) => {
+  await page.goto("/preset/amenity/clinic/abortion?dataUrl=/test-schema");
+  const fieldsSymlink = page.getByRole("button", { name: /"\{amenity\/clinic\}"/ }).first();
+  await fieldsSymlink.click();
+  await expect(page.getByText("data/fields/name.json")).toBeVisible();
+  await expect(page.getByText("data/fields/operator.json")).toBeVisible();
+  await expect(page.getByText("data/fields/healthcare/speciality.json")).toHaveCount(0);
+  await expect(page.getByText('"geometry"')).toHaveCount(1);
+});
+
+test("preset ref in moreFields inherits moreFields from parent preset", async ({ page }) => {
+  await page.goto("/preset/amenity/clinic/abortion?dataUrl=/test-schema");
+  await page.getByRole("button", { name: /"\{amenity\/clinic\}"/ }).nth(1).click();
+  await expect(page.getByText("data/fields/wheelchair.json")).toBeVisible();
+  await expect(page.getByText("data/fields/operator.json")).toHaveCount(0);
 });
