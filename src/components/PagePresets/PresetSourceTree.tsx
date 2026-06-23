@@ -1,4 +1,11 @@
-import { getInheritedFieldItems } from "@/components/PagePresets/presetFieldInheritance";
+import {
+  getInheritedFieldItems,
+  presetIdFromRef,
+} from "@/components/PagePresets/presetFieldInheritance";
+import {
+  getInheritedLabels,
+  resolveLabelSourcePresetId,
+} from "@/components/PagePresets/presetLabelInheritance";
 import { useSchema } from "@/contexts/SchemaContext";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { RawPreset } from "@/utils/types";
@@ -81,6 +88,127 @@ type HostPresetContext = {
   hostOriginalFields: string[];
   hostOriginalMoreFields: string[];
 };
+
+/** Inherited name / terms / aliases when `name` references another preset. */
+function PresetRefInheritedLabels({
+  labels,
+  level,
+  trailingComma,
+}: {
+  labels: { name: string; terms: string[]; aliases: string[] };
+  level: number;
+  trailingComma?: boolean;
+}) {
+  const hasTerms = labels.terms.length > 0;
+  const hasAliases = labels.aliases.length > 0;
+
+  return (
+    <>
+      <JsonLine level={level} trailingComma={hasTerms || hasAliases || trailingComma}>
+        <JsonKey name="name" />
+        <span className="text-slate-500">: </span>
+        <JsonScalar value={labels.name} />
+      </JsonLine>
+      {hasTerms ? (
+        <Fragment>
+          <JsonLine level={level}>
+            <JsonKey name="terms" />
+            <span className="text-slate-500">: [</span>
+          </JsonLine>
+          {labels.terms.map((term, i) => (
+            <JsonLine key={term} level={level + 1} trailingComma={i < labels.terms.length - 1}>
+              <JsonScalar value={term} />
+            </JsonLine>
+          ))}
+          <JsonLine level={level} trailingComma={hasAliases || trailingComma}>
+            <span className="text-slate-500">]</span>
+          </JsonLine>
+        </Fragment>
+      ) : null}
+      {hasAliases ? (
+        <Fragment>
+          <JsonLine level={level}>
+            <JsonKey name="aliases" />
+            <span className="text-slate-500">: [</span>
+          </JsonLine>
+          {labels.aliases.map((alias, i) => (
+            <JsonLine key={alias} level={level + 1} trailingComma={i < labels.aliases.length - 1}>
+              <JsonScalar value={alias} />
+            </JsonLine>
+          ))}
+          <JsonLine level={level} trailingComma={trailingComma}>
+            <span className="text-slate-500">]</span>
+          </JsonLine>
+        </Fragment>
+      ) : null}
+    </>
+  );
+}
+
+function NameRefDisclosure({
+  nameRef,
+  level,
+  dataUrl,
+  trailingComma,
+}: {
+  nameRef: string;
+  level: number;
+  dataUrl: string;
+  trailingComma?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const { rawPresets, presetsById } = useSchema();
+  const sourceId = resolveLabelSourcePresetId(nameRef, rawPresets);
+  const labels = getInheritedLabels(nameRef, rawPresets, presetsById);
+  const repoPath = sourceId ? schemaRepoPath("preset", sourceId) : "";
+
+  return (
+    <>
+      <JsonLine level={level} trailingComma={!open && trailingComma}>
+        <JsonKey name="name" />
+        <span className="text-slate-500">: </span>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="inline-flex min-w-0 items-center gap-1 text-left hover:text-sky-700"
+        >
+          <span aria-hidden className="w-3 shrink-0 text-slate-400">
+            {open ? "▾" : "▸"}
+          </span>
+          <span className="text-emerald-800">"{nameRef}"</span>
+        </button>
+        {repoPath ? (
+          <>
+            <code className="truncate text-[10px] text-slate-400">{repoPath}</code>
+            <GithubLink href={githubFileUrl(dataUrl, repoPath)} />
+            <Link
+              to="/preset/$"
+              params={{ _splat: sourceId ?? "" }}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+              className="text-[10px] font-medium text-sky-600 hover:underline"
+            >
+              open preset
+            </Link>
+          </>
+        ) : null}
+      </JsonLine>
+      {open ? (
+        labels ? (
+          <PresetRefInheritedLabels
+            labels={labels}
+            level={level + 1}
+            trailingComma={trailingComma}
+          />
+        ) : (
+          <JsonLine level={level + 1} trailingComma={trailingComma}>
+            <span className="text-slate-400 italic">{"/* not loaded */"}</span>
+          </JsonLine>
+        )
+      ) : null}
+    </>
+  );
+}
 
 function RefDisclosure({
   label,
@@ -340,6 +468,16 @@ function JsonObjectEntry({
   host: HostPresetContext;
 }) {
   if (isScalar(value)) {
+    if (keyName === "name" && typeof value === "string" && presetIdFromRef(value)) {
+      return (
+        <NameRefDisclosure
+          nameRef={value}
+          level={level}
+          dataUrl={dataUrl}
+          trailingComma={trailingComma}
+        />
+      );
+    }
     return (
       <JsonLine level={level} trailingComma={trailingComma}>
         <JsonKey name={keyName} />

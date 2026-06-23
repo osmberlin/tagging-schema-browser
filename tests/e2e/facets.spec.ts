@@ -51,3 +51,12 @@ test("preset ref in moreFields inherits moreFields from parent preset", async ({
   await expect(page.getByText("data/fields/wheelchair.json")).toBeVisible();
   await expect(page.getByText("data/fields/operator.json")).toHaveCount(0);
 });
+
+test("name preset ref shows inherited labels from referenced preset", async ({ page }) => {
+  await page.goto("/preset/shop/ice_cream?dataUrl=/test-schema");
+  await page.getByRole("button", { name: /"\{amenity\/ice_cream\}"/ }).last().click();
+  await expect(page.getByText('"Gelateria"')).toBeVisible();
+  await expect(page.getByText('"froyo"')).toBeVisible();
+  await expect(page.getByText('"gelato"')).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ice Cream Shop" })).toBeVisible();
+});
