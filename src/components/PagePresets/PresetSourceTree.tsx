@@ -80,12 +80,14 @@ function RefDisclosure({
   level,
   dataUrl,
   trailingComma,
+  parentKey,
 }: {
   label: string;
   ref: RefInfo;
   level: number;
   dataUrl: string;
   trailingComma?: boolean;
+  parentKey?: string;
 }) {
   const [open, setOpen] = useState(false);
   const { fields, rawPresets } = useSchema();
@@ -93,6 +95,8 @@ function RefDisclosure({
     ref.kind === "field"
       ? (fields[ref.id] as Record<string, unknown> | undefined)
       : (rawPresets[ref.id] as Record<string, unknown> | undefined);
+  const unnestPresetFields =
+    ref.kind === "preset" && (parentKey === "fields" || parentKey === "moreFields") && expandedRaw;
 
   return (
     <>
@@ -123,12 +127,22 @@ function RefDisclosure({
       </JsonLine>
       {open ? (
         expandedRaw ? (
-          <JsonNode
-            value={expandedRaw}
-            level={level + 1}
-            dataUrl={dataUrl}
-            trailingComma={trailingComma}
-          />
+          unnestPresetFields ? (
+            <PresetRefUnnested
+              raw={expandedRaw}
+              fieldListKey={parentKey as "fields" | "moreFields"}
+              level={level + 1}
+              dataUrl={dataUrl}
+              trailingComma={trailingComma}
+            />
+          ) : (
+            <JsonNode
+              value={expandedRaw}
+              level={level + 1}
+              dataUrl={dataUrl}
+              trailingComma={trailingComma}
+            />
+          )
         ) : (
           <JsonLine level={level + 1} trailingComma={trailingComma}>
             <span className="text-slate-400 italic">{"/* not loaded */"}</span>
@@ -137,6 +151,54 @@ function RefDisclosure({
       ) : null}
     </>
   );
+}
+
+/** When a preset ref is expanded inside a fields/moreFields list, inline that list's items. */
+function PresetRefUnnested({
+  raw,
+  fieldListKey,
+  level,
+  dataUrl,
+  trailingComma,
+}: {
+  raw: Record<string, unknown>;
+  fieldListKey: "fields" | "moreFields";
+  level: number;
+  dataUrl: string;
+  trailingComma?: boolean;
+}) {
+  const metaEntries = Object.entries(raw).filter(([k]) => k !== "fields" && k !== "moreFields");
+  const listToUnnest = Array.isArray(raw[fieldListKey]) ? (raw[fieldListKey] as unknown[]) : [];
+  const lines: ReactNode[] = [];
+
+  for (let i = 0; i < metaEntries.length; i++) {
+    const [key, child] = metaEntries[i];
+    lines.push(
+      <JsonObjectEntry
+        key={key}
+        keyName={key}
+        value={child}
+        level={level}
+        dataUrl={dataUrl}
+        trailingComma={i < metaEntries.length - 1 || listToUnnest.length > 0 || trailingComma}
+      />,
+    );
+  }
+
+  for (let i = 0; i < listToUnnest.length; i++) {
+    lines.push(
+      <JsonNode
+        key={`${fieldListKey}-${i}-${String(listToUnnest[i])}`}
+        value={listToUnnest[i]}
+        level={level}
+        parentKey={fieldListKey}
+        dataUrl={dataUrl}
+        trailingComma={i < listToUnnest.length - 1 ? true : trailingComma}
+      />,
+    );
+  }
+
+  return <>{lines}</>;
 }
 
 function JsonNode({
@@ -163,6 +225,7 @@ function JsonNode({
             level={level}
             dataUrl={dataUrl}
             trailingComma={trailingComma}
+            parentKey={parentKey}
           />
         );
       }
