@@ -119,7 +119,7 @@ function RefDisclosure({
             to="/preset/$"
             params={{ _splat: ref.id }}
             search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
-            className="text-[10px] font-medium text-violet-600 hover:underline"
+            className="text-[10px] font-medium text-sky-600 hover:underline"
           >
             open preset
           </Link>
