@@ -2,7 +2,7 @@ import { CountPill } from "@/components/ui/CountPill";
 import { Input } from "@/components/ui/Input";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { PresetTable } from "./PresetTable";
 import { getExpectedFilesHelp } from "./dataLoader";
 import { usePresetSearch } from "./usePresetSearch";
@@ -12,6 +12,10 @@ export function PagePresets() {
   const { dataUrl, setDataUrl, load, loading, error, data } = useSchema();
   const [searchState, setSearchState] = useSearchState();
   const totalCount = usePresetSearch()?.data.total ?? 0;
+  const brokenIconCount = useMemo(
+    () => data?.presets.filter((preset) => preset.iconBroken).length ?? 0,
+    [data],
+  );
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -161,6 +165,20 @@ export function PagePresets() {
           </div>
         ) : null}
       </div>
+      {brokenIconCount > 0 ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <strong>{brokenIconCount}</strong>{" "}
+          {brokenIconCount === 1 ? "preset references" : "presets reference"} a missing icon —{" "}
+          <button
+            type="button"
+            onClick={() => setSearchState({ hasIcon: ["broken"], page: 1 })}
+            className="font-medium text-red-900 underline hover:text-red-950"
+          >
+            show broken icons
+          </button>
+          .
+        </p>
+      ) : null}
       <PresetTable />
     </div>
   );

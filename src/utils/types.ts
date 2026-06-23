@@ -44,6 +44,8 @@ export type DenormalizedPreset = {
   moreFields: string[];
   matchScore: number;
   hasIcon: boolean;
+  /** Preset has an `icon` field but no matching asset in the icon library. */
+  iconBroken: boolean;
   searchable?: boolean;
 };
 

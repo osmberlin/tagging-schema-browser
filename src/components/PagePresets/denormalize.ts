@@ -1,4 +1,4 @@
-import { resolvePresetIconName } from "@/components/PageIcons/iconRegistry";
+import { isPresetIconBroken, resolvePresetIconName } from "@/components/PageIcons/iconRegistry";
 import { nameRefFromRaw } from "@/components/PagePresets/presetLabelInheritance";
 import type {
   DenormalizedPreset,
@@ -185,6 +185,8 @@ export function denormalize(
       .map(([cid]) => cid);
     const categoryNamesList = categoryIds.map((cid) => categoryNames[cid] ?? cid);
 
+    const iconBroken = isPresetIconBroken(icon);
+
     result.push({
       id,
       name,
@@ -204,6 +206,7 @@ export function denormalize(
       moreFields: resolvedMore.length ? resolvedMore : (r.moreFields ?? []),
       matchScore: r.matchScore ?? 1,
       hasIcon: Boolean(icon || imageURL),
+      iconBroken,
       searchable: r.searchable !== false,
     });
   }

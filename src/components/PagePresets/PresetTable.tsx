@@ -51,6 +51,8 @@ type Row = {
   title?: (p: DenormalizedPreset) => string | undefined;
   /** Cells where this returns true get a subtle highlight background. */
   highlight?: (p: DenormalizedPreset) => boolean;
+  /** Tailwind background class when `highlight` is true (default `bg-sky-50/70`). */
+  highlightClass?: string;
   /** Turns the cell into a click-through that filters presets (with a `›` affordance). */
   link?: (p: DenormalizedPreset) => CellLink | null;
 };
@@ -131,11 +133,29 @@ export function PresetTable() {
               const src = getIconSvgDataUrl(p.icon);
               return (
                 <span className="flex items-center gap-1.5">
-                  {src ? <img src={src} alt="" className="h-5 w-5 shrink-0" /> : null}
-                  <span className="font-mono text-xs">{p.icon}</span>
+                  {src ? (
+                    <img src={src} alt="" className="h-5 w-5 shrink-0" />
+                  ) : p.iconBroken ? (
+                    <span
+                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
+                      title="Missing icon asset"
+                    >
+                      !
+                    </span>
+                  ) : null}
+                  <span
+                    className={clsx(
+                      "font-mono text-xs",
+                      p.iconBroken && "font-medium text-red-700",
+                    )}
+                  >
+                    {p.icon}
+                  </span>
                 </span>
               );
             },
+            highlight: (p) => p.iconBroken,
+            highlightClass: "bg-red-50/70",
             link: (p) =>
               p.icon && (iconCounts.get(p.icon) ?? 0) > 1
                 ? {
@@ -281,6 +301,8 @@ export function PresetTable() {
                     </th>
                     {presets.map((p) => {
                       const cellLink = row.link?.(p);
+                      const highlighted = row.highlight?.(p);
+                      const highlightClass = row.highlightClass ?? "bg-sky-50/70";
                       return (
                         <td
                           key={p.id}
@@ -291,9 +313,7 @@ export function PresetTable() {
                             // h-0 lets the link/span child resolve `h-full` against the row
                             // height (table-cell percentage-height quirk) so the hover fills.
                             row.link ? "h-0 p-0" : "px-3 py-1.5",
-                            !row.link && row.highlight?.(p)
-                              ? "bg-sky-50/70"
-                              : !row.link && "group-hover:bg-slate-50",
+                            highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
                           )}
                         >
                           {row.link ? (
