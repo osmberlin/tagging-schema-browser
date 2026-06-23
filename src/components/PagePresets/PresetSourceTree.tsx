@@ -2,6 +2,7 @@ import {
   getInheritedFieldItems,
   presetIdFromRef,
 } from "@/components/PagePresets/presetFieldInheritance";
+import { type KeySortMode, sortObjectEntries } from "@/components/PagePresets/presetKeyOrder";
 import {
   getInheritedLabels,
   resolveLabelSourcePresetId,
@@ -218,6 +219,7 @@ function RefDisclosure({
   trailingComma,
   parentKey,
   host,
+  sortMode = "alpha",
 }: {
   label: string;
   ref: RefInfo;
@@ -226,6 +228,7 @@ function RefDisclosure({
   trailingComma?: boolean;
   parentKey?: string;
   host: HostPresetContext;
+  sortMode?: KeySortMode;
 }) {
   const [open, setOpen] = useState(false);
   const { fields, rawPresets } = useSchema();
@@ -280,6 +283,7 @@ function RefDisclosure({
             dataUrl={dataUrl}
             trailingComma={trailingComma}
             host={host}
+            sortMode={ref.kind === "preset" ? "preset" : sortMode}
           />
         ) : (
           <JsonLine level={level + 1} trailingComma={trailingComma}>
@@ -350,6 +354,7 @@ function JsonNode({
   dataUrl,
   trailingComma,
   host,
+  sortMode = "alpha",
 }: {
   value: unknown;
   level: number;
@@ -357,6 +362,7 @@ function JsonNode({
   dataUrl: string;
   trailingComma?: boolean;
   host: HostPresetContext;
+  sortMode?: KeySortMode;
 }) {
   if (isScalar(value)) {
     if (typeof value === "string" && (parentKey === "fields" || parentKey === "moreFields")) {
@@ -371,6 +377,7 @@ function JsonNode({
             trailingComma={trailingComma}
             parentKey={parentKey}
             host={host}
+            sortMode={sortMode}
           />
         );
       }
@@ -404,6 +411,7 @@ function JsonNode({
             dataUrl={dataUrl}
             trailingComma={i < value.length - 1}
             host={host}
+            sortMode={sortMode}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -414,7 +422,10 @@ function JsonNode({
   }
 
   if (typeof value === "object" && value !== null) {
-    const entries = Object.entries(value as Record<string, unknown>);
+    const entries = sortObjectEntries(Object.entries(value as Record<string, unknown>), {
+      parentKey,
+      sortMode,
+    });
     if (entries.length === 0) {
       return (
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -436,6 +447,7 @@ function JsonNode({
             dataUrl={dataUrl}
             trailingComma={i < entries.length - 1}
             host={host}
+            sortMode={sortMode}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -459,6 +471,7 @@ function JsonObjectEntry({
   dataUrl,
   trailingComma,
   host,
+  sortMode = "alpha",
 }: {
   keyName: string;
   value: unknown;
@@ -466,6 +479,7 @@ function JsonObjectEntry({
   dataUrl: string;
   trailingComma?: boolean;
   host: HostPresetContext;
+  sortMode?: KeySortMode;
 }) {
   if (isScalar(value)) {
     if (keyName === "name" && typeof value === "string" && presetIdFromRef(value)) {
@@ -511,6 +525,7 @@ function JsonObjectEntry({
             dataUrl={dataUrl}
             trailingComma={i < value.length - 1}
             host={host}
+            sortMode={sortMode}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -521,7 +536,10 @@ function JsonObjectEntry({
   }
 
   if (typeof value === "object" && value !== null) {
-    const entries = Object.entries(value as Record<string, unknown>);
+    const entries = sortObjectEntries(Object.entries(value as Record<string, unknown>), {
+      parentKey: keyName,
+      sortMode,
+    });
     if (entries.length === 0) {
       return (
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -545,6 +563,7 @@ function JsonObjectEntry({
             dataUrl={dataUrl}
             trailingComma={i < entries.length - 1}
             host={host}
+            sortMode={sortMode}
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
@@ -589,7 +608,7 @@ export function PresetSourceTree({
         "font-mono text-xs leading-relaxed text-slate-800",
       )}
     >
-      <JsonNode value={raw} level={0} dataUrl={dataUrl ?? ""} host={host} />
+      <JsonNode value={raw} level={0} dataUrl={dataUrl ?? ""} host={host} sortMode="preset" />
     </div>
   );
 }

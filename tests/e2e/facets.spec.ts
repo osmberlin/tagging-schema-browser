@@ -70,11 +70,27 @@ test("preset ref in moreFields inherits moreFields from parent preset", async ({
   await expect(page.getByText("data/fields/operator.json")).toHaveCount(0);
 });
 
+test("preset source JSON sorts keys in a stable discoverable order", async ({ page }) => {
+  await page.goto("/preset/shop/ice_cream?dataUrl=/test-schema");
+
+  const sourceText = await page
+    .locator(".overflow-x-auto.bg-slate-50.font-mono")
+    .innerText();
+
+  const orderedKeys = ["name", "icon", "tags", "geometry", "fields", "searchable"];
+  let lastIndex = -1;
+  for (const key of orderedKeys) {
+    const index = sourceText.indexOf(`"${key}"`);
+    expect(index).toBeGreaterThan(lastIndex);
+    lastIndex = index;
+  }
+});
+
 test("name preset ref shows inherited labels from referenced preset", async ({ page }) => {
   await page.goto("/preset/shop/ice_cream?dataUrl=/test-schema");
   await page
     .getByRole("button", { name: /"\{amenity\/ice_cream\}"/ })
-    .last()
+    .first()
     .click();
   await expect(page.getByText('"Gelateria"')).toBeVisible();
   await expect(page.getByText('"froyo"')).toBeVisible();
