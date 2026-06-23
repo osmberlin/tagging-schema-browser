@@ -24,8 +24,12 @@ function comparisonNavClass(active: boolean): string {
     : "rounded-lg px-3 py-1.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50 hover:text-violet-700";
 }
 
+function NavDivider() {
+  return <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden />;
+}
+
 // Reset each page's own params to defaults on navigation, but keep `dataUrl`.
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
   const { isRelease, result } = useComparison();
   const changeCount = result
@@ -89,6 +93,24 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           ) : null}
         </Link>
       ) : null}
+    </>
+  );
+}
+
+function UtilityNavLinks({
+  onNavigate,
+  onHelp,
+}: {
+  onNavigate?: () => void;
+  onHelp: () => void;
+}) {
+  const { pathname } = useLocation();
+  return (
+    <>
+      <LanguagePicker />
+      <NavDivider />
+      <HelpButton onClick={onHelp} />
+      <NavDivider />
       <Link
         to="/about"
         search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
@@ -119,7 +141,7 @@ function HelpButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="ml-1 flex h-8 items-center rounded-lg px-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+      className="flex h-8 items-center rounded-lg px-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
       aria-label="Keyboard shortcuts"
       title="Keyboard shortcuts"
     >
@@ -248,14 +270,18 @@ export function SidebarLayout({
             </span>
           </Link>
 
-          {/* Actions: stay inline next to the logo on wide screens, wrap to their own full row below lg. */}
-          <div className="order-last flex w-full min-w-0 items-center gap-3 lg:order-none lg:w-auto lg:flex-1">
+          <nav
+            aria-label="Main"
+            className="order-3 flex shrink-0 items-center gap-1 overflow-x-auto lg:order-none"
+          >
+            <PrimaryNavLinks />
+          </nav>
+
+          {/* Search and utility nav: wrap to their own full row below lg. */}
+          <div className="order-last flex w-full min-w-0 items-center gap-3 lg:order-none lg:ml-auto lg:w-auto lg:flex-1">
             <div className="flex min-w-0 flex-1 justify-center">{topSearch}</div>
-            <nav className="flex shrink-0 items-center gap-1 overflow-x-auto">
-              <NavLinks />
-              <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden />
-              <LanguagePicker />
-              <HelpButton onClick={() => setHelpOpen(true)} />
+            <nav aria-label="Settings" className="flex shrink-0 items-center gap-1 overflow-x-auto">
+              <UtilityNavLinks onHelp={() => setHelpOpen(true)} />
             </nav>
           </div>
         </div>
