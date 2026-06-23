@@ -403,33 +403,21 @@ function JsonObjectEntry({
 }
 
 export function PresetSourceTree({
-  presetId,
   raw,
 }: {
   presetId: string;
   raw: Record<string, unknown>;
 }) {
   const { dataUrl } = useSchema();
-  const filePath = schemaRepoPath("preset", presetId);
-  const githubUrl = githubFileUrl(dataUrl ?? "", filePath);
 
   return (
-    <section className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-slate-900">Source preset</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <code className="font-mono text-xs text-slate-500">{filePath}</code>
-          <GithubLink href={githubUrl} />
-        </div>
-      </div>
-      <div
-        className={clsx(
-          "overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4",
-          "font-mono text-xs leading-relaxed text-slate-800",
-        )}
-      >
-        <JsonNode value={raw} level={0} dataUrl={dataUrl ?? ""} />
-      </div>
-    </section>
+    <div
+      className={clsx(
+        "overflow-x-auto bg-slate-50 p-4",
+        "font-mono text-xs leading-relaxed text-slate-800",
+      )}
+    >
+      <JsonNode value={raw} level={0} dataUrl={dataUrl ?? ""} />
+    </div>
   );
 }

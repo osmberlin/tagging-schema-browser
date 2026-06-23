@@ -17,7 +17,8 @@ test("preset detail page shows source JSON", async ({ page }) => {
   await page.getByRole("button", { name: /cafe/i }).first().click();
   await expect(page).toHaveURL(/\/preset\/amenity\/cafe/);
   await expect(page.getByRole("heading", { name: /cafe/i })).toBeVisible();
-  await expect(page.getByText("Source preset")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Translation/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Source preset/i })).toBeVisible();
   await expect(page.getByText("data/presets/amenity/cafe.json")).toBeVisible();
   await expect(page.getByText('"name"')).toBeVisible();
 });

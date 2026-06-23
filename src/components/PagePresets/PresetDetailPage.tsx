@@ -1,9 +1,10 @@
 import type { PresetFilterUpdate } from "@/components/PagePresets/PresetDetailModal.types";
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
+import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
 import { presetSearchDefaults, useSetPreset } from "@/components/PagePresets/useSearchState";
-import { Badge } from "@/components/ui/Badge";
 import { CountPill } from "@/components/ui/CountPill";
+import { DetailDisclosure } from "@/components/ui/DetailDisclosure";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
@@ -66,7 +67,6 @@ function PresetDetailContent({
   const changeStatus = comparison?.statusById.get(preset.id);
   const modified = comparison?.modified.find((m) => m.current.id === preset.id);
 
-  const tagEntries = Object.entries(preset.tags ?? {});
   const filePath = schemaRepoPath("preset", preset.id);
   const githubUrl = githubFileUrl(dataUrl, filePath);
 
@@ -108,16 +108,17 @@ function PresetDetailContent({
     : [];
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-12">
+    <div className="mx-auto max-w-5xl space-y-4 pb-12">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
         <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
           <PresetIconBox preset={preset} size="md" />
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
             <p className="mt-1 font-mono text-xs text-slate-500">{preset.id}</p>
-            <p className="mt-2 text-sm text-slate-600">
-              {preset.aliases.length > 0 ? `Aliases: ${preset.aliases.join(", ")}` : "No aliases"}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-500">Geometry</span>
+              <GeometryIcons geometry={preset.geometry} />
+            </div>
             {preset.imageURL ? (
               <p className="mt-2 text-sm">
                 <span className="text-slate-500">imageURL: </span>
@@ -143,34 +144,69 @@ function PresetDetailContent({
         </a>
       </header>
 
-      <PresetSourceTree presetId={preset.id} raw={raw} />
+      <DetailDisclosure
+        title="Translation"
+        subtitle={
+          locale ? (
+            <>
+              EN ↔ <span className="font-mono">{locale}</span>
+            </>
+          ) : (
+            "English"
+          )
+        }
+        defaultOpen
+      >
+        <div className="overflow-hidden">
+          <TranslationRow
+            label="Name"
+            en={preset.name}
+            localized={loc?.name}
+            showLocale={Boolean(locale)}
+            same={Boolean(loc?.name && loc.name === preset.name)}
+          />
+          <TranslationRow
+            label="Terms"
+            en={preset.terms.join(", ")}
+            localized={loc?.terms.join(", ")}
+            showLocale={Boolean(locale)}
+          />
+          <TranslationRow
+            label="Aliases"
+            en={preset.aliases.join(", ")}
+            localized={loc?.aliases.join(", ")}
+            showLocale={Boolean(locale)}
+          />
+        </div>
+      </DetailDisclosure>
 
-      {tagEntries.length > 0 ? (
-        <details className="group rounded-xl border border-slate-200 bg-slate-50/50">
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-            <span className="text-slate-400 group-open:inline hidden">▾</span>
-            <span className="text-slate-400 group-open:hidden inline">▸</span> Tags
-          </summary>
-          <div className="flex flex-wrap gap-1 border-t border-slate-200 px-4 py-3">
-            {tagEntries.map(([k, v]) => (
-              <Badge key={k} variant="zinc" className="font-mono">
-                {k}={v}
-              </Badge>
-            ))}
-          </div>
-        </details>
-      ) : null}
+      <DetailDisclosure
+        title="Source preset"
+        actions={
+          <>
+            <code className="font-mono text-xs text-slate-500">{filePath}</code>
+            <a
+              href={githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-sky-600 ring-1 ring-sky-100 ring-inset hover:bg-sky-50"
+            >
+              GitHub ↗
+            </a>
+          </>
+        }
+        defaultOpen
+      >
+        <PresetSourceTree presetId={preset.id} raw={raw} />
+      </DetailDisclosure>
 
       {changeStatus === "added" || changeStatus === "modified" ? (
-        <details className="group rounded-xl border border-violet-200 bg-violet-50/60" open>
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-violet-800 marker:content-none [&::-webkit-details-marker]:hidden">
-            <span
-              className="mr-1 inline-block h-2 w-2 rounded-full bg-violet-500 align-middle"
-              aria-hidden
-            />
-            {changeStatus === "added" ? "Added vs release" : "Changes vs release"}
-          </summary>
-          <div className="border-t border-violet-200 px-4 py-3">
+        <DetailDisclosure
+          title={changeStatus === "added" ? "Added vs release" : "Changes vs release"}
+          defaultOpen
+          className="border-violet-200 bg-violet-50/40"
+        >
+          <div className="px-4 py-3">
             {changeStatus === "added" ? (
               <p className="text-sm text-violet-700">This preset does not exist in the release.</p>
             ) : (
@@ -190,43 +226,11 @@ function PresetDetailContent({
               </ul>
             )}
           </div>
-        </details>
+        </DetailDisclosure>
       ) : null}
 
-      {locale ? (
-        <details className="group rounded-xl border border-slate-200">
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-            Translation{" "}
-            <span className="font-normal text-slate-400">
-              EN ↔ <span className="font-mono">{locale}</span>
-            </span>
-          </summary>
-          <div className="overflow-hidden border-t border-slate-200">
-            <TranslationRow
-              label="Name"
-              en={preset.name}
-              localized={loc?.name}
-              same={Boolean(loc?.name && loc.name === preset.name)}
-            />
-            <TranslationRow
-              label="Terms"
-              en={preset.terms.join(", ")}
-              localized={loc?.terms.join(", ")}
-            />
-            <TranslationRow
-              label="Aliases"
-              en={preset.aliases.join(", ")}
-              localized={loc?.aliases.join(", ")}
-            />
-          </div>
-        </details>
-      ) : null}
-
-      <details className="group rounded-xl border border-slate-200">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-          Related presets
-        </summary>
-        <div className="grid gap-4 border-t border-slate-200 p-4 sm:grid-cols-2">
+      <DetailDisclosure title="Related presets">
+        <div className="grid gap-4 p-4 sm:grid-cols-2">
           {categorySections.map((section) => (
             <RelatedBlock
               key={section.title}
@@ -256,7 +260,7 @@ function PresetDetailContent({
             />
           ) : null}
         </div>
-      </details>
+      </DetailDisclosure>
     </div>
   );
 }
@@ -265,33 +269,42 @@ function TranslationRow({
   label,
   en,
   localized,
+  showLocale,
   same,
 }: {
   label: string;
   en: string;
   localized?: string;
+  showLocale: boolean;
   same?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[5rem_1fr_1fr] gap-x-4 border-t border-slate-100 px-3 py-2 text-sm first:border-t-0">
+    <div
+      className={clsx(
+        "grid items-start gap-x-4 gap-y-1 border-t border-slate-100 px-4 py-2 text-sm first:border-t-0",
+        showLocale ? "grid-cols-[5rem_1fr_1fr]" : "grid-cols-[5rem_1fr]",
+      )}
+    >
       <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
       <div className="min-w-0 text-slate-900">
         {en || <span className="text-slate-300">—</span>}
       </div>
-      <div className="min-w-0">
-        {localized ? (
-          <span
-            className={clsx("text-slate-900", same && "text-amber-700")}
-            title={same ? "Same as English" : undefined}
-          >
-            {localized}
-          </span>
-        ) : (
-          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
-            untranslated
-          </span>
-        )}
-      </div>
+      {showLocale ? (
+        <div className="min-w-0">
+          {localized ? (
+            <span
+              className={clsx("text-slate-900", same && "text-amber-700")}
+              title={same ? "Same as English" : undefined}
+            >
+              {localized}
+            </span>
+          ) : (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
+              untranslated
+            </span>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
