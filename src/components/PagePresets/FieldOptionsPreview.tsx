@@ -1,5 +1,6 @@
 import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
 import { AreaIcon } from "@/components/ui/areaIcons";
+import { areaAccent } from "@/theme/areaAccent";
 import type { PresetOptionRow } from "@/utils/fieldOptions";
 import { clsx } from "clsx";
 
@@ -20,7 +21,7 @@ function OptionLabelRow({
     <div className="grid gap-1 text-sm sm:grid-cols-2">
       <span className="text-slate-900">{english}</span>
       <span
-        className={clsx("text-slate-900", same && "text-amber-700")}
+        className={clsx("text-slate-900", same && "text-yellow-700")}
         title={same ? "Same as English" : undefined}
       >
         {localized ?? <span className="text-slate-400">—</span>}
@@ -106,7 +107,7 @@ export function FieldOptionsPreview({
                 <button
                   type="button"
                   onClick={() => onOpenPreset(childPreset.id)}
-                  className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:underline"
+                  className={`mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
                 >
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {childPreset.name}

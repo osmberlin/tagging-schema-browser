@@ -2,7 +2,9 @@
 @plugin "@tailwindcss/typography";
 
 /* White-only app (no dark mode). Inspired by the Tailwind "Syntax" theme:
-   Inter for body, Lexend for display headings, slate neutrals, sky accent.
+   Inter for body, Lexend for display headings, slate neutrals.
+   Per-area accents: rose (presets), sky (icons), emerald (fields), yellow (translations).
+   Brand logo uses mist; outbound links use mauve. Violet = comparison / non-release only.
    Fonts are self-hosted via Fontsource (imported in main.tsx) — no CDN. */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;

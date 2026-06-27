@@ -1,6 +1,7 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
 import { AreaIcon } from "@/components/ui/areaIcons";
+import { areaAccent } from "@/theme/areaAccent";
 import type { DenormalizedPreset, OptionIconUsageRef } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 
@@ -64,7 +65,7 @@ export function IconCard({
       {presetUsageCount > 0 ? (
         <p className="mt-1 line-clamp-2 text-xs text-slate-500">
           <span className="inline-flex items-center gap-1 font-medium text-slate-700">
-            <AreaIcon area="presets" className="h-3 w-3" />
+            <AreaIcon area="presets" className={`h-3 w-3 ${areaAccent.presets.icon}`} />
             Presets
           </span>{" "}
           <CountPill className="bg-slate-100 align-text-bottom">{presetUsageCount}</CountPill>:{" "}
@@ -74,7 +75,7 @@ export function IconCard({
       {optionUsageCount > 0 ? (
         <p className="mt-1 line-clamp-2 text-xs text-slate-500">
           <span className="inline-flex items-center gap-1 font-medium text-slate-700">
-            <AreaIcon area="fields" className="h-3 w-3" />
+            <AreaIcon area="fields" className={`h-3 w-3 ${areaAccent.fields.icon}`} />
             Options
           </span>{" "}
           <CountPill className="bg-slate-100 align-text-bottom">{optionUsageCount}</CountPill>:{" "}
@@ -98,12 +99,12 @@ export function IconCard({
         })}
         title={`Show all ${presetUsageCount} presets using "${iconName}"`}
         data-icon={iconName}
-        className={`group/ac relative ${iconCardClass} transition duration-200 hover:border-sky-300 hover:bg-sky-50/40 hover:shadow-md hover:shadow-slate-900/5`}
+        className={`group/ac relative ${iconCardClass} transition duration-200 ${areaAccent.icons.cardHoverBorder} ${areaAccent.icons.cardHoverBg} hover:shadow-md hover:shadow-slate-900/5`}
       >
         {body}
         <span
           aria-hidden
-          className="absolute top-2 right-2 hidden h-5 w-5 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
+          className={`absolute top-2 right-2 hidden h-5 w-5 items-center justify-center rounded-full text-sm font-semibold group-hover/ac:flex ${areaAccent.icons.cardChevron}`}
         >
           ›
         </span>

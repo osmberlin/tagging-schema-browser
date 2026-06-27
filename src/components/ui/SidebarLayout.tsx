@@ -8,23 +8,15 @@ import { LanguagePicker } from "@/components/ui/LanguagePicker";
 import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
+import { areaAccent, areaNavClass, utilityNavClass } from "@/theme/areaAccent";
+import { brandAccent } from "@/theme/brandAccent";
+import { comparisonAccent, comparisonNavClass } from "@/theme/comparisonAccent";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useHotkey, useHotkeySequence } from "@tanstack/react-hotkeys";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { clsx } from "clsx";
 import { useState } from "react";
 import { PAGE_SEARCH_INPUT_ID } from "./HeaderSearch";
-
-function navLinkClass(active: boolean): string {
-  return active
-    ? "rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 ring-1 ring-sky-100 ring-inset"
-    : "rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900";
-}
-
-function comparisonNavClass(active: boolean): string {
-  return active
-    ? "rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 ring-1 ring-violet-200 ring-inset"
-    : "rounded-lg px-3 py-1.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50 hover:text-violet-700";
-}
 
 function NavDivider() {
   return <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden />;
@@ -47,14 +39,24 @@ function NavLinkItem({
   label: string;
   search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>;
   onNavigate?: () => void;
-  className: (active: boolean) => string;
+  className?: (active: boolean) => string;
   title?: string;
   children?: React.ReactNode;
 }) {
+  const accentClass = area !== "about" ? areaNavClass(area, active) : utilityNavClass(active);
   return (
-    <Link to={to} search={search} onClick={onNavigate} className={className(active)} title={title}>
+    <Link
+      to={to}
+      search={search}
+      onClick={onNavigate}
+      className={className?.(active) ?? accentClass}
+      title={title}
+    >
       {area !== "about" ? (
-        <AreaIcon area={area} className="mr-1.5 inline h-3.5 w-3.5 align-[-2px]" />
+        <AreaIcon
+          area={area}
+          className={clsx("mr-1.5 inline h-3.5 w-3.5 align-[-2px]", areaAccent[area].icon)}
+        />
       ) : null}
       {label}
       {children}
@@ -82,7 +84,6 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
           locale: prev.locale ?? "",
         })}
         onNavigate={onNavigate}
-        className={navLinkClass}
       />
       <NavLinkItem
         to="/icons"
@@ -95,7 +96,6 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
           locale: prev.locale ?? "",
         })}
         onNavigate={onNavigate}
-        className={navLinkClass}
       />
       <NavLinkItem
         to="/fields"
@@ -108,7 +108,6 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
           locale: prev.locale ?? "",
         })}
         onNavigate={onNavigate}
-        className={navLinkClass}
       />
       <NavLinkItem
         to="/translations"
@@ -121,7 +120,6 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
           locale: prev.locale ?? "",
         })}
         onNavigate={onNavigate}
-        className={navLinkClass}
       />
       {!isRelease ? (
         <Link
@@ -137,7 +135,9 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
         >
           Comparison
           {changeCount != null ? (
-            <span className="ml-1.5 rounded-full bg-violet-100 px-1.5 py-0.5 text-[11px] font-semibold text-violet-700">
+            <span
+              className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${comparisonAccent.badge}`}
+            >
               {changeCount}
             </span>
           ) : null}
@@ -165,7 +165,7 @@ function UtilityNavLinks({
         to="/about"
         search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
         onClick={onNavigate}
-        className={navLinkClass(pathname === "/about")}
+        className={utilityNavClass(pathname === "/about")}
       >
         About
       </Link>
@@ -303,7 +303,9 @@ export function SidebarLayout({
             })}
             className="flex shrink-0 items-center gap-2.5"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm shadow-sky-500/30">
+            <span
+              className={`flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm ${brandAccent.logo}`}
+            >
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none">
                 <path
                   d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
@@ -321,7 +323,7 @@ export function SidebarLayout({
             </span>
             <span className="hidden flex-col leading-tight sm:flex">
               <span className="font-display text-base font-semibold whitespace-nowrap text-slate-900">
-                Tagging Schema <span className="text-sky-600">Browser</span>
+                Tagging Schema <span className={brandAccent.wordmark}>Browser</span>
               </span>
               {releaseVersion ? (
                 <span className="text-[11px] font-medium text-slate-400">

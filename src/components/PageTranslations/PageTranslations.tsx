@@ -10,6 +10,7 @@ import { CountPill } from "@/components/ui/CountPill";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
 import type { DenormalizedPreset } from "@/utils/types";
 import { useMemo } from "react";
 import { useTranslationStatus } from "./translationsSearch";
@@ -86,7 +87,7 @@ export function PageTranslations() {
     <div className="space-y-4">
       <div className="space-y-2">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
-          <AreaIcon area="translations" className="h-7 w-7 text-violet-600" />
+          <AreaIcon area="translations" className={`h-7 w-7 ${areaAccent.translations.icon}`} />
           Translations <CountPill className="text-sm">{rows.length}</CountPill>
         </h1>
         <p className="text-sm text-slate-500">
@@ -128,26 +129,28 @@ export function PageTranslations() {
                   <button
                     type="button"
                     onClick={() => setPreset(p.id)}
-                    className="group/ac relative flex w-full items-start justify-between gap-3 bg-slate-50/70 px-3 py-2 pr-9 text-left transition hover:bg-sky-50"
+                    className={`group/ac relative flex w-full items-start justify-between gap-3 bg-slate-50/70 px-3 py-2 pr-9 text-left transition ${areaAccent.translations.rowHover}`}
                     title="Show details of preset"
                   >
                     <span className="flex min-w-0 items-start gap-2">
                       <PresetIconBox preset={p} size="sm" />
                       <span className="min-w-0">
-                        <span className="block font-medium text-slate-900 group-hover/ac:text-sky-700">
+                        <span
+                          className={`block font-medium text-slate-900 ${areaAccent.translations.rowHoverText}`}
+                        >
                           {p.name}
                         </span>
                         <span className="block font-mono text-[11px] text-slate-400">{p.id}</span>
                       </span>
                     </span>
                     {untranslated ? (
-                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
+                      <span className="rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 ring-1 ring-yellow-100 ring-inset">
                         untranslated
                       </span>
                     ) : null}
                     <span
                       aria-hidden
-                      className="absolute top-1/2 right-2 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
+                      className={`absolute top-1/2 right-2 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-sm font-semibold group-hover/ac:flex ${areaAccent.translations.cardChevron}`}
                     >
                       ›
                     </span>

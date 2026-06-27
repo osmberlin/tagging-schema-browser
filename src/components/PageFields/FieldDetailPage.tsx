@@ -9,6 +9,8 @@ import { DetailDisclosure } from "@/components/ui/DetailDisclosure";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
+import { externalAccent, externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset, RawFieldTranslation } from "@/utils/types";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -108,7 +110,9 @@ function FieldDetailContent({
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
         <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 ring-inset">
+          <span
+            className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ring-1 ring-emerald-100 ring-inset ${areaAccent.fields.iconBg}`}
+          >
             <AreaIcon area="fields" className="h-8 w-8" />
           </span>
           <div className="min-w-0">
@@ -140,7 +144,7 @@ function FieldDetailContent({
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
+            className={externalAccent.button}
           >
             View source ↗
           </a>
@@ -200,7 +204,7 @@ function FieldDetailContent({
               href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-sky-600 ring-1 ring-sky-100 ring-inset hover:bg-sky-50"
+              className={externalPillClass()}
             >
               GitHub ↗
             </a>

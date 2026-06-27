@@ -1,11 +1,30 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { Input } from "@/components/ui/Input";
+import { areaAccent } from "@/theme/areaAccent";
+import { externalLinkClass } from "@/theme/externalAccent";
 import { deriveDataUrl } from "@/utils/deriveDataUrl";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 const EXAMPLE_PREVIEW =
   "https://pr-2276--ideditor-presets-preview.netlify.app/id/dist/#locale=en&map=18.00/48.84/2.58";
+
+function ColorDot({ halo, dot }: { halo: string; dot: string }) {
+  return (
+    <span className={`flex-none rounded-full p-1 ${halo}`}>
+      <span className={`block size-1.5 rounded-full ${dot}`} />
+    </span>
+  );
+}
+
+function ColorLegendItem({ halo, dot, text }: { halo: string; dot: string; text: string }) {
+  return (
+    <li className="flex items-center gap-x-2">
+      <ColorDot halo={halo} dot={dot} />
+      <span className="text-sm text-slate-600">{text}</span>
+    </li>
+  );
+}
 
 /** Paste any id-tagging-schema preview URL → get the correct `dataUrl` base, with a way to test + load it. */
 function DataUrlGenerator() {
@@ -42,7 +61,7 @@ function DataUrlGenerator() {
                 dataUrl: derived,
                 locale: prev.locale ?? "",
               })}
-              className="rounded-lg bg-sky-600 px-3 py-1.5 font-medium text-white hover:bg-sky-700"
+              className={`rounded-lg px-3 py-1.5 font-medium text-white ${areaAccent.presets.button}`}
             >
               Open in browser →
             </Link>
@@ -50,7 +69,7 @@ function DataUrlGenerator() {
               href={`${derived}presets.min.json`}
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-sky-600 hover:underline"
+              className={externalLinkClass()}
             >
               To test, open <code className="font-mono">presets.min.json</code> ↗
             </a>
@@ -70,7 +89,7 @@ function DataUrlGenerator() {
 
 export function PageAbout() {
   return (
-    <article className="prose prose-slate prose-headings:scroll-mt-24 prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline">
+    <article className="prose prose-slate prose-headings:scroll-mt-24">
       <h1>About</h1>
       <p>
         <strong>Tagging Schema Browser</strong> loads OpenStreetMap preset data from an
@@ -84,6 +103,7 @@ export function PageAbout() {
             href="https://github.com/openstreetmap/id-tagging-schema"
             target="_blank"
             rel="noreferrer"
+            className={externalLinkClass()}
           >
             id-tagging-schema
           </a>{" "}
@@ -94,6 +114,7 @@ export function PageAbout() {
             href="https://github.com/openstreetmap/schema-builder"
             target="_blank"
             rel="noreferrer"
+            className={externalLinkClass()}
           >
             schema-builder
           </a>{" "}
@@ -116,6 +137,34 @@ export function PageAbout() {
         generate the right <code>dataUrl</code>:
       </p>
       <DataUrlGenerator />
+      <h2>Area colors</h2>
+      <div className="not-prose space-y-2">
+        <p className="text-sm text-slate-600">
+          Each browsing area has its own accent color in the nav, page headings, links, and buttons:
+        </p>
+        <ul className="space-y-1.5">
+          <ColorLegendItem halo="bg-rose-500/20" dot="bg-rose-500" text="rose for Presets" />
+          <ColorLegendItem halo="bg-sky-500/20" dot="bg-sky-500" text="sky for Icons" />
+          <ColorLegendItem
+            halo="bg-emerald-500/20"
+            dot="bg-emerald-500"
+            text="emerald for Fields"
+          />
+          <ColorLegendItem
+            halo="bg-yellow-500/20"
+            dot="bg-yellow-500"
+            text="yellow for Translations"
+          />
+        </ul>
+        <ul className="space-y-1.5 pt-1">
+          <ColorLegendItem halo="bg-mist-500/20" dot="bg-mist-500" text="mist for the logo" />
+          <ColorLegendItem
+            halo="bg-mauve-500/20"
+            dot="bg-mauve-500"
+            text="mauve for outbound links (GitHub, test URLs)"
+          />
+        </ul>
+      </div>
       <h2>Spotting non-release data</h2>
       <p>
         Whenever you load a custom build,{" "}

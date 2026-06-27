@@ -4,6 +4,7 @@ import { filtersFromState, useSearchState } from "@/components/PagePresets/useSe
 import { SidebarSection } from "@/components/ui/Sidebar";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
 import { clsx } from "clsx";
 import { useMemo } from "react";
 import { type TranslationStatus, useTranslationStatus } from "./translationsSearch";
@@ -30,7 +31,7 @@ function StatusRow({
         className={clsx(
           "flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",
           selected
-            ? "font-medium text-sky-600 before:block before:bg-sky-500"
+            ? areaAccent.translations.facetSelected
             : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
         )}
       >

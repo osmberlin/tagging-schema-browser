@@ -1,5 +1,6 @@
 import { SidebarSection } from "@/components/ui/Sidebar";
 import type { SchemaArea } from "@/components/ui/areaIcons";
+import { areaAccent } from "@/theme/areaAccent";
 import { clsx } from "clsx";
 import { useRef, useState } from "react";
 import { usePresetSearch } from "./usePresetSearch";
@@ -43,7 +44,7 @@ function FacetGroup({
                 className={clsx(
                   "flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",
                   isSelected
-                    ? "font-medium text-sky-600 before:block before:bg-sky-500"
+                    ? areaAccent.presets.facetSelected
                     : disabled
                       ? "text-slate-300 before:hidden"
                       : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
@@ -67,7 +68,10 @@ function FacetGroup({
         <button
           type="button"
           onClick={() => setShowEmpty((v) => !v)}
-          className="mt-1 pl-4 text-left text-xs font-medium text-sky-600 hover:underline"
+          className={clsx(
+            "mt-1 pl-4 text-left text-xs font-medium hover:underline",
+            areaAccent.presets.facetShowMore,
+          )}
         >
           {showEmpty ? "Hide empty" : `Show ${hiddenCount} with no results`}
         </button>

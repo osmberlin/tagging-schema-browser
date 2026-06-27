@@ -9,6 +9,7 @@ export function IconSearchBar() {
       value={state.i_q}
       onChange={(value) => setState({ i_q: value })}
       placeholder="Search icons by name..."
+      area="icons"
     />
   );
 }

@@ -11,6 +11,8 @@ import {
 } from "@/components/PagePresets/presetLabelInheritance";
 import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent, areaSourceLinkClass } from "@/theme/areaAccent";
+import { externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset, RawPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
@@ -49,7 +51,7 @@ function GithubLink({ href, label = "GitHub" }: { href: string; label?: string }
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-sky-600 ring-1 ring-sky-100 ring-inset hover:bg-sky-50"
+      className={externalPillClass("shrink-0")}
       title="Open in id-tagging-schema repository"
     >
       {label} ↗
@@ -75,10 +77,7 @@ function SourceAreaLink({
   label: string;
   title: string;
 }) {
-  const toneClass =
-    area === "fields"
-      ? "text-emerald-700 ring-emerald-100 hover:bg-emerald-50"
-      : "text-sky-600 ring-sky-100 hover:bg-sky-50";
+  const toneClass = areaSourceLinkClass(area);
 
   return (
     <Link
@@ -116,13 +115,13 @@ function JsonLine({
 
 function JsonScalar({ value }: { value: string | number | boolean | null }) {
   if (value === null) return <span className="text-slate-400">null</span>;
-  if (typeof value === "boolean") return <span className="text-violet-700">{String(value)}</span>;
-  if (typeof value === "number") return <span className="text-violet-700">{value}</span>;
+  if (typeof value === "boolean") return <span className="text-purple-700">{String(value)}</span>;
+  if (typeof value === "number") return <span className="text-purple-700">{value}</span>;
   return <span className="text-emerald-800">"{value}"</span>;
 }
 
 function JsonKey({ name }: { name: string }) {
-  return <span className="text-sky-800">"{name}"</span>;
+  return <span className="text-rose-800">"{name}"</span>;
 }
 
 type JsonRootKind = "field" | "preset";
@@ -218,7 +217,7 @@ function NameRefDisclosure({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="inline-flex min-w-0 items-center gap-1 text-left hover:text-sky-700"
+          className={`inline-flex min-w-0 items-center gap-1 text-left ${areaAccent.presets.linkRingHover}`}
         >
           <span aria-hidden className="w-3 shrink-0 text-slate-400">
             {open ? "▾" : "▸"}
@@ -292,7 +291,7 @@ function RefDisclosure({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="inline-flex min-w-0 items-center gap-1 text-left hover:text-sky-700"
+          className={`inline-flex min-w-0 items-center gap-1 text-left ${areaAccent.presets.linkRingHover}`}
         >
           <span aria-hidden className="w-3 shrink-0 text-slate-400">
             {open ? "▾" : "▸"}

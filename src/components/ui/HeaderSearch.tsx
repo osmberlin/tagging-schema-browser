@@ -1,5 +1,7 @@
 import { Input } from "@/components/ui/Input";
 import { Kbd, modLabel } from "@/components/ui/Kbd";
+import type { SchemaArea } from "@/components/ui/areaIcons";
+import { areaAccent } from "@/theme/areaAccent";
 
 export const PAGE_SEARCH_INPUT_ID = "page-search-input";
 
@@ -20,10 +22,12 @@ export function HeaderSearch({
   value,
   onChange,
   placeholder,
+  area = "presets",
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  area?: SchemaArea;
 }) {
   return (
     <div className="w-full max-w-md">
@@ -37,7 +41,8 @@ export function HeaderSearch({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-10 rounded-full border-transparent bg-slate-100 pl-11 pr-16 text-sm shadow-none ring-1 ring-transparent transition hover:bg-slate-200/70 focus:bg-white focus:ring-2 focus:ring-sky-500/60"
+          area={area}
+          className={`h-10 rounded-full border-transparent bg-slate-100 pl-11 pr-16 text-sm shadow-none ring-1 ring-transparent transition hover:bg-slate-200/70 focus:bg-white focus:ring-2 ${areaAccent[area].searchFocus}`}
         />
         <span className="pointer-events-none absolute inset-y-0 right-2.5 hidden items-center gap-1 sm:flex">
           <Kbd>{modLabel()}</Kbd>

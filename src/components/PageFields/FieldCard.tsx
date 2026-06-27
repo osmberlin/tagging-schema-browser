@@ -1,16 +1,23 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
+import { ExpandIcon } from "@/components/ui/ExpandIcon";
 import { AreaIcon } from "@/components/ui/areaIcons";
+import { areaAccent } from "@/theme/areaAccent";
 import type { FieldViewModel } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
+
+const fieldCardClass =
+  "group/fc relative flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 transition duration-200 hover:shadow-md hover:shadow-slate-900/5";
 
 export function FieldCard({ field }: { field: FieldViewModel }) {
   const names = field.presets.map((p) => p.name).join(", ");
 
   const body = (
-    <>
+    <div className="pointer-events-none flex flex-col">
       <div className="flex items-start gap-2.5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${areaAccent.fields.iconBg}`}
+        >
           <AreaIcon area="fields" className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
@@ -40,7 +47,7 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
       {field.usageCount > 0 ? (
         <p className="mt-2 line-clamp-2 text-xs text-slate-500">
           <span className="inline-flex items-center gap-1 font-medium text-slate-700">
-            <AreaIcon area="presets" className="h-3 w-3" />
+            <AreaIcon area="presets" className={`h-3 w-3 ${areaAccent.presets.icon}`} />
             Presets
           </span>{" "}
           <CountPill className="bg-slate-100 align-text-bottom">{field.usageCount}</CountPill>:{" "}
@@ -49,22 +56,24 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
       ) : (
         <p className="mt-2 text-xs text-slate-400">Unused by presets</p>
       )}
-    </>
+    </div>
   );
 
-  if (field.usageCount > 0) {
-    return (
-      <article className="group/fc relative flex flex-col rounded-xl border border-slate-200 bg-white p-2.5">
-        <Link
-          to="/field/$"
-          params={{ _splat: field.id }}
-          search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
-          title={`Open field "${field.id}"`}
-          data-field={field.id}
-          className="flex flex-col transition duration-200 hover:text-slate-900"
-        >
-          {body}
-        </Link>
+  return (
+    <article
+      data-field={field.id}
+      className={`${fieldCardClass} ${areaAccent.fields.cardHoverBorder} ${areaAccent.fields.cardHoverBg}`}
+    >
+      <Link
+        to="/field/$"
+        params={{ _splat: field.id }}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+        title={`Open field "${field.id}"`}
+        className="absolute inset-0 rounded-xl"
+        aria-label={`Open field "${field.label}"`}
+      />
+      {body}
+      {field.usageCount > 0 ? (
         <Link
           to="/"
           search={(prev) => ({
@@ -74,37 +83,18 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
             fieldIds: [field.id],
           })}
           title={`Show all ${field.usageCount} presets using "${field.id}"`}
-          className="mt-2 inline-flex items-center gap-1 self-start text-[11px] font-medium text-sky-600 hover:underline"
+          className={`relative z-10 mt-2 inline-flex items-center gap-1 self-start text-[11px] font-medium hover:underline ${areaAccent.presets.link}`}
         >
-          <AreaIcon area="presets" className="h-3 w-3" />
+          <AreaIcon area="presets" className={`h-3 w-3 ${areaAccent.presets.icon}`} />
           Filter presets
         </Link>
-        <span
-          aria-hidden
-          className="absolute top-2 right-2 hidden h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700 group-hover/fc:flex"
-        >
-          ›
-        </span>
-      </article>
-    );
-  }
-
-  return (
-    <Link
-      to="/field/$"
-      params={{ _splat: field.id }}
-      search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
-      title={`Open field "${field.id}"`}
-      data-field={field.id}
-      className="group/fc relative flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 transition duration-200 hover:border-emerald-300 hover:bg-emerald-50/40 hover:shadow-md hover:shadow-slate-900/5"
-    >
-      {body}
+      ) : null}
       <span
         aria-hidden
-        className="absolute top-2 right-2 hidden h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700 group-hover/fc:flex"
+        className={`pointer-events-none absolute top-2 right-2 hidden h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/fc:flex ${areaAccent.fields.cardExpandHover}`}
       >
-        ›
+        <ExpandIcon className="h-3 w-3" />
       </span>
-    </Link>
+    </article>
   );
 }
