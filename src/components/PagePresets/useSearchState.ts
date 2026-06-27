@@ -19,6 +19,8 @@ export const presetSearchSchema = z.object({
   iconPrefix: stringArray,
   iconName: stringArray,
   fieldIds: stringArray,
+  primaryFieldIds: stringArray,
+  moreFieldIds: stringArray,
   categoryNames: stringArray,
   hasIcon: stringArray,
 });
@@ -71,6 +73,8 @@ export function filtersFromState(state: SearchState): Record<string, string[]> {
   if (state.iconPrefix.length) f.iconPrefix = state.iconPrefix;
   if (state.iconName.length) f.iconName = state.iconName;
   if (state.fieldIds.length) f.fieldIds = state.fieldIds;
+  if (state.primaryFieldIds.length) f.primaryFieldIds = state.primaryFieldIds;
+  if (state.moreFieldIds.length) f.moreFieldIds = state.moreFieldIds;
   if (state.categoryNames.length) f.categoryFacet = state.categoryNames;
   if (state.hasIcon.length) f.hasIcon = state.hasIcon;
   return f;

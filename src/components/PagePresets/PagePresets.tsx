@@ -34,6 +34,8 @@ export function PagePresets() {
 
   const facetArea: Partial<Record<string, SchemaArea>> = {
     fieldIds: "fields",
+    primaryFieldIds: "fields",
+    moreFieldIds: "fields",
     iconName: "icons",
     iconPrefix: "icons",
     hasIcon: "icons",
@@ -63,6 +65,18 @@ export function PagePresets() {
       facet: "fieldIds",
       label: `Field: ${value}`,
       onRemove: () => removeValue("fieldIds", value),
+    })),
+    ...searchState.primaryFieldIds.map((value) => ({
+      key: `primary-field-${value}`,
+      facet: "primaryFieldIds",
+      label: `Primary field: ${value}`,
+      onRemove: () => removeValue("primaryFieldIds", value),
+    })),
+    ...searchState.moreFieldIds.map((value) => ({
+      key: `more-field-${value}`,
+      facet: "moreFieldIds",
+      label: `More field: ${value}`,
+      onRemove: () => removeValue("moreFieldIds", value),
     })),
     ...searchState.categoryNames.map((value) => ({
       key: `category-${value}`,
