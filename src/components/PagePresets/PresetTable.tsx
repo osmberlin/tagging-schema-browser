@@ -14,6 +14,44 @@ const COLUMN_WIDTH = 160;
 
 const dash = <span className="text-slate-300">—</span>;
 
+function CellOverflow({
+  children,
+  truncate,
+  wrap,
+  breakText,
+}: {
+  children: ReactNode;
+  truncate?: boolean;
+  wrap?: boolean;
+  /** Line break + hyphenation inside the fixed column (instead of ellipsis). */
+  breakText?: boolean;
+}) {
+  return (
+    <span
+      className={clsx(
+        "block min-w-0",
+        truncate && "truncate",
+        wrap && "break-all",
+        breakText && "break-words hyphens-auto",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function renderCellContent(row: Row, preset: DenormalizedPreset) {
+  const content = row.render(preset);
+  if (row.truncate || row.wrap || row.breakText) {
+    return (
+      <CellOverflow truncate={row.truncate} wrap={row.wrap} breakText={row.breakText}>
+        {content}
+      </CellOverflow>
+    );
+  }
+  return content;
+}
+
 /** "Expand / open modal" affordance shown on the column headers. */
 function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   return (
@@ -44,6 +82,10 @@ type Row = {
   mono?: boolean;
   /** Truncate overflowing text with ellipsis; pair with `title` for the full value. */
   truncate?: boolean;
+  /** Wrap with line breaks and hyphenation inside the fixed column. */
+  breakText?: boolean;
+  /** Break long unbroken strings (e.g. URLs) across lines inside the fixed column. */
+  wrap?: boolean;
   render: (p: DenormalizedPreset) => ReactNode;
   /** Native tooltip for the value cell. */
   title?: (p: DenormalizedPreset) => string | undefined;
@@ -103,25 +145,26 @@ function PresetHeaderCell({
 }) {
   return (
     <th
-      className="sticky top-0 z-20 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
+      className="sticky top-0 z-20 overflow-hidden border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
       style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
     >
       <button
         type="button"
         onClick={() => onOpen(preset.id)}
-        className="group/col relative block h-full w-full px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
-        title="Show details of preset"
+        className="group/col relative block h-full w-full overflow-hidden px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
       >
-        <span className="flex max-w-50 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
+        <span className="flex min-w-0 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
           {changed ? (
             <span
               className="h-2 w-2 shrink-0 rounded-full bg-violet-500"
               title={status === "added" ? "Added vs release" : "Modified vs release"}
             />
           ) : null}
-          <span className="truncate">{preset.name}</span>
+          <span className="truncate" title={preset.name}>
+            {preset.name}
+          </span>
         </span>
-        <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
+        <span className="block truncate font-mono text-[11px] text-slate-400" title={preset.id}>
           {preset.id}
         </span>
         <span
@@ -151,10 +194,9 @@ function PresetValueCell({
     <td
       title={row.link ? undefined : row.title?.(preset)}
       className={clsx(
-        "border-r border-b border-slate-100 align-top text-slate-700",
+        "overflow-hidden border-r border-b border-slate-100 align-top text-slate-700",
         row.mono && "font-mono text-xs",
         row.link ? "h-0 p-0" : "px-3 py-1.5",
-        row.truncate && "overflow-hidden",
         highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
       )}
       style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
@@ -165,9 +207,9 @@ function PresetValueCell({
             to="/"
             search={cellLink.search as never}
             title={cellLink.title}
-            className="group/ac relative flex h-full items-start px-3 py-1.5 pr-8 transition hover:bg-sky-50"
+            className="group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition hover:bg-sky-50"
           >
-            <span className="min-w-0">{row.render(preset)}</span>
+            <span className="min-w-0">{renderCellContent(row, preset)}</span>
             <span
               aria-hidden
               className="absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
@@ -176,12 +218,10 @@ function PresetValueCell({
             </span>
           </Link>
         ) : (
-          <span className="block h-full px-3 py-1.5">{row.render(preset)}</span>
+          <span className="block h-full px-3 py-1.5">{renderCellContent(row, preset)}</span>
         )
-      ) : row.truncate ? (
-        <span className="block max-w-40 truncate">{row.render(preset)}</span>
       ) : (
-        row.render(preset)
+        renderCellContent(row, preset)
       )}
     </td>
   );
@@ -213,14 +253,16 @@ export function PresetTable() {
         title: "Identity",
         rows: [
           { label: "ID", mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
-          { label: "Name", render: (p) => p.name, title: (p) => p.name },
+          { label: "Name", breakText: true, render: (p) => p.name, title: (p) => p.name },
           {
             label: "Terms",
+            breakText: true,
             render: (p) => (p.terms.length ? p.terms.join(", ") : dash),
             title: (p) => p.terms.join(", "),
           },
           {
             label: "Aliases",
+            breakText: true,
             render: (p) => (p.aliases.length ? p.aliases.join(", ") : dash),
             title: (p) => p.aliases.join(", "),
           },
@@ -231,6 +273,7 @@ export function PresetTable() {
           },
           {
             label: "Category",
+            truncate: true,
             render: (p) => (p.categoryNames.length ? p.categoryNames.join(", ") : dash),
             link: (p) =>
               p.categoryNames.length
@@ -251,7 +294,7 @@ export function PresetTable() {
               if (!p.icon) return dash;
               const src = getIconSvgDataUrl(p.icon);
               return (
-                <span className="flex items-center gap-1.5">
+                <span className="flex min-w-0 items-center gap-1.5">
                   {src ? (
                     <img src={src} alt="" className="h-5 w-5 shrink-0" />
                   ) : p.iconBroken ? (
@@ -264,7 +307,7 @@ export function PresetTable() {
                   ) : null}
                   <span
                     className={clsx(
-                      "font-mono text-xs",
+                      "min-w-0 truncate font-mono text-xs",
                       p.iconBroken && "font-medium text-red-700",
                     )}
                   >
@@ -273,6 +316,7 @@ export function PresetTable() {
                 </span>
               );
             },
+            title: (p) => p.icon ?? undefined,
             highlight: (p) => p.iconBroken,
             highlightClass: "bg-red-50/70",
             link: (p) =>
@@ -291,7 +335,8 @@ export function PresetTable() {
           {
             label: "imageURL",
             mono: true,
-            render: (p) => (p.imageURL ? <span className="break-all">{p.imageURL}</span> : dash),
+            wrap: true,
+            render: (p) => (p.imageURL ? p.imageURL : dash),
             title: (p) => p.imageURL,
           },
         ],
@@ -301,6 +346,7 @@ export function PresetTable() {
         rows: tagKeys.map((k) => ({
           label: k,
           mono: true,
+          truncate: true,
           render: (p) => (p.tags && k in p.tags ? p.tags[k] : dash),
           title: (p) => (p.tags && k in p.tags ? `${k}=${p.tags[k]}` : undefined),
         })),

@@ -120,3 +120,70 @@ test("preset table ID row truncates long values with ellipsis", async ({ page })
   expect(truncation.isOverflowing).toBe(true);
   await expect(idCell).toHaveAttribute("title", "amenity/clinic/abortion");
 });
+
+test("preset table columns share a fixed width", async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await loadTestSchema(page);
+  await expect(page.locator("table thead th").nth(1)).toBeVisible();
+
+  const widths = await page
+    .locator("table thead tr th")
+    .evaluateAll((ths) => ths.slice(1).map((th) => Math.round(th.getBoundingClientRect().width)));
+
+  expect(widths.length).toBeGreaterThan(1);
+  expect(new Set(widths).size).toBe(1);
+  expect(widths[0]).toBe(160);
+});
+
+test("preset table column headers expose full name and id via title", async ({ page }) => {
+  await loadTestSchema(page);
+
+  const header = page.locator("thead th").filter({ hasText: "amenity/clinic/abortion" });
+  await expect(header.locator("span.font-mono")).toHaveAttribute(
+    "title",
+    "amenity/clinic/abortion",
+  );
+  await expect(header.locator("button > span > span[title]").first()).toHaveAttribute(
+    "title",
+    /.+/,
+  );
+  await expect(header.locator("button")).not.toHaveAttribute("title");
+});
+
+test("preset table name row wraps instead of truncating", async ({ page }) => {
+  await loadTestSchema(page);
+
+  const nameRow = page.locator("tbody tr", { has: page.locator("th", { hasText: /^Name$/ }) });
+  const nameCell = nameRow.locator("td").first();
+  await expect(nameCell).toBeVisible();
+
+  const style = await nameCell.locator("span.break-words").evaluate((el) => ({
+    overflowWrap: getComputedStyle(el).overflowWrap,
+    hyphens: getComputedStyle(el).hyphens,
+    whiteSpace: getComputedStyle(el).whiteSpace,
+  }));
+
+  expect(style.overflowWrap).toBe("break-word");
+  expect(style.hyphens).toBe("auto");
+  expect(style.whiteSpace).toBe("normal");
+});
+
+test("preset table icon row truncates long icon names", async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await loadTestSchema(page);
+
+  const iconRow = page.locator("tbody tr", { has: page.locator("th", { hasText: /^Icon$/ }) });
+  const iconCell = iconRow
+    .locator("td")
+    .filter({ hasText: "temaki-this-icon-does-not-exist" })
+    .first();
+  await expect(iconCell).toBeVisible();
+
+  const truncation = await iconCell.locator("span.truncate").evaluate((el) => ({
+    textOverflow: getComputedStyle(el).textOverflow,
+    isOverflowing: el.scrollWidth > el.clientWidth,
+  }));
+
+  expect(truncation.textOverflow).toBe("ellipsis");
+  expect(truncation.isOverflowing).toBe(true);
+});
