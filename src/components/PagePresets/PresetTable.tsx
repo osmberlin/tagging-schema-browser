@@ -15,8 +15,28 @@ import {
 } from "./useSearchState";
 
 const MAX_COLUMNS = 25;
+/** Fixed width for each preset comparison column (`table-fixed` + colgroup). */
+const PRESET_COL_CLASS = "w-40 max-w-40 overflow-hidden";
 
 const dash = <span className="text-slate-300">—</span>;
+
+function CellOverflow({
+  children,
+  truncate,
+  wrap,
+}: {
+  children: ReactNode;
+  truncate?: boolean;
+  wrap?: boolean;
+}) {
+  return (
+    <span
+      className={clsx("block min-w-0", truncate && "truncate", wrap && "break-all")}
+    >
+      {children}
+    </span>
+  );
+}
 
 /** "Expand / open modal" affordance shown on the column headers. */
 function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
@@ -48,6 +68,8 @@ type Row = {
   mono?: boolean;
   /** Truncate overflowing text with ellipsis; pair with `title` for the full value. */
   truncate?: boolean;
+  /** Break long unbroken strings (e.g. URLs) across lines inside the fixed column. */
+  wrap?: boolean;
   render: (p: DenormalizedPreset) => ReactNode;
   /** Native tooltip for the value cell. */
   title?: (p: DenormalizedPreset) => string | undefined;
@@ -96,14 +118,16 @@ export function PresetTable() {
         title: "Identity",
         rows: [
           { label: "ID", mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
-          { label: "Name", render: (p) => p.name, title: (p) => p.name },
+          { label: "Name", truncate: true, render: (p) => p.name, title: (p) => p.name },
           {
             label: "Terms",
+            truncate: true,
             render: (p) => (p.terms.length ? p.terms.join(", ") : dash),
             title: (p) => p.terms.join(", "),
           },
           {
             label: "Aliases",
+            truncate: true,
             render: (p) => (p.aliases.length ? p.aliases.join(", ") : dash),
             title: (p) => p.aliases.join(", "),
           },
@@ -114,6 +138,7 @@ export function PresetTable() {
           },
           {
             label: "Category",
+            truncate: true,
             render: (p) => (p.categoryNames.length ? p.categoryNames.join(", ") : dash),
             link: (p) =>
               p.categoryNames.length
@@ -134,7 +159,7 @@ export function PresetTable() {
               if (!p.icon) return dash;
               const src = getIconSvgDataUrl(p.icon);
               return (
-                <span className="flex items-center gap-1.5">
+                <span className="flex min-w-0 items-center gap-1.5">
                   {src ? (
                     <img src={src} alt="" className="h-5 w-5 shrink-0" />
                   ) : p.iconBroken ? (
@@ -147,7 +172,7 @@ export function PresetTable() {
                   ) : null}
                   <span
                     className={clsx(
-                      "font-mono text-xs",
+                      "min-w-0 truncate font-mono text-xs",
                       p.iconBroken && "font-medium text-red-700",
                     )}
                   >
@@ -156,6 +181,7 @@ export function PresetTable() {
                 </span>
               );
             },
+            title: (p) => p.icon ?? undefined,
             highlight: (p) => p.iconBroken,
             highlightClass: "bg-red-50/70",
             link: (p) =>
@@ -174,7 +200,8 @@ export function PresetTable() {
           {
             label: "imageURL",
             mono: true,
-            render: (p) => (p.imageURL ? <span className="break-all">{p.imageURL}</span> : dash),
+            wrap: true,
+            render: (p) => (p.imageURL ? p.imageURL : dash),
             title: (p) => p.imageURL,
           },
         ],
@@ -184,6 +211,7 @@ export function PresetTable() {
         rows: tagKeys.map((k) => ({
           label: k,
           mono: true,
+          truncate: true,
           render: (p) => (p.tags && k in p.tags ? p.tags[k] : dash),
           title: (p) => (p.tags && k in p.tags ? `${k}=${p.tags[k]}` : undefined),
         })),
@@ -234,7 +262,13 @@ export function PresetTable() {
         </p>
       ) : null}
       <div className="relative max-h-[calc(100svh-13rem)] overflow-auto rounded-xl border border-slate-200">
-        <table className="border-separate border-spacing-0 text-sm">
+        <table className="table-fixed w-max border-separate border-spacing-0 text-sm">
+          <colgroup>
+            <col className="w-36" />
+            {presets.map((p) => (
+              <col key={p.id} className="w-40" />
+            ))}
+          </colgroup>
           <thead>
             <tr>
               <th className="sticky top-0 left-0 z-30 border-r border-b border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-500">
@@ -246,15 +280,18 @@ export function PresetTable() {
                 return (
                   <th
                     key={p.id}
-                    className="sticky top-0 z-20 min-w-40 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
+                    className={clsx(
+                      "sticky top-0 z-20 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom",
+                      PRESET_COL_CLASS,
+                    )}
                   >
                     <button
                       type="button"
                       onClick={() => setPreset(p.id)}
-                      className="group/col relative block h-full w-full px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
+                      className="group/col relative block h-full w-full overflow-hidden px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
                       title="Show details of preset"
                     >
-                      <span className="flex max-w-50 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
+                      <span className="flex min-w-0 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
                         {changed ? (
                           <span
                             className="h-2 w-2 shrink-0 rounded-full bg-violet-500"
@@ -263,7 +300,7 @@ export function PresetTable() {
                         ) : null}
                         <span className="truncate">{p.name}</span>
                       </span>
-                      <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
+                      <span className="block truncate font-mono text-[11px] text-slate-400">
                         {p.id}
                       </span>
                       <span
@@ -311,11 +348,11 @@ export function PresetTable() {
                           title={row.link ? undefined : row.title?.(p)}
                           className={clsx(
                             "border-r border-b border-slate-100 align-top text-slate-700",
+                            PRESET_COL_CLASS,
                             row.mono && "font-mono text-xs",
                             // h-0 lets the link/span child resolve `h-full` against the row
                             // height (table-cell percentage-height quirk) so the hover fills.
                             row.link ? "h-0 p-0" : "px-3 py-1.5",
-                            row.truncate && "overflow-hidden",
                             highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
                           )}
                         >
@@ -325,9 +362,17 @@ export function PresetTable() {
                                 to="/"
                                 search={cellLink.search as never}
                                 title={cellLink.title}
-                                className="group/ac relative flex h-full items-start px-3 py-1.5 pr-8 transition hover:bg-sky-50"
+                                className="group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition hover:bg-sky-50"
                               >
-                                <span className="min-w-0">{row.render(p)}</span>
+                                <span className="min-w-0">
+                                  {row.truncate || row.wrap ? (
+                                    <CellOverflow truncate={row.truncate} wrap={row.wrap}>
+                                      {row.render(p)}
+                                    </CellOverflow>
+                                  ) : (
+                                    row.render(p)
+                                  )}
+                                </span>
                                 <span
                                   aria-hidden
                                   className="absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
@@ -336,10 +381,20 @@ export function PresetTable() {
                                 </span>
                               </Link>
                             ) : (
-                              <span className="block h-full px-3 py-1.5">{row.render(p)}</span>
+                              <span className="block h-full px-3 py-1.5">
+                                {row.truncate || row.wrap ? (
+                                  <CellOverflow truncate={row.truncate} wrap={row.wrap}>
+                                    {row.render(p)}
+                                  </CellOverflow>
+                                ) : (
+                                  row.render(p)
+                                )}
+                              </span>
                             )
-                          ) : row.truncate ? (
-                            <span className="block max-w-40 truncate">{row.render(p)}</span>
+                          ) : row.truncate || row.wrap ? (
+                            <CellOverflow truncate={row.truncate} wrap={row.wrap}>
+                              {row.render(p)}
+                            </CellOverflow>
                           ) : (
                             row.render(p)
                           )}
