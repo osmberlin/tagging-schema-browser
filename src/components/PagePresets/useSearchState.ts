@@ -2,8 +2,6 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useCallback } from "react";
 import { z } from "zod";
 
-const PER_PAGE = 24;
-
 const stringArray = z.array(z.string()).catch([]);
 
 /**
@@ -13,8 +11,8 @@ const stringArray = z.array(z.string()).catch([]);
  */
 export const presetSearchSchema = z.object({
   q: z.string().catch(""),
+  /** Used by the translations page for its own client-side list pagination. */
   page: z.number().int().positive().catch(1),
-  per_page: z.number().int().positive().catch(PER_PAGE),
   sort: z.enum(["name_asc", "name_desc"]).catch("name_asc"),
   primaryTagKey: stringArray,
   geometry: stringArray,
