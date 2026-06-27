@@ -1,6 +1,7 @@
 import { getIconSvgDataUrl, isIconSvgConfirmedMissing } from "@/components/PageIcons/iconRegistry";
 import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
 import { AreaLink } from "@/components/ui/AreaLink";
+import { ExpandIcon } from "@/components/ui/ExpandIcon";
 import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
@@ -55,19 +56,6 @@ function renderCellContent(row: Row, preset: DenormalizedPreset) {
     );
   }
   return content;
-}
-
-function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 4H5a1 1 0 0 0-1 1v4m11-5h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4m11 5h4a1 1 0 0 0 1-1v-4"
-      />
-    </svg>
-  );
 }
 
 function IconNameCell({ iconName, broken }: { iconName: string; broken: boolean }) {
@@ -198,7 +186,7 @@ function PresetHeaderCell({
         </span>
         <span
           aria-hidden
-          className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/col:bg-indigo-100 group-hover/col:text-indigo-700"
+          className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/col:bg-rose-100 group-hover/col:text-rose-700"
           title="Open modal"
         >
           <ExpandIcon className="h-3 w-3" />

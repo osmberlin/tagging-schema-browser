@@ -144,7 +144,7 @@ export function PageTranslations() {
                       </span>
                     </span>
                     {untranslated ? (
-                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
+                      <span className="rounded-full bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 ring-1 ring-yellow-100 ring-inset">
                         untranslated
                       </span>
                     ) : null}

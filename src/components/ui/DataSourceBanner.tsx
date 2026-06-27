@@ -1,5 +1,6 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { useComparison } from "@/contexts/ComparisonContext";
+import { externalLinkClass } from "@/theme/externalAccent";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 /**
@@ -30,7 +31,7 @@ export function DataSourceBanner() {
             href={presetsUrl}
             target="_blank"
             rel="noreferrer"
-            className="font-medium underline decoration-violet-300 underline-offset-2 hover:decoration-violet-500"
+            className={externalLinkClass("font-medium")}
             title="Open this build's presets.min.json"
           >
             {domain}

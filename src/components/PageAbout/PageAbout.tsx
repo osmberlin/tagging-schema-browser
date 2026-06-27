@@ -1,6 +1,7 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { Input } from "@/components/ui/Input";
 import { areaAccent } from "@/theme/areaAccent";
+import { externalLinkClass } from "@/theme/externalAccent";
 import { deriveDataUrl } from "@/utils/deriveDataUrl";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -51,7 +52,7 @@ function DataUrlGenerator() {
               href={`${derived}presets.min.json`}
               target="_blank"
               rel="noreferrer"
-              className={`font-medium hover:underline ${areaAccent.presets.link}`}
+              className={externalLinkClass()}
             >
               To test, open <code className="font-mono">presets.min.json</code> ↗
             </a>
@@ -71,7 +72,7 @@ function DataUrlGenerator() {
 
 export function PageAbout() {
   return (
-    <article className="prose prose-slate prose-headings:scroll-mt-24 prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline">
+    <article className="prose prose-slate prose-headings:scroll-mt-24">
       <h1>About</h1>
       <p>
         <strong>Tagging Schema Browser</strong> loads OpenStreetMap preset data from an
@@ -85,6 +86,7 @@ export function PageAbout() {
             href="https://github.com/openstreetmap/id-tagging-schema"
             target="_blank"
             rel="noreferrer"
+            className={externalLinkClass()}
           >
             id-tagging-schema
           </a>{" "}
@@ -95,6 +97,7 @@ export function PageAbout() {
             href="https://github.com/openstreetmap/schema-builder"
             target="_blank"
             rel="noreferrer"
+            className={externalLinkClass()}
           >
             schema-builder
           </a>{" "}
@@ -120,10 +123,12 @@ export function PageAbout() {
       <h2>Area colors</h2>
       <p>
         Each browsing area has its own accent color in the nav, page headings, links, and buttons:{" "}
-        <span className="font-medium text-indigo-600">indigo</span> for Presets,{" "}
+        <span className="font-medium text-rose-600">rose</span> for Presets,{" "}
         <span className="font-medium text-sky-600">sky</span> for Icons,{" "}
         <span className="font-medium text-emerald-600">emerald</span> for Fields, and{" "}
-        <span className="font-medium text-amber-600">amber</span> for Translations.
+        <span className="font-medium text-yellow-600">yellow</span> for Translations. The logo uses{" "}
+        <span className="font-medium text-mist-600">mist</span>. Outbound links (GitHub, test URLs)
+        use <span className="font-medium text-mauve-600">mauve</span>.
       </p>
       <h2>Spotting non-release data</h2>
       <p>

@@ -21,7 +21,7 @@ function OptionLabelRow({
     <div className="grid gap-1 text-sm sm:grid-cols-2">
       <span className="text-slate-900">{english}</span>
       <span
-        className={clsx("text-slate-900", same && "text-amber-700")}
+        className={clsx("text-slate-900", same && "text-yellow-700")}
         title={same ? "Same as English" : undefined}
       >
         {localized ?? <span className="text-slate-400">—</span>}

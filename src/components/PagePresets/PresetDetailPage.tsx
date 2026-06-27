@@ -10,7 +10,7 @@ import { AreaIcon } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
+import { externalAccent, externalLinkClass, externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset } from "@/utils/types";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -139,7 +139,7 @@ function PresetDetailContent({
                 <span className="text-slate-500">imageURL: </span>
                 <a
                   href={preset.imageURL}
-                  className={`break-all underline ${areaAccent.presets.link}`}
+                  className={`break-all underline ${externalLinkClass("break-all")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -153,7 +153,7 @@ function PresetDetailContent({
           href={githubUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
+          className={externalAccent.button}
         >
           View source ↗
         </a>
@@ -197,7 +197,7 @@ function PresetDetailContent({
               href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${areaAccent.presets.linkRing}`}
+              className={externalPillClass()}
             >
               GitHub ↗
             </a>

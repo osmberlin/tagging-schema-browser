@@ -12,6 +12,7 @@ import {
 import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent, areaSourceLinkClass } from "@/theme/areaAccent";
+import { externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset, RawPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
@@ -50,7 +51,7 @@ function GithubLink({ href, label = "GitHub" }: { href: string; label?: string }
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${areaAccent.presets.linkRing}`}
+      className={externalPillClass("shrink-0")}
       title="Open in id-tagging-schema repository"
     >
       {label} ↗
@@ -120,7 +121,7 @@ function JsonScalar({ value }: { value: string | number | boolean | null }) {
 }
 
 function JsonKey({ name }: { name: string }) {
-  return <span className="text-indigo-800">"{name}"</span>;
+  return <span className="text-rose-800">"{name}"</span>;
 }
 
 type JsonRootKind = "field" | "preset";

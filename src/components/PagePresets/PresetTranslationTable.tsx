@@ -1,4 +1,5 @@
 import { areaAccent } from "@/theme/areaAccent";
+import { externalLinkClass } from "@/theme/externalAccent";
 import type { DenormalizedPreset } from "@/utils/types";
 import { clsx } from "clsx";
 import type { ReactNode } from "react";
@@ -91,7 +92,7 @@ export function PresetTranslationTable({
               )}
               target="_blank"
               rel="noreferrer"
-              className={`font-medium hover:underline ${areaAccent.translations.link}`}
+              className={externalLinkClass()}
               title="Translate the English name, terms & aliases (one per line) via Google Translate"
             >
               GT ↗
@@ -110,7 +111,7 @@ export function PresetTranslationTable({
             <span className="text-slate-400">—</span>
           ) : (
             <span
-              className={clsx(sameName && "text-amber-700")}
+              className={clsx(sameName && "text-yellow-700")}
               title={sameName ? "Same as English" : undefined}
             >
               {localized?.name}
