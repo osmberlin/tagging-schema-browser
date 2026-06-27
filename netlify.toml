@@ -1,0 +1,4 @@
+# Skip Netlify deploy previews for Dependabot PRs (deps-only; no UI/schema change).
+# Production deploys (GitHub Pages) are unaffected — this applies to deploy-preview only.
+[context.deploy-preview]
+ignore = "bash -c 'git log -1 --pretty=%ae | grep -q dependabot@users.noreply.github.com || git log -1 --pretty=%B | grep -qi \"\\[skip netlify\\]\"'"

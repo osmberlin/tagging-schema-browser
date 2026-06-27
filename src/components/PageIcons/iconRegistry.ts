@@ -1,10 +1,5 @@
 import type { IconRegistryEntry, RawPresets } from "@/utils/types";
 
-/** Icons used in docs/examples that no longer exist in current Maki; map to iD/schema equivalents. */
-export const PRESET_ICON_ALIASES: Record<string, string> = {
-  "maki-bench": "temaki-bench",
-};
-
 export type IconSupplier = "maki" | "temaki" | "roentgen" | "iD" | "fas" | "far" | "fab";
 
 const ALL_ICON_SUPPLIERS: IconSupplier[] = [
@@ -35,10 +30,6 @@ const loadedSuppliers = new Set<IconSupplier>();
 const failedSuppliers = new Set<IconSupplier>();
 const supplierLoadPromises = new Map<IconSupplier, Promise<void>>();
 
-export function resolvePresetIconName(iconName: string): string {
-  return PRESET_ICON_ALIASES[iconName] ?? iconName;
-}
-
 export function iconSupplierFromName(iconName: string): IconSupplier | null {
   const prefix = iconName.split("-")[0];
   if (prefix && ALL_ICON_SUPPLIERS.includes(prefix as IconSupplier)) {
@@ -50,7 +41,7 @@ export function iconSupplierFromName(iconName: string): IconSupplier | null {
 function suppliersFromIconNames(names: Iterable<string>): Set<IconSupplier> {
   const suppliers = new Set<IconSupplier>();
   for (const name of names) {
-    const supplier = iconSupplierFromName(resolvePresetIconName(name));
+    const supplier = iconSupplierFromName(name);
     if (supplier) suppliers.add(supplier);
   }
   return suppliers;
@@ -60,7 +51,7 @@ export function collectPresetIconNames(presets: RawPresets): string[] {
   const names = new Set<string>();
   for (const raw of Object.values(presets)) {
     if (typeof raw.icon === "string" && raw.icon.trim()) {
-      names.add(resolvePresetIconName(raw.icon.trim()));
+      names.add(raw.icon.trim());
     }
   }
   return Array.from(names);
@@ -166,28 +157,26 @@ export function isPresetIconBroken(iconName?: string): boolean {
  */
 export function isIconSvgConfirmedMissing(iconName?: string): boolean {
   if (!iconName) return false;
-  const canonical = resolvePresetIconName(iconName);
-  const supplier = iconSupplierFromName(canonical);
+  const supplier = iconSupplierFromName(iconName);
   if (!supplier || !loadedSuppliers.has(supplier)) return false;
-  const entry = registryCache.get(canonical);
+  const entry = registryCache.get(iconName);
   return !entry?.svgRaw;
 }
 
 export function getIconSvgDataUrl(iconName?: string): string | null {
   if (!iconName) return null;
-  const canonical = resolvePresetIconName(iconName);
-  const cached = dataUrlCache.get(canonical);
+  const cached = dataUrlCache.get(iconName);
   if (cached !== undefined) return cached;
 
-  const entry = registryCache.get(canonical);
+  const entry = registryCache.get(iconName);
   if (!entry?.svgRaw) {
     // Avoid caching a miss while the supplier chunk is still loading.
-    if (!isSupplierLoadedForIcon(canonical)) return null;
-    dataUrlCache.set(canonical, null);
+    if (!isSupplierLoadedForIcon(iconName)) return null;
+    dataUrlCache.set(iconName, null);
     return null;
   }
 
   const dataUrl = `data:image/svg+xml;utf8,${encodeURIComponent(entry.svgRaw)}`;
-  dataUrlCache.set(canonical, dataUrl);
+  dataUrlCache.set(iconName, dataUrl);
   return dataUrl;
 }

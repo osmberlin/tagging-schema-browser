@@ -1,0 +1,26 @@
+# Keep bundled icon libraries in sync with id-tagging-schema references.
+# The schema loads at runtime from jsDelivr, but preset/field icons are resolved
+# from npm packages vendored at build time — stale versions show as "broken" icons.
+version: 2
+updates:
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-name: "@enzet/roentgen"
+      - dependency-name: "@mapbox/maki"
+      - dependency-name: "@rapideditor/temaki"
+    commit-message:
+      prefix: "[skip netlify] "
+    groups:
+      icon-libraries:
+        patterns:
+          - "@enzet/roentgen"
+          - "@mapbox/maki"
+          - "@rapideditor/temaki"
+        update-types:
+          - minor
+          - patch
