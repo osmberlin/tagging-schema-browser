@@ -95,3 +95,28 @@ test("name preset ref shows inherited labels from referenced preset", async ({ p
   await expect(page.getByText('"gelato"')).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ice Cream Shop" })).toBeVisible();
 });
+
+test("preset table ID row truncates long values with ellipsis", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 900 });
+  await page.goto("/?dataUrl=/test-schema");
+
+  const idRow = page.locator("tbody tr", { has: page.locator("th", { hasText: /^ID$/ }) });
+  const idCell = idRow.locator("td").filter({ hasText: "amenity/clinic/abortion" }).first();
+  await expect(idCell).toBeVisible();
+
+  const truncation = await idCell.locator("span.truncate").evaluate((el) => {
+    const style = getComputedStyle(el);
+    return {
+      textOverflow: style.textOverflow,
+      overflow: style.overflow,
+      whiteSpace: style.whiteSpace,
+      isOverflowing: el.scrollWidth > el.clientWidth,
+    };
+  });
+
+  expect(truncation.textOverflow).toBe("ellipsis");
+  expect(truncation.overflow).toBe("hidden");
+  expect(truncation.whiteSpace).toBe("nowrap");
+  expect(truncation.isOverflowing).toBe(true);
+  await expect(idCell).toHaveAttribute("title", "amenity/clinic/abortion");
+});

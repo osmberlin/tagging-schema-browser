@@ -46,6 +46,8 @@ type Row = {
   /** Tooltip for the row label (explains the dimension). */
   labelTitle?: string;
   mono?: boolean;
+  /** Truncate overflowing text with ellipsis; pair with `title` for the full value. */
+  truncate?: boolean;
   render: (p: DenormalizedPreset) => ReactNode;
   /** Native tooltip for the value cell. */
   title?: (p: DenormalizedPreset) => string | undefined;
@@ -93,7 +95,7 @@ export function PresetTable() {
       {
         title: "Identity",
         rows: [
-          { label: "ID", mono: true, render: (p) => p.id, title: (p) => p.id },
+          { label: "ID", mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
           { label: "Name", render: (p) => p.name, title: (p) => p.name },
           {
             label: "Terms",
@@ -313,6 +315,7 @@ export function PresetTable() {
                             // h-0 lets the link/span child resolve `h-full` against the row
                             // height (table-cell percentage-height quirk) so the hover fills.
                             row.link ? "h-0 p-0" : "px-3 py-1.5",
+                            row.truncate && "overflow-hidden",
                             highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
                           )}
                         >
@@ -335,6 +338,8 @@ export function PresetTable() {
                             ) : (
                               <span className="block h-full px-3 py-1.5">{row.render(p)}</span>
                             )
+                          ) : row.truncate ? (
+                            <span className="block max-w-40 truncate">{row.render(p)}</span>
                           ) : (
                             row.render(p)
                           )}
