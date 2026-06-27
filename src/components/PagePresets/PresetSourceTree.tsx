@@ -326,7 +326,11 @@ function RefDisclosure({
                 ...presetSearchDefaults,
                 dataUrl: prev.dataUrl ?? "",
                 locale: prev.locale ?? "",
-                fieldIds: [ref.id],
+                ...(fieldListKey === "moreFields"
+                  ? { moreFieldIds: [ref.id] }
+                  : fieldListKey === "fields"
+                    ? { primaryFieldIds: [ref.id] }
+                    : { fieldIds: [ref.id] }),
                 page: 1,
               })}
               label="Presets"

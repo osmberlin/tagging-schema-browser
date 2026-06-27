@@ -6,6 +6,8 @@ type PresetSearchRecord = DenormalizedPreset & {
   aliasesText: string;
   fieldText: string;
   fieldIds: string[];
+  primaryFieldIds: string[];
+  moreFieldIds: string[];
   iconName: string;
   hasIconFacet: "yes" | "no" | "broken";
 };
@@ -17,6 +19,8 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     aliasesText: p.aliases.join(" "),
     fieldText: [...p.fields, ...p.moreFields].join(" "),
     fieldIds: Array.from(new Set([...p.fields, ...p.moreFields])),
+    primaryFieldIds: p.fields,
+    moreFieldIds: p.moreFields,
     categoryFacet: p.categoryNames.length > 0 ? p.categoryNames : (["No Category"] as string[]),
     primaryTagKey: p.primaryTagKey ?? "",
     iconName: p.icon ?? "",
@@ -35,6 +39,20 @@ const itemsJsConfig = {
     // Filterable so "Show presets" from an icon (and the iconName pill) works.
     iconName: { title: "Icon", size: 2000, conjunction: false },
     fieldIds: { title: "Fields", size: 100, sort: "count", order: "desc", conjunction: false },
+    primaryFieldIds: {
+      title: "Primary fields",
+      size: 100,
+      sort: "count",
+      order: "desc",
+      conjunction: false,
+    },
+    moreFieldIds: {
+      title: "More fields",
+      size: 100,
+      sort: "count",
+      order: "desc",
+      conjunction: false,
+    },
     hasIconFacet: { title: "Has icon", size: 3 },
   },
   sortings: {
@@ -96,13 +114,24 @@ export function searchPresets(params: {
   return {
     data: {
       items: (items as PresetSearchRecord[]).map((item) => {
-        const { termsText, aliasesText, hasIconFacet, fieldText, fieldIds, iconName, ...preset } =
-          item;
+        const {
+          termsText,
+          aliasesText,
+          hasIconFacet,
+          fieldText,
+          fieldIds,
+          primaryFieldIds,
+          moreFieldIds,
+          iconName,
+          ...preset
+        } = item;
         void termsText;
         void aliasesText;
         void hasIconFacet;
         void fieldText;
         void fieldIds;
+        void primaryFieldIds;
+        void moreFieldIds;
         void iconName;
         return preset;
       }),

@@ -1,5 +1,4 @@
 import { FieldTranslationTable } from "@/components/PageFields/FieldTranslationTable";
-import { useFieldLocale } from "@/components/PageFields/useFieldLocale";
 import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
 import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
 import { presetSearchDefaults, useSetPreset } from "@/components/PagePresets/useSearchState";
@@ -77,12 +76,8 @@ function FieldDetailContent({
 }) {
   const navigate = useNavigate();
   const setPreset = useSetPreset();
-  const { locale, loading: localeLoading, error: localeError } = useLocale();
-  const {
-    fieldLocale,
-    loading: fieldLocaleLoading,
-    error: fieldLocaleError,
-  } = useFieldLocale(locale, fieldId);
+  const { locale, fieldLocaleMap, loading: localeLoading, error: localeError } = useLocale();
+  const fieldLocale = locale ? fieldLocaleMap?.[fieldId] : undefined;
 
   const filePath = schemaRepoPath("field", fieldId);
   const githubUrl = githubFileUrl(dataUrl, filePath);
@@ -91,14 +86,27 @@ function FieldDetailContent({
   const type = typeof raw.type === "string" ? raw.type : "unknown";
   const geometry = Array.isArray(raw.geometry) ? (raw.geometry as string[]) : [];
 
-  const onFilterPresets = () => {
+  const onFilterPrimaryPresets = () => {
     void navigate({
       to: "/",
       search: (prev) => ({
         ...presetSearchDefaults,
         dataUrl: prev.dataUrl ?? "",
         locale: prev.locale ?? "",
-        fieldIds: [fieldId],
+        primaryFieldIds: [fieldId],
+        page: 1,
+      }),
+    });
+  };
+
+  const onFilterMorePresets = () => {
+    void navigate({
+      to: "/",
+      search: (prev) => ({
+        ...presetSearchDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+        moreFieldIds: [fieldId],
         page: 1,
       }),
     });
@@ -179,11 +187,11 @@ function FieldDetailContent({
         }
         defaultOpen
       >
-        {locale && (localeLoading || fieldLocaleLoading) ? (
+        {locale && localeLoading ? (
           <p className="px-4 py-3 text-sm text-slate-500">Loading {locale}…</p>
-        ) : locale && (localeError || fieldLocaleError) ? (
+        ) : locale && localeError ? (
           <p className="mx-4 my-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            {localeError ?? fieldLocaleError}
+            {localeError}
           </p>
         ) : (
           <FieldTranslationTable
@@ -220,14 +228,14 @@ function FieldDetailContent({
           <RelatedBlock
             title="Presets with this field (primary)"
             count={primaryPresets.length}
-            onTitleClick={onFilterPresets}
+            onTitleClick={onFilterPrimaryPresets}
             presets={primaryPresets.map(toItem)}
             onOpenPreset={setPreset}
           />
           <RelatedBlock
             title="Presets with this field (more fields)"
             count={morePresets.length}
-            onTitleClick={onFilterPresets}
+            onTitleClick={onFilterMorePresets}
             presets={morePresets.map(toItem)}
             onOpenPreset={setPreset}
           />

@@ -5,6 +5,8 @@ export type PresetFilterUpdate = Partial<
     SearchState,
     | "categoryNames"
     | "fieldIds"
+    | "primaryFieldIds"
+    | "moreFieldIds"
     | "iconName"
     | "primaryTagKey"
     | "geometry"
