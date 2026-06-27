@@ -9,6 +9,23 @@ import { useMemo, useState } from "react";
 const EXAMPLE_PREVIEW =
   "https://pr-2276--ideditor-presets-preview.netlify.app/id/dist/#locale=en&map=18.00/48.84/2.58";
 
+function ColorDot({ halo, dot }: { halo: string; dot: string }) {
+  return (
+    <span className={`flex-none rounded-full p-1 ${halo}`}>
+      <span className={`block size-1.5 rounded-full ${dot}`} />
+    </span>
+  );
+}
+
+function ColorLegendItem({ halo, dot, text }: { halo: string; dot: string; text: string }) {
+  return (
+    <li className="flex items-center gap-x-2">
+      <ColorDot halo={halo} dot={dot} />
+      <span className="text-sm text-slate-600">{text}</span>
+    </li>
+  );
+}
+
 /** Paste any id-tagging-schema preview URL → get the correct `dataUrl` base, with a way to test + load it. */
 function DataUrlGenerator() {
   const [input, setInput] = useState("");
@@ -121,15 +138,33 @@ export function PageAbout() {
       </p>
       <DataUrlGenerator />
       <h2>Area colors</h2>
-      <p>
-        Each browsing area has its own accent color in the nav, page headings, links, and buttons:{" "}
-        <span className="font-medium text-rose-600">rose</span> for Presets,{" "}
-        <span className="font-medium text-sky-600">sky</span> for Icons,{" "}
-        <span className="font-medium text-emerald-600">emerald</span> for Fields, and{" "}
-        <span className="font-medium text-yellow-600">yellow</span> for Translations. The logo uses{" "}
-        <span className="font-medium text-mist-600">mist</span>. Outbound links (GitHub, test URLs)
-        use <span className="font-medium text-mauve-600">mauve</span>.
-      </p>
+      <div className="not-prose space-y-2">
+        <p className="text-sm text-slate-600">
+          Each browsing area has its own accent color in the nav, page headings, links, and buttons:
+        </p>
+        <ul className="space-y-1.5">
+          <ColorLegendItem halo="bg-rose-500/20" dot="bg-rose-500" text="rose for Presets" />
+          <ColorLegendItem halo="bg-sky-500/20" dot="bg-sky-500" text="sky for Icons" />
+          <ColorLegendItem
+            halo="bg-emerald-500/20"
+            dot="bg-emerald-500"
+            text="emerald for Fields"
+          />
+          <ColorLegendItem
+            halo="bg-yellow-500/20"
+            dot="bg-yellow-500"
+            text="yellow for Translations"
+          />
+        </ul>
+        <ul className="space-y-1.5 pt-1">
+          <ColorLegendItem halo="bg-mist-500/20" dot="bg-mist-500" text="mist for the logo" />
+          <ColorLegendItem
+            halo="bg-mauve-500/20"
+            dot="bg-mauve-500"
+            text="mauve for outbound links (GitHub, test URLs)"
+          />
+        </ul>
+      </div>
       <h2>Spotting non-release data</h2>
       <p>
         Whenever you load a custom build,{" "}
