@@ -1,8 +1,9 @@
-import type { DenormalizedPreset, IconViewModel } from "@/utils/types";
+import { collectOptionIconUsages } from "@/utils/fieldOptions";
+import type { DenormalizedPreset, IconViewModel, RawFields } from "@/utils/types";
 import { useEffect, useMemo, useState } from "react";
 import { areAllIconSuppliersLoaded, ensureAllIconSuppliers, getIconRegistry } from "./iconRegistry";
 
-export function useIconSearch(presets: DenormalizedPreset[]) {
+export function useIconSearch(presets: DenormalizedPreset[], fields: RawFields) {
   const [suppliersReady, setSuppliersReady] = useState(areAllIconSuppliersLoaded());
 
   useEffect(() => {
@@ -20,33 +21,43 @@ export function useIconSearch(presets: DenormalizedPreset[]) {
     const registry = getIconRegistry();
     // Recompute when icon suppliers finish loading into the shared registry map.
     void suppliersReady;
-    const usage = new Map<string, DenormalizedPreset[]>();
+    const presetUsage = new Map<string, DenormalizedPreset[]>();
+    const optionUsage = collectOptionIconUsages(fields, presets);
 
     for (const preset of presets) {
       if (!preset.icon) continue;
-      const list = usage.get(preset.icon) ?? [];
+      const list = presetUsage.get(preset.icon) ?? [];
       list.push(preset);
-      usage.set(preset.icon, list);
+      presetUsage.set(preset.icon, list);
     }
 
-    // Include icons used by presets even if not found in local package assets.
-    for (const iconName of usage.keys()) {
+    const referenced = new Set([...presetUsage.keys(), ...optionUsage.keys()]);
+    for (const iconName of referenced) {
       if (!registry.has(iconName)) {
         const prefix = iconName.split("-")[0] ?? "unknown";
         registry.set(iconName, { name: iconName, prefix });
       }
     }
 
-    const icons: IconViewModel[] = Array.from(registry.values()).map((entry) => ({
-      ...entry,
-      usageCount: usage.get(entry.name)?.length ?? 0,
-      presets: usage.get(entry.name) ?? [],
-    }));
+    const icons: IconViewModel[] = Array.from(registry.values()).map((entry) => {
+      const presetsForIcon = presetUsage.get(entry.name) ?? [];
+      const optionsForIcon = optionUsage.get(entry.name) ?? [];
+      const presetUsageCount = presetsForIcon.length;
+      const optionUsageCount = optionsForIcon.length;
+      return {
+        ...entry,
+        presetUsageCount,
+        optionUsageCount,
+        usageCount: presetUsageCount + optionUsageCount,
+        presets: presetsForIcon,
+        optionUsages: optionsForIcon,
+      };
+    });
 
     const prefixes = Array.from(new Set(icons.map((i) => i.prefix))).sort((a, b) =>
       a.localeCompare(b),
     );
 
     return { icons, prefixes };
-  }, [presets, suppliersReady]);
+  }, [presets, fields, suppliersReady]);
 }

@@ -7,6 +7,7 @@ import {
   useSetPreset,
 } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
+import { AreaIcon } from "@/components/ui/areaIcons";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import type { DenormalizedPreset } from "@/utils/types";
@@ -85,6 +86,7 @@ export function PageTranslations() {
     <div className="space-y-4">
       <div className="space-y-2">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+          <AreaIcon area="translations" className="h-7 w-7 text-violet-600" />
           Translations <CountPill className="text-sm">{rows.length}</CountPill>
         </h1>
         <p className="text-sm text-slate-500">

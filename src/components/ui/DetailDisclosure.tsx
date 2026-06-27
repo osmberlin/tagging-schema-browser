@@ -1,3 +1,4 @@
+import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
 import { clsx } from "clsx";
 import { type ReactNode, useState } from "react";
 
@@ -26,6 +27,7 @@ function DisclosureChevron({ open }: { open: boolean }) {
 
 export function DetailDisclosure({
   title,
+  area,
   subtitle,
   actions,
   defaultOpen = false,
@@ -33,6 +35,7 @@ export function DetailDisclosure({
   className,
 }: {
   title: string;
+  area?: SchemaArea;
   subtitle?: ReactNode;
   actions?: ReactNode;
   defaultOpen?: boolean;
@@ -55,7 +58,10 @@ export function DetailDisclosure({
       >
         <DisclosureChevron open={open} />
         <span className="min-w-0 flex-1">
-          <span>{title}</span>
+          <span className="inline-flex items-center gap-1.5">
+            {area ? <AreaIcon area={area} className="h-3.5 w-3.5 shrink-0" /> : null}
+            <span>{title}</span>
+          </span>
           {subtitle ? <span className="ml-2 font-normal text-slate-400">{subtitle}</span> : null}
         </span>
         {actions ? (

@@ -7,9 +7,8 @@ import { z } from "zod";
 export const iconFacetSchema = z.object({
   i_q: z.string().catch(""),
   i_supplier: z.string().catch("all"),
-  i_usage: z.enum(["all", "used", "unused"]).catch("used"),
+  i_usage: z.enum(["all", "unused", "presets", "options", "any"]).catch("any"),
   i_hasSvg: z.enum(["all", "with", "missing"]).catch("all"),
-  // Default to most-used first — multi-usage icons are the focus.
   i_sort: z.enum(["name", "usage_desc", "usage_asc"]).catch("usage_desc"),
 });
 
@@ -19,9 +18,6 @@ export type IconFacetState = z.infer<typeof iconFacetSchema>;
 export const iconFacetDefaults: IconFacetState = iconFacetSchema.parse({});
 
 export function useIconFacetState() {
-  // Non-strict (the bar/sidebar render in the root layout, so a strict route
-  // match isn't guaranteed mid-navigation), and parsed through the schema so
-  // default-stripped params come back with their defaults.
   const state = useSearch({ strict: false, select: (raw) => iconFacetSchema.parse(raw) });
   const navigate = useNavigate();
   const setState = useCallback(
@@ -36,8 +32,20 @@ export function useIconFacetState() {
 export function applyIconFacets(icons: IconViewModel[], state: IconFacetState): IconViewModel[] {
   let filtered = icons;
 
-  if (state.i_usage === "used") filtered = filtered.filter((icon) => icon.usageCount > 0);
-  if (state.i_usage === "unused") filtered = filtered.filter((icon) => icon.usageCount === 0);
+  if (state.i_usage === "unused") {
+    filtered = filtered.filter(
+      (icon) => icon.presetUsageCount === 0 && icon.optionUsageCount === 0,
+    );
+  }
+  if (state.i_usage === "presets") {
+    filtered = filtered.filter((icon) => icon.presetUsageCount > 0);
+  }
+  if (state.i_usage === "options") {
+    filtered = filtered.filter((icon) => icon.optionUsageCount > 0);
+  }
+  if (state.i_usage === "any") {
+    filtered = filtered.filter((icon) => icon.presetUsageCount > 0 || icon.optionUsageCount > 0);
+  }
 
   if (state.i_hasSvg === "with") filtered = filtered.filter((icon) => Boolean(icon.svgRaw));
   if (state.i_hasSvg === "missing") filtered = filtered.filter((icon) => !icon.svgRaw);
@@ -66,22 +74,28 @@ export function useIconFacetMeta(icons: IconViewModel[]) {
     const supplierCounts = new Map<string, number>();
     let withSvg = 0;
     let missingSvg = 0;
-    let usedCount = 0;
+    let presetsCount = 0;
+    let optionsCount = 0;
+    let anyCount = 0;
     let unusedCount = 0;
 
     for (const icon of icons) {
       supplierCounts.set(icon.prefix, (supplierCounts.get(icon.prefix) ?? 0) + 1);
       if (icon.svgRaw) withSvg += 1;
       else missingSvg += 1;
-      if (icon.usageCount > 0) usedCount += 1;
-      else unusedCount += 1;
+      if (icon.presetUsageCount > 0) presetsCount += 1;
+      if (icon.optionUsageCount > 0) optionsCount += 1;
+      if (icon.presetUsageCount > 0 || icon.optionUsageCount > 0) anyCount += 1;
+      if (icon.presetUsageCount === 0 && icon.optionUsageCount === 0) unusedCount += 1;
     }
 
     return {
       supplierCounts,
       withSvg,
       missingSvg,
-      usedCount,
+      presetsCount,
+      optionsCount,
+      anyCount,
       unusedCount,
     };
   }, [icons]);

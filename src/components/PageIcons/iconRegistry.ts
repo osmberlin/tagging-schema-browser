@@ -154,10 +154,23 @@ export function getIconRegistry(): Map<string, IconRegistryEntry> {
   return registryCache;
 }
 
-/** True when a preset references an icon name that is not in the bundled icon library. */
+/** True when an icon name is not in the bundled icon library. */
 export function isPresetIconBroken(iconName?: string): boolean {
   if (!iconName) return false;
   return getIconSvgDataUrl(iconName) === null;
+}
+
+/**
+ * True only after the icon's supplier has loaded and the name has no SVG asset.
+ * Avoids false positives while supplier chunks are still loading (option icons on Presets).
+ */
+export function isIconSvgConfirmedMissing(iconName?: string): boolean {
+  if (!iconName) return false;
+  const canonical = resolvePresetIconName(iconName);
+  const supplier = iconSupplierFromName(canonical);
+  if (!supplier || !loadedSuppliers.has(supplier)) return false;
+  const entry = registryCache.get(canonical);
+  return !entry?.svgRaw;
 }
 
 export function getIconSvgDataUrl(iconName?: string): string | null {

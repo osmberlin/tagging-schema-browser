@@ -1,7 +1,10 @@
-import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
+import { getIconSvgDataUrl, isIconSvgConfirmedMissing } from "@/components/PageIcons/iconRegistry";
 import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
+import { AreaLink } from "@/components/ui/AreaLink";
+import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { getPresetOptionIconNames } from "@/utils/fieldOptions";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 import { type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
@@ -52,7 +55,6 @@ function renderCellContent(row: Row, preset: DenormalizedPreset) {
   return content;
 }
 
-/** "Expand / open modal" affordance shown on the column headers. */
 function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" {...props}>
@@ -66,6 +68,30 @@ function ExpandIcon(props: React.ComponentPropsWithoutRef<"svg">) {
   );
 }
 
+function IconNameCell({ iconName, broken }: { iconName: string; broken: boolean }) {
+  const src = getIconSvgDataUrl(iconName);
+  return (
+    <span className="flex min-w-0 items-center gap-1.5">
+      {src ? (
+        <img src={src} alt="" className="h-5 w-5 shrink-0" />
+      ) : broken ? (
+        <span
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
+          title="Missing icon asset"
+        >
+          !
+        </span>
+      ) : null}
+      <span
+        className={clsx("min-w-0 truncate font-mono text-xs", broken && "font-medium text-red-700")}
+        title={iconName}
+      >
+        {iconName}
+      </span>
+    </span>
+  );
+}
+
 function uniqueSorted(values: string[]): string[] {
   return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
 }
@@ -76,8 +102,9 @@ type CellLink = {
 };
 
 type Row = {
-  label: string;
-  /** Tooltip for the row label (explains the dimension). */
+  label: ReactNode;
+  /** Stable key for table rows (defaults to string label when omitted). */
+  rowKey?: string;
   labelTitle?: string;
   mono?: boolean;
   /** Truncate overflowing text with ellipsis; pair with `title` for the full value. */
@@ -87,16 +114,14 @@ type Row = {
   /** Break long unbroken strings (e.g. URLs) across lines inside the fixed column. */
   wrap?: boolean;
   render: (p: DenormalizedPreset) => ReactNode;
-  /** Native tooltip for the value cell. */
   title?: (p: DenormalizedPreset) => string | undefined;
-  /** Cells where this returns true get a subtle highlight background. */
   highlight?: (p: DenormalizedPreset) => boolean;
   /** Tailwind background class when `highlight` is true (default `bg-sky-50/70`). */
   highlightClass?: string;
-  /** Turns the cell into a click-through that filters presets (with a `›` affordance). */
+  errorHighlight?: (p: DenormalizedPreset) => boolean;
   link?: (p: DenormalizedPreset) => CellLink | null;
 };
-type Section = { title: string; rows: Row[] };
+type Section = { title: string; area?: SchemaArea; rows: Row[] };
 
 function ColumnSpacer({ width, as: Tag = "th" }: { width: number; as?: "th" | "td" }) {
   if (width <= 0) return null;
@@ -187,7 +212,8 @@ function PresetValueCell({
   row: Row;
 }) {
   const cellLink = row.link?.(preset);
-  const highlighted = row.highlight?.(preset);
+  const errorHighlighted = row.errorHighlight?.(preset);
+  const infoHighlighted = !errorHighlighted && row.highlight?.(preset);
   const highlightClass = row.highlightClass ?? "bg-sky-50/70";
 
   return (
@@ -197,7 +223,11 @@ function PresetValueCell({
         "overflow-hidden border-r border-b border-slate-100 align-top text-slate-700",
         row.mono && "font-mono text-xs",
         row.link ? "h-0 p-0" : "px-3 py-1.5",
-        highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
+        errorHighlighted
+          ? "bg-red-50/70"
+          : infoHighlighted
+            ? highlightClass
+            : !row.link && "group-hover:bg-slate-50",
       )}
       style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
     >
@@ -207,7 +237,10 @@ function PresetValueCell({
             to="/"
             search={cellLink.search as never}
             title={cellLink.title}
-            className="group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition hover:bg-sky-50"
+            className={clsx(
+              "group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition hover:bg-sky-50",
+              errorHighlighted && "bg-red-50/70",
+            )}
           >
             <span className="min-w-0">{renderCellContent(row, preset)}</span>
             <span
@@ -218,7 +251,9 @@ function PresetValueCell({
             </span>
           </Link>
         ) : (
-          <span className="block h-full px-3 py-1.5">{renderCellContent(row, preset)}</span>
+          <span className={clsx("block h-full px-3 py-1.5", errorHighlighted && "bg-red-50/70")}>
+            {renderCellContent(row, preset)}
+          </span>
         )
       ) : (
         renderCellContent(row, preset)
@@ -234,8 +269,6 @@ export function PresetTable() {
   const setPreset = useSetPreset();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Usage count per icon across the whole schema — the Icon cell only becomes a
-  // click-through when more than one preset shares the icon (otherwise it's a no-op).
   const iconCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const p of data?.presets ?? []) {
@@ -246,6 +279,7 @@ export function PresetTable() {
 
   const sections = useMemo<Section[]>(() => {
     const presets = result?.data.items ?? [];
+    const fields = data?.fields ?? {};
     const tagKeys = uniqueSorted(presets.flatMap((p) => Object.keys(p.tags ?? {})));
     const fieldIds = uniqueSorted(presets.flatMap((p) => [...p.fields, ...p.moreFields]));
     return [
@@ -292,33 +326,11 @@ export function PresetTable() {
             label: "Icon",
             render: (p) => {
               if (!p.icon) return dash;
-              const src = getIconSvgDataUrl(p.icon);
-              return (
-                <span className="flex min-w-0 items-center gap-1.5">
-                  {src ? (
-                    <img src={src} alt="" className="h-5 w-5 shrink-0" />
-                  ) : p.iconBroken ? (
-                    <span
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
-                      title="Missing icon asset"
-                    >
-                      !
-                    </span>
-                  ) : null}
-                  <span
-                    className={clsx(
-                      "min-w-0 truncate font-mono text-xs",
-                      p.iconBroken && "font-medium text-red-700",
-                    )}
-                  >
-                    {p.icon}
-                  </span>
-                </span>
-              );
+              return <IconNameCell iconName={p.icon} broken={p.iconBroken} />;
             },
             title: (p) => p.icon ?? undefined,
             highlight: (p) => p.iconBroken,
-            highlightClass: "bg-red-50/70",
+            errorHighlight: (p) => p.iconBroken,
             link: (p) =>
               p.icon && (iconCounts.get(p.icon) ?? 0) > 1
                 ? {
@@ -331,6 +343,29 @@ export function PresetTable() {
                     title: "Show all presets of this icon",
                   }
                 : null,
+          },
+          {
+            label: <AreaLabel area="icons">Options icons</AreaLabel>,
+            labelTitle: "Icons used by field options on this preset",
+            render: (p) => {
+              const icons = getPresetOptionIconNames(p, fields);
+              if (icons.length === 0) return dash;
+              return (
+                <span className="flex flex-col gap-1">
+                  {icons.map((iconName) => (
+                    <IconNameCell
+                      key={iconName}
+                      iconName={iconName}
+                      broken={isIconSvgConfirmedMissing(iconName)}
+                    />
+                  ))}
+                </span>
+              );
+            },
+            highlight: (p) =>
+              getPresetOptionIconNames(p, fields).some((icon) => isIconSvgConfirmedMissing(icon)),
+            errorHighlight: (p) =>
+              getPresetOptionIconNames(p, fields).some((icon) => isIconSvgConfirmedMissing(icon)),
           },
           {
             label: "imageURL",
@@ -353,8 +388,21 @@ export function PresetTable() {
       },
       {
         title: `Fields (${fieldIds.length})`,
+        area: "fields",
         rows: fieldIds.map((f) => ({
-          label: f,
+          rowKey: f,
+          label: (
+            <AreaLink
+              area="fields"
+              to="/field/$"
+              params={{ _splat: f }}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+              className="font-mono text-xs no-underline hover:underline"
+              title={`Open field "${f}"`}
+            >
+              {f}
+            </AreaLink>
+          ),
           mono: true,
           highlight: (p) => p.fields.includes(f) || p.moreFields.includes(f),
           title: (p) =>
@@ -374,7 +422,7 @@ export function PresetTable() {
         })),
       },
     ];
-  }, [result, iconCounts]);
+  }, [result, iconCounts, data?.fields]);
 
   const presets = result?.data.items ?? [];
   const total = result?.data.total ?? 0;
@@ -446,7 +494,14 @@ export function PresetTable() {
               <Fragment key={section.title}>
                 <tr>
                   <th className="sticky left-0 z-10 border-r border-b border-slate-200 bg-slate-100 px-3 py-1 text-left font-display text-xs font-medium tracking-wide text-slate-600">
-                    {section.title}
+                    {section.area ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <AreaIcon area={section.area} className="h-3 w-3 shrink-0" />
+                        {section.title}
+                      </span>
+                    ) : (
+                      section.title
+                    )}
                   </th>
                   <th
                     colSpan={
@@ -457,7 +512,10 @@ export function PresetTable() {
                   />
                 </tr>
                 {section.rows.map((row) => (
-                  <tr key={row.label} className="group">
+                  <tr
+                    key={row.rowKey ?? (typeof row.label === "string" ? row.label : section.title)}
+                    className="group"
+                  >
                     <th
                       title={row.labelTitle}
                       className={clsx(

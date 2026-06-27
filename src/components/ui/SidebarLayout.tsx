@@ -1,3 +1,4 @@
+import { fieldFacetDefaults } from "@/components/PageFields/useFieldFacetState";
 import { iconFacetDefaults } from "@/components/PageIcons/useIconFacetState";
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { translationsSearchDefaults } from "@/components/PageTranslations/translationsSearch";
@@ -5,6 +6,7 @@ import { DataSourceBanner } from "@/components/ui/DataSourceBanner";
 import { Kbd } from "@/components/ui/Kbd";
 import { LanguagePicker } from "@/components/ui/LanguagePicker";
 import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
+import { AreaIcon } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useHotkey, useHotkeySequence } from "@tanstack/react-hotkeys";
@@ -28,6 +30,38 @@ function NavDivider() {
   return <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden />;
 }
 
+function NavLinkItem({
+  to,
+  active,
+  area,
+  label,
+  search,
+  onNavigate,
+  className,
+  title,
+  children,
+}: {
+  to: string;
+  active: boolean;
+  area: "presets" | "icons" | "fields" | "translations" | "about";
+  label: string;
+  search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>;
+  onNavigate?: () => void;
+  className: (active: boolean) => string;
+  title?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Link to={to} search={search} onClick={onNavigate} className={className(active)} title={title}>
+      {area !== "about" ? (
+        <AreaIcon area={area} className="mr-1.5 inline h-3.5 w-3.5 align-[-2px]" />
+      ) : null}
+      {label}
+      {children}
+    </Link>
+  );
+}
+
 // Reset each page's own params to defaults on navigation, but keep `dataUrl`.
 function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
@@ -37,42 +71,58 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
     : null;
   return (
     <>
-      <Link
+      <NavLinkItem
         to="/"
+        active={pathname === "/"}
+        area="presets"
+        label="Presets"
         search={(prev) => ({
           ...presetSearchDefaults,
           dataUrl: prev.dataUrl ?? "",
           locale: prev.locale ?? "",
         })}
-        onClick={onNavigate}
-        className={navLinkClass(pathname === "/")}
-      >
-        Presets
-      </Link>
-      <Link
+        onNavigate={onNavigate}
+        className={navLinkClass}
+      />
+      <NavLinkItem
         to="/icons"
+        active={pathname === "/icons"}
+        area="icons"
+        label="Icons"
         search={(prev) => ({
           ...iconFacetDefaults,
           dataUrl: prev.dataUrl ?? "",
           locale: prev.locale ?? "",
         })}
-        onClick={onNavigate}
-        className={navLinkClass(pathname === "/icons")}
-      >
-        Icons
-      </Link>
-      <Link
+        onNavigate={onNavigate}
+        className={navLinkClass}
+      />
+      <NavLinkItem
+        to="/fields"
+        active={pathname === "/fields" || pathname.startsWith("/field/")}
+        area="fields"
+        label="Fields"
+        search={(prev) => ({
+          ...fieldFacetDefaults,
+          dataUrl: prev.dataUrl ?? "",
+          locale: prev.locale ?? "",
+        })}
+        onNavigate={onNavigate}
+        className={navLinkClass}
+      />
+      <NavLinkItem
         to="/translations"
+        active={pathname === "/translations"}
+        area="translations"
+        label="Translations"
         search={(prev) => ({
           ...translationsSearchDefaults,
           dataUrl: prev.dataUrl ?? "",
           locale: prev.locale ?? "",
         })}
-        onClick={onNavigate}
-        className={navLinkClass(pathname === "/translations")}
-      >
-        Translations
-      </Link>
+        onNavigate={onNavigate}
+        className={navLinkClass}
+      />
       {!isRelease ? (
         <Link
           to="/comparison"
@@ -167,6 +217,7 @@ export function SidebarLayout({
   const showSidebar =
     location.pathname === "/" ||
     location.pathname === "/icons" ||
+    location.pathname === "/fields" ||
     location.pathname === "/translations";
 
   const focusSearch = () => {
@@ -195,6 +246,16 @@ export function SidebarLayout({
       to: "/icons",
       search: (prev) => ({
         ...iconFacetDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
+    }),
+  );
+  useHotkeySequence(["G", "F"], () =>
+    navigate({
+      to: "/fields",
+      search: (prev) => ({
+        ...fieldFacetDefaults,
         dataUrl: prev.dataUrl ?? "",
         locale: prev.locale ?? "",
       }),

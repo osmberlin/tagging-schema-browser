@@ -6,6 +6,7 @@ import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
 import { presetSearchDefaults, useSetPreset } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
 import { DetailDisclosure } from "@/components/ui/DetailDisclosure";
+import { AreaIcon } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
@@ -159,6 +160,7 @@ function PresetDetailContent({
 
       <DetailDisclosure
         title="Translation"
+        area="translations"
         subtitle={
           locale ? (
             <>
@@ -202,7 +204,14 @@ function PresetDetailContent({
         }
         defaultOpen
       >
-        <PresetSourceTree key={preset.id} presetId={preset.id} raw={raw} />
+        <PresetSourceTree
+          key={preset.id}
+          presetId={preset.id}
+          raw={raw}
+          preset={preset}
+          presets={presets}
+          onOpenPreset={setPreset}
+        />
       </DetailDisclosure>
 
       {changeStatus === "added" || changeStatus === "modified" ? (
@@ -234,7 +243,7 @@ function PresetDetailContent({
         </DetailDisclosure>
       ) : null}
 
-      <DetailDisclosure title="Related presets">
+      <DetailDisclosure title="Related presets" area="presets">
         <div className="grid gap-4 p-4 sm:grid-cols-2">
           {categorySections.map((section) => (
             <RelatedBlock
@@ -262,6 +271,7 @@ function PresetDetailContent({
               onTitleClick={() => onApplyFilter({ iconName: [iconId] })}
               presets={iconRelated}
               onOpenPreset={setPreset}
+              area="icons"
             />
           ) : null}
         </div>
@@ -276,18 +286,25 @@ function RelatedBlock({
   onTitleClick,
   presets,
   onOpenPreset,
+  area = "presets",
 }: {
   title: string;
   count: number;
   onTitleClick: () => void;
   presets: RelatedItem[];
   onOpenPreset: (id: string) => void;
+  area?: "presets" | "icons";
 }) {
   return (
     <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
       <h2 className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-900">
-        <button type="button" onClick={onTitleClick} className="min-w-0 text-left hover:underline">
-          {title}
+        <button
+          type="button"
+          onClick={onTitleClick}
+          className="inline-flex min-w-0 items-center gap-1.5 text-left hover:underline"
+        >
+          <AreaIcon area={area} className="h-3.5 w-3.5 shrink-0" />
+          <span className="min-w-0">{title}</span>
         </button>
         <CountPill>{count}</CountPill>
       </h2>
