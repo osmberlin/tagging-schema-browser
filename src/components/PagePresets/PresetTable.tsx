@@ -4,17 +4,13 @@ import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
+import { type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
 import { clsx } from "clsx";
-import { Fragment, type ReactNode, useMemo } from "react";
-import { searchPresets } from "./presetSearch";
-import {
-  filtersFromState,
-  presetSearchDefaults,
-  useSearchState,
-  useSetPreset,
-} from "./useSearchState";
+import { Fragment, type ReactNode, useMemo, useRef } from "react";
+import { usePresetSearch } from "./usePresetSearch";
+import { presetSearchDefaults, useSetPreset } from "./useSearchState";
 
-const MAX_COLUMNS = 25;
+const COLUMN_WIDTH = 160;
 
 const dash = <span className="text-slate-300">—</span>;
 
@@ -60,22 +56,143 @@ type Row = {
 };
 type Section = { title: string; rows: Row[] };
 
+function ColumnSpacer({ width, as: Tag = "th" }: { width: number; as?: "th" | "td" }) {
+  if (width <= 0) return null;
+  return (
+    <Tag aria-hidden className="border-0 p-0" style={{ width, minWidth: width, maxWidth: width }} />
+  );
+}
+
+function VirtualizedPresetColumns({
+  presets,
+  virtualColumns,
+  paddingLeft,
+  paddingRight,
+  renderColumn,
+  spacerAs = "th",
+}: {
+  presets: DenormalizedPreset[];
+  virtualColumns: VirtualItem[];
+  paddingLeft: number;
+  paddingRight: number;
+  renderColumn: (preset: DenormalizedPreset, index: number) => ReactNode;
+  spacerAs?: "th" | "td";
+}) {
+  return (
+    <>
+      <ColumnSpacer width={paddingLeft} as={spacerAs} />
+      {virtualColumns.map((virtualColumn) => {
+        const preset = presets[virtualColumn.index];
+        if (!preset) return null;
+        return <Fragment key={preset.id}>{renderColumn(preset, virtualColumn.index)}</Fragment>;
+      })}
+      <ColumnSpacer width={paddingRight} as={spacerAs} />
+    </>
+  );
+}
+function PresetHeaderCell({
+  preset,
+  changed,
+  status,
+  onOpen,
+}: {
+  preset: DenormalizedPreset;
+  changed: boolean;
+  status: string | undefined;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <th
+      className="sticky top-0 z-20 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
+      style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
+    >
+      <button
+        type="button"
+        onClick={() => onOpen(preset.id)}
+        className="group/col relative block h-full w-full px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
+        title="Show details of preset"
+      >
+        <span className="flex max-w-50 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
+          {changed ? (
+            <span
+              className="h-2 w-2 shrink-0 rounded-full bg-violet-500"
+              title={status === "added" ? "Added vs release" : "Modified vs release"}
+            />
+          ) : null}
+          <span className="truncate">{preset.name}</span>
+        </span>
+        <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
+          {preset.id}
+        </span>
+        <span
+          aria-hidden
+          className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/col:bg-sky-100 group-hover/col:text-sky-700"
+          title="Open modal"
+        >
+          <ExpandIcon className="h-3 w-3" />
+        </span>
+      </button>
+    </th>
+  );
+}
+
+function PresetValueCell({
+  preset,
+  row,
+}: {
+  preset: DenormalizedPreset;
+  row: Row;
+}) {
+  const cellLink = row.link?.(preset);
+  const highlighted = row.highlight?.(preset);
+  const highlightClass = row.highlightClass ?? "bg-sky-50/70";
+
+  return (
+    <td
+      title={row.link ? undefined : row.title?.(preset)}
+      className={clsx(
+        "border-r border-b border-slate-100 align-top text-slate-700",
+        row.mono && "font-mono text-xs",
+        row.link ? "h-0 p-0" : "px-3 py-1.5",
+        row.truncate && "overflow-hidden",
+        highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
+      )}
+      style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
+    >
+      {row.link ? (
+        cellLink ? (
+          <Link
+            to="/"
+            search={cellLink.search as never}
+            title={cellLink.title}
+            className="group/ac relative flex h-full items-start px-3 py-1.5 pr-8 transition hover:bg-sky-50"
+          >
+            <span className="min-w-0">{row.render(preset)}</span>
+            <span
+              aria-hidden
+              className="absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
+            >
+              ›
+            </span>
+          </Link>
+        ) : (
+          <span className="block h-full px-3 py-1.5">{row.render(preset)}</span>
+        )
+      ) : row.truncate ? (
+        <span className="block max-w-40 truncate">{row.render(preset)}</span>
+      ) : (
+        row.render(preset)
+      )}
+    </td>
+  );
+}
+
 export function PresetTable() {
   const { data } = useSchema();
   const { result: comparison } = useComparison();
-  const [state] = useSearchState();
+  const result = usePresetSearch();
   const setPreset = useSetPreset();
-
-  const result = useMemo(() => {
-    if (!data) return null;
-    return searchPresets({
-      query: state.q,
-      filters: filtersFromState(state),
-      page: 1,
-      per_page: MAX_COLUMNS,
-      sort: state.sort,
-    });
-  }, [data, state]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Usage count per icon across the whole schema — the Icon cell only becomes a
   // click-through when more than one preset shares the icon (otherwise it's a no-op).
@@ -213,9 +330,24 @@ export function PresetTable() {
     ];
   }, [result, iconCounts]);
 
+  const presets = result?.data.items ?? [];
+  const total = result?.data.total ?? 0;
+  const truncated = total > presets.length;
+
+  const columnVirtualizer = useVirtualizer({
+    count: presets.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => COLUMN_WIDTH,
+    horizontal: true,
+    overscan: 3,
+  });
+
+  const virtualColumns = columnVirtualizer.getVirtualItems();
+  const totalColumnWidth = columnVirtualizer.getTotalSize();
+  const paddingLeft = virtualColumns[0]?.start ?? 0;
+  const paddingRight = totalColumnWidth - (virtualColumns.at(-1)?.end ?? 0);
+
   if (!result) return null;
-  const presets = result.data.items;
-  const total = result.data.total;
 
   if (presets.length === 0) {
     return (
@@ -227,68 +359,56 @@ export function PresetTable() {
 
   return (
     <div className="space-y-3">
-      {total > MAX_COLUMNS ? (
+      {truncated ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Comparing the first <strong>{MAX_COLUMNS}</strong> of <strong>{total}</strong> presets —
-          add filters to narrow the comparison.
+          Showing the first <strong>{presets.length}</strong> of <strong>{total}</strong> matching
+          presets — add filters to narrow the comparison.
         </p>
       ) : null}
-      <div className="relative max-h-[calc(100svh-13rem)] overflow-auto rounded-xl border border-slate-200">
+      <div
+        ref={scrollRef}
+        className="relative max-h-[calc(100svh-13rem)] overflow-auto rounded-xl border border-slate-200"
+      >
         <table className="border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
               <th className="sticky top-0 left-0 z-30 border-r border-b border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-500">
                 Property
               </th>
-              {presets.map((p) => {
-                const status = comparison?.statusById.get(p.id);
-                const changed = status === "added" || status === "modified";
-                return (
-                  <th
-                    key={p.id}
-                    className="sticky top-0 z-20 min-w-40 border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setPreset(p.id)}
-                      className="group/col relative block h-full w-full px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
-                      title="Show details of preset"
-                    >
-                      <span className="flex max-w-50 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
-                        {changed ? (
-                          <span
-                            className="h-2 w-2 shrink-0 rounded-full bg-violet-500"
-                            title={status === "added" ? "Added vs release" : "Modified vs release"}
-                          />
-                        ) : null}
-                        <span className="truncate">{p.name}</span>
-                      </span>
-                      <span className="block max-w-50 truncate font-mono text-[11px] text-slate-400">
-                        {p.id}
-                      </span>
-                      <span
-                        aria-hidden
-                        className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/col:bg-sky-100 group-hover/col:text-sky-700"
-                        title="Open modal"
-                      >
-                        <ExpandIcon className="h-3 w-3" />
-                      </span>
-                    </button>
-                  </th>
-                );
-              })}
+              <VirtualizedPresetColumns
+                presets={presets}
+                virtualColumns={virtualColumns}
+                paddingLeft={paddingLeft}
+                paddingRight={paddingRight}
+                renderColumn={(preset) => {
+                  const status = comparison?.statusById.get(preset.id);
+                  const changed = status === "added" || status === "modified";
+                  return (
+                    <PresetHeaderCell
+                      preset={preset}
+                      changed={changed}
+                      status={status}
+                      onOpen={setPreset}
+                    />
+                  );
+                }}
+              />
             </tr>
           </thead>
           <tbody>
             {sections.map((section) => (
               <Fragment key={section.title}>
                 <tr>
-                  <th
-                    colSpan={presets.length + 1}
-                    className="border-b border-slate-200 bg-slate-100 px-3 py-1 text-left font-display text-xs font-medium tracking-wide text-slate-600"
-                  >
+                  <th className="sticky left-0 z-10 border-r border-b border-slate-200 bg-slate-100 px-3 py-1 text-left font-display text-xs font-medium tracking-wide text-slate-600">
                     {section.title}
                   </th>
+                  <th
+                    colSpan={
+                      virtualColumns.length + (paddingLeft > 0 ? 1 : 0) + (paddingRight > 0 ? 1 : 0)
+                    }
+                    className="border-b border-slate-200 bg-slate-100 px-0 py-1"
+                    style={{ width: totalColumnWidth, minWidth: totalColumnWidth }}
+                  />
                 </tr>
                 {section.rows.map((row) => (
                   <tr key={row.label} className="group">
@@ -301,51 +421,14 @@ export function PresetTable() {
                     >
                       {row.label}
                     </th>
-                    {presets.map((p) => {
-                      const cellLink = row.link?.(p);
-                      const highlighted = row.highlight?.(p);
-                      const highlightClass = row.highlightClass ?? "bg-sky-50/70";
-                      return (
-                        <td
-                          key={p.id}
-                          title={row.link ? undefined : row.title?.(p)}
-                          className={clsx(
-                            "border-r border-b border-slate-100 align-top text-slate-700",
-                            row.mono && "font-mono text-xs",
-                            // h-0 lets the link/span child resolve `h-full` against the row
-                            // height (table-cell percentage-height quirk) so the hover fills.
-                            row.link ? "h-0 p-0" : "px-3 py-1.5",
-                            row.truncate && "overflow-hidden",
-                            highlighted ? highlightClass : !row.link && "group-hover:bg-slate-50",
-                          )}
-                        >
-                          {row.link ? (
-                            cellLink ? (
-                              <Link
-                                to="/"
-                                search={cellLink.search as never}
-                                title={cellLink.title}
-                                className="group/ac relative flex h-full items-start px-3 py-1.5 pr-8 transition hover:bg-sky-50"
-                              >
-                                <span className="min-w-0">{row.render(p)}</span>
-                                <span
-                                  aria-hidden
-                                  className="absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
-                                >
-                                  ›
-                                </span>
-                              </Link>
-                            ) : (
-                              <span className="block h-full px-3 py-1.5">{row.render(p)}</span>
-                            )
-                          ) : row.truncate ? (
-                            <span className="block max-w-40 truncate">{row.render(p)}</span>
-                          ) : (
-                            row.render(p)
-                          )}
-                        </td>
-                      );
-                    })}
+                    <VirtualizedPresetColumns
+                      presets={presets}
+                      virtualColumns={virtualColumns}
+                      paddingLeft={paddingLeft}
+                      paddingRight={paddingRight}
+                      spacerAs="td"
+                      renderColumn={(preset) => <PresetValueCell preset={preset} row={row} />}
+                    />
                   </tr>
                 ))}
               </Fragment>

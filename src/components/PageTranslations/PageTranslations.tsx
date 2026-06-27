@@ -1,6 +1,6 @@
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslationTable";
-import { searchPresets } from "@/components/PagePresets/presetSearch";
+import { PRESET_SEARCH_ALL, searchPresets } from "@/components/PagePresets/presetSearch";
 import {
   filtersFromState,
   useSearchState,
@@ -28,7 +28,13 @@ export function PageTranslations() {
   // query ourselves so it can match the locale's content too (bilingual search).
   const matched = useMemo(() => {
     if (!data) return [] as DenormalizedPreset[];
-    const res = searchPresets({ query: "", filters, page: 1, per_page: 100000, sort: state.sort });
+    const res = searchPresets({
+      query: "",
+      filters,
+      page: 1,
+      per_page: PRESET_SEARCH_ALL,
+      sort: state.sort,
+    });
     return (res?.data.items ?? []).filter((p) => p.name && p.searchable !== false);
   }, [data, filters, state.sort]);
 

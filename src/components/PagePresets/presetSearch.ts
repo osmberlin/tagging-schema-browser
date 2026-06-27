@@ -48,6 +48,9 @@ export type PresetSearchResult = {
   aggregations: Record<string, { buckets: { key: string; doc_count: number }[] }>;
 };
 
+/** Upper bound for itemsjs `per_page` — well above any real schema size. */
+export const PRESET_SEARCH_ALL = 100_000;
+
 let engine: ReturnType<typeof itemsjs> | null = null;
 
 export function buildPresetSearchIndex(presets: DenormalizedPreset[]): void {

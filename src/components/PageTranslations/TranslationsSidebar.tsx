@@ -1,5 +1,5 @@
 import { FacetSidebar } from "@/components/PagePresets/FacetSidebar";
-import { searchPresets } from "@/components/PagePresets/presetSearch";
+import { PRESET_SEARCH_ALL, searchPresets } from "@/components/PagePresets/presetSearch";
 import { filtersFromState, useSearchState } from "@/components/PagePresets/useSearchState";
 import { SidebarSection } from "@/components/ui/Sidebar";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -58,7 +58,7 @@ export function TranslationsSidebar() {
       query: "",
       filters: filtersFromState(state),
       page: 1,
-      per_page: 100000,
+      per_page: PRESET_SEARCH_ALL,
       sort: state.sort,
     });
     const matched = (res?.data.items ?? []).filter((p) => p.name && p.searchable !== false);
