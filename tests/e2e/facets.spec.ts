@@ -73,9 +73,7 @@ test("preset ref in moreFields inherits moreFields from parent preset", async ({
 test("preset source JSON sorts keys in a stable discoverable order", async ({ page }) => {
   await page.goto("/preset/shop/ice_cream?dataUrl=/test-schema");
 
-  const sourceText = await page
-    .locator(".overflow-x-auto.bg-slate-50.font-mono")
-    .innerText();
+  const sourceText = await page.locator(".overflow-x-auto.bg-slate-50.font-mono").innerText();
 
   const orderedKeys = ["name", "icon", "tags", "geometry", "fields", "searchable"];
   let lastIndex = -1;

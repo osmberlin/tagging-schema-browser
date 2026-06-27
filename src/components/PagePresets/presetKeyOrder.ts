@@ -65,7 +65,9 @@ export function sortObjectEntries(
     return sortByOrder(entries, nestedOrder);
   }
 
-  if (sortMode === "preset") {
+  // Preset key order applies only to the preset root (and expanded preset refs),
+  // not to arbitrary nested objects that happen to share property names.
+  if (sortMode === "preset" && parentKey === undefined) {
     return sortByOrder(entries, PRESET_KEY_ORDER);
   }
 
