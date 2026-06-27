@@ -24,14 +24,22 @@ function CellOverflow({
   children,
   truncate,
   wrap,
+  breakText,
 }: {
   children: ReactNode;
   truncate?: boolean;
   wrap?: boolean;
+  /** Line break + hyphenation inside the fixed column (instead of ellipsis). */
+  breakText?: boolean;
 }) {
   return (
     <span
-      className={clsx("block min-w-0", truncate && "truncate", wrap && "break-all")}
+      className={clsx(
+        "block min-w-0",
+        truncate && "truncate",
+        wrap && "break-all",
+        breakText && "break-words hyphens-auto",
+      )}
     >
       {children}
     </span>
@@ -68,6 +76,8 @@ type Row = {
   mono?: boolean;
   /** Truncate overflowing text with ellipsis; pair with `title` for the full value. */
   truncate?: boolean;
+  /** Wrap with line breaks and hyphenation inside the fixed column. */
+  breakText?: boolean;
   /** Break long unbroken strings (e.g. URLs) across lines inside the fixed column. */
   wrap?: boolean;
   render: (p: DenormalizedPreset) => ReactNode;
@@ -118,16 +128,16 @@ export function PresetTable() {
         title: "Identity",
         rows: [
           { label: "ID", mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
-          { label: "Name", truncate: true, render: (p) => p.name, title: (p) => p.name },
+          { label: "Name", breakText: true, render: (p) => p.name, title: (p) => p.name },
           {
             label: "Terms",
-            truncate: true,
+            breakText: true,
             render: (p) => (p.terms.length ? p.terms.join(", ") : dash),
             title: (p) => p.terms.join(", "),
           },
           {
             label: "Aliases",
-            truncate: true,
+            breakText: true,
             render: (p) => (p.aliases.length ? p.aliases.join(", ") : dash),
             title: (p) => p.aliases.join(", "),
           },
@@ -289,7 +299,6 @@ export function PresetTable() {
                       type="button"
                       onClick={() => setPreset(p.id)}
                       className="group/col relative block h-full w-full overflow-hidden px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
-                      title="Show details of preset"
                     >
                       <span className="flex min-w-0 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
                         {changed ? (
@@ -298,9 +307,14 @@ export function PresetTable() {
                             title={status === "added" ? "Added vs release" : "Modified vs release"}
                           />
                         ) : null}
-                        <span className="truncate">{p.name}</span>
+                        <span className="truncate" title={p.name}>
+                          {p.name}
+                        </span>
                       </span>
-                      <span className="block truncate font-mono text-[11px] text-slate-400">
+                      <span
+                        className="block truncate font-mono text-[11px] text-slate-400"
+                        title={p.id}
+                      >
                         {p.id}
                       </span>
                       <span
@@ -365,8 +379,12 @@ export function PresetTable() {
                                 className="group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition hover:bg-sky-50"
                               >
                                 <span className="min-w-0">
-                                  {row.truncate || row.wrap ? (
-                                    <CellOverflow truncate={row.truncate} wrap={row.wrap}>
+                                  {row.truncate || row.wrap || row.breakText ? (
+                                    <CellOverflow
+                                      truncate={row.truncate}
+                                      wrap={row.wrap}
+                                      breakText={row.breakText}
+                                    >
                                       {row.render(p)}
                                     </CellOverflow>
                                   ) : (
@@ -382,8 +400,12 @@ export function PresetTable() {
                               </Link>
                             ) : (
                               <span className="block h-full px-3 py-1.5">
-                                {row.truncate || row.wrap ? (
-                                  <CellOverflow truncate={row.truncate} wrap={row.wrap}>
+                                {row.truncate || row.wrap || row.breakText ? (
+                                  <CellOverflow
+                                    truncate={row.truncate}
+                                    wrap={row.wrap}
+                                    breakText={row.breakText}
+                                  >
                                     {row.render(p)}
                                   </CellOverflow>
                                 ) : (
@@ -391,8 +413,12 @@ export function PresetTable() {
                                 )}
                               </span>
                             )
-                          ) : row.truncate || row.wrap ? (
-                            <CellOverflow truncate={row.truncate} wrap={row.wrap}>
+                          ) : row.truncate || row.wrap || row.breakText ? (
+                            <CellOverflow
+                              truncate={row.truncate}
+                              wrap={row.wrap}
+                              breakText={row.breakText}
+                            >
                               {row.render(p)}
                             </CellOverflow>
                           ) : (
