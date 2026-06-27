@@ -8,7 +8,7 @@ export function useIconSearch(presets: DenormalizedPreset[]) {
   useEffect(() => {
     if (suppliersReady) return;
     let cancelled = false;
-    void ensureAllIconSuppliers().then(() => {
+    void ensureAllIconSuppliers().finally(() => {
       if (!cancelled) setSuppliersReady(true);
     });
     return () => {

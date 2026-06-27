@@ -32,6 +32,7 @@ const supplierLoaders: Record<IconSupplier, SupplierLoader> = {
 const registryCache = new Map<string, IconRegistryEntry>();
 const dataUrlCache = new Map<string, string | null>();
 const loadedSuppliers = new Set<IconSupplier>();
+const failedSuppliers = new Set<IconSupplier>();
 const supplierLoadPromises = new Map<IconSupplier, Promise<void>>();
 
 export function resolvePresetIconName(iconName: string): string {
@@ -80,12 +81,14 @@ function clearMissCacheForSupplier(supplier: IconSupplier): void {
 
 function isSupplierLoadedForIcon(iconName: string): boolean {
   const supplier = iconSupplierFromName(iconName);
-  return supplier ? loadedSuppliers.has(supplier) : true;
+  return supplier ? loadedSuppliers.has(supplier) || failedSuppliers.has(supplier) : true;
 }
 
 /** Loads one icon supplier package on demand (separate JS chunk, cached after first load). */
 export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
-  if (loadedSuppliers.has(supplier)) return Promise.resolve();
+  if (loadedSuppliers.has(supplier) || failedSuppliers.has(supplier)) {
+    return Promise.resolve();
+  }
 
   let promise = supplierLoadPromises.get(supplier);
   if (!promise) {
@@ -95,6 +98,9 @@ export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
         loadedSuppliers.add(supplier);
         clearMissCacheForSupplier(supplier);
       })
+      .catch(() => {
+        failedSuppliers.add(supplier);
+      })
       .finally(() => {
         supplierLoadPromises.delete(supplier);
       });
@@ -103,11 +109,11 @@ export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
   return promise;
 }
 
-/** Loads only the suppliers needed for the given icon names. */
+/** Loads only the suppliers needed for the given icon names. Partial success is OK. */
 export function ensureIconsForNames(names: Iterable<string>): Promise<void> {
   const suppliers = suppliersFromIconNames(names);
   if (suppliers.size === 0) return Promise.resolve();
-  return Promise.all([...suppliers].map(ensureIconSupplier)).then(() => {});
+  return Promise.allSettled([...suppliers].map(ensureIconSupplier)).then(() => {});
 }
 
 /** Loads suppliers referenced by preset icons (minimal footprint for Presets pages). */
@@ -115,9 +121,9 @@ export function ensureIconsForPresetUsage(presets: RawPresets): Promise<void> {
   return ensureIconsForNames(collectPresetIconNames(presets));
 }
 
-/** Loads every icon supplier (Icons browse page). */
+/** Loads every icon supplier (Icons browse page). Partial success is OK. */
 export function ensureAllIconSuppliers(): Promise<void> {
-  return Promise.all(ALL_ICON_SUPPLIERS.map(ensureIconSupplier)).then(() => {});
+  return Promise.allSettled(ALL_ICON_SUPPLIERS.map(ensureIconSupplier)).then(() => {});
 }
 
 export function isIconSupplierLoaded(supplier: IconSupplier): boolean {
@@ -125,7 +131,9 @@ export function isIconSupplierLoaded(supplier: IconSupplier): boolean {
 }
 
 export function areAllIconSuppliersLoaded(): boolean {
-  return loadedSuppliers.size === ALL_ICON_SUPPLIERS.length;
+  return ALL_ICON_SUPPLIERS.every(
+    (supplier) => loadedSuppliers.has(supplier) || failedSuppliers.has(supplier),
+  );
 }
 
 /** @deprecated Use ensureIconSupplier("fas") or ensureIconsForNames instead. */
