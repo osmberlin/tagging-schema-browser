@@ -1,4 +1,4 @@
-import { ensureFontAwesomeRegistry } from "@/components/PageIcons/iconRegistry";
+import { ensureIconsForPresetUsage } from "@/components/PageIcons/iconRegistry";
 import { loadSchemaData } from "@/components/PagePresets/dataLoader";
 import { denormalize } from "@/components/PagePresets/denormalize";
 import { buildPresetSearchIndex } from "@/components/PagePresets/presetSearch";
@@ -47,14 +47,16 @@ export function SchemaProvider({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Promise.all([loadSchemaData(dataUrl), ensureFontAwesomeRegistry()])
-      .then(([raw]) => {
+    loadSchemaData(dataUrl)
+      .then(async (raw) => {
         if (cancelled) return;
         if (raw.loadErrors.length > 0) {
           setError(raw.loadErrors.join("; "));
           setLoading(false);
           return;
         }
+        await ensureIconsForPresetUsage(raw.presets);
+        if (cancelled) return;
         const diagnostics: string[] = [];
         const presets = denormalize(raw.presets, raw.translations, raw.categories, raw.fields);
         buildPresetSearchIndex(presets);

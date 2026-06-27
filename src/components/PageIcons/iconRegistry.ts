@@ -1,153 +1,148 @@
-import type { IconRegistryEntry } from "@/utils/types";
-import { type IconDefinition, icon } from "@fortawesome/fontawesome-svg-core";
-
-type RawGlobMap = Record<string, string>;
+import type { IconRegistryEntry, RawPresets } from "@/utils/types";
 
 /** Icons used in docs/examples that no longer exist in current Maki; map to iD/schema equivalents. */
 export const PRESET_ICON_ALIASES: Record<string, string> = {
   "maki-bench": "temaki-bench",
 };
 
+export type IconSupplier = "maki" | "temaki" | "roentgen" | "iD" | "fas" | "far" | "fab";
+
+const ALL_ICON_SUPPLIERS: IconSupplier[] = [
+  "maki",
+  "temaki",
+  "roentgen",
+  "iD",
+  "fas",
+  "far",
+  "fab",
+];
+
+type SupplierLoader = () => Promise<IconRegistryEntry[]>;
+
+const supplierLoaders: Record<IconSupplier, SupplierLoader> = {
+  maki: () => import("./suppliers/makiSupplier").then((m) => m.loadMakiEntries()),
+  temaki: () => import("./suppliers/temakiSupplier").then((m) => m.loadTemakiEntries()),
+  roentgen: () => import("./suppliers/roentgenSupplier").then((m) => m.loadRoentgenEntries()),
+  iD: () => import("./suppliers/idSupplier").then((m) => m.loadIdPresetEntries()),
+  fas: () => import("./suppliers/fasSupplier").then((m) => m.loadFasEntries()),
+  far: () => import("./suppliers/farSupplier").then((m) => m.loadFarEntries()),
+  fab: () => import("./suppliers/fabSupplier").then((m) => m.loadFabEntries()),
+};
+
+const registryCache = new Map<string, IconRegistryEntry>();
+const dataUrlCache = new Map<string, string | null>();
+const loadedSuppliers = new Set<IconSupplier>();
+const supplierLoadPromises = new Map<IconSupplier, Promise<void>>();
+
 export function resolvePresetIconName(iconName: string): string {
   return PRESET_ICON_ALIASES[iconName] ?? iconName;
 }
 
-function normalizeIconBase(name: string): string {
-  // Maki ships some icons with size suffixes, keep canonical names.
-  return name.replace(/-(11|15)$/, "");
+export function iconSupplierFromName(iconName: string): IconSupplier | null {
+  const prefix = iconName.split("-")[0];
+  if (prefix && ALL_ICON_SUPPLIERS.includes(prefix as IconSupplier)) {
+    return prefix as IconSupplier;
+  }
+  return null;
 }
 
-function buildSetEntries(prefix: string, paths: RawGlobMap): IconRegistryEntry[] {
-  const byName = new Map<string, IconRegistryEntry>();
-  for (const [filepath, raw] of Object.entries(paths)) {
-    const file = filepath.split("/").pop() ?? "";
-    const base = normalizeIconBase(file.replace(/\.svg$/, ""));
-    const name = `${prefix}-${base}`;
-    if (!byName.has(name)) {
-      byName.set(name, { name, prefix, svgRaw: raw });
+function suppliersFromIconNames(names: Iterable<string>): Set<IconSupplier> {
+  const suppliers = new Set<IconSupplier>();
+  for (const name of names) {
+    const supplier = iconSupplierFromName(resolvePresetIconName(name));
+    if (supplier) suppliers.add(supplier);
+  }
+  return suppliers;
+}
+
+export function collectPresetIconNames(presets: RawPresets): string[] {
+  const names = new Set<string>();
+  for (const raw of Object.values(presets)) {
+    if (typeof raw.icon === "string" && raw.icon.trim()) {
+      names.add(resolvePresetIconName(raw.icon.trim()));
     }
   }
-  return Array.from(byName.values());
+  return Array.from(names);
 }
 
-const makiSvgs = import.meta.glob("/node_modules/@mapbox/maki/icons/*.svg", {
-  eager: true,
-  import: "default",
-  query: "?raw",
-}) as RawGlobMap;
-
-const temakiSvgs = import.meta.glob("/node_modules/@rapideditor/temaki/icons/*.svg", {
-  eager: true,
-  import: "default",
-  query: "?raw",
-}) as RawGlobMap;
-
-const roentgenSvgs = import.meta.glob("/node_modules/@enzet/roentgen/icons/*.svg", {
-  eager: true,
-  import: "default",
-  query: "?raw",
-}) as RawGlobMap;
-
-const idPresetSvgs = import.meta.glob("../../icons/id-sprite-presets/*.svg", {
-  eager: true,
-  import: "default",
-  query: "?raw",
-}) as RawGlobMap;
-
-function fontAwesomeStringAliases(definition: IconDefinition): string[] {
-  const ligatures = definition.icon[2];
-  if (!Array.isArray(ligatures)) return [];
-  return ligatures.filter((alias): alias is string => typeof alias === "string");
+function mergeRegistryEntries(entries: IconRegistryEntry[]): void {
+  for (const entry of entries) registryCache.set(entry.name, entry);
 }
 
-function buildFontAwesomeEntries(
-  prefix: "fas" | "far" | "fab",
-  source: Record<string, unknown>,
-): IconRegistryEntry[] {
-  const byName = new Map<string, IconRegistryEntry>();
-  for (const value of Object.values(source)) {
-    if (!value || typeof value !== "object") continue;
-    const maybe = value as Partial<IconDefinition>;
-    if (!maybe.iconName || !maybe.prefix || !maybe.icon) continue;
-    if (
-      (prefix === "fas" && maybe.prefix !== "fas") ||
-      (prefix === "far" && maybe.prefix !== "far") ||
-      (prefix === "fab" && maybe.prefix !== "fab")
-    ) {
-      continue;
-    }
-    try {
-      let rendered = icon(maybe as IconDefinition).html?.[0];
-      if (!rendered) continue;
-      // FontAwesome renders inline SVG without the xmlns namespace, which makes
-      // the resulting `data:image/svg+xml` URL an invalid standalone document
-      // (the <img> renders broken). Inject the namespace so it loads.
-      if (!rendered.includes("xmlns")) {
-        rendered = rendered.replace(/^<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"');
-      }
-      const addEntry = (name: string) => {
-        if (!byName.has(name)) {
-          byName.set(name, { name, prefix, svgRaw: rendered });
-        }
-      };
-      addEntry(`${prefix}-${maybe.iconName}`);
-      for (const alias of fontAwesomeStringAliases(maybe as IconDefinition)) {
-        if (alias !== maybe.iconName) {
-          addEntry(`${prefix}-${alias}`);
-        }
-      }
-    } catch {
-      // Skip invalid exported values.
+function clearMissCacheForSupplier(supplier: IconSupplier): void {
+  const prefix = `${supplier}-`;
+  for (const [name, value] of dataUrlCache) {
+    if (value === null && name.startsWith(prefix)) {
+      dataUrlCache.delete(name);
     }
   }
-  return Array.from(byName.values());
 }
 
-let registryCache: Map<string, IconRegistryEntry> | null = null;
-let dataUrlCache: Map<string, string | null> | null = null;
-let fontAwesomeLoadPromise: Promise<void> | null = null;
-let fontAwesomeLoaded = false;
-
-function buildBaseRegistry(): Map<string, IconRegistryEntry> {
-  const entries = [
-    ...buildSetEntries("maki", makiSvgs),
-    ...buildSetEntries("temaki", temakiSvgs),
-    ...buildSetEntries("roentgen", roentgenSvgs),
-    ...buildSetEntries("iD", idPresetSvgs),
-  ];
-  const map = new Map<string, IconRegistryEntry>();
-  for (const entry of entries) map.set(entry.name, entry);
-  return map;
+function isSupplierLoadedForIcon(iconName: string): boolean {
+  const supplier = iconSupplierFromName(iconName);
+  return supplier ? loadedSuppliers.has(supplier) : true;
 }
 
-/** Loads Font Awesome icon packages on demand (separate JS chunk, not in the main bundle). */
+/** Loads one icon supplier package on demand (separate JS chunk, cached after first load). */
+export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
+  if (loadedSuppliers.has(supplier)) return Promise.resolve();
+
+  let promise = supplierLoadPromises.get(supplier);
+  if (!promise) {
+    promise = supplierLoaders[supplier]()
+      .then((entries) => {
+        mergeRegistryEntries(entries);
+        loadedSuppliers.add(supplier);
+        clearMissCacheForSupplier(supplier);
+      })
+      .finally(() => {
+        supplierLoadPromises.delete(supplier);
+      });
+    supplierLoadPromises.set(supplier, promise);
+  }
+  return promise;
+}
+
+/** Loads only the suppliers needed for the given icon names. */
+export function ensureIconsForNames(names: Iterable<string>): Promise<void> {
+  const suppliers = suppliersFromIconNames(names);
+  if (suppliers.size === 0) return Promise.resolve();
+  return Promise.all([...suppliers].map(ensureIconSupplier)).then(() => {});
+}
+
+/** Loads suppliers referenced by preset icons (minimal footprint for Presets pages). */
+export function ensureIconsForPresetUsage(presets: RawPresets): Promise<void> {
+  return ensureIconsForNames(collectPresetIconNames(presets));
+}
+
+/** Loads every icon supplier (Icons browse page). */
+export function ensureAllIconSuppliers(): Promise<void> {
+  return Promise.all(ALL_ICON_SUPPLIERS.map(ensureIconSupplier)).then(() => {});
+}
+
+export function isIconSupplierLoaded(supplier: IconSupplier): boolean {
+  return loadedSuppliers.has(supplier);
+}
+
+export function areAllIconSuppliersLoaded(): boolean {
+  return loadedSuppliers.size === ALL_ICON_SUPPLIERS.length;
+}
+
+/** @deprecated Use ensureIconSupplier("fas") or ensureIconsForNames instead. */
 export function ensureFontAwesomeRegistry(): Promise<void> {
-  if (fontAwesomeLoaded) return Promise.resolve();
-  if (!fontAwesomeLoadPromise) {
-    fontAwesomeLoadPromise = Promise.all([
-      import("@fortawesome/free-solid-svg-icons"),
-      import("@fortawesome/free-regular-svg-icons"),
-      import("@fortawesome/free-brands-svg-icons"),
-    ]).then(([faSolid, faRegular, faBrands]) => {
-      const entries = [
-        ...buildFontAwesomeEntries("fas", faSolid),
-        ...buildFontAwesomeEntries("far", faRegular),
-        ...buildFontAwesomeEntries("fab", faBrands),
-      ];
-      const map = getIconRegistry();
-      for (const entry of entries) map.set(entry.name, entry);
-      fontAwesomeLoaded = true;
-    });
-  }
-  return fontAwesomeLoadPromise;
+  return Promise.all([
+    ensureIconSupplier("fas"),
+    ensureIconSupplier("far"),
+    ensureIconSupplier("fab"),
+  ]).then(() => {});
 }
 
+/** @deprecated Use isIconSupplierLoaded("fas") instead. */
 export function isFontAwesomeRegistryLoaded(): boolean {
-  return fontAwesomeLoaded;
+  return loadedSuppliers.has("fas") && loadedSuppliers.has("far") && loadedSuppliers.has("fab");
 }
 
 export function getIconRegistry(): Map<string, IconRegistryEntry> {
-  if (!registryCache) registryCache = buildBaseRegistry();
   return registryCache;
 }
 
@@ -160,12 +155,13 @@ export function isPresetIconBroken(iconName?: string): boolean {
 export function getIconSvgDataUrl(iconName?: string): string | null {
   if (!iconName) return null;
   const canonical = resolvePresetIconName(iconName);
-  if (!dataUrlCache) dataUrlCache = new Map();
   const cached = dataUrlCache.get(canonical);
   if (cached !== undefined) return cached;
 
-  const entry = getIconRegistry().get(canonical);
+  const entry = registryCache.get(canonical);
   if (!entry?.svgRaw) {
+    // Avoid caching a miss while the supplier chunk is still loading.
+    if (!isSupplierLoadedForIcon(canonical)) return null;
     dataUrlCache.set(canonical, null);
     return null;
   }
