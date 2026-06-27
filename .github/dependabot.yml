@@ -3,7 +3,7 @@
 # from npm packages vendored at build time — stale versions show as "broken" icons.
 version: 2
 updates:
-  - package-ecosystem: npm
+  - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
