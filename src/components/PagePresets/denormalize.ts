@@ -1,4 +1,4 @@
-import { isPresetIconBroken, resolvePresetIconName } from "@/components/PageIcons/iconRegistry";
+import { isPresetIconBroken } from "@/components/PageIcons/iconRegistry";
 import { nameRefFromRaw } from "@/components/PagePresets/presetLabelInheritance";
 import type {
   DenormalizedPreset,
@@ -167,10 +167,7 @@ export function denormalize(
     const primaryTagKey = tagEntries[0]?.[0];
     const primaryTagValue = tagEntries[0]?.[1];
     const geometry = r.geometry ?? [];
-    const icon =
-      typeof r.icon === "string" && r.icon.trim()
-        ? resolvePresetIconName(r.icon.trim())
-        : undefined;
+    const icon = typeof r.icon === "string" && r.icon.trim() ? r.icon.trim() : undefined;
     const imageURL =
       typeof r.imageURL === "string" && r.imageURL.trim() ? r.imageURL.trim() : undefined;
     const fieldSet = new Set<string>();

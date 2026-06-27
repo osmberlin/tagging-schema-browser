@@ -1,7 +1,4 @@
-import {
-  isIconSvgConfirmedMissing,
-  resolvePresetIconName,
-} from "@/components/PageIcons/iconRegistry";
+import { isIconSvgConfirmedMissing } from "@/components/PageIcons/iconRegistry";
 import type { DenormalizedPreset, FieldTranslations, RawField, RawFields } from "@/utils/types";
 
 const REF_REGEX = /^\{(.*)\}$/;
@@ -18,7 +15,7 @@ export function resolveFieldIcons(field: RawField, allFields: RawFields): Record
   const resolved: Record<string, string> = {};
   for (const [opt, icon] of Object.entries(icons)) {
     if (typeof icon === "string") {
-      resolved[opt] = resolvePresetIconName(icon);
+      resolved[opt] = icon;
     }
   }
   return resolved;
