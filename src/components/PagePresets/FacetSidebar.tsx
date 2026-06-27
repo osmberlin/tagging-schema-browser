@@ -1,4 +1,5 @@
 import { SidebarSection } from "@/components/ui/Sidebar";
+import type { SchemaArea } from "@/components/ui/areaIcons";
 import { clsx } from "clsx";
 import { useRef, useState } from "react";
 import { usePresetSearch } from "./usePresetSearch";
@@ -8,11 +9,13 @@ type Bucket = { key: string; doc_count: number };
 
 function FacetGroup({
   title,
+  area,
   buckets,
   selected,
   onToggle,
 }: {
   title: string;
+  area?: SchemaArea;
   buckets: Bucket[];
   selected: string[];
   onToggle: (key: string) => void;
@@ -25,7 +28,7 @@ function FacetGroup({
     ? buckets
     : buckets.filter((b) => b.doc_count > 0 || selected.includes(b.key));
   return (
-    <SidebarSection title={title}>
+    <SidebarSection title={title} area={area}>
       <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
         {visible.map(({ key, doc_count }) => {
           const isSelected = selected.includes(key);
@@ -130,18 +133,21 @@ export function FacetSidebar() {
       />
       <FacetGroup
         title="Icon set"
+        area="icons"
         buckets={orderedBuckets("iconPrefix", agg.iconPrefix?.buckets ?? [])}
         selected={state.iconPrefix}
         onToggle={(k) => toggle("iconPrefix")(k)}
       />
       <FacetGroup
         title="Fields"
+        area="fields"
         buckets={orderedBuckets("fieldIds", agg.fieldIds?.buckets ?? [])}
         selected={state.fieldIds}
         onToggle={(k) => toggle("fieldIds")(k)}
       />
       <FacetGroup
         title="Has icon"
+        area="icons"
         buckets={orderedBuckets("hasIcon", agg.hasIcon?.buckets ?? [])}
         selected={state.hasIcon}
         onToggle={(k) => toggle("hasIcon")(k)}

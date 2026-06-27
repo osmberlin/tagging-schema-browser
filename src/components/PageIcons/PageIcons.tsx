@@ -1,4 +1,5 @@
 import { CountPill } from "@/components/ui/CountPill";
+import { AreaIcon } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
 import { IconCard } from "./IconCard";
 import { applyIconFacets, useIconFacetState } from "./useIconFacetState";
@@ -7,7 +8,7 @@ import { useIconSearch } from "./useIconSearch";
 export function PageIcons() {
   const { data, loading, dataUrl } = useSchema();
   const [facetState, setFacetState] = useIconFacetState();
-  const { icons } = useIconSearch(data?.presets ?? []);
+  const { icons } = useIconSearch(data?.presets ?? [], data?.fields ?? {});
 
   if (!dataUrl && !data) {
     return (
@@ -33,6 +34,7 @@ export function PageIcons() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+          <AreaIcon area="icons" className="h-7 w-7 text-sky-600" />
           Icons <CountPill className="text-sm">{filtered.length}</CountPill>
         </h1>
         <label className="flex items-center gap-2 text-sm text-slate-500">
@@ -52,12 +54,14 @@ export function PageIcons() {
       </div>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         {filtered.map((icon) => (
-          <li key={icon.name}>
+          <li key={icon.name} className="h-full">
             <IconCard
               iconName={icon.name}
               svgRaw={icon.svgRaw}
-              usageCount={icon.usageCount}
+              presetUsageCount={icon.presetUsageCount}
+              optionUsageCount={icon.optionUsageCount}
               presets={icon.presets}
+              optionUsages={icon.optionUsages}
             />
           </li>
         ))}

@@ -26,6 +26,7 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
       items: [
         { label: "Presets", keys: [["g", "p"]] },
         { label: "Icons", keys: [["g", "i"]] },
+        { label: "Fields", keys: [["g", "f"]] },
         { label: "Translations", keys: [["g", "t"]] },
         { label: "About", keys: [["g", "a"]] },
       ],

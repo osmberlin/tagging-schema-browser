@@ -1,4 +1,8 @@
 import { PageAbout } from "@/components/PageAbout/PageAbout";
+import { FieldDetailPage } from "@/components/PageFields/FieldDetailPage";
+import { FieldFacetSidebar } from "@/components/PageFields/FieldFacetSidebar";
+import { FieldSearchBar } from "@/components/PageFields/FieldSearchBar";
+import { fieldFacetDefaults, fieldFacetSchema } from "@/components/PageFields/useFieldFacetState";
 import { IconFacetSidebar } from "@/components/PageIcons/IconFacetSidebar";
 import { IconSearchBar } from "@/components/PageIcons/IconSearchBar";
 import { iconFacetDefaults, iconFacetSchema } from "@/components/PageIcons/useIconFacetState";
@@ -42,6 +46,10 @@ const LazyPageTranslations = lazy(() =>
   })),
 );
 
+const LazyPageFields = lazy(() =>
+  import("@/components/PageFields/PageFields").then((m) => ({ default: m.PageFields })),
+);
+
 const LazyPageComparison = lazy(() =>
   import("@/components/PageComparison/PageComparison").then((m) => ({
     default: m.PageComparison,
@@ -82,20 +90,26 @@ function RootContent() {
   const topSearch =
     location.pathname === "/icons" ? (
       <IconSearchBar />
+    ) : location.pathname === "/fields" ? (
+      <FieldSearchBar />
     ) : location.pathname === "/" || location.pathname === "/translations" ? (
       <SearchBar />
     ) : null;
-  const isPresetDetail = location.pathname.startsWith("/preset/");
+  const isDetailPage =
+    location.pathname.startsWith("/preset/") || location.pathname.startsWith("/field/");
   const sidebar =
     location.pathname === "/icons" ? (
       <IconFacetSidebar />
+    ) : location.pathname === "/fields" ? (
+      <FieldFacetSidebar />
     ) : location.pathname === "/translations" ? (
       <TranslationsSidebar />
     ) : location.pathname === "/" ? (
       <FacetSidebar />
-    ) : isPresetDetail ? null : (
+    ) : isDetailPage ? null : (
       <p className="mt-4 px-2 text-sm text-slate-500 ">
-        Open <strong>Presets</strong> or <strong>Icons</strong> to use faceted search.
+        Open <strong>Presets</strong>, <strong>Icons</strong>, or <strong>Fields</strong> to use
+        faceted search.
       </p>
     );
 
@@ -148,6 +162,18 @@ const iconsRoute = createRoute({
   ),
 });
 
+const fieldsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/fields",
+  validateSearch: fieldFacetSchema,
+  search: { middlewares: [stripSearchParams(fieldFacetDefaults)] },
+  component: () => (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading fields...</p>}>
+      <LazyPageFields />
+    </Suspense>
+  ),
+});
+
 const translationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/translations",
@@ -176,6 +202,12 @@ const presetRoute = createRoute({
   component: PresetDetailPage,
 });
 
+const fieldRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/field/$",
+  component: FieldDetailPage,
+});
+
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/about",
@@ -185,9 +217,11 @@ const aboutRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   iconsRoute,
+  fieldsRoute,
   translationsRoute,
   comparisonRoute,
   presetRoute,
+  fieldRoute,
   aboutRoute,
 ]);
 

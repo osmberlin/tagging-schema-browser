@@ -74,7 +74,7 @@ export function TranslationsSidebar() {
   return (
     <div className="flex flex-col">
       {locale ? (
-        <SidebarSection title="Translation status" className="mt-6">
+        <SidebarSection title="Translation status" area="translations" className="mt-6">
           <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
             {options.map((o) => (
               <StatusRow

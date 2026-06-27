@@ -1,5 +1,6 @@
 import { CountPill } from "@/components/ui/CountPill";
 import { Input } from "@/components/ui/Input";
+import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
 import { Fragment, useMemo } from "react";
@@ -12,7 +13,7 @@ export function PagePresets() {
   const { dataUrl, setDataUrl, load, loading, error, data } = useSchema();
   const [searchState, setSearchState] = useSearchState();
   const totalCount = usePresetSearch()?.data.total ?? 0;
-  const brokenIconCount = useMemo(
+  const brokenPresetIconCount = useMemo(
     () => data?.presets.filter((preset) => preset.iconBroken).length ?? 0,
     [data],
   );
@@ -29,6 +30,13 @@ export function PagePresets() {
     if (!Array.isArray(searchState[facet])) return;
     const next = (searchState[facet] as string[]).filter((v) => v !== value);
     setSearchState({ [facet]: next, page: 1 });
+  };
+
+  const facetArea: Partial<Record<string, SchemaArea>> = {
+    fieldIds: "fields",
+    iconName: "icons",
+    iconPrefix: "icons",
+    hasIcon: "icons",
   };
 
   const activePills = [
@@ -141,40 +149,51 @@ export function PagePresets() {
     <div className="space-y-4">
       <div className="space-y-2">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+          <AreaIcon area="presets" className="h-7 w-7 text-indigo-600" />
           Presets <CountPill className="text-sm">{totalCount}</CountPill>
         </h1>
         {activePills.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5">
-            {activePills.map((pill, i) => (
-              <Fragment key={pill.key}>
-                {i > 0 ? (
-                  <span className="text-[11px] font-medium text-slate-400">
-                    {activePills[i - 1].facet === pill.facet ? "or" : "and"}
-                  </span>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={pill.onRemove}
-                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
-                >
-                  <span>{pill.label}</span>
-                  <span aria-hidden>×</span>
-                </button>
-              </Fragment>
-            ))}
+            {activePills.map((pill, i) => {
+              const pillArea = facetArea[pill.facet];
+              return (
+                <Fragment key={pill.key}>
+                  {i > 0 ? (
+                    <span className="text-[11px] font-medium text-slate-400">
+                      {activePills[i - 1].facet === pill.facet ? "or" : "and"}
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={pill.onRemove}
+                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+                  >
+                    {pillArea ? (
+                      <AreaLabel area={pillArea} iconClassName="h-3 w-3">
+                        {pill.label}
+                      </AreaLabel>
+                    ) : (
+                      <span>{pill.label}</span>
+                    )}
+                    <span aria-hidden>×</span>
+                  </button>
+                </Fragment>
+              );
+            })}
           </div>
         ) : null}
       </div>
-      {brokenIconCount > 0 ? (
+      {brokenPresetIconCount > 0 ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-          <strong>{brokenIconCount}</strong>{" "}
-          {brokenIconCount === 1 ? "preset references" : "presets reference"} a missing icon —{" "}
+          <strong>{brokenPresetIconCount}</strong>{" "}
+          {brokenPresetIconCount === 1 ? "preset references" : "presets reference"} a missing preset
+          icon —{" "}
           <button
             type="button"
             onClick={() => setSearchState({ hasIcon: ["broken"], page: 1 })}
             className="font-medium text-red-900 underline hover:text-red-950"
           >
-            show broken icons
+            show broken preset icons
           </button>
           .
         </p>

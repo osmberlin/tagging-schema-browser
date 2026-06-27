@@ -21,13 +21,45 @@ test("preset facets are visible and populated in left navigation", async ({ page
 test("broken icon presets are flagged and filterable", async ({ page }) => {
   await loadTestSchema(page);
 
-  await expect(page.getByText(/\d+ presets? references? a missing icon/i)).toBeVisible();
-  await expect(page.getByRole("button", { name: "show broken icons" })).toBeVisible();
+  await expect(page.getByText(/1 preset references a missing preset icon/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: "show broken preset icons" })).toBeVisible();
   await expect(page.locator("aside").getByRole("button", { name: /^broken\b/i })).toBeVisible();
 
-  await page.getByRole("button", { name: "show broken icons" }).click();
+  await page.getByRole("button", { name: "show broken preset icons" }).click();
   await expect(page.getByRole("button", { name: "Has icon: broken" })).toBeVisible();
   await expect(page.getByText("temaki-this-icon-does-not-exist")).toBeVisible();
+});
+
+test("missing option icons are discoverable on icons page", async ({ page }) => {
+  await loadTestSchema(page);
+  await page.goto("/icons?dataUrl=/test-schema&i_usage=options&i_hasSvg=missing");
+
+  await expect(page.locator("[data-icon='temaki-missing-option-icon']")).toBeVisible();
+  await expect(page.getByText(/1 preset has a missing option icon/i)).toHaveCount(0);
+});
+
+test("icons page tracks option icon usage", async ({ page }) => {
+  await loadTestSchema(page);
+  await page.goto("/icons?dataUrl=/test-schema");
+
+  await expect(page.getByRole("heading", { name: /^Icons\b/i })).toBeVisible();
+  await expect(page.getByText("Used by presets or options")).toBeVisible();
+  await expect(page.locator("[data-icon='roentgen-bump']")).toBeVisible();
+  await expect(page.locator("[data-icon='roentgen-bump']").getByText("Options")).toBeVisible();
+});
+
+test("preset detail shows field options with child preset links", async ({ page }) => {
+  await loadTestSchema(page);
+  await page.goto("/preset/man_made/crane?dataUrl=/test-schema");
+
+  await expect(page.getByRole("button", { name: /Source preset/i })).toBeVisible();
+  await page.getByRole("button", { name: /"crane\/type"/ }).click();
+  await expect(page.getByText("portal_crane")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Portal Crane/i })).toBeVisible();
+
+  await page.getByRole("button", { name: /Portal Crane/i }).click();
+  await expect(page).toHaveURL(/\/preset\/man_made\/crane\/portal_crane/);
+  await expect(page.getByText("man_made/crane/portal_crane")).toBeVisible();
 });
 
 test("preset detail page shows source JSON", async ({ page }) => {
