@@ -3,6 +3,8 @@ import type { IconRegistryEntry, RawPresets } from "@/utils/types";
 /** Icons used in docs/examples that no longer exist in current Maki; map to iD/schema equivalents. */
 export const PRESET_ICON_ALIASES: Record<string, string> = {
   "maki-bench": "temaki-bench",
+  // id-tagging-schema@6.18.0 typo; fixed upstream as roentgen-telescope_radio (PR #2335).
+  "roentgen-telescope-radio": "roentgen-telescope_radio",
 };
 
 export type IconSupplier = "maki" | "temaki" | "roentgen" | "iD" | "fas" | "far" | "fab";
