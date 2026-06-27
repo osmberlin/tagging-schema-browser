@@ -1,10 +1,24 @@
 import type { DenormalizedPreset, IconViewModel } from "@/utils/types";
-import { useMemo } from "react";
-import { getIconRegistry } from "./iconRegistry";
+import { useEffect, useMemo, useState } from "react";
+import { ensureFontAwesomeRegistry, getIconRegistry } from "./iconRegistry";
 
 export function useIconSearch(presets: DenormalizedPreset[]) {
+  const [fontAwesomeReady, setFontAwesomeReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void ensureFontAwesomeRegistry().then(() => {
+      if (!cancelled) setFontAwesomeReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return useMemo(() => {
     const registry = getIconRegistry();
+    // Recompute when Font Awesome finishes loading into the shared registry map.
+    void fontAwesomeReady;
     const usage = new Map<string, DenormalizedPreset[]>();
 
     for (const preset of presets) {
@@ -33,5 +47,5 @@ export function useIconSearch(presets: DenormalizedPreset[]) {
     );
 
     return { icons, prefixes };
-  }, [presets]);
+  }, [presets, fontAwesomeReady]);
 }

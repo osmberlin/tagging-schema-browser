@@ -1,3 +1,4 @@
+import { ensureFontAwesomeRegistry } from "@/components/PageIcons/iconRegistry";
 import { loadSchemaData } from "@/components/PagePresets/dataLoader";
 import { denormalize } from "@/components/PagePresets/denormalize";
 import { buildPresetSearchIndex } from "@/components/PagePresets/presetSearch";
@@ -46,8 +47,8 @@ export function SchemaProvider({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    loadSchemaData(dataUrl)
-      .then((raw) => {
+    Promise.all([loadSchemaData(dataUrl), ensureFontAwesomeRegistry()])
+      .then(([raw]) => {
         if (cancelled) return;
         if (raw.loadErrors.length > 0) {
           setError(raw.loadErrors.join("; "));

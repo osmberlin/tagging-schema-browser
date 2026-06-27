@@ -1,8 +1,5 @@
 import type { IconRegistryEntry } from "@/utils/types";
 import { type IconDefinition, icon } from "@fortawesome/fontawesome-svg-core";
-import * as faBrands from "@fortawesome/free-brands-svg-icons";
-import * as faRegular from "@fortawesome/free-regular-svg-icons";
-import * as faSolid from "@fortawesome/free-solid-svg-icons";
 
 type RawGlobMap = Record<string, string>;
 
@@ -57,11 +54,17 @@ const idPresetSvgs = import.meta.glob("../../icons/id-sprite-presets/*.svg", {
   query: "?raw",
 }) as RawGlobMap;
 
+function fontAwesomeStringAliases(definition: IconDefinition): string[] {
+  const ligatures = definition.icon[2];
+  if (!Array.isArray(ligatures)) return [];
+  return ligatures.filter((alias): alias is string => typeof alias === "string");
+}
+
 function buildFontAwesomeEntries(
   prefix: "fas" | "far" | "fab",
   source: Record<string, unknown>,
 ): IconRegistryEntry[] {
-  const entries: IconRegistryEntry[] = [];
+  const byName = new Map<string, IconRegistryEntry>();
   for (const value of Object.values(source)) {
     if (!value || typeof value !== "object") continue;
     const maybe = value as Partial<IconDefinition>;
@@ -82,36 +85,70 @@ function buildFontAwesomeEntries(
       if (!rendered.includes("xmlns")) {
         rendered = rendered.replace(/^<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"');
       }
-      entries.push({
-        name: `${prefix}-${maybe.iconName}`,
-        prefix,
-        svgRaw: rendered,
-      });
+      const addEntry = (name: string) => {
+        if (!byName.has(name)) {
+          byName.set(name, { name, prefix, svgRaw: rendered });
+        }
+      };
+      addEntry(`${prefix}-${maybe.iconName}`);
+      for (const alias of fontAwesomeStringAliases(maybe as IconDefinition)) {
+        if (alias !== maybe.iconName) {
+          addEntry(`${prefix}-${alias}`);
+        }
+      }
     } catch {
       // Skip invalid exported values.
     }
   }
-  return entries;
+  return Array.from(byName.values());
 }
 
 let registryCache: Map<string, IconRegistryEntry> | null = null;
 let dataUrlCache: Map<string, string | null> | null = null;
+let fontAwesomeLoadPromise: Promise<void> | null = null;
+let fontAwesomeLoaded = false;
 
-export function getIconRegistry(): Map<string, IconRegistryEntry> {
-  if (registryCache) return registryCache;
+function buildBaseRegistry(): Map<string, IconRegistryEntry> {
   const entries = [
     ...buildSetEntries("maki", makiSvgs),
     ...buildSetEntries("temaki", temakiSvgs),
     ...buildSetEntries("roentgen", roentgenSvgs),
     ...buildSetEntries("iD", idPresetSvgs),
-    ...buildFontAwesomeEntries("fas", faSolid),
-    ...buildFontAwesomeEntries("far", faRegular),
-    ...buildFontAwesomeEntries("fab", faBrands),
   ];
   const map = new Map<string, IconRegistryEntry>();
   for (const entry of entries) map.set(entry.name, entry);
-  registryCache = map;
   return map;
+}
+
+/** Loads Font Awesome icon packages on demand (separate JS chunk, not in the main bundle). */
+export function ensureFontAwesomeRegistry(): Promise<void> {
+  if (fontAwesomeLoaded) return Promise.resolve();
+  if (!fontAwesomeLoadPromise) {
+    fontAwesomeLoadPromise = Promise.all([
+      import("@fortawesome/free-solid-svg-icons"),
+      import("@fortawesome/free-regular-svg-icons"),
+      import("@fortawesome/free-brands-svg-icons"),
+    ]).then(([faSolid, faRegular, faBrands]) => {
+      const entries = [
+        ...buildFontAwesomeEntries("fas", faSolid),
+        ...buildFontAwesomeEntries("far", faRegular),
+        ...buildFontAwesomeEntries("fab", faBrands),
+      ];
+      const map = getIconRegistry();
+      for (const entry of entries) map.set(entry.name, entry);
+      fontAwesomeLoaded = true;
+    });
+  }
+  return fontAwesomeLoadPromise;
+}
+
+export function isFontAwesomeRegistryLoaded(): boolean {
+  return fontAwesomeLoaded;
+}
+
+export function getIconRegistry(): Map<string, IconRegistryEntry> {
+  if (!registryCache) registryCache = buildBaseRegistry();
+  return registryCache;
 }
 
 /** True when a preset references an icon name that is not in the bundled icon library. */
