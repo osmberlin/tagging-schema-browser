@@ -1,3 +1,4 @@
+import { ensureIconsForPresetUsage } from "@/components/PageIcons/iconRegistry";
 import { loadSchemaData } from "@/components/PagePresets/dataLoader";
 import { denormalize } from "@/components/PagePresets/denormalize";
 import { DEFAULT_DATA_URL } from "@/utils/constants";
@@ -86,12 +87,14 @@ export function ComparisonProvider({
     let cancelled = false;
     setRelease({ presets: null, loading: true, error: null });
     loadSchemaData(DEFAULT_DATA_URL)
-      .then((raw) => {
+      .then(async (raw) => {
         if (cancelled) return;
         if (raw.loadErrors.length > 0) {
           setRelease({ presets: null, loading: false, error: raw.loadErrors.join("; ") });
           return;
         }
+        await ensureIconsForPresetUsage(raw.presets);
+        if (cancelled) return;
         const denorm = denormalize(raw.presets, raw.translations, raw.categories, raw.fields);
         setRelease({ presets: denorm, loading: false, error: null });
       })
