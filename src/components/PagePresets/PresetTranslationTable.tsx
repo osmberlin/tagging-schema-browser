@@ -1,3 +1,4 @@
+import { areaAccent } from "@/theme/areaAccent";
 import type { DenormalizedPreset } from "@/utils/types";
 import { clsx } from "clsx";
 import type { ReactNode } from "react";
@@ -17,9 +18,7 @@ function TermChips({ terms, shared }: { terms: string[]; shared: Set<string> }) 
           key={t}
           className={clsx(
             "rounded-full px-2 py-0.5 text-xs",
-            shared.has(t)
-              ? "bg-sky-50 text-sky-700 ring-1 ring-sky-100 ring-inset"
-              : "bg-slate-100 text-slate-600",
+            shared.has(t) ? areaAccent.translations.sharedChip : "bg-slate-100 text-slate-600",
           )}
           title={shared.has(t) ? "Identical in both languages" : undefined}
         >
@@ -92,7 +91,7 @@ export function PresetTranslationTable({
               )}
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-sky-600 hover:underline"
+              className={`font-medium hover:underline ${areaAccent.translations.link}`}
               title="Translate the English name, terms & aliases (one per line) via Google Translate"
             >
               GT ↗

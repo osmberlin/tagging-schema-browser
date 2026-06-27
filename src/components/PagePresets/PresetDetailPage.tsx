@@ -10,6 +10,7 @@ import { AreaIcon } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset } from "@/utils/types";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -138,7 +139,7 @@ function PresetDetailContent({
                 <span className="text-slate-500">imageURL: </span>
                 <a
                   href={preset.imageURL}
-                  className="break-all text-sky-600 underline"
+                  className={`break-all underline ${areaAccent.presets.link}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -196,7 +197,7 @@ function PresetDetailContent({
               href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-sky-600 ring-1 ring-sky-100 ring-inset hover:bg-sky-50"
+              className={`rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${areaAccent.presets.linkRing}`}
             >
               GitHub ↗
             </a>

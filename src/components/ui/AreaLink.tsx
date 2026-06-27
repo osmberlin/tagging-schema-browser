@@ -1,4 +1,5 @@
 import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
+import { areaLinkClass } from "@/theme/areaAccent";
 import { Link, type LinkProps } from "@tanstack/react-router";
 import { clsx } from "clsx";
 
@@ -23,10 +24,7 @@ export function AreaLink({
     <Link
       {...linkProps}
       title={title}
-      className={clsx(
-        "inline-flex items-center gap-1.5 font-medium text-sky-600 transition hover:text-sky-700 hover:underline",
-        className,
-      )}
+      className={clsx("inline-flex items-center gap-1.5", areaLinkClass(area), className)}
     >
       <AreaIcon area={area} className={clsx("h-3.5 w-3.5", iconClassName)} />
       <span>{children}</span>

@@ -3,6 +3,7 @@ import { useSetPreset } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { comparisonAccent } from "@/theme/comparisonAccent";
 import type { FieldDiff } from "@/utils/presetDiff";
 import type { DenormalizedPreset } from "@/utils/types";
 
@@ -30,7 +31,7 @@ function PresetRow({
         <button
           type="button"
           onClick={() => onOpen(preset.id)}
-          className="flex w-full items-start gap-2 px-3 py-2 text-left transition hover:bg-violet-50"
+          className={`flex w-full items-start gap-2 px-3 py-2 text-left transition ${comparisonAccent.rowHover}`}
           title="Show details of preset"
         >
           {head}
@@ -111,7 +112,7 @@ export function PageComparison() {
       <div className="space-y-1">
         <h1 className="font-display text-2xl font-semibold text-slate-900">Comparison</h1>
         <p className="text-sm text-slate-500">
-          <span className="font-mono text-violet-700">{domain}</span> vs release
+          <span className={`font-mono ${comparisonAccent.text}`}>{domain}</span> vs release
           {releaseVersion ? ` ${releaseVersion}` : ""}.
         </p>
       </div>

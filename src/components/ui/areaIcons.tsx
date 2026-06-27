@@ -1,3 +1,4 @@
+import { areaAccent } from "@/theme/areaAccent";
 import { clsx } from "clsx";
 
 export type SchemaArea = "presets" | "icons" | "fields" | "translations";
@@ -99,7 +100,10 @@ export function AreaLabel({
 }) {
   return (
     <span className={clsx("inline-flex items-center gap-1.5", className)}>
-      <AreaIcon area={area} className={clsx("h-3.5 w-3.5 shrink-0", iconClassName)} />
+      <AreaIcon
+        area={area}
+        className={clsx("h-3.5 w-3.5 shrink-0", areaAccent[area].icon, iconClassName)}
+      />
       <span>{children}</span>
     </span>
   );

@@ -1,6 +1,7 @@
 import { CountPill } from "@/components/ui/CountPill";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
 import { FieldCard } from "./FieldCard";
 import { applyFieldFacets, useFieldFacetState } from "./useFieldFacetState";
 import { useFieldSearch } from "./useFieldSearch";
@@ -38,7 +39,7 @@ export function PageFields() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
-          <AreaIcon area="fields" className="h-7 w-7 text-emerald-600" />
+          <AreaIcon area="fields" className={`h-7 w-7 ${areaAccent.fields.icon}`} />
           Fields <CountPill className="text-sm">{filtered.length}</CountPill>
         </h1>
         <label className="flex items-center gap-2 text-sm text-slate-500">
@@ -50,7 +51,7 @@ export function PageFields() {
                 f_sort: e.target.value as "name" | "label" | "usage_desc" | "usage_asc",
               })
             }
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+            className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.fields.focus}`}
           >
             <option value="usage_desc">Usage (high to low)</option>
             <option value="usage_asc">Usage (low to high)</option>

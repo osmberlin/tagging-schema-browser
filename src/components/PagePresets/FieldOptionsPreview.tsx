@@ -1,5 +1,6 @@
 import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
 import { AreaIcon } from "@/components/ui/areaIcons";
+import { areaAccent } from "@/theme/areaAccent";
 import type { PresetOptionRow } from "@/utils/fieldOptions";
 import { clsx } from "clsx";
 
@@ -106,7 +107,7 @@ export function FieldOptionsPreview({
                 <button
                   type="button"
                   onClick={() => onOpenPreset(childPreset.id)}
-                  className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:underline"
+                  className={`mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
                 >
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {childPreset.name}

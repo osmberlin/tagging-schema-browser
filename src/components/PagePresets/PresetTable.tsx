@@ -4,6 +4,8 @@ import { AreaLink } from "@/components/ui/AreaLink";
 import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
+import { comparisonAccent } from "@/theme/comparisonAccent";
 import { getPresetOptionIconNames } from "@/utils/fieldOptions";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
@@ -116,7 +118,7 @@ type Row = {
   render: (p: DenormalizedPreset) => ReactNode;
   title?: (p: DenormalizedPreset) => string | undefined;
   highlight?: (p: DenormalizedPreset) => boolean;
-  /** Tailwind background class when `highlight` is true (default `bg-sky-50/70`). */
+  /** Tailwind background class when `highlight` is true (default presets highlight). */
   highlightClass?: string;
   errorHighlight?: (p: DenormalizedPreset) => boolean;
   link?: (p: DenormalizedPreset) => CellLink | null;
@@ -176,12 +178,14 @@ function PresetHeaderCell({
       <button
         type="button"
         onClick={() => onOpen(preset.id)}
-        className="group/col relative block h-full w-full overflow-hidden px-3 py-2 pr-8 text-left transition hover:bg-sky-50"
+        className={`group/col relative block h-full w-full overflow-hidden px-3 py-2 pr-8 text-left transition ${areaAccent.presets.rowHover}`}
       >
-        <span className="flex min-w-0 items-center gap-1.5 truncate font-display font-medium text-slate-900 group-hover/col:text-sky-700">
+        <span
+          className={`flex min-w-0 items-center gap-1.5 truncate font-display font-medium text-slate-900 ${areaAccent.presets.rowHoverText}`}
+        >
           {changed ? (
             <span
-              className="h-2 w-2 shrink-0 rounded-full bg-violet-500"
+              className={`h-2 w-2 shrink-0 rounded-full ${comparisonAccent.dot}`}
               title={status === "added" ? "Added vs release" : "Modified vs release"}
             />
           ) : null}
@@ -194,7 +198,7 @@ function PresetHeaderCell({
         </span>
         <span
           aria-hidden
-          className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/col:bg-sky-100 group-hover/col:text-sky-700"
+          className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition group-hover/col:bg-indigo-100 group-hover/col:text-indigo-700"
           title="Open modal"
         >
           <ExpandIcon className="h-3 w-3" />
@@ -214,7 +218,7 @@ function PresetValueCell({
   const cellLink = row.link?.(preset);
   const errorHighlighted = row.errorHighlight?.(preset);
   const infoHighlighted = !errorHighlighted && row.highlight?.(preset);
-  const highlightClass = row.highlightClass ?? "bg-sky-50/70";
+  const highlightClass = row.highlightClass ?? areaAccent.presets.highlight;
 
   return (
     <td
@@ -238,14 +242,14 @@ function PresetValueCell({
             search={cellLink.search as never}
             title={cellLink.title}
             className={clsx(
-              "group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition hover:bg-sky-50",
+              `group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition ${areaAccent.presets.rowHover}`,
               errorHighlighted && "bg-red-50/70",
             )}
           >
             <span className="min-w-0">{renderCellContent(row, preset)}</span>
             <span
               aria-hidden
-              className="absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700 group-hover/ac:flex"
+              className={`absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-sm font-semibold group-hover/ac:flex ${areaAccent.presets.cardChevron}`}
             >
               ›
             </span>
@@ -413,9 +417,9 @@ export function PresetTable() {
                 : `Does not use "${f}"`,
           render: (p) =>
             p.fields.includes(f) ? (
-              <span className="font-semibold text-sky-700">✓</span>
+              <span className={`font-semibold ${areaAccent.fields.fieldMarker}`}>✓</span>
             ) : p.moreFields.includes(f) ? (
-              <span className="text-sky-500">○</span>
+              <span className={areaAccent.fields.fieldMarkerSecondary}>○</span>
             ) : (
               dash
             ),
@@ -496,7 +500,10 @@ export function PresetTable() {
                   <th className="sticky left-0 z-10 border-r border-b border-slate-200 bg-slate-100 px-3 py-1 text-left font-display text-xs font-medium tracking-wide text-slate-600">
                     {section.area ? (
                       <span className="inline-flex items-center gap-1.5">
-                        <AreaIcon area={section.area} className="h-3 w-3 shrink-0" />
+                        <AreaIcon
+                          area={section.area}
+                          className={`h-3 w-3 shrink-0 ${areaAccent[section.area].icon}`}
+                        />
                         {section.title}
                       </span>
                     ) : (

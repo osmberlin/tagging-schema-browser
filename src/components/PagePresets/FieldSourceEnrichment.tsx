@@ -1,6 +1,7 @@
 import { FieldOptionsPreview } from "@/components/PagePresets/FieldOptionsPreview";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
 import { getPresetFieldSections } from "@/utils/fieldOptions";
 import type { DenormalizedPreset } from "@/utils/types";
 
@@ -35,7 +36,9 @@ export function FieldSourceEnrichment({
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
         <span className="font-medium text-slate-800">{section.labelEn}</span>
         {section.inPrimary ? (
-          <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700 ring-1 ring-sky-100 ring-inset">
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset ${areaAccent.fields.sharedChip}`}
+          >
             primary
           </span>
         ) : null}

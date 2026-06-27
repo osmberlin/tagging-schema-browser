@@ -1,4 +1,5 @@
 import { googleTranslateUrl } from "@/components/PagePresets/PresetTranslationTable";
+import { areaAccent } from "@/theme/areaAccent";
 import type { RawFieldTranslation } from "@/utils/types";
 import { clsx } from "clsx";
 import type { ReactNode } from "react";
@@ -47,7 +48,7 @@ function TextWithTranslate({
         href={googleTranslateUrl(locale, text)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[11px] font-medium text-sky-600 hover:underline"
+        className={`text-[11px] font-medium hover:underline ${areaAccent.translations.link}`}
       >
         Google Translate ↗
       </a>

@@ -1,5 +1,6 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { Input } from "@/components/ui/Input";
+import { areaAccent } from "@/theme/areaAccent";
 import { deriveDataUrl } from "@/utils/deriveDataUrl";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
@@ -42,7 +43,7 @@ function DataUrlGenerator() {
                 dataUrl: derived,
                 locale: prev.locale ?? "",
               })}
-              className="rounded-lg bg-sky-600 px-3 py-1.5 font-medium text-white hover:bg-sky-700"
+              className={`rounded-lg px-3 py-1.5 font-medium text-white ${areaAccent.presets.button}`}
             >
               Open in browser →
             </Link>
@@ -50,7 +51,7 @@ function DataUrlGenerator() {
               href={`${derived}presets.min.json`}
               target="_blank"
               rel="noreferrer"
-              className="font-medium text-sky-600 hover:underline"
+              className={`font-medium hover:underline ${areaAccent.presets.link}`}
             >
               To test, open <code className="font-mono">presets.min.json</code> ↗
             </a>
@@ -70,7 +71,7 @@ function DataUrlGenerator() {
 
 export function PageAbout() {
   return (
-    <article className="prose prose-slate prose-headings:scroll-mt-24 prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline">
+    <article className="prose prose-slate prose-headings:scroll-mt-24 prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline">
       <h1>About</h1>
       <p>
         <strong>Tagging Schema Browser</strong> loads OpenStreetMap preset data from an
@@ -116,6 +117,14 @@ export function PageAbout() {
         generate the right <code>dataUrl</code>:
       </p>
       <DataUrlGenerator />
+      <h2>Area colors</h2>
+      <p>
+        Each browsing area has its own accent color in the nav, page headings, links, and buttons:{" "}
+        <span className="font-medium text-indigo-600">indigo</span> for Presets,{" "}
+        <span className="font-medium text-sky-600">sky</span> for Icons,{" "}
+        <span className="font-medium text-emerald-600">emerald</span> for Fields, and{" "}
+        <span className="font-medium text-amber-600">amber</span> for Translations.
+      </p>
       <h2>Spotting non-release data</h2>
       <p>
         Whenever you load a custom build,{" "}

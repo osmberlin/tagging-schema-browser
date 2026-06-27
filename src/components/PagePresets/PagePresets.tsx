@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/Input";
 import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
 import { Fragment, useMemo } from "react";
 import { PresetTable } from "./PresetTable";
 import { getExpectedFilesHelp } from "./dataLoader";
@@ -107,7 +108,7 @@ export function PagePresets() {
           <Input name="dataUrl" type="url" placeholder={DEFAULT_CDN} defaultValue={DEFAULT_CDN} />
           <button
             type="submit"
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+            className={`rounded-lg px-4 py-2 text-sm font-medium text-white ${areaAccent.presets.button}`}
           >
             Load
           </button>
@@ -149,7 +150,7 @@ export function PagePresets() {
     <div className="space-y-4">
       <div className="space-y-2">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
-          <AreaIcon area="presets" className="h-7 w-7 text-indigo-600" />
+          <AreaIcon area="presets" className={`h-7 w-7 ${areaAccent.presets.icon}`} />
           Presets <CountPill className="text-sm">{totalCount}</CountPill>
         </h1>
         {activePills.length > 0 ? (

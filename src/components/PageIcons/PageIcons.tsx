@@ -1,6 +1,7 @@
 import { CountPill } from "@/components/ui/CountPill";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
+import { areaAccent } from "@/theme/areaAccent";
 import { IconCard } from "./IconCard";
 import { applyIconFacets, useIconFacetState } from "./useIconFacetState";
 import { useIconSearch } from "./useIconSearch";
@@ -34,7 +35,7 @@ export function PageIcons() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
-          <AreaIcon area="icons" className="h-7 w-7 text-sky-600" />
+          <AreaIcon area="icons" className={`h-7 w-7 ${areaAccent.icons.icon}`} />
           Icons <CountPill className="text-sm">{filtered.length}</CountPill>
         </h1>
         <label className="flex items-center gap-2 text-sm text-slate-500">
@@ -44,7 +45,7 @@ export function PageIcons() {
             onChange={(e) =>
               setFacetState({ i_sort: e.target.value as "name" | "usage_desc" | "usage_asc" })
             }
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+            className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.icons.focus}`}
           >
             <option value="name">Name</option>
             <option value="usage_desc">Usage (high to low)</option>
