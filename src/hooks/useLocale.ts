@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { useReference } from '@/features/data-source/reference-store'
 import { useSchema } from '@/hooks/useSchema'
 import { fetchLocaleTranslations, fetchLocales, localeKeys } from '@/queries/locale'
