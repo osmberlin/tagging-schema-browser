@@ -19,6 +19,10 @@ import { fieldFacetDefaults, fieldFacetSchema } from '@/components/PageFields/us
 import { IconFacetSidebar } from '@/components/PageIcons/IconFacetSidebar'
 import { IconSearchBar } from '@/components/PageIcons/IconSearchBar'
 import { iconFacetDefaults, iconFacetSchema } from '@/components/PageIcons/useIconFacetState'
+import {
+  presetSwitchSearchDefaults,
+  presetSwitchSearchSchema,
+} from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
 import { PagePresets } from '@/components/PagePresets/PagePresets'
 import { PresetDetailPage } from '@/components/PagePresets/PresetDetailPage'
@@ -55,6 +59,12 @@ const LazyPageComparison = lazy(() =>
     default: m.PageComparison,
   })),
 )
+
+const LazyPagePresetSwitch = lazy(() =>
+  import("@/components/PagePresetSwitch/PagePresetSwitch").then((m) => ({
+    default: m.PagePresetSwitch,
+  })),
+);
 
 function routerBasepath(): string {
   const trimmed = import.meta.env.BASE_URL.replace(/^\/+|\/+$/g, '')
@@ -217,6 +227,18 @@ const translationsRoute = createRoute({
   ),
 })
 
+const presetSwitchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/preset-switch",
+  validateSearch: presetSwitchSearchSchema,
+  search: { middlewares: [stripSearchParams(presetSwitchSearchDefaults)] },
+  component: () => (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading preset switch...</p>}>
+      <LazyPagePresetSwitch />
+    </Suspense>
+  ),
+});
+
 const comparisonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/comparison',
@@ -250,6 +272,7 @@ const routeTree = rootRoute.addChildren([
   iconsRoute,
   fieldsRoute,
   translationsRoute,
+  presetSwitchRoute,
   comparisonRoute,
   presetRoute,
   fieldRoute,

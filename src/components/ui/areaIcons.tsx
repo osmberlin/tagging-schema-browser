@@ -1,13 +1,14 @@
 import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 
-export type SchemaArea = 'presets' | 'icons' | 'fields' | 'translations'
+export type SchemaArea = 'presets' | 'icons' | 'fields' | 'translations' | 'presetSwitch'
 
 const areaTitles: Record<SchemaArea, string> = {
   presets: 'Presets',
   icons: 'Icons',
   fields: 'Fields',
   translations: 'Translations',
+  presetSwitch: 'Preset switch',
 }
 
 /** Distinct icons for each schema browsing area — reused in nav and cross-links. */
@@ -70,6 +71,27 @@ export function AreaIcon({ area, className }: { area: SchemaArea; className?: st
             stroke="currentColor"
             strokeWidth={1.6}
             strokeLinecap="round"
+          />
+        </svg>
+      )
+    case 'presetSwitch':
+      return (
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={iconClassName}>
+          <title>{areaTitles.presetSwitch}</title>
+          <path
+            d="M5 7h8M9 4l4 3-4 3M19 17h-8M15 14l-4 3 4 3"
+            stroke="currentColor"
+            strokeWidth={1.6}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M5 5v14M19 5v14"
+            stroke="currentColor"
+            strokeWidth={1.6}
+            strokeLinecap="round"
+            strokeDasharray="2 3"
+            opacity={0.45}
           />
         </svg>
       )

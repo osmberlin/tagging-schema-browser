@@ -161,6 +161,38 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
     fieldMarkerSecondary: 'text-yellow-500',
     sharedChip: 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-100 ring-inset',
   },
+  presetSwitch: {
+    icon: 'text-amber-600',
+    iconSection: 'text-amber-500',
+    iconBg: 'bg-amber-50 text-amber-600',
+    navActive:
+      'rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 ring-1 ring-amber-100 ring-inset',
+    navInactive:
+      'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-amber-50 hover:text-amber-700',
+    navIndicatorBg: 'bg-amber-50',
+    navIndicatorRing: 'ring-amber-100',
+    navIndicatorText: 'text-amber-700',
+    link: 'text-amber-600 hover:text-amber-700',
+    linkRing: 'text-amber-600 ring-amber-100 hover:bg-amber-50',
+    linkRingHover: 'hover:text-amber-700',
+    button: 'bg-amber-600 hover:bg-amber-700',
+    focus: 'focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30',
+    searchFocus: 'focus:ring-amber-500/60',
+    facetSelected: 'font-medium text-amber-600 before:block before:bg-amber-500',
+    facetShowMore: 'text-amber-600',
+    rowHover: 'hover:bg-amber-50',
+    rowHoverText: 'group-hover/col:text-amber-700 group-hover/ac:text-amber-700',
+    highlight: 'bg-amber-50/70',
+    pill: 'bg-amber-100',
+    pillText: 'text-amber-700',
+    cardHoverBorder: 'hover:border-amber-300',
+    cardHoverBg: 'hover:bg-amber-50/40',
+    cardChevron: 'bg-amber-100 text-amber-700',
+    cardExpandHover: 'group-hover/fc:bg-amber-100 group-hover/fc:text-amber-700',
+    fieldMarker: 'text-amber-700',
+    fieldMarkerSecondary: 'text-amber-500',
+    sharedChip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100 ring-inset',
+  },
 }
 
 export function areaNavClass(area: SchemaArea, active: boolean): string {

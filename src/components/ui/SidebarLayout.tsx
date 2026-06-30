@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
+import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
 import { DataSourceBanner } from '@/components/ui/DataSourceBanner'
@@ -88,7 +89,7 @@ export function SidebarLayout({
     input.select()
   }
 
-  // Mod+K / "/" focus search; "?" opens help; "g" then p/i/a navigates.
+  // Mod+K / "/" focus search; "?" opens help; "g" then p/i/f/t/s/a navigates.
   // The library auto-ignores single-key/sequence hotkeys while typing in inputs.
   useHotkey('Mod+K', focusSearch)
   useHotkey('/', focusSearch)
@@ -133,6 +134,16 @@ export function SidebarLayout({
       }),
     }),
   )
+  useHotkeySequence(['G', 'S'], () =>
+    navigate({
+      to: '/preset-switch',
+      search: (prev) => ({
+        ...presetSwitchSearchDefaults,
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
+      }),
+    }),
+  )
   useHotkeySequence(['G', 'A'], () =>
     navigate({
       to: '/about',
@@ -143,7 +154,7 @@ export function SidebarLayout({
   return (
     <div className="flex min-h-svh w-full flex-col bg-white text-slate-900">
       <header className="sticky top-0 z-40 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur-sm">
-        {/* Wraps to two rows when the search would shrink below 45px: logo on row 1, search + nav on row 2. */}
+        {/* Wraps to two rows when the search would shrink below 45px: logo + nav on row 1, search on row 2. */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:px-8">
           <div className="flex shrink-0 items-center gap-2">
             {showSidebar ? (
@@ -204,14 +215,14 @@ export function SidebarLayout({
             </div>
           </div>
 
-          <PrimaryNav className="order-3 lg:order-none" />
+          <PrimaryNav className="shrink-0" />
 
           {/* Inline when header is wide enough; full-width row 2 when search would drop below 45px. */}
           <div
             className={
               topSearch
-                ? 'order-last flex w-full min-w-[min(100%,calc(45px+33rem))] flex-1 basis-[calc(45px+33rem)] items-center gap-3 lg:order-none'
-                : 'order-last flex w-full min-w-[min(100%,33rem)] flex-1 basis-132 items-center gap-3 lg:order-none'
+                ? 'order-last flex w-full min-w-[min(100%,calc(45px+33rem))] shrink-0 grow basis-[min(100%,calc(45px+33rem))] items-center gap-3 lg:min-w-[calc(45px+33rem)] lg:grow lg:basis-[calc(45px+33rem)]'
+                : 'order-last flex w-full min-w-[min(100%,33rem)] shrink-0 grow basis-[min(100%,33rem)] items-center gap-3 lg:min-w-132 lg:grow lg:basis-132'
             }
           >
             {topSearch ? (

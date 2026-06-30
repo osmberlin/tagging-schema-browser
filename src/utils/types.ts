@@ -9,6 +9,10 @@ export type RawPreset = {
   moreFields?: string[]
   geometry?: string[]
   tags?: Record<string, string>
+  /** Tags applied when selecting this preset. Defaults to `tags`. */
+  addTags?: Record<string, string>
+  /** Tags removed when deselecting this preset. Defaults to `addTags`, then `tags`. */
+  removeTags?: Record<string, string>
   matchScore?: number
   searchable?: boolean
   suggestion?: boolean
