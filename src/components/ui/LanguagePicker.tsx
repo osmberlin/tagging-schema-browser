@@ -40,12 +40,25 @@ export function LanguagePicker() {
         title={locale ? `Compare with ${locale}` : 'Compare language (EN only)'}
         className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none opacity-0"
       >
+<<<<<<< HEAD
         <option value="">Choose</option>
         {locales.map((l) => (
           <option key={l} value={l}>
             {l}
+=======
+        <option value="">EN only</option>
+        {locales === null ? (
+          <option value="" disabled>
+            Loading…
+>>>>>>> aecaf2c (Proxy full release schema on Netlify previews; fix locale discovery)
           </option>
-        ))}
+        ) : (
+          locales.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))
+        )}
       </select>
     </div>
   )
