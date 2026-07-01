@@ -9,12 +9,10 @@ export function FieldSourceEnrichment({
   fieldId,
   preset,
   presets,
-  onOpenPreset,
 }: {
   fieldId: string;
   preset: DenormalizedPreset;
   presets: DenormalizedPreset[];
-  onOpenPreset: (id: string) => void;
 }) {
   const { locale, fieldLocaleMap } = useLocale();
   const { fields, fieldTranslations } = useSchema();
@@ -48,12 +46,7 @@ export function FieldSourceEnrichment({
           </span>
         ) : null}
       </div>
-      <FieldOptionsPreview
-        options={optionRows}
-        locale={locale}
-        fieldLocaleMap={fieldLocaleMap}
-        onOpenPreset={onOpenPreset}
-      />
+      <FieldOptionsPreview options={optionRows} locale={locale} fieldLocaleMap={fieldLocaleMap} />
     </div>
   );
 }

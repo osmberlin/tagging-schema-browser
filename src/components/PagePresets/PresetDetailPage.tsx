@@ -1,19 +1,16 @@
-import type { PresetFilterUpdate } from "@/components/PagePresets/PresetDetailModal.types";
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
 import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslationTable";
 import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
-import { presetSearchDefaults, useSetPreset } from "@/components/PagePresets/useSearchState";
-import { CountPill } from "@/components/ui/CountPill";
 import { DetailDisclosure } from "@/components/ui/DetailDisclosure";
-import { AreaIcon } from "@/components/ui/areaIcons";
+import { RelatedBlock } from "@/components/ui/RelatedBlock";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { externalAccent, externalLinkClass, externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset } from "@/utils/types";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 
 type RelatedItem = { id: string; name: string };
 
@@ -73,8 +70,6 @@ function PresetDetailContent({
   presets: DenormalizedPreset[];
   dataUrl: string;
 }) {
-  const navigate = useNavigate();
-  const setPreset = useSetPreset();
   const { locale, localeMap, loading: localeLoading, error: localeError } = useLocale();
   const loc = locale ? localeMap?.get(preset.id) : undefined;
 
@@ -87,19 +82,6 @@ function PresetDetailContent({
 
   const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name });
 
-  const onApplyFilter = (update: PresetFilterUpdate) => {
-    void navigate({
-      to: "/",
-      search: (prev) => ({
-        ...presetSearchDefaults,
-        dataUrl: prev.dataUrl ?? "",
-        locale: prev.locale ?? "",
-        ...update,
-        page: 1,
-      }),
-    });
-  };
-
   const categorySections = preset.categoryNames.map((categoryName, index) => {
     const categoryId = preset.categoryIds[index];
     const related = presets
@@ -107,7 +89,7 @@ function PresetDetailContent({
       .map(toItem);
     return {
       title: `Presets of this category "${categoryName}"`,
-      onListClick: () => onApplyFilter({ categoryNames: [categoryName] }),
+      titleFilter: { categoryNames: [categoryName] },
       related,
     };
   });
@@ -211,7 +193,6 @@ function PresetDetailContent({
           raw={raw}
           preset={preset}
           presets={presets}
-          onOpenPreset={setPreset}
         />
       </DetailDisclosure>
 
@@ -251,84 +232,29 @@ function PresetDetailContent({
               key={section.title}
               title={section.title}
               count={section.related.length}
-              onTitleClick={section.onListClick}
+              titleFilter={section.titleFilter}
               presets={section.related}
-              onOpenPreset={setPreset}
             />
           ))}
           {preset.categoryNames.length === 0 && (
             <RelatedBlock
               title="Presets with no category"
               count={uncategorizedRelated.length}
-              onTitleClick={() => onApplyFilter({ categoryNames: ["No Category"] })}
+              titleFilter={{ categoryNames: ["No Category"] }}
               presets={uncategorizedRelated}
-              onOpenPreset={setPreset}
             />
           )}
           {iconId ? (
             <RelatedBlock
               title={`Presets with this icon \`${iconId}\``}
               count={iconRelated.length}
-              onTitleClick={() => onApplyFilter({ iconName: [iconId] })}
+              titleFilter={{ iconName: [iconId] }}
               presets={iconRelated}
-              onOpenPreset={setPreset}
               area="icons"
             />
           ) : null}
         </div>
       </DetailDisclosure>
     </div>
-  );
-}
-
-function RelatedBlock({
-  title,
-  count,
-  onTitleClick,
-  presets,
-  onOpenPreset,
-  area = "presets",
-}: {
-  title: string;
-  count: number;
-  onTitleClick: () => void;
-  presets: RelatedItem[];
-  onOpenPreset: (id: string) => void;
-  area?: "presets" | "icons";
-}) {
-  return (
-    <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <h2 className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-900">
-        <button
-          type="button"
-          onClick={onTitleClick}
-          className="inline-flex min-w-0 items-center gap-1.5 text-left hover:underline"
-        >
-          <AreaIcon area={area} className="h-3.5 w-3.5 shrink-0" />
-          <span className="min-w-0">{title}</span>
-        </button>
-        <CountPill>{count}</CountPill>
-      </h2>
-      {presets.length === 0 ? (
-        <p className="text-sm text-slate-500">No related presets.</p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {presets.slice(0, 30).map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onOpenPreset(p.id)}
-              title={p.id}
-              className="max-w-full truncate rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200 ring-inset hover:bg-slate-100"
-            >
-              {p.name}
-            </button>
-          ))}
-          {presets.length > 30 ? (
-            <span className="self-center text-xs text-slate-400">+{presets.length - 30} more</span>
-          ) : null}
-        </div>
-      )}
-    </section>
   );
 }

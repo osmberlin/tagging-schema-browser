@@ -142,7 +142,6 @@ type HostPresetContext = {
   hostPresetDenorm?: DenormalizedPreset;
   allPresets: DenormalizedPreset[];
   rawPresets: RawPresets;
-  onOpenPreset?: (id: string) => void;
 };
 
 /** Inherited name / terms / aliases when `name` references another preset. */
@@ -372,12 +371,11 @@ function RefDisclosure({
               sortMode={ref.kind === "preset" ? "preset" : sortMode}
               jsonRootKind={ref.kind === "field" ? "field" : "preset"}
             />
-            {ref.kind === "field" && host.hostPresetDenorm && host.onOpenPreset ? (
+            {ref.kind === "field" && host.hostPresetDenorm ? (
               <FieldSourceEnrichment
                 fieldId={ref.id}
                 preset={host.hostPresetDenorm}
                 presets={host.allPresets}
-                onOpenPreset={host.onOpenPreset}
               />
             ) : null}
           </>
@@ -712,14 +710,12 @@ export function PresetSourceTree({
   raw,
   preset,
   presets,
-  onOpenPreset,
   sourceKind = "preset",
 }: {
   presetId: string;
   raw: Record<string, unknown>;
   preset?: DenormalizedPreset;
   presets?: DenormalizedPreset[];
-  onOpenPreset?: (id: string) => void;
   sourceKind?: JsonRootKind;
 }) {
   void presetId;
@@ -735,7 +731,6 @@ export function PresetSourceTree({
     hostPresetDenorm: preset,
     allPresets: presets ?? [],
     rawPresets,
-    onOpenPreset,
   };
 
   return (
