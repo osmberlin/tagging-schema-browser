@@ -69,10 +69,6 @@ export function exportPresets(presets: DenormalizedPreset[]): PresetExport[] {
   }));
 }
 
-export function exportPresetIds(presets: DenormalizedPreset[]): string[] {
-  return presets.map((preset) => preset.id);
-}
-
 export function exportIcons(icons: IconViewModel[]): IconExport[] {
   return icons.map((icon) => ({
     name: icon.name,
