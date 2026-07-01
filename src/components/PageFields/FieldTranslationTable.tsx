@@ -1,35 +1,8 @@
 import { googleTranslateUrl } from "@/components/PagePresets/PresetTranslationTable";
+import { TranslationAttrRow, TranslationColumnHeader } from "@/components/TranslationTableLayout";
 import { externalLinkClass } from "@/theme/externalAccent";
 import type { RawFieldTranslation } from "@/utils/types";
-import { clsx } from "clsx";
 import type { ReactNode } from "react";
-
-function AttrRow({
-  label,
-  english,
-  localized,
-  showLocale,
-}: {
-  label: string;
-  english: ReactNode;
-  localized?: ReactNode;
-  showLocale: boolean;
-}) {
-  return (
-    <div
-      className={clsx(
-        "grid items-start gap-x-4 gap-y-1 border-t border-slate-100 px-4 py-2",
-        showLocale ? "grid-cols-[5rem_1fr] sm:grid-cols-[6rem_1fr_1fr]" : "grid-cols-[5rem_1fr]",
-      )}
-    >
-      <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">{label}</div>
-      <div className="min-w-0 text-sm text-slate-900 sm:col-start-2">{english}</div>
-      {showLocale ? (
-        <div className="col-start-2 min-w-0 text-sm text-slate-900 sm:col-start-3">{localized}</div>
-      ) : null}
-    </div>
-  );
-}
 
 function TextWithTranslate({
   locale,
@@ -72,31 +45,53 @@ export function FieldTranslationTable({
     new Set([...Object.keys(english.options ?? {}), ...Object.keys(localized?.options ?? {})]),
   ).sort((a, b) => a.localeCompare(b));
 
+  const englishTexts = [
+    english.label,
+    english.placeholder,
+    english.terms,
+    ...optionKeys.map((key) => english.options?.[key]),
+  ].filter((value): value is string => Boolean(value?.trim()));
+
   return (
-    <div>
+    <div className="overflow-hidden">
       <div className="border-b border-slate-100 px-4 py-2 text-xs text-slate-500">
         <span className="font-mono">{fieldId}</span>
-        {showLocale ? (
-          <span className="ml-3">
-            EN ↔ <span className="font-mono">{locale}</span>
-          </span>
-        ) : (
-          <span className="ml-3">English</span>
-        )}
       </div>
-      <AttrRow
+      <TranslationColumnHeader
+        showLocale={showLocale}
+        locale={locale}
+        englishHeader={
+          showLocale ? (
+            <span className="flex items-center gap-2">
+              <span>English</span>
+              <a
+                href={googleTranslateUrl(locale, englishTexts.join("\n"))}
+                target="_blank"
+                rel="noreferrer"
+                className={externalLinkClass()}
+                title="Translate the English label, placeholder, terms & options (one per line) via Google Translate"
+              >
+                GT ↗
+              </a>
+            </span>
+          ) : (
+            "English"
+          )
+        }
+      />
+      <TranslationAttrRow
         label="Label"
         english={english.label ?? "—"}
         localized={localized?.label ?? "—"}
         showLocale={showLocale}
       />
-      <AttrRow
+      <TranslationAttrRow
         label="Placeholder"
         english={english.placeholder ?? "—"}
         localized={localized?.placeholder ?? "—"}
         showLocale={showLocale}
       />
-      <AttrRow
+      <TranslationAttrRow
         label="Terms"
         english={english.terms ?? "—"}
         localized={
@@ -116,7 +111,7 @@ export function FieldTranslationTable({
             Options
           </div>
           {optionKeys.map((key) => (
-            <AttrRow
+            <TranslationAttrRow
               key={key}
               label={key}
               english={english.options?.[key] ?? "—"}
