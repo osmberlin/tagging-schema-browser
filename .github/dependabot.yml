@@ -1,26 +1,117 @@
-# Keep bundled icon libraries in sync with id-tagging-schema references.
-# The schema loads at runtime from jsDelivr, but preset/field icons are resolved
-# from npm packages vendored at build time — stale versions show as "broken" icons.
+# Dependabot policy: weekly Monday 07:00 Europe/Berlin, one open PR per ecosystem,
+# grouped minor/patch bumps. Majors surface individually when the queue is empty.
+# Review/merge: .agents/skills/review-dependabot/SKILL.md
+#
+# Icon libraries: schema loads from jsDelivr at runtime; preset/field icons come from
+# npm packages at build time — stale versions show as broken icons.
 version: 2
 updates:
   - package-ecosystem: bun
+    directories:
+      - /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 1
+    exclude-paths:
+      - .cursor/**
+    commit-message:
+      prefix: "[skip netlify]"
+      include: scope
+    groups:
+      security-dev-tools:
+        applies-to: security-updates
+        patterns:
+          - '@biomejs/*'
+          - '@playwright/*'
+          - '@types/*'
+          - 'typescript'
+          - 'vite'
+
+      icon-libraries:
+        applies-to: version-updates
+        patterns:
+          - '@enzet/roentgen'
+          - '@mapbox/maki'
+          - '@rapideditor/temaki'
+          - '@fortawesome/*'
+          - '@fontsource*'
+        update-types:
+          - minor
+          - patch
+
+      app-dev-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '@babel/*'
+          - '@biomejs/*'
+          - '@playwright/*'
+          - '@rolldown/*'
+          - '@types/*'
+          - '@vitejs/*'
+          - 'babel-plugin-*'
+          - 'postcss'
+          - 'typescript'
+          - 'vite'
+        update-types:
+          - minor
+          - patch
+
+      app-framework-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - '@headlessui/*'
+          - '@tanstack/*'
+          - '@tailwindcss/*'
+          - 'tailwindcss'
+          - 'react'
+          - 'react-dom'
+          - '@types/react*'
+          - 'zod'
+          - 'zustand'
+        update-types:
+          - minor
+          - patch
+
+      app-prod-misc-patch:
+        applies-to: version-updates
+        update-types:
+          - patch
+        patterns:
+          - '*'
+        exclude-patterns:
+          - '@enzet/roentgen'
+          - '@mapbox/maki'
+          - '@rapideditor/temaki'
+          - '@fortawesome/*'
+          - '@fontsource*'
+          - '@headlessui/*'
+          - '@tanstack/*'
+          - '@tailwindcss/*'
+          - 'tailwindcss'
+          - 'react'
+          - 'react-dom'
+          - 'zod'
+          - 'zustand'
+
+  - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 5
-    allow:
-      - dependency-name: "@enzet/roentgen"
-      - dependency-name: "@mapbox/maki"
-      - dependency-name: "@rapideditor/temaki"
-    commit-message:
-      prefix: "[skip netlify] "
+      time: '07:00'
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 5
+    open-pull-requests-limit: 1
     groups:
-      icon-libraries:
-        patterns:
-          - "@enzet/roentgen"
-          - "@mapbox/maki"
-          - "@rapideditor/temaki"
+      actions-minor-patch:
         update-types:
           - minor
           - patch
+        patterns:
+          - '*'
