@@ -42,6 +42,7 @@ export type OptionIconUsage = {
 export function collectOptionIconUsages(
   fields: RawFields,
   presets: DenormalizedPreset[],
+  fieldTranslations: FieldTranslations = {},
 ): Map<string, OptionIconUsage[]> {
   const usage = new Map<string, OptionIconUsage[]>();
   const fieldIdsUsed = new Set<string>();
@@ -56,7 +57,7 @@ export function collectOptionIconUsages(
     if (!field) continue;
     const icons = resolveFieldIcons(field, fields);
     const fieldKey = field.key ?? fieldId;
-    for (const opt of getFieldOptionValues(field)) {
+    for (const opt of getFieldOptionValues(field, fieldTranslations, fieldId)) {
       const iconName = icons[opt];
       if (!iconName) continue;
       const list = usage.get(iconName) ?? [];

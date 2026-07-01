@@ -1,4 +1,4 @@
-import { applyRuntimeDereference } from "@/schemaRuntimeDereference";
+import { type References, applyRuntimeDereference } from "@/schemaRuntimeDereference";
 import type { RawCategories, RawFields, RawPresets, RawTranslations } from "@/utils/types";
 
 const REQUIRED_FILES = [
@@ -16,6 +16,7 @@ export type RawSchemaPayload = {
   fields: RawFields;
   defaults: unknown;
   loadErrors: string[];
+  references: References | null;
 };
 
 function ensureTrailingSlash(url: string): string {
@@ -37,6 +38,7 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
   let categories: RawCategories = {};
   let fields: RawFields = {};
   let defaults: unknown = {};
+  let references: References | null = null;
 
   for (const file of REQUIRED_FILES) {
     try {
@@ -53,10 +55,10 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
   }
 
   if (loadErrors.length === 0) {
-    applyRuntimeDereference({ presets, translations, fields });
+    references = applyRuntimeDereference({ presets, translations, fields });
   }
 
-  return { presets, translations, categories, fields, defaults, loadErrors };
+  return { presets, translations, categories, fields, defaults, loadErrors, references };
 }
 
 export function getExpectedFilesHelp(): string {

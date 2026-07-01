@@ -1,3 +1,5 @@
+import type { References } from "@/schemaRuntimeDereference";
+
 export type RawPresets = Record<string, RawPreset>;
 export type RawPreset = {
   icon?: string;
@@ -86,6 +88,8 @@ export type SchemaData = {
   translations: RawTranslations;
   /** English field labels and option strings from translations/en.min.json. */
   fieldTranslations: FieldTranslations;
+  /** Reference map for runtime locale dereferencing; null when v7 dist or no refs. */
+  schemaReferences: References | null;
   loadError: string | null;
   diagnostics: string[];
 };

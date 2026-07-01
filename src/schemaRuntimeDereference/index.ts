@@ -4,12 +4,11 @@
  * schema-builder v7 (PR #281) dereferences references at build time, so downstream
  * apps no longer receive `{…}` refs, stringsCrossReference, or iconsCrossReference.
  * When this project switches to v7 dist output, delete this folder and remove the
- * calls from dataLoader.ts and useLocaleData.ts.
+ * calls from dataLoader.ts and LocaleContext (via SchemaContext).
  *
  * Logic is ported from ideditor/schema-builder lib/references.js (PR #281).
  */
 
-import { setSchemaReferences } from "@/schemaRuntimeDereference/cache";
 import { collectReferences } from "@/schemaRuntimeDereference/collectReferences";
 import {
   type References,
@@ -21,7 +20,6 @@ import {
 import type { RawFields, RawPresets, RawTranslations } from "@/utils/types";
 
 export { isReference, type References, type TranslatableStrings };
-export { getSchemaReferences, setSchemaReferences } from "@/schemaRuntimeDereference/cache";
 
 export function getTranslatableStrings(
   translations: RawTranslations,
@@ -69,7 +67,6 @@ export function applyRuntimeDereference(payload: {
   translations: RawTranslations;
 }): References | null {
   if (!needsRuntimeDereference(payload.fields, payload.presets)) {
-    setSchemaReferences(null);
     return null;
   }
 
@@ -84,6 +81,5 @@ export function applyRuntimeDereference(payload: {
   }
 
   dereferenceUntranslatedFieldContent(payload.fields);
-  setSchemaReferences(references);
   return references;
 }

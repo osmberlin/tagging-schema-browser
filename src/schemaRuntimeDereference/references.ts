@@ -149,12 +149,18 @@ export function dereferencedTranslatableContent(
       const referencedField = tstrings.fields[f.stringsCrossReference.slice(1, -1)];
 
       if (referencedField) {
+        const target = tstrings.fields[fieldID];
         for (const prop in referencedField) {
           const value = referencedField[prop as keyof typeof referencedField];
-          if (value && typeof value === "object") {
-            if (prop === "options") {
-              tstrings.fields[fieldID].options = value as Record<string, string>;
-            }
+          if (value === undefined) continue;
+          if (typeof value === "object") {
+            (target as Record<string, unknown>)[prop] = value;
+          } else if (
+            typeof value === "string" &&
+            (target[prop as keyof typeof target] === undefined ||
+              target[prop as keyof typeof target] === "")
+          ) {
+            (target as Record<string, unknown>)[prop] = value;
           }
         }
       } else if (strict) {

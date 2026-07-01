@@ -3,6 +3,7 @@ import {
   useLocaleTranslations,
   useLocales,
 } from "@/components/PageTranslations/useLocaleData";
+import { useSchema } from "@/contexts/SchemaContext";
 import type { FieldTranslations } from "@/utils/types";
 import { createContext, useContext, useMemo } from "react";
 
@@ -37,7 +38,13 @@ export function LocaleProvider({
   children: React.ReactNode;
 }) {
   const locales = useLocales(dataUrl);
-  const { map, fieldMap, loading, error } = useLocaleTranslations(dataUrl, locale);
+  const { schemaReferences, loading: schemaLoading } = useSchema();
+  const { map, fieldMap, loading, error } = useLocaleTranslations(
+    dataUrl,
+    locale,
+    schemaReferences,
+    schemaLoading,
+  );
   const value = useMemo<LocaleContextValue>(
     () => ({
       locale,

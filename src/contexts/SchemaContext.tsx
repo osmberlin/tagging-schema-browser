@@ -2,6 +2,7 @@ import { ensureIconsForPresetUsage } from "@/components/PageIcons/iconRegistry";
 import { loadSchemaData } from "@/components/PagePresets/dataLoader";
 import { denormalize } from "@/components/PagePresets/denormalize";
 import { buildPresetSearchIndex } from "@/components/PagePresets/presetSearch";
+import type { References } from "@/schemaRuntimeDereference";
 import { DEFAULT_DATA_URL } from "@/utils/constants";
 import type { DenormalizedPreset, RawPresets, SchemaData } from "@/utils/types";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -18,6 +19,8 @@ type SchemaContextValue = {
   rawPresets: RawPresets;
   fields: SchemaData["fields"];
   fieldTranslations: SchemaData["fieldTranslations"];
+  /** Reference map for runtime locale dereferencing; null when v7 dist or no refs. */
+  schemaReferences: References | null;
 };
 
 const SchemaContext = createContext<SchemaContextValue | null>(null);
@@ -75,6 +78,7 @@ export function SchemaProvider({
           fields: raw.fields,
           translations: raw.translations,
           fieldTranslations: raw.translations.en?.presets?.fields ?? {},
+          schemaReferences: raw.references,
           loadError: null,
           diagnostics,
         });
@@ -118,6 +122,7 @@ export function SchemaProvider({
       rawPresets: data?.rawPresets ?? {},
       fields: data?.fields ?? {},
       fieldTranslations: data?.fieldTranslations ?? {},
+      schemaReferences: data?.schemaReferences ?? null,
     }),
     [dataUrl, setDataUrl, load, loading, error, data],
   );

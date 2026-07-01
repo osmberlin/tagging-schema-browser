@@ -1,4 +1,4 @@
-import { dereferenceLocaleStrings, getSchemaReferences } from "@/schemaRuntimeDereference";
+import { type References, dereferenceLocaleStrings } from "@/schemaRuntimeDereference";
 import type { FieldTranslations } from "@/utils/types";
 import { useEffect, useState } from "react";
 
@@ -115,6 +115,7 @@ export function useLocales(dataUrl: string | null) {
 async function loadLocale(
   dataUrl: string,
   locale: string,
+  schemaReferences: References | null,
 ): Promise<{ presets: LocaleMap; fields: FieldTranslations }> {
   const res = await fetch(`${ensureSlash(dataUrl)}translations/${locale}.min.json`);
   if (!res.ok) throw new Error(`No translations for "${locale}" (HTTP ${res.status})`);
@@ -131,9 +132,8 @@ async function loadLocale(
     presets: json[locale]?.presets?.presets ?? {},
     fields: json[locale]?.presets?.fields ?? {},
   };
-  const references = getSchemaReferences();
-  if (references) {
-    dereferenceLocaleStrings(tstrings, references);
+  if (schemaReferences) {
+    dereferenceLocaleStrings(tstrings, schemaReferences);
   }
 
   const map: LocaleMap = new Map();
@@ -147,7 +147,12 @@ async function loadLocale(
   return { presets: map, fields: tstrings.fields };
 }
 
-export function useLocaleTranslations(dataUrl: string | null, locale: string) {
+export function useLocaleTranslations(
+  dataUrl: string | null,
+  locale: string,
+  schemaReferences: References | null,
+  schemaLoading: boolean,
+) {
   const [state, setState] = useState<{
     map: LocaleMap | null;
     fieldMap: FieldTranslations | null;
@@ -159,9 +164,13 @@ export function useLocaleTranslations(dataUrl: string | null, locale: string) {
       setState({ map: null, fieldMap: null, loading: false, error: null });
       return;
     }
+    if (schemaLoading) {
+      setState({ map: null, fieldMap: null, loading: true, error: null });
+      return;
+    }
     let cancelled = false;
     setState({ map: null, fieldMap: null, loading: true, error: null });
-    loadLocale(dataUrl, locale)
+    loadLocale(dataUrl, locale, schemaReferences)
       .then(({ presets, fields }) => {
         if (!cancelled) setState({ map: presets, fieldMap: fields, loading: false, error: null });
       })
@@ -178,6 +187,6 @@ export function useLocaleTranslations(dataUrl: string | null, locale: string) {
     return () => {
       cancelled = true;
     };
-  }, [dataUrl, locale]);
+  }, [dataUrl, locale, schemaReferences, schemaLoading]);
   return state;
 }
