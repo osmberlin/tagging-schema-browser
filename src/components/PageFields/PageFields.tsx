@@ -1,7 +1,10 @@
 import { CountPill } from "@/components/ui/CountPill";
+import { DownloadButton } from "@/components/ui/DownloadButton";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
+import { exportFields } from "@/utils/pageExports";
+import { useMemo } from "react";
 import { FieldCard } from "./FieldCard";
 import { applyFieldFacets, useFieldFacetState } from "./useFieldFacetState";
 import { useFieldSearch } from "./useFieldSearch";
@@ -14,6 +17,11 @@ export function PageFields() {
     data?.presets ?? [],
     data?.fieldTranslations ?? {},
   );
+  const filtered = useMemo(() => {
+    if (!data) return [];
+    return applyFieldFacets(fields, facetState);
+  }, [data, fields, facetState]);
+  const exportData = useMemo(() => exportFields(filtered), [filtered]);
 
   if (!dataUrl && !data) {
     return (
@@ -33,8 +41,6 @@ export function PageFields() {
     );
   }
 
-  const filtered = applyFieldFacets(fields, facetState);
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -42,23 +48,30 @@ export function PageFields() {
           <AreaIcon area="fields" className={`h-7 w-7 ${areaAccent.fields.icon}`} />
           Fields <CountPill className="text-sm">{filtered.length}</CountPill>
         </h1>
-        <label className="flex items-center gap-2 text-sm text-slate-500">
-          Sort
-          <select
-            value={facetState.f_sort}
-            onChange={(e) =>
-              setFacetState({
-                f_sort: e.target.value as "name" | "label" | "usage_desc" | "usage_asc",
-              })
-            }
-            className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.fields.focus}`}
-          >
-            <option value="usage_desc">Usage (high to low)</option>
-            <option value="usage_asc">Usage (low to high)</option>
-            <option value="label">Label</option>
-            <option value="name">Id</option>
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <DownloadButton
+            filename="fields.json"
+            data={exportData}
+            disabled={exportData.length === 0}
+          />
+          <label className="flex items-center gap-2 text-sm text-slate-500">
+            Sort
+            <select
+              value={facetState.f_sort}
+              onChange={(e) =>
+                setFacetState({
+                  f_sort: e.target.value as "name" | "label" | "usage_desc" | "usage_asc",
+                })
+              }
+              className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.fields.focus}`}
+            >
+              <option value="usage_desc">Usage (high to low)</option>
+              <option value="usage_asc">Usage (low to high)</option>
+              <option value="label">Label</option>
+              <option value="name">Id</option>
+            </select>
+          </label>
+        </div>
       </div>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
         {filtered.map((field) => (

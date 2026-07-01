@@ -3,10 +3,12 @@ import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslati
 import { PRESET_SEARCH_ALL, searchPresets } from "@/components/PagePresets/presetSearch";
 import { filtersFromState, useSearchState } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
+import { DownloadButton } from "@/components/ui/DownloadButton";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
+import { exportTranslations } from "@/utils/pageExports";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -69,12 +71,18 @@ export function PageTranslations() {
     () => (localeMap ? matched.filter((p) => localeMap.get(p.id)?.name).length : 0),
     [matched, localeMap],
   );
+  const exportData = useMemo(
+    () => exportTranslations(rows, locale || undefined, localeMap),
+    [rows, locale, localeMap],
+  );
+  const exportFilename = locale ? `translations-${locale}.json` : "translations.json";
+  const showLocale = Boolean(locale);
+  const canExportTranslations = exportData.length > 0 && (!showLocale || (!loading && !error && localeMap));
 
   if (!dataUrl && !data) {
     return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;
   }
 
-  const showLocale = Boolean(locale);
   const totalPages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
   const page = Math.min(state.page, totalPages);
   const pageRows = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
@@ -82,10 +90,17 @@ export function PageTranslations() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
-          <AreaIcon area="translations" className={`h-7 w-7 ${areaAccent.translations.icon}`} />
-          Translations <CountPill className="text-sm">{rows.length}</CountPill>
-        </h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+            <AreaIcon area="translations" className={`h-7 w-7 ${areaAccent.translations.icon}`} />
+            Translations <CountPill className="text-sm">{rows.length}</CountPill>
+          </h1>
+          <DownloadButton
+            filename={exportFilename}
+            data={exportData}
+            disabled={!canExportTranslations}
+          />
+        </div>
         <p className="text-sm text-slate-500">
           {showLocale ? (
             <>

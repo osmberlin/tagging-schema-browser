@@ -1,11 +1,14 @@
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { CountPill } from "@/components/ui/CountPill";
+import { DownloadButton } from "@/components/ui/DownloadButton";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { comparisonAccent } from "@/theme/comparisonAccent";
+import { exportComparison } from "@/utils/pageExports";
 import type { FieldDiff } from "@/utils/presetDiff";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 
 function PresetRow({
   preset,
@@ -89,6 +92,7 @@ function Section({
 export function PageComparison() {
   const { isRelease, result, loading, error, domain, releaseVersion } = useComparison();
   const { dataUrl, data } = useSchema();
+  const exportData = useMemo(() => (result ? exportComparison(result) : null), [result]);
 
   if (!dataUrl && !data) {
     return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;
@@ -110,7 +114,10 @@ export function PageComparison() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="font-display text-2xl font-semibold text-slate-900">Comparison</h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h1 className="font-display text-2xl font-semibold text-slate-900">Comparison</h1>
+          {exportData ? <DownloadButton filename="comparison.json" data={exportData} /> : null}
+        </div>
         <p className="text-sm text-slate-500">
           <span className={`font-mono ${comparisonAccent.text}`}>{domain}</span> vs release
           {releaseVersion ? ` ${releaseVersion}` : ""}.
