@@ -89,8 +89,9 @@ export function SidebarLayout({
 
   const focusSearch = () => {
     const input = document.getElementById(PAGE_SEARCH_INPUT_ID) as HTMLInputElement | null;
-    input?.focus();
-    input?.select();
+    if (!input || document.activeElement === input) return;
+    input.focus();
+    input.select();
   };
 
   // Mod+K / "/" focus search; "?" opens help; "g" then p/i/a navigates.

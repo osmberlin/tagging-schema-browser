@@ -7,7 +7,7 @@ export function SearchBar() {
     <HeaderSearch
       value={state.q}
       onChange={(value) => setState({ q: value, page: 1 })}
-      placeholder="Search presets by name, terms, aliases, tags..."
+      placeholder="Search presets by name, path (amenity/cafe), tags…"
     />
   );
 }

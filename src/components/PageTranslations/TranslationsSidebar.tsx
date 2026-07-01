@@ -5,6 +5,7 @@ import { SidebarSection } from "@/components/ui/Sidebar";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
+import { isDefaultTranslationPreset } from "@/utils/presetTextMatch";
 import { clsx } from "clsx";
 import { useMemo } from "react";
 import { type TranslationStatus, useTranslationStatus } from "./translationsSearch";
@@ -62,7 +63,7 @@ export function TranslationsSidebar() {
       per_page: PRESET_SEARCH_ALL,
       sort: state.sort,
     });
-    const matched = (res?.data.items ?? []).filter((p) => p.name && p.searchable !== false);
+    const matched = (res?.data.items ?? []).filter((p) => isDefaultTranslationPreset(p));
     const translated = localeMap ? matched.filter((p) => localeMap.get(p.id)?.name).length : 0;
     return { translated, untranslated: matched.length - translated };
   }, [data, state, localeMap]);

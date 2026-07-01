@@ -9,6 +9,11 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
 import { exportTranslations } from "@/utils/pageExports";
+import {
+  isDefaultTranslationPreset,
+  isTranslationPresetEligible,
+  presetMatchesTextQuery,
+} from "@/utils/presetTextMatch";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -24,9 +29,7 @@ export function PageTranslations() {
 
   const filters = useMemo(() => filtersFromState(state), [state]);
 
-  // Facet-filter via itemsjs (so the shared sidebar applies), but run the text
-  // query ourselves so it can match the locale's content too (bilingual search).
-  const matched = useMemo(() => {
+  const facetFiltered = useMemo(() => {
     if (!data) return [] as DenormalizedPreset[];
     const res = searchPresets({
       query: "",
@@ -35,27 +38,22 @@ export function PageTranslations() {
       per_page: PRESET_SEARCH_ALL,
       sort: state.sort,
     });
-    return (res?.data.items ?? []).filter((p) => p.name && p.searchable !== false);
+    return res?.data.items ?? [];
   }, [data, filters, state.sort]);
 
-  const q = state.q.trim().toLowerCase();
+  // Default list: searchable presets with a display name.
+  const matched = useMemo(
+    () => facetFiltered.filter((p) => isDefaultTranslationPreset(p)),
+    [facetFiltered],
+  );
+
+  const q = state.q.trim();
   const rows = useMemo(() => {
-    let r = matched;
+    let r = q ? facetFiltered.filter((p) => isTranslationPresetEligible(p, q)) : matched;
     if (q) {
       r = r.filter((p) => {
         const loc = localeMap?.get(p.id);
-        const haystack = [
-          p.name,
-          p.id,
-          ...p.terms,
-          ...p.aliases,
-          loc?.name ?? "",
-          ...(loc?.terms ?? []),
-          ...(loc?.aliases ?? []),
-        ]
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(q);
+        return presetMatchesTextQuery(p, q, { locale: loc, includeTranslationKeys: true });
       });
     }
     if (translationStatus && localeMap) {
@@ -65,7 +63,7 @@ export function PageTranslations() {
       });
     }
     return r;
-  }, [matched, q, translationStatus, localeMap]);
+  }, [facetFiltered, matched, q, translationStatus, localeMap]);
 
   const translatedCount = useMemo(
     () => (localeMap ? matched.filter((p) => localeMap.get(p.id)?.name).length : 0),

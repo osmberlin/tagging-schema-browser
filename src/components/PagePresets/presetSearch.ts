@@ -1,3 +1,4 @@
+import { presetMatchesTextQuery } from "@/utils/presetTextMatch";
 import type { DenormalizedPreset } from "@/utils/types";
 import itemsjs from "itemsjs";
 
@@ -89,9 +90,14 @@ export function searchPresets(params: {
     mappedFilters.hasIconFacet = mappedFilters.hasIcon;
     mappedFilters.hasIcon = [];
   }
+  const query = params.query ?? "";
+  const useCustomTextFilter = query.trim().length > 0;
   const result = engine.search({
-    query: params.query ?? "",
+    query: useCustomTextFilter ? "" : query,
     filters: mappedFilters,
+    filter: useCustomTextFilter
+      ? (item: Record<string, unknown>) => presetMatchesTextQuery(item as DenormalizedPreset, query)
+      : undefined,
     page: params.page ?? 1,
     per_page: params.per_page ?? 24,
     sort: params.sort ?? "name_asc",
