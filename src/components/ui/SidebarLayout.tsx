@@ -5,151 +5,20 @@ import { translationsSearchDefaults } from "@/components/PageTranslations/transl
 import { DataSourceBanner } from "@/components/ui/DataSourceBanner";
 import { Kbd } from "@/components/ui/Kbd";
 import { LanguagePicker } from "@/components/ui/LanguagePicker";
+import { PrimaryNav } from "@/components/ui/PrimaryNav";
 import { ReferenceToggle } from "@/components/ui/ReferenceToggle";
 import { SchemaLoadIndicator } from "@/components/ui/SchemaLoadIndicator";
 import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { useComparison } from "@/contexts/ComparisonContext";
-import { areaAccent, areaNavClass, utilityNavClass } from "@/theme/areaAccent";
+import { utilityNavClass } from "@/theme/areaAccent";
 import { brandAccent } from "@/theme/brandAccent";
-import { comparisonAccent, comparisonNavClass } from "@/theme/comparisonAccent";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useHotkey, useHotkeySequence } from "@tanstack/react-hotkeys";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { clsx } from "clsx";
 import { useState } from "react";
 import { PAGE_SEARCH_INPUT_ID } from "./HeaderSearch";
 
 function NavDivider() {
   return <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden />;
-}
-
-function NavLinkItem({
-  to,
-  active,
-  area,
-  label,
-  search,
-  onNavigate,
-  className,
-  title,
-  children,
-}: {
-  to: string;
-  active: boolean;
-  area: "presets" | "icons" | "fields" | "translations" | "about";
-  label: string;
-  search: (prev: { dataUrl?: string; locale?: string; reference?: string }) => Record<
-    string,
-    unknown
-  >;
-  onNavigate?: () => void;
-  className?: (active: boolean) => string;
-  title?: string;
-  children?: React.ReactNode;
-}) {
-  const accentClass = area !== "about" ? areaNavClass(area, active) : utilityNavClass(active);
-  return (
-    <Link
-      to={to}
-      search={search}
-      onClick={onNavigate}
-      className={className?.(active) ?? accentClass}
-      title={title}
-    >
-      {area !== "about" ? (
-        <AreaIcon
-          area={area}
-          className={clsx("mr-1.5 inline h-3.5 w-3.5 align-[-2px]", areaAccent[area].icon)}
-        />
-      ) : null}
-      {label}
-      {children}
-    </Link>
-  );
-}
-
-// Reset each page's own params to defaults on navigation, but keep `dataUrl`.
-function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
-  const { pathname } = useLocation();
-  const { isComparing, result } = useComparison();
-  const changeCount = result
-    ? result.added.length + result.removed.length + result.modified.length
-    : null;
-  return (
-    <>
-      <NavLinkItem
-        to="/"
-        active={pathname === "/"}
-        area="presets"
-        label="Presets"
-        search={(prev) => ({
-          ...presetSearchDefaults,
-          dataUrl: prev.dataUrl ?? "",
-          locale: prev.locale ?? "",
-        })}
-        onNavigate={onNavigate}
-      />
-      <NavLinkItem
-        to="/icons"
-        active={pathname === "/icons"}
-        area="icons"
-        label="Icons"
-        search={(prev) => ({
-          ...iconFacetDefaults,
-          dataUrl: prev.dataUrl ?? "",
-          locale: prev.locale ?? "",
-        })}
-        onNavigate={onNavigate}
-      />
-      <NavLinkItem
-        to="/fields"
-        active={pathname === "/fields" || pathname.startsWith("/field/")}
-        area="fields"
-        label="Fields"
-        search={(prev) => ({
-          ...fieldFacetDefaults,
-          dataUrl: prev.dataUrl ?? "",
-          locale: prev.locale ?? "",
-        })}
-        onNavigate={onNavigate}
-      />
-      <NavLinkItem
-        to="/translations"
-        active={pathname === "/translations"}
-        area="translations"
-        label="Translations"
-        search={(prev) => ({
-          ...translationsSearchDefaults,
-          dataUrl: prev.dataUrl ?? "",
-          locale: prev.locale ?? "",
-        })}
-        onNavigate={onNavigate}
-      />
-      {isComparing ? (
-        <Link
-          to="/comparison"
-          search={(prev) => ({
-            ...presetSearchDefaults,
-            dataUrl: prev.dataUrl ?? "",
-            locale: prev.locale ?? "",
-          })}
-          onClick={onNavigate}
-          className={comparisonNavClass(pathname === "/comparison")}
-          title="What changed vs staging"
-        >
-          Comparison
-          {changeCount != null ? (
-            <span
-              className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${comparisonAccent.badge}`}
-            >
-              {changeCount}
-            </span>
-          ) : null}
-        </Link>
-      ) : null}
-    </>
-  );
 }
 
 function UtilityNavLinks({
@@ -346,12 +215,7 @@ export function SidebarLayout({
             </div>
           </div>
 
-          <nav
-            aria-label="Main"
-            className="order-3 flex shrink-0 items-center gap-1 overflow-x-auto lg:order-none"
-          >
-            <PrimaryNavLinks />
-          </nav>
+          <PrimaryNav className="order-3 lg:order-none" />
 
           {/* Inline when header is wide enough; full-width row 2 when search would drop below 45px. */}
           <div

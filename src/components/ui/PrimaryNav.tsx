@@ -1,0 +1,249 @@
+import { fieldFacetDefaults } from "@/components/PageFields/useFieldFacetState";
+import { iconFacetDefaults } from "@/components/PageIcons/useIconFacetState";
+import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
+import { translationsSearchDefaults } from "@/components/PageTranslations/translationsSearch";
+import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
+import { useComparison } from "@/contexts/ComparisonContext";
+import { areaAccent } from "@/theme/areaAccent";
+import { comparisonAccent } from "@/theme/comparisonAccent";
+import { Link, useLocation } from "@tanstack/react-router";
+import { clsx } from "clsx";
+import { motion, useReducedMotion } from "motion/react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
+
+type NavKey = SchemaArea | "comparison";
+
+type NavIndicator = {
+  bg: string;
+  ring: string;
+  text: string;
+};
+
+const areaIndicators: Record<SchemaArea, NavIndicator> = {
+  presets: {
+    bg: areaAccent.presets.navIndicatorBg,
+    ring: areaAccent.presets.navIndicatorRing,
+    text: areaAccent.presets.navIndicatorText,
+  },
+  icons: {
+    bg: areaAccent.icons.navIndicatorBg,
+    ring: areaAccent.icons.navIndicatorRing,
+    text: areaAccent.icons.navIndicatorText,
+  },
+  fields: {
+    bg: areaAccent.fields.navIndicatorBg,
+    ring: areaAccent.fields.navIndicatorRing,
+    text: areaAccent.fields.navIndicatorText,
+  },
+  translations: {
+    bg: areaAccent.translations.navIndicatorBg,
+    ring: areaAccent.translations.navIndicatorRing,
+    text: areaAccent.translations.navIndicatorText,
+  },
+};
+
+const comparisonIndicator: NavIndicator = {
+  bg: comparisonAccent.navIndicatorBg,
+  ring: comparisonAccent.navIndicatorRing,
+  text: comparisonAccent.navIndicatorText,
+};
+
+function getIndicator(key: NavKey): NavIndicator {
+  return key === "comparison" ? comparisonIndicator : areaIndicators[key];
+}
+
+function getActiveKey(pathname: string): NavKey {
+  if (pathname === "/icons") return "icons";
+  if (pathname === "/fields" || pathname.startsWith("/field/")) return "fields";
+  if (pathname === "/translations") return "translations";
+  if (pathname === "/comparison") return "comparison";
+  return "presets";
+}
+
+type NavItem = {
+  key: NavKey;
+  to: string;
+  label: string;
+  area?: SchemaArea;
+  search: (prev: { dataUrl?: string; locale?: string; reference?: string }) => Record<
+    string,
+    unknown
+  >;
+  title?: string;
+  children?: React.ReactNode;
+};
+
+const springTransition = { type: "spring" as const, stiffness: 500, damping: 35 };
+
+// Reset each page's own params to defaults on navigation, but keep `dataUrl`.
+export function PrimaryNav({
+  onNavigate,
+  className,
+}: {
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  const { pathname } = useLocation();
+  const { isComparing, result } = useComparison();
+  const reducedMotion = useReducedMotion();
+  const navRef = useRef<HTMLElement>(null);
+  const itemRefs = useRef(new Map<NavKey, HTMLAnchorElement>());
+  const [hoveredKey, setHoveredKey] = useState<NavKey | null>(null);
+  const [indicatorRect, setIndicatorRect] = useState({ left: 0, width: 0 });
+
+  const activeKey = getActiveKey(pathname);
+  const indicatorKey = hoveredKey ?? activeKey;
+  const indicator = getIndicator(indicatorKey);
+
+  const changeCount = result
+    ? result.added.length + result.removed.length + result.modified.length
+    : null;
+
+  const items: NavItem[] = [
+    {
+      key: "presets",
+      to: "/",
+      label: "Presets",
+      area: "presets",
+      search: (prev) => ({
+        ...presetSearchDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
+    },
+    {
+      key: "icons",
+      to: "/icons",
+      label: "Icons",
+      area: "icons",
+      search: (prev) => ({
+        ...iconFacetDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
+    },
+    {
+      key: "fields",
+      to: "/fields",
+      label: "Fields",
+      area: "fields",
+      search: (prev) => ({
+        ...fieldFacetDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
+    },
+    {
+      key: "translations",
+      to: "/translations",
+      label: "Translations",
+      area: "translations",
+      search: (prev) => ({
+        ...translationsSearchDefaults,
+        dataUrl: prev.dataUrl ?? "",
+        locale: prev.locale ?? "",
+      }),
+    },
+    ...(isComparing
+      ? [
+          {
+            key: "comparison" as const,
+            to: "/comparison",
+            label: "Comparison",
+            search: (prev: { dataUrl?: string; locale?: string; reference?: string }) => ({
+              ...presetSearchDefaults,
+              dataUrl: prev.dataUrl ?? "",
+              locale: prev.locale ?? "",
+            }),
+            title: "What changed vs staging",
+            children:
+              changeCount != null ? (
+                <span
+                  className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${comparisonAccent.badge}`}
+                >
+                  {changeCount}
+                </span>
+              ) : null,
+          },
+        ]
+      : []),
+  ];
+
+  const measureIndicator = useCallback(() => {
+    const el = itemRefs.current.get(indicatorKey);
+    if (!el) return;
+    setIndicatorRect({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [indicatorKey]);
+
+  useLayoutEffect(() => {
+    measureIndicator();
+  }, [measureIndicator]);
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const observer = new ResizeObserver(measureIndicator);
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, [measureIndicator]);
+
+  const transition = reducedMotion ? { duration: 0 } : springTransition;
+
+  return (
+    <nav
+      ref={navRef}
+      aria-label="Main"
+      className={clsx("relative flex shrink-0 items-center gap-1 overflow-x-auto", className)}
+      onMouseLeave={() => setHoveredKey(null)}
+    >
+      {indicatorRect.width > 0 ? (
+        <motion.div
+          aria-hidden
+          className={clsx(
+            "pointer-events-none absolute top-0 bottom-0 rounded-lg ring-1 ring-inset",
+            indicator.bg,
+            indicator.ring,
+          )}
+          initial={false}
+          animate={{ left: indicatorRect.left, width: indicatorRect.width }}
+          transition={transition}
+        />
+      ) : null}
+
+      {items.map((item) => {
+        const highlighted = item.key === indicatorKey;
+        const itemIndicator = getIndicator(item.key);
+        return (
+          <Link
+            key={item.key}
+            ref={(el) => {
+              if (el) itemRefs.current.set(item.key, el);
+              else itemRefs.current.delete(item.key);
+            }}
+            to={item.to}
+            search={item.search}
+            onClick={onNavigate}
+            onMouseEnter={() => setHoveredKey(item.key)}
+            title={item.title}
+            className={clsx(
+              "relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              highlighted ? itemIndicator.text : "text-slate-600",
+            )}
+          >
+            {item.area ? (
+              <AreaIcon
+                area={item.area}
+                className={clsx(
+                  "mr-1.5 inline h-3.5 w-3.5 align-[-2px]",
+                  highlighted ? itemIndicator.text : areaAccent[item.area].icon,
+                )}
+              />
+            ) : null}
+            {item.label}
+            {item.children}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

@@ -7,6 +7,9 @@ export type AreaAccent = {
   iconBg: string;
   navActive: string;
   navInactive: string;
+  navIndicatorBg: string;
+  navIndicatorRing: string;
+  navIndicatorText: string;
   link: string;
   linkRing: string;
   linkRingHover: string;
@@ -38,6 +41,9 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
       "rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-100 ring-inset",
     navInactive:
       "rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-700",
+    navIndicatorBg: "bg-rose-50",
+    navIndicatorRing: "ring-rose-100",
+    navIndicatorText: "text-rose-700",
     link: "text-rose-600 hover:text-rose-700",
     linkRing: "text-rose-600 ring-rose-100 hover:bg-rose-50",
     linkRingHover: "hover:text-rose-700",
@@ -67,6 +73,9 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
       "rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 ring-1 ring-sky-100 ring-inset",
     navInactive:
       "rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-sky-50 hover:text-sky-700",
+    navIndicatorBg: "bg-sky-50",
+    navIndicatorRing: "ring-sky-100",
+    navIndicatorText: "text-sky-700",
     link: "text-sky-600 hover:text-sky-700",
     linkRing: "text-sky-600 ring-sky-100 hover:bg-sky-50",
     linkRingHover: "hover:text-sky-700",
@@ -96,6 +105,9 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
       "rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100 ring-inset",
     navInactive:
       "rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700",
+    navIndicatorBg: "bg-emerald-50",
+    navIndicatorRing: "ring-emerald-100",
+    navIndicatorText: "text-emerald-700",
     link: "text-emerald-600 hover:text-emerald-700",
     linkRing: "text-emerald-700 ring-emerald-100 hover:bg-emerald-50",
     linkRingHover: "hover:text-emerald-700",
@@ -125,6 +137,9 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
       "rounded-lg bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700 ring-1 ring-yellow-100 ring-inset",
     navInactive:
       "rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-yellow-50 hover:text-yellow-700",
+    navIndicatorBg: "bg-yellow-50",
+    navIndicatorRing: "ring-yellow-100",
+    navIndicatorText: "text-yellow-700",
     link: "text-yellow-600 hover:text-yellow-700",
     linkRing: "text-yellow-600 ring-yellow-100 hover:bg-yellow-50",
     linkRingHover: "hover:text-yellow-700",
