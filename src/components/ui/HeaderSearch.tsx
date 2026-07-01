@@ -30,7 +30,7 @@ export function HeaderSearch({
   area?: SchemaArea;
 }) {
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full min-w-[45px] max-w-[450px]">
       <div className="relative">
         <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
           <SearchIcon className="h-4.5 w-4.5" />

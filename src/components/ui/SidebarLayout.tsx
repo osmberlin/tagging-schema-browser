@@ -281,57 +281,59 @@ export function SidebarLayout({
   return (
     <div className="flex min-h-svh w-full flex-col overflow-x-clip bg-white text-slate-900">
       <header className="sticky top-0 z-40 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur-sm">
-        {/* Wraps to two rows when cramped: logo on the first row, all actions on the second. */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:h-16 lg:py-0 lg:px-8">
-          {showSidebar ? (
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="-ml-1 rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 md:hidden"
-              aria-label="Open filters"
-            >
-              <FiltersIcon className="h-5 w-5" />
-            </button>
-          ) : null}
+        {/* Wraps to two rows when the search would shrink below 45px: logo on row 1, search + nav on row 2. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:px-8">
+          <div className="flex shrink-0 items-center gap-2">
+            {showSidebar ? (
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="-ml-1 rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 md:hidden"
+                aria-label="Open filters"
+              >
+                <FiltersIcon className="h-5 w-5" />
+              </button>
+            ) : null}
 
-          <Link
-            to="/"
-            search={(prev) => ({
-              ...presetSearchDefaults,
-              dataUrl: prev.dataUrl ?? "",
-              locale: prev.locale ?? "",
-            })}
-            className="flex shrink-0 items-center gap-2.5"
-          >
-            <span
-              className={`flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm ${brandAccent.logo}`}
+            <Link
+              to="/"
+              search={(prev) => ({
+                ...presetSearchDefaults,
+                dataUrl: prev.dataUrl ?? "",
+                locale: prev.locale ?? "",
+              })}
+              className="flex shrink-0 items-center gap-2.5"
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-                <path
-                  d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
-                  stroke="currentColor"
-                  strokeWidth={1.6}
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M11 3v18M3 7.5 11 12l8-4.5"
-                  stroke="currentColor"
-                  strokeWidth={1.6}
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            <span className="hidden flex-col leading-tight sm:flex">
-              <span className="font-display text-base font-semibold whitespace-nowrap text-slate-900">
-                Tagging Schema <span className={brandAccent.wordmark}>Browser</span>
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm ${brandAccent.logo}`}
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none">
+                  <path
+                    d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
+                    stroke="currentColor"
+                    strokeWidth={1.6}
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M11 3v18M3 7.5 11 12l8-4.5"
+                    stroke="currentColor"
+                    strokeWidth={1.6}
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </span>
-              {releaseVersion ? (
-                <span className="text-[11px] font-medium text-slate-400">
-                  Release {releaseVersion}
+              <span className="hidden flex-col leading-tight sm:flex">
+                <span className="font-display text-base font-semibold whitespace-nowrap text-slate-900">
+                  Tagging Schema <span className={brandAccent.wordmark}>Browser</span>
                 </span>
-              ) : null}
-            </span>
-          </Link>
+                {releaseVersion ? (
+                  <span className="text-[11px] font-medium text-slate-400">
+                    Release {releaseVersion}
+                  </span>
+                ) : null}
+              </span>
+            </Link>
+          </div>
 
           <nav
             aria-label="Main"
@@ -340,10 +342,19 @@ export function SidebarLayout({
             <PrimaryNavLinks />
           </nav>
 
-          {/* Search and utility nav: wrap to their own full row below lg. */}
-          <div className="order-last flex w-full min-w-0 items-center gap-3 lg:order-none lg:ml-auto lg:w-auto lg:flex-1">
-            <div className="flex min-w-0 flex-1 justify-center">{topSearch}</div>
-            <nav aria-label="Settings" className="flex shrink-0 items-center gap-1 overflow-x-auto">
+          {/* Inline when header is wide enough; full-width row 2 when search would drop below 45px. */}
+          <div
+            className={
+              topSearch
+                ? "order-last flex w-full min-w-[min(100%,calc(45px+33rem))] flex-1 basis-[calc(45px+33rem)] items-center gap-3 lg:order-none"
+                : "order-last flex w-full min-w-[min(100%,33rem)] flex-1 basis-132 items-center gap-3 lg:order-none"
+            }
+          >
+            {topSearch ? <div className="min-w-[45px] max-w-[450px] flex-1">{topSearch}</div> : null}
+            <nav
+              aria-label="Settings"
+              className="ml-auto flex shrink-0 items-center gap-1 overflow-x-auto"
+            >
               <UtilityNavLinks onHelp={() => setHelpOpen(true)} />
             </nav>
           </div>
