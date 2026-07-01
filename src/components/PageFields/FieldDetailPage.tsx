@@ -1,10 +1,10 @@
 import { FieldTranslationTable } from "@/components/PageFields/FieldTranslationTable";
 import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
 import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
-import { presetSearchDefaults, useSetPreset } from "@/components/PagePresets/useSearchState";
+import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { AreaLink } from "@/components/ui/AreaLink";
-import { CountPill } from "@/components/ui/CountPill";
 import { DetailDisclosure } from "@/components/ui/DetailDisclosure";
+import { RelatedBlock } from "@/components/ui/RelatedBlock";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
@@ -12,7 +12,7 @@ import { areaAccent } from "@/theme/areaAccent";
 import { externalAccent, externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
 import type { DenormalizedPreset, RawFieldTranslation } from "@/utils/types";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 
 type RelatedItem = { id: string; name: string };
 
@@ -74,8 +74,6 @@ function FieldDetailContent({
   morePresets: DenormalizedPreset[];
   dataUrl: string;
 }) {
-  const navigate = useNavigate();
-  const setPreset = useSetPreset();
   const { locale, fieldLocaleMap, loading: localeLoading, error: localeError } = useLocale();
   const fieldLocale = locale ? fieldLocaleMap?.[fieldId] : undefined;
 
@@ -86,31 +84,8 @@ function FieldDetailContent({
   const type = typeof raw.type === "string" ? raw.type : "unknown";
   const geometry = Array.isArray(raw.geometry) ? (raw.geometry as string[]) : [];
 
-  const onFilterPrimaryPresets = () => {
-    void navigate({
-      to: "/",
-      search: (prev) => ({
-        ...presetSearchDefaults,
-        dataUrl: prev.dataUrl ?? "",
-        locale: prev.locale ?? "",
-        primaryFieldIds: [fieldId],
-        page: 1,
-      }),
-    });
-  };
-
-  const onFilterMorePresets = () => {
-    void navigate({
-      to: "/",
-      search: (prev) => ({
-        ...presetSearchDefaults,
-        dataUrl: prev.dataUrl ?? "",
-        locale: prev.locale ?? "",
-        moreFieldIds: [fieldId],
-        page: 1,
-      }),
-    });
-  };
+  const onFilterPrimaryPresets = { primaryFieldIds: [fieldId] };
+  const onFilterMorePresets = { moreFieldIds: [fieldId] };
 
   const toItem = (p: DenormalizedPreset): RelatedItem => ({ id: p.id, name: p.name });
 
@@ -228,69 +203,17 @@ function FieldDetailContent({
           <RelatedBlock
             title="Presets with this field (primary)"
             count={primaryPresets.length}
-            onTitleClick={onFilterPrimaryPresets}
+            titleFilter={onFilterPrimaryPresets}
             presets={primaryPresets.map(toItem)}
-            onOpenPreset={setPreset}
           />
           <RelatedBlock
             title="Presets with this field (more fields)"
             count={morePresets.length}
-            onTitleClick={onFilterMorePresets}
+            titleFilter={onFilterMorePresets}
             presets={morePresets.map(toItem)}
-            onOpenPreset={setPreset}
           />
         </div>
       </DetailDisclosure>
     </div>
-  );
-}
-
-function RelatedBlock({
-  title,
-  count,
-  onTitleClick,
-  presets,
-  onOpenPreset,
-}: {
-  title: string;
-  count: number;
-  onTitleClick: () => void;
-  presets: RelatedItem[];
-  onOpenPreset: (id: string) => void;
-}) {
-  return (
-    <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <h2 className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-900">
-        <button
-          type="button"
-          onClick={onTitleClick}
-          className="inline-flex min-w-0 items-center gap-1.5 text-left hover:underline"
-        >
-          <AreaIcon area="presets" className="h-3.5 w-3.5 shrink-0" />
-          <span className="min-w-0">{title}</span>
-        </button>
-        <CountPill>{count}</CountPill>
-      </h2>
-      {presets.length === 0 ? (
-        <p className="text-sm text-slate-500">No related presets.</p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {presets.slice(0, 30).map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onOpenPreset(p.id)}
-              title={p.id}
-              className="max-w-full truncate rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200 ring-inset hover:bg-slate-100"
-            >
-              {p.name}
-            </button>
-          ))}
-          {presets.length > 30 ? (
-            <span className="self-center text-xs text-slate-400">+{presets.length - 30} more</span>
-          ) : null}
-        </div>
-      )}
-    </section>
   );
 }

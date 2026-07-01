@@ -14,7 +14,7 @@ import { type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
 import { clsx } from "clsx";
 import { Fragment, type ReactNode, useMemo, useRef } from "react";
 import { usePresetSearch } from "./usePresetSearch";
-import { presetSearchDefaults, useSetPreset } from "./useSearchState";
+import { presetSearchDefaults } from "./useSearchState";
 
 const COLUMN_WIDTH = 160;
 
@@ -151,21 +151,21 @@ function PresetHeaderCell({
   preset,
   changed,
   status,
-  onOpen,
 }: {
   preset: DenormalizedPreset;
   changed: boolean;
   status: string | undefined;
-  onOpen: (id: string) => void;
 }) {
   return (
     <th
       className="sticky top-0 z-20 overflow-hidden border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
       style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
     >
-      <button
-        type="button"
-        onClick={() => onOpen(preset.id)}
+      <Link
+        to="/preset/$"
+        params={{ _splat: preset.id }}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+        title={`Open preset "${preset.id}"`}
         className={`group/col relative block h-full w-full overflow-hidden px-3 py-2 pr-8 text-left transition ${areaAccent.presets.rowHover}`}
       >
         <span
@@ -191,7 +191,7 @@ function PresetHeaderCell({
         >
           <ExpandIcon className="h-3 w-3" />
         </span>
-      </button>
+      </Link>
     </th>
   );
 }
@@ -258,7 +258,6 @@ export function PresetTable() {
   const { data } = useSchema();
   const { result: comparison } = useComparison();
   const result = usePresetSearch();
-  const setPreset = useSetPreset();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const iconCounts = useMemo(() => {
@@ -469,14 +468,7 @@ export function PresetTable() {
                 renderColumn={(preset) => {
                   const status = comparison?.statusById.get(preset.id);
                   const changed = status === "added" || status === "modified";
-                  return (
-                    <PresetHeaderCell
-                      preset={preset}
-                      changed={changed}
-                      status={status}
-                      onOpen={setPreset}
-                    />
-                  );
+                  return <PresetHeaderCell preset={preset} changed={changed} status={status} />;
                 }}
               />
             </tr>

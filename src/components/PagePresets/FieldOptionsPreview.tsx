@@ -2,6 +2,7 @@ import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { areaAccent } from "@/theme/areaAccent";
 import type { PresetOptionRow } from "@/utils/fieldOptions";
+import { Link } from "@tanstack/react-router";
 import { clsx } from "clsx";
 
 function OptionLabelRow({
@@ -60,12 +61,10 @@ export function FieldOptionsPreview({
   options,
   locale,
   fieldLocaleMap,
-  onOpenPreset,
 }: {
   options: PresetOptionRow[];
   locale?: string;
   fieldLocaleMap?: Record<string, { options?: Record<string, string> }> | null;
-  onOpenPreset?: (id: string) => void;
 }) {
   const showLocale = Boolean(locale);
   if (options.length === 0) return null;
@@ -103,15 +102,16 @@ export function FieldOptionsPreview({
                 localized={labelLocale}
                 showLocale={showLocale}
               />
-              {childPreset && onOpenPreset ? (
-                <button
-                  type="button"
-                  onClick={() => onOpenPreset(childPreset.id)}
+              {childPreset ? (
+                <Link
+                  to="/preset/$"
+                  params={{ _splat: childPreset.id }}
+                  search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
                   className={`mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
                 >
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {childPreset.name}
-                </button>
+                </Link>
               ) : null}
             </div>
           </div>

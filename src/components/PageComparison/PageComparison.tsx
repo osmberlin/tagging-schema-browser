@@ -1,20 +1,20 @@
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
-import { useSetPreset } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { comparisonAccent } from "@/theme/comparisonAccent";
 import type { FieldDiff } from "@/utils/presetDiff";
 import type { DenormalizedPreset } from "@/utils/types";
+import { Link } from "@tanstack/react-router";
 
 function PresetRow({
   preset,
   diffs,
-  onOpen,
+  linkable = true,
 }: {
   preset: DenormalizedPreset;
   diffs?: FieldDiff[];
-  onOpen?: (id: string) => void;
+  linkable?: boolean;
 }) {
   const head = (
     <>
@@ -27,15 +27,16 @@ function PresetRow({
   );
   return (
     <li className="rounded-xl border border-slate-200 bg-white">
-      {onOpen ? (
-        <button
-          type="button"
-          onClick={() => onOpen(preset.id)}
+      {linkable ? (
+        <Link
+          to="/preset/$"
+          params={{ _splat: preset.id }}
+          search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
           className={`flex w-full items-start gap-2 px-3 py-2 text-left transition ${comparisonAccent.rowHover}`}
           title="Show details of preset"
         >
           {head}
-        </button>
+        </Link>
       ) : (
         <div className="flex items-start gap-2 px-3 py-2" title="Only in the release">
           {head}
@@ -88,7 +89,6 @@ function Section({
 export function PageComparison() {
   const { isRelease, result, loading, error, domain, releaseVersion } = useComparison();
   const { dataUrl, data } = useSchema();
-  const setPreset = useSetPreset();
 
   if (!dataUrl && !data) {
     return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;
@@ -127,17 +127,17 @@ export function PageComparison() {
         <div className="space-y-8">
           <Section title="Added" count={result.added.length} accent="bg-emerald-500">
             {result.added.map((p) => (
-              <PresetRow key={p.id} preset={p} onOpen={setPreset} />
+              <PresetRow key={p.id} preset={p} />
             ))}
           </Section>
           <Section title="Modified" count={result.modified.length} accent="bg-violet-500">
             {result.modified.map((m) => (
-              <PresetRow key={m.current.id} preset={m.current} diffs={m.diffs} onOpen={setPreset} />
+              <PresetRow key={m.current.id} preset={m.current} diffs={m.diffs} />
             ))}
           </Section>
           <Section title="Removed" count={result.removed.length} accent="bg-rose-500">
             {result.removed.map((p) => (
-              <PresetRow key={p.id} preset={p} />
+              <PresetRow key={p.id} preset={p} linkable={false} />
             ))}
           </Section>
         </div>

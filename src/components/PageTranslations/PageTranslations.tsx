@@ -1,17 +1,14 @@
 import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
 import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslationTable";
 import { PRESET_SEARCH_ALL, searchPresets } from "@/components/PagePresets/presetSearch";
-import {
-  filtersFromState,
-  useSearchState,
-  useSetPreset,
-} from "@/components/PagePresets/useSearchState";
+import { filtersFromState, useSearchState } from "@/components/PagePresets/useSearchState";
 import { CountPill } from "@/components/ui/CountPill";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
 import type { DenormalizedPreset } from "@/utils/types";
+import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslationStatus } from "./translationsSearch";
 
@@ -21,7 +18,6 @@ export function PageTranslations() {
   const { data, dataUrl } = useSchema();
   const [state, setState] = useSearchState();
   const [translationStatus] = useTranslationStatus();
-  const setPreset = useSetPreset();
   const { locale, localeMap, loading, error } = useLocale();
 
   const filters = useMemo(() => filtersFromState(state), [state]);
@@ -126,9 +122,10 @@ export function PageTranslations() {
                   key={p.id}
                   className="overflow-hidden rounded-xl border border-slate-200 bg-white"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setPreset(p.id)}
+                  <Link
+                    to="/preset/$"
+                    params={{ _splat: p.id }}
+                    search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
                     className={`group/ac relative flex w-full items-start justify-between gap-3 bg-slate-50/70 px-3 py-2 pr-9 text-left transition ${areaAccent.translations.rowHover}`}
                     title="Show details of preset"
                   >
@@ -154,7 +151,7 @@ export function PageTranslations() {
                     >
                       ›
                     </span>
-                  </button>
+                  </Link>
 
                   <PresetTranslationTable
                     preset={p}
