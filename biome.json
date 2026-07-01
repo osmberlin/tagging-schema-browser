@@ -1,5 +1,8 @@
 {
   "vcs": { "enabled": true, "clientKind": "git" },
+  "files": {
+    "ignore": [".agents/**"]
+  },
   "organizeImports": { "enabled": true },
   "linter": {
     "enabled": true,

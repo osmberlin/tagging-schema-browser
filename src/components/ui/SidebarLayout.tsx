@@ -350,7 +350,9 @@ export function SidebarLayout({
                 : "order-last flex w-full min-w-[min(100%,33rem)] flex-1 basis-132 items-center gap-3 lg:order-none"
             }
           >
-            {topSearch ? <div className="min-w-[45px] max-w-[450px] flex-1">{topSearch}</div> : null}
+            {topSearch ? (
+              <div className="min-w-[45px] max-w-[450px] flex-1">{topSearch}</div>
+            ) : null}
             <nav
               aria-label="Settings"
               className="ml-auto flex shrink-0 items-center gap-1 overflow-x-auto"

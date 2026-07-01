@@ -3,6 +3,20 @@ import { expect, test } from "@playwright/test";
 async function loadTestSchema(page: import("@playwright/test").Page) {
   await page.goto("/?dataUrl=/test-schema");
   await expect(page.getByRole("heading", { name: /^Presets\b/i })).toBeVisible();
+  await expect(page.locator("table tbody")).toBeVisible();
+}
+
+/** Preset columns are virtualized — filter to one preset when asserting a specific column. */
+async function loadTestSchemaPreset(page: import("@playwright/test").Page, query: string) {
+  await page.goto(`/?dataUrl=/test-schema&q=${encodeURIComponent(query)}`);
+  await expect(page.getByRole("heading", { name: /^Presets\b/i })).toBeVisible();
+  await expect(page.locator("table thead th").filter({ hasText: query })).toBeVisible();
+}
+
+async function presetColumnHeaderWidths(page: import("@playwright/test").Page) {
+  return page
+    .locator("table thead tr th:not([aria-hidden])")
+    .evaluateAll((ths) => ths.slice(1).map((th) => Math.round(th.getBoundingClientRect().width)));
 }
 
 test("preset facets are visible and populated in left navigation", async ({ page }) => {
@@ -21,7 +35,7 @@ test("preset facets are visible and populated in left navigation", async ({ page
 test("broken icon presets are flagged and filterable", async ({ page }) => {
   await loadTestSchema(page);
 
-  await expect(page.getByText(/1 preset references a missing preset icon/i)).toBeVisible();
+  await expect(page.getByText(/presets? references? a missing preset icon/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "show broken preset icons" })).toBeVisible();
   await expect(page.locator("aside").getByRole("button", { name: /^broken\b/i })).toBeVisible();
 
@@ -54,17 +68,17 @@ test("preset detail shows field options with child preset links", async ({ page 
 
   await expect(page.getByRole("button", { name: /Source preset/i })).toBeVisible();
   await page.getByRole("button", { name: /"crane\/type"/ }).click();
-  await expect(page.getByText("portal_crane")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Portal Crane/i })).toBeVisible();
+  await expect(page.getByText("portal_crane", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Portal Crane/i })).toBeVisible();
 
-  await page.getByRole("button", { name: /Portal Crane/i }).click();
+  await page.getByRole("link", { name: /Portal Crane/i }).click();
   await expect(page).toHaveURL(/\/preset\/man_made\/crane\/portal_crane/);
-  await expect(page.getByText("man_made/crane/portal_crane")).toBeVisible();
+  await expect(page.getByText("man_made/crane/portal_crane", { exact: true })).toBeVisible();
 });
 
 test("preset detail page shows source JSON", async ({ page }) => {
   await page.goto("/?dataUrl=/test-schema");
-  await page.getByRole("button", { name: /cafe/i }).first().click();
+  await page.getByRole("link", { name: /Cafe/i }).first().click();
   await expect(page).toHaveURL(/\/preset\/amenity\/cafe/);
   await expect(page.getByRole("heading", { name: /cafe/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Translation/i })).toBeVisible();
@@ -135,7 +149,7 @@ test("name preset ref shows inherited labels from referenced preset", async ({ p
 
 test("preset table ID row truncates long values with ellipsis", async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 900 });
-  await page.goto("/?dataUrl=/test-schema");
+  await loadTestSchemaPreset(page, "amenity/clinic/abortion");
 
   const idRow = page.locator("tbody tr", { has: page.locator("th", { hasText: /^ID$/ }) });
   const idCell = idRow.locator("td").filter({ hasText: "amenity/clinic/abortion" }).first();
@@ -163,9 +177,7 @@ test("preset table columns share a fixed width", async ({ page }) => {
   await loadTestSchema(page);
   await expect(page.locator("table thead th").nth(1)).toBeVisible();
 
-  const widths = await page
-    .locator("table thead tr th")
-    .evaluateAll((ths) => ths.slice(1).map((th) => Math.round(th.getBoundingClientRect().width)));
+  const widths = await presetColumnHeaderWidths(page);
 
   expect(widths.length).toBeGreaterThan(1);
   expect(new Set(widths).size).toBe(1);
@@ -173,18 +185,18 @@ test("preset table columns share a fixed width", async ({ page }) => {
 });
 
 test("preset table column headers expose full name and id via title", async ({ page }) => {
-  await loadTestSchema(page);
+  await loadTestSchemaPreset(page, "amenity/clinic/abortion");
 
   const header = page.locator("thead th").filter({ hasText: "amenity/clinic/abortion" });
   await expect(header.locator("span.font-mono")).toHaveAttribute(
     "title",
     "amenity/clinic/abortion",
   );
-  await expect(header.locator("button > span > span[title]").first()).toHaveAttribute(
+  await expect(header.locator("span.truncate[title]").first()).toHaveAttribute(
     "title",
-    /.+/,
+    "amenity/clinic/abortion",
   );
-  await expect(header.locator("button")).not.toHaveAttribute("title");
+  await expect(header.locator("a")).toHaveAttribute("title", /Open preset/i);
 });
 
 test("preset table name row wraps instead of truncating", async ({ page }) => {
