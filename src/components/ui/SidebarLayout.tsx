@@ -279,7 +279,7 @@ export function SidebarLayout({
   );
 
   return (
-    <div className="flex min-h-svh w-full flex-col overflow-x-clip bg-white text-slate-900">
+    <div className="flex min-h-svh w-full flex-col bg-white text-slate-900">
       <header className="sticky top-0 z-40 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur-sm">
         {/* Wraps to two rows when the search would shrink below 45px: logo on row 1, search + nav on row 2. */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:px-8">
@@ -353,10 +353,7 @@ export function SidebarLayout({
             {topSearch ? (
               <div className="min-w-[45px] max-w-[450px] flex-1">{topSearch}</div>
             ) : null}
-            <nav
-              aria-label="Settings"
-              className="ml-auto flex shrink-0 items-center gap-1 overflow-x-auto"
-            >
+            <nav aria-label="Settings" className="ml-auto flex shrink-0 items-center gap-1">
               <UtilityNavLinks onHelp={() => setHelpOpen(true)} />
             </nav>
           </div>
@@ -365,7 +362,7 @@ export function SidebarLayout({
         <DataSourceBanner />
       </header>
 
-      <div className="flex w-full flex-auto">
+      <div className="flex w-full flex-auto overflow-x-clip">
         {showSidebar ? (
           <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-slate-50 md:block">
             <div className="sticky top-16 max-h-[calc(100svh-4rem)] overflow-y-auto px-5 py-6">
