@@ -17,10 +17,6 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { PAGE_SEARCH_INPUT_ID } from "./HeaderSearch";
 
-function NavDivider() {
-  return <span className="mx-1 h-5 w-px shrink-0 bg-slate-200" aria-hidden />;
-}
-
 function UtilityNavLinks({
   onNavigate,
   onHelp,
@@ -32,9 +28,7 @@ function UtilityNavLinks({
   return (
     <>
       <LanguagePicker />
-      <NavDivider />
       <HelpButton onClick={onHelp} />
-      <NavDivider />
       <Link
         to="/about"
         search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}

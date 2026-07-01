@@ -1,23 +1,52 @@
 import { useLocale } from "@/contexts/LocaleContext";
 
+function ChevronDownIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
+      <path
+        fillRule="evenodd"
+        d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
 /** Global comparison-language picker shown in the header (drives `locale` state). */
 export function LanguagePicker() {
   const { locale, setLocale, locales } = useLocale();
+  const valueLabel = locale || "Choose";
+
   return (
-    <label className="flex items-center gap-1.5 text-xs text-slate-500" title="Comparison language">
-      <span className="hidden lg:inline">Lang</span>
+    <div className="group relative h-10 w-[5.25rem]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-0.5 rounded-lg border border-slate-300 bg-white px-1.5 py-0.5 shadow-sm transition group-focus-within:border-sky-500 group-focus-within:ring-2 group-focus-within:ring-sky-500/30"
+      >
+        <span className="whitespace-nowrap text-[10px] leading-none text-slate-500">
+          Compare Lang
+        </span>
+        <div className="flex min-w-0 items-center gap-0.5">
+          <span className="min-w-0 flex-1 truncate text-xs leading-none font-medium text-slate-900">
+            {valueLabel}
+          </span>
+          <ChevronDownIcon className="h-3 w-3 shrink-0 text-slate-400" />
+        </div>
+      </div>
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value)}
-        className="h-8 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900 shadow-sm transition focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+        aria-label="Comparison language"
+        title={locale ? `Compare with ${locale}` : "Compare language (EN only)"}
+        className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none opacity-0"
       >
-        <option value="">EN only</option>
+        <option value="">Choose</option>
         {locales.map((l) => (
           <option key={l} value={l}>
             {l}
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
