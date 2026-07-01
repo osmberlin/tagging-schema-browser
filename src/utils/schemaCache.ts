@@ -10,6 +10,15 @@ function normalizeDataUrl(url: string): string {
 
 const cache = new Map<string, SchemaData>();
 const inflight = new Map<string, Promise<SchemaData | null>>();
+const loadErrors = new Map<string, string>();
+
+export function getSchemaLoadError(dataUrl: string): string | null {
+  return loadErrors.get(normalizeDataUrl(dataUrl)) ?? null;
+}
+
+function clearSchemaLoadError(dataUrl: string): void {
+  loadErrors.delete(normalizeDataUrl(dataUrl));
+}
 
 export function processRawSchemaPayload(raw: RawSchemaPayload): SchemaData | null {
   if (raw.loadErrors.length > 0) return null;
@@ -57,6 +66,13 @@ export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | n
 
   const promise = loadSchemaData(dataUrl)
     .then((raw) => {
+      if (raw.loadErrors.length > 0) {
+        const message = raw.loadErrors.join("; ");
+        loadErrors.set(key, message);
+        inflight.delete(key);
+        return null;
+      }
+      clearSchemaLoadError(dataUrl);
       const data = processRawSchemaPayload(raw);
       if (data) {
         storeSchemaData(dataUrl, data);
@@ -65,7 +81,9 @@ export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | n
       inflight.delete(key);
       return data;
     })
-    .catch(() => {
+    .catch((e) => {
+      const message = e instanceof Error ? e.message : String(e);
+      loadErrors.set(key, message);
       inflight.delete(key);
       return null;
     });

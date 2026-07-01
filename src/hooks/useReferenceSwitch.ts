@@ -62,9 +62,16 @@ export function useReferenceSwitch() {
         reference: referenceSearchParam(target),
         dataUrl: undefined,
       }),
-    }).then(() => {
-      setPersistedReference(target);
-    });
+    })
+      .then(() => {
+        setPersistedReference(target);
+      })
+      .catch(() => {
+        setPendingReference(null);
+        setReferencePreloading(false);
+        targetRef.current = null;
+        animationDoneRef.current = false;
+      });
   }, [
     clearFallbackTimer,
     navigate,
@@ -113,6 +120,16 @@ export function useReferenceSwitch() {
   }, [tryCommit]);
 
   useEffect(() => () => clearFallbackTimer(), [clearFallbackTimer]);
+
+  // Drop optimistic UI if the hook unmounts mid-switch (e.g. navigation away).
+  useEffect(() => {
+    return () => {
+      if (useReferenceStore.getState().pendingReference !== null) {
+        setPendingReference(null);
+        setReferencePreloading(false);
+      }
+    };
+  }, [setPendingReference, setReferencePreloading]);
 
   return {
     committedReference,

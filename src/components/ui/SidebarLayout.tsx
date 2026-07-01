@@ -329,7 +329,7 @@ export function SidebarLayout({
                   </svg>
                 </span>
               </Link>
-              <div className="hidden min-w-0 flex-col gap-0.5 sm:flex">
+              <div className="flex min-w-0 flex-col gap-0.5">
                 <Link
                   to="/"
                   search={(prev) => ({
@@ -337,7 +337,7 @@ export function SidebarLayout({
                     dataUrl: prev.dataUrl ?? "",
                     locale: prev.locale ?? "",
                   })}
-                  className="font-display text-sm leading-none font-semibold whitespace-nowrap text-slate-900"
+                  className="hidden font-display text-sm leading-none font-semibold whitespace-nowrap text-slate-900 sm:inline"
                 >
                   Tagging Schema <span className={brandAccent.wordmark}>Browser</span>
                 </Link>

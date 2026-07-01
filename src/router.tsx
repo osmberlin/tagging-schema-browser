@@ -94,6 +94,18 @@ function RootContent() {
     if (urlReference === "interem") setPersistedReference("interem");
   }, [urlReference, setPersistedReference]);
 
+  // Keep the URL aligned when release was persisted but the param was stripped.
+  useEffect(() => {
+    if (dataUrl.trim()) return;
+    if (urlReference !== undefined) return;
+    if (persistedReference !== "release") return;
+    void navigate({
+      to: ".",
+      search: (prev) => ({ ...prev, reference: "release" }),
+      replace: true,
+    });
+  }, [dataUrl, urlReference, persistedReference, navigate]);
+
   // Preload the alternate canonical reference so toggling can commit from cache.
   useEffect(() => {
     if (dataUrl.trim()) return;

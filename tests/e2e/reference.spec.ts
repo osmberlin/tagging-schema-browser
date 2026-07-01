@@ -11,6 +11,13 @@ test("staging is the default reference", async ({ page }) => {
   await expect(page).not.toHaveURL(/reference=/);
 });
 
+test("reference toggle is visible on narrow viewports", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.getByRole("tablist", { name: "Schema reference" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /^Staging/i })).toBeVisible();
+});
+
 test("reference toggle switches to release in URL", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("tab", { name: /^Release/i }).click();

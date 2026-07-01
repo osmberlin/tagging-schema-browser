@@ -1,6 +1,7 @@
 import { ensureIconsForPresetUsage } from "@/components/PageIcons/iconRegistry";
+import { buildPresetSearchIndex } from "@/components/PagePresets/presetSearch";
 import type { References } from "@/schemaRuntimeDereference";
-import { getCachedSchemaData, preloadSchemaData } from "@/utils/schemaCache";
+import { getCachedSchemaData, getSchemaLoadError, preloadSchemaData } from "@/utils/schemaCache";
 import type { DenormalizedPreset, RawPresets, SchemaData } from "@/utils/types";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
@@ -47,6 +48,7 @@ export function SchemaProvider({
 
     const cached = getCachedSchemaData(dataUrl);
     if (cached) {
+      buildPresetSearchIndex(cached.presets);
       setData(cached);
       setError(null);
       setLoading(false);
@@ -54,17 +56,19 @@ export function SchemaProvider({
       return;
     }
 
+    setData(null);
     setLoading(true);
     setError(null);
     void preloadSchemaData(dataUrl)
       .then((schemaData) => {
         if (cancelled) return;
         if (!schemaData) {
-          setError("Failed to load schema data");
+          setError(getSchemaLoadError(dataUrl) ?? "Failed to load schema data");
           setData(null);
           setLoading(false);
           return;
         }
+        buildPresetSearchIndex(schemaData.presets);
         setData(schemaData);
         setError(null);
         setLoading(false);
