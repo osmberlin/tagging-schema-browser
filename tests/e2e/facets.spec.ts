@@ -205,6 +205,31 @@ test("preset table name row wraps instead of truncating", async ({ page }) => {
   expect(style.whiteSpace).toBe("normal");
 });
 
+test("field stringsCrossReference shows dereferenced label on fields page", async ({ page }) => {
+  await page.goto("/fields?dataUrl=/test-schema");
+  await expect(page.getByRole("heading", { name: /^Fields\b/i })).toBeVisible();
+  await expect(page.getByText("Free Menstrual Products Available").first()).toBeVisible();
+  await expect(page.getByText("{test/menstrual_products}")).toHaveCount(0);
+});
+
+test("field detail resolves stringsCrossReference label and options", async ({ page }) => {
+  await page.goto("/field/test/menstrual_products_poi?dataUrl=/test-schema");
+  await expect(
+    page.getByRole("heading", { name: "Free Menstrual Products Available" }),
+  ).toBeVisible();
+  await expect(page.getByText("Yes, in all stalls")).toBeVisible();
+  await expect(page.getByText("Limited to some stalls")).toBeVisible();
+});
+
+test("field source JSON shows dereferenced values with reference annotation", async ({ page }) => {
+  await page.goto("/field/test/menstrual_products_poi?dataUrl=/test-schema");
+  await expect(page.getByRole("button", { name: /Source field/i })).toBeVisible();
+  const source = page.locator(".overflow-x-auto.bg-slate-50.font-mono");
+  await expect(source.getByText("Free Menstrual Products Available").first()).toBeVisible();
+  await expect(source.getByText("ref {test/menstrual_products}")).toHaveCount(2);
+  await expect(source.getByText("3 option strings")).toBeVisible();
+});
+
 test("preset table icon row truncates long icon names", async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await loadTestSchema(page);

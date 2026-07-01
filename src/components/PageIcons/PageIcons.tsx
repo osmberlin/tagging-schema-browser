@@ -12,7 +12,11 @@ import { useIconSearch } from "./useIconSearch";
 export function PageIcons() {
   const { data, loading, dataUrl } = useSchema();
   const [facetState, setFacetState] = useIconFacetState();
-  const { icons } = useIconSearch(data?.presets ?? [], data?.fields ?? {});
+  const { icons } = useIconSearch(
+    data?.presets ?? [],
+    data?.fields ?? {},
+    data?.fieldTranslations ?? {},
+  );
   const filtered = useMemo(() => {
     if (!data) return [];
     return applyIconFacets(icons, facetState);

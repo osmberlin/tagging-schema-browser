@@ -1,9 +1,18 @@
 import { collectOptionIconUsages } from "@/utils/fieldOptions";
-import type { DenormalizedPreset, IconViewModel, RawFields } from "@/utils/types";
+import type {
+  DenormalizedPreset,
+  FieldTranslations,
+  IconViewModel,
+  RawFields,
+} from "@/utils/types";
 import { useEffect, useMemo, useState } from "react";
 import { areAllIconSuppliersLoaded, ensureAllIconSuppliers, getIconRegistry } from "./iconRegistry";
 
-export function useIconSearch(presets: DenormalizedPreset[], fields: RawFields) {
+export function useIconSearch(
+  presets: DenormalizedPreset[],
+  fields: RawFields,
+  fieldTranslations: FieldTranslations = {},
+) {
   const [suppliersReady, setSuppliersReady] = useState(areAllIconSuppliersLoaded());
 
   useEffect(() => {
@@ -22,7 +31,7 @@ export function useIconSearch(presets: DenormalizedPreset[], fields: RawFields) 
     // Recompute when icon suppliers finish loading into the shared registry map.
     void suppliersReady;
     const presetUsage = new Map<string, DenormalizedPreset[]>();
-    const optionUsage = collectOptionIconUsages(fields, presets);
+    const optionUsage = collectOptionIconUsages(fields, presets, fieldTranslations);
 
     for (const preset of presets) {
       if (!preset.icon) continue;
@@ -59,5 +68,5 @@ export function useIconSearch(presets: DenormalizedPreset[], fields: RawFields) 
     );
 
     return { icons, prefixes };
-  }, [presets, fields, suppliersReady]);
+  }, [presets, fields, fieldTranslations, suppliersReady]);
 }

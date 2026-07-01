@@ -21,8 +21,15 @@ export function resolveFieldIcons(field: RawField, allFields: RawFields): Record
   return resolved;
 }
 
-export function getFieldOptionValues(field: RawField): string[] {
-  return field.options ?? [];
+export function getFieldOptionValues(
+  field: RawField,
+  fieldTranslations?: Record<string, { options?: Record<string, string> }>,
+  fieldId?: string,
+): string[] {
+  if (field.options?.length) return field.options;
+  const optionStrings = fieldId ? fieldTranslations?.[fieldId]?.options : undefined;
+  if (optionStrings) return Object.keys(optionStrings);
+  return [];
 }
 
 export type OptionIconUsage = {
@@ -35,6 +42,7 @@ export type OptionIconUsage = {
 export function collectOptionIconUsages(
   fields: RawFields,
   presets: DenormalizedPreset[],
+  fieldTranslations: FieldTranslations = {},
 ): Map<string, OptionIconUsage[]> {
   const usage = new Map<string, OptionIconUsage[]>();
   const fieldIdsUsed = new Set<string>();
@@ -49,7 +57,7 @@ export function collectOptionIconUsages(
     if (!field) continue;
     const icons = resolveFieldIcons(field, fields);
     const fieldKey = field.key ?? fieldId;
-    for (const opt of getFieldOptionValues(field)) {
+    for (const opt of getFieldOptionValues(field, fieldTranslations, fieldId)) {
       const iconName = icons[opt];
       if (!iconName) continue;
       const list = usage.get(iconName) ?? [];
@@ -115,7 +123,7 @@ function buildOptionRowsForField(
   allFields: RawFields,
 ): PresetOptionRow[] {
   if (!field) return [];
-  const options = getFieldOptionValues(field);
+  const options = getFieldOptionValues(field, fieldTranslations, fieldId);
   if (options.length === 0) return [];
 
   const icons = resolveFieldIcons(field, allFields);
