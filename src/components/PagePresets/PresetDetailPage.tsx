@@ -82,7 +82,7 @@ function PresetDetailContent({
   const changeStatus = comparison?.statusById.get(preset.id);
   const modified = comparison?.modified.find((m) => m.current.id === preset.id);
 
-  const filePath = schemaRepoPath("preset", preset.id);
+  const filePath = schemaRepoPath("preset", preset.id, { searchable: preset.searchable });
   const githubUrl = githubFileUrl(dataUrl, filePath);
 
   const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name });

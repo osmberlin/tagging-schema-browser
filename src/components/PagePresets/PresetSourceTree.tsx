@@ -14,7 +14,7 @@ import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent, areaSourceLinkClass } from "@/theme/areaAccent";
 import { externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
-import type { DenormalizedPreset, RawPreset } from "@/utils/types";
+import type { DenormalizedPreset, RawPreset, RawPresets } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 import { clsx } from "clsx";
 import { Fragment, type ReactNode, useState } from "react";
@@ -28,10 +28,19 @@ type RefInfo = {
   repoPath: string;
 };
 
-function refInFieldList(value: string): RefInfo | null {
+function presetSearchable(rawPresets: RawPresets, id: string): boolean {
+  return rawPresets[id]?.searchable !== false;
+}
+
+function refInFieldList(value: string, rawPresets: RawPresets): RefInfo | null {
   const m = value.match(REF_REGEX);
   if (m) {
-    return { kind: "preset", id: m[1], repoPath: schemaRepoPath("preset", m[1]) };
+    const id = m[1];
+    return {
+      kind: "preset",
+      id,
+      repoPath: schemaRepoPath("preset", id, { searchable: presetSearchable(rawPresets, id) }),
+    };
   }
   return { kind: "field", id: value, repoPath: schemaRepoPath("field", value) };
 }
@@ -132,6 +141,7 @@ type HostPresetContext = {
   hostOriginalMoreFields: string[];
   hostPresetDenorm?: DenormalizedPreset;
   allPresets: DenormalizedPreset[];
+  rawPresets: RawPresets;
   onOpenPreset?: (id: string) => void;
 };
 
@@ -206,7 +216,9 @@ function NameRefDisclosure({
   const { rawPresets, presetsById } = useSchema();
   const sourceId = resolveLabelSourcePresetId(nameRef, rawPresets);
   const labels = getInheritedLabels(nameRef, rawPresets, presetsById);
-  const repoPath = sourceId ? schemaRepoPath("preset", sourceId) : "";
+  const repoPath = sourceId
+    ? schemaRepoPath("preset", sourceId, { searchable: presetSearchable(rawPresets, sourceId) })
+    : "";
 
   return (
     <>
@@ -452,7 +464,7 @@ function JsonNode({
 }) {
   if (isScalar(value)) {
     if (typeof value === "string" && (parentKey === "fields" || parentKey === "moreFields")) {
-      const ref = refInFieldList(value);
+      const ref = refInFieldList(value, host.rawPresets);
       if (ref) {
         return (
           <RefDisclosure
@@ -711,7 +723,7 @@ export function PresetSourceTree({
   sourceKind?: JsonRootKind;
 }) {
   void presetId;
-  const { dataUrl } = useSchema();
+  const { dataUrl, rawPresets } = useSchema();
   const host: HostPresetContext = {
     hostPreset: raw as RawPreset,
     hostOriginalFields: Array.isArray(raw.fields)
@@ -722,6 +734,7 @@ export function PresetSourceTree({
       : [],
     hostPresetDenorm: preset,
     allPresets: presets ?? [],
+    rawPresets,
     onOpenPreset,
   };
 

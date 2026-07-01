@@ -30,7 +30,23 @@ export function githubFileUrl(dataUrl: string, repoPath: string): string {
   return `https://github.com/${REPO}/blob/${branch}/${path}`;
 }
 
+/**
+ * Preset id with underscore filename convention for unsearchable presets
+ * (e.g. `amenity/bus_station` → `amenity/_bus_station`).
+ */
+function unsearchablePresetId(id: string): string {
+  const lastSlash = id.lastIndexOf("/");
+  if (lastSlash === -1) return `_${id}`;
+  return `${id.slice(0, lastSlash)}/_${id.slice(lastSlash + 1)}`;
+}
+
 /** Repo-relative path for a preset, field, or nested preset reference. */
-export function schemaRepoPath(kind: "preset" | "field", id: string): string {
-  return kind === "field" ? `data/fields/${id}.json` : `data/presets/${id}.json`;
+export function schemaRepoPath(
+  kind: "preset" | "field",
+  id: string,
+  options?: { searchable?: boolean },
+): string {
+  if (kind === "field") return `data/fields/${id}.json`;
+  const presetId = options?.searchable === false ? unsearchablePresetId(id) : id;
+  return `data/presets/${presetId}.json`;
 }

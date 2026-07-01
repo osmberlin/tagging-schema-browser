@@ -102,6 +102,11 @@ test("preset ref in moreFields inherits moreFields from parent preset", async ({
   await expect(page.getByText("data/fields/operator.json")).toHaveCount(0);
 });
 
+test("unsearchable preset links to underscore-prefixed source file", async ({ page }) => {
+  await page.goto("/preset/shop/ice_cream?dataUrl=/test-schema");
+  await expect(page.getByText("data/presets/shop/_ice_cream.json")).toBeVisible();
+});
+
 test("preset source JSON sorts keys in a stable discoverable order", async ({ page }) => {
   await page.goto("/preset/shop/ice_cream?dataUrl=/test-schema");
 
