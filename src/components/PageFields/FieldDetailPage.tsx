@@ -25,10 +25,6 @@ export function FieldDetailPage() {
     return <p className="text-sm text-slate-600">No field id in URL.</p>;
   }
 
-  if (loading || !data) {
-    return <p className="text-sm text-slate-600">Loading schema…</p>;
-  }
-
   if (error) {
     return (
       <div className="space-y-2">
@@ -36,6 +32,10 @@ export function FieldDetailPage() {
         <p className="text-sm text-slate-600">{error}</p>
       </div>
     );
+  }
+
+  if (loading || !data) {
+    return <p className="text-sm text-slate-600">Loading schema…</p>;
   }
 
   if (!raw) {
