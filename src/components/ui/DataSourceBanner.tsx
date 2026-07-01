@@ -11,8 +11,17 @@ import { Link, useNavigate } from "@tanstack/react-router";
  * how many changes; right: buttons back to staging or release.
  */
 export function DataSourceBanner() {
-  const { isComparing, domain, presetsUrl, stagingUpdatedAt, releaseVersion, result, loading } =
-    useComparison();
+  const {
+    isComparing,
+    compareMode,
+    compareLabel,
+    domain,
+    presetsUrl,
+    stagingUpdatedAt,
+    releaseVersion,
+    result,
+    loading,
+  } = useComparison();
   const navigate = useNavigate();
   const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt);
 
@@ -34,6 +43,17 @@ export function DataSourceBanner() {
     ? result.added.length + result.removed.length + result.modified.length
     : null;
 
+  const versionLabel =
+    compareMode === "release" ? `Release${releaseVersion ? ` ${releaseVersion}` : ""}` : domain;
+  const compareTarget =
+    compareMode === "release"
+      ? `${compareLabel}${compareLabel === "staging" && stagingAge ? ` · ${stagingAge}` : ""}`
+      : `staging${stagingAge ? ` · ${stagingAge}` : ""}`;
+  const loadingLabel =
+    compareMode === "release" && compareLabel !== "staging"
+      ? "comparing to PR preview…"
+      : "comparing to staging…";
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-violet-100 bg-violet-50 px-4 py-1.5 text-xs text-violet-700 sm:px-6 lg:px-8">
       <span className="flex flex-wrap items-center gap-x-2">
@@ -46,7 +66,7 @@ export function DataSourceBanner() {
             className={externalLinkClass("font-medium")}
             title="Open this build's presets.min.json"
           >
-            {domain}
+            {versionLabel}
           </a>
         </span>
         {changeCount != null ? (
@@ -62,14 +82,13 @@ export function DataSourceBanner() {
               })}
               className="font-medium hover:underline"
             >
-              {changeCount} change{changeCount === 1 ? "" : "s"} vs staging
-              {stagingAge ? ` · ${stagingAge}` : ""}
+              {changeCount} change{changeCount === 1 ? "" : "s"} vs {compareTarget}
             </Link>
           </>
         ) : loading ? (
           <>
             <span className="text-violet-300">·</span>
-            <span className="text-violet-400">comparing to staging…</span>
+            <span className="text-violet-400">{loadingLabel}</span>
           </>
         ) : null}
       </span>

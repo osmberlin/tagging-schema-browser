@@ -91,7 +91,17 @@ function Section({
 }
 
 export function PageComparison() {
-  const { isComparing, result, loading, error, domain, stagingUpdatedAt } = useComparison();
+  const {
+    isComparing,
+    compareMode,
+    compareLabel,
+    domain,
+    releaseVersion,
+    result,
+    loading,
+    error,
+    stagingUpdatedAt,
+  } = useComparison();
   const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt);
   const { dataUrl, data } = useSchema();
   const exportData = useMemo(() => (result ? exportComparison(result) : null), [result]);
@@ -107,11 +117,26 @@ export function PageComparison() {
         <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
           You're viewing a release or staging build, so there's nothing to compare. Load a custom
           build (a PR preview <code className="font-mono">dataUrl</code>) to see what changed
-          against staging.
+          against staging or release.
         </p>
       </div>
     );
   }
+
+  const activeLabel =
+    compareMode === "release" ? `Release${releaseVersion ? ` ${releaseVersion}` : ""}` : domain;
+  const baselineLabel =
+    compareMode === "release"
+      ? `${compareLabel}${compareLabel === "staging" && stagingAge ? ` · ${stagingAge}` : ""}`
+      : `staging${stagingAge ? ` · ${stagingAge}` : ""}`;
+  const loadingLabel =
+    compareMode === "release" && compareLabel !== "staging"
+      ? "Loading PR preview to compare…"
+      : "Loading staging to compare…";
+  const errorLabel =
+    compareMode === "release" && compareLabel !== "staging"
+      ? "Could not load PR preview for comparison"
+      : "Could not load staging for comparison";
 
   return (
     <div className="space-y-6">
@@ -121,16 +146,16 @@ export function PageComparison() {
           {exportData ? <DownloadButton filename="comparison.json" data={exportData} /> : null}
         </div>
         <p className="text-sm text-slate-500">
-          <span className={`font-mono ${comparisonAccent.text}`}>{domain}</span> vs staging
-          {stagingAge ? ` · ${stagingAge}` : ""}.
+          <span className={`font-mono ${comparisonAccent.text}`}>{activeLabel}</span> vs{" "}
+          {baselineLabel}.
         </p>
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading staging to compare…</p>
+        <p className="text-sm text-slate-500">{loadingLabel}</p>
       ) : error ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Could not load staging for comparison: {error}
+          {errorLabel}: {error}
         </p>
       ) : result ? (
         <div className="space-y-8">

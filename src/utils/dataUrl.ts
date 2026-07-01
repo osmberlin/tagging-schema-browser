@@ -33,9 +33,44 @@ export function referenceSearchParam(reference: SchemaReference): SchemaReferenc
   return reference === "release" ? "release" : undefined;
 }
 
-/** Pick the active dist base: explicit `dataUrl` wins over the reference toggle. */
+/**
+ * `reference=release` with a non-release `dataUrl`: browse the published release and compare
+ * against that baseline (staging main or a PR preview URL).
+ */
+export function isReleaseCompareMode(dataUrl: string, reference: SchemaReference): boolean {
+  const trimmed = dataUrl.trim();
+  if (!trimmed || reference !== "release") return false;
+  return ensureSlash(trimmed) !== ensureSlash(RELEASE_DATA_URL);
+}
+
+/** Pick the active dist base. Custom `dataUrl` wins, except in release-compare mode. */
 export function resolveActiveDataUrl(dataUrl: string, reference: SchemaReference): string {
   const trimmed = dataUrl.trim();
+  if (isReleaseCompareMode(trimmed, reference)) {
+    return RELEASE_DATA_URL;
+  }
   if (trimmed) return trimmed;
   return dataUrlForReference(reference);
+}
+
+/** Baseline dist URL when comparing (null when not comparing). */
+export function resolveCompareBaselineUrl(
+  dataUrl: string,
+  reference: SchemaReference,
+): string | null {
+  const trimmed = dataUrl.trim();
+  if (!trimmed) return null;
+  if (isReleaseCompareMode(trimmed, reference)) return ensureSlash(trimmed);
+  if (!isCanonicalDataUrl(trimmed)) return INTEREM_DATA_URL;
+  return null;
+}
+
+/** Short UI label for the comparison baseline. */
+export function compareBaselineLabel(baselineUrl: string): string {
+  if (ensureSlash(baselineUrl) === ensureSlash(INTEREM_DATA_URL)) return "staging";
+  try {
+    return new URL(baselineUrl).hostname;
+  } catch {
+    return baselineUrl;
+  }
 }

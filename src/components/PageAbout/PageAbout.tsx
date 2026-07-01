@@ -1,13 +1,12 @@
+import { PrPreviewList } from "@/components/PageAbout/PrPreviewList";
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { Input } from "@/components/ui/Input";
 import { areaAccent } from "@/theme/areaAccent";
 import { externalLinkClass } from "@/theme/externalAccent";
+import { INTEREM_DATA_URL } from "@/utils/constants";
 import { deriveDataUrl } from "@/utils/deriveDataUrl";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-
-const EXAMPLE_PREVIEW =
-  "https://pr-2276--ideditor-presets-preview.netlify.app/id/dist/#locale=en&map=18.00/48.84/2.58";
 
 function ColorDot({ halo, dot }: { halo: string; dot: string }) {
   return (
@@ -26,61 +25,63 @@ function ColorLegendItem({ halo, dot, text }: { halo: string; dot: string; text:
   );
 }
 
-/** Paste any id-tagging-schema preview URL → get the correct `dataUrl` base, with a way to test + load it. */
-function DataUrlGenerator() {
-  const [input, setInput] = useState("");
-  const derived = useMemo(() => deriveDataUrl(input), [input]);
+/** Staging URL in the input → open release compared against that baseline. */
+function ReleaseStagingCompare() {
+  const [input, setInput] = useState(INTEREM_DATA_URL);
+  const baselineUrl = useMemo(() => deriveDataUrl(input), [input]);
 
   return (
     <div className="not-prose rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <label htmlFor="derive-url" className="block text-sm font-medium text-slate-900">
-        Paste an iD preview URL (or any site URL)
+      <label htmlFor="staging-compare-url" className="block text-sm font-medium text-slate-900">
+        Staging data URL
       </label>
+      <p className="mt-1 text-xs text-slate-500">
+        Compared against the published release when you open the browser. Edit to point at another
+        build (e.g. a PR preview URL).
+      </p>
       <Input
-        id="derive-url"
+        id="staging-compare-url"
         type="url"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={EXAMPLE_PREVIEW}
-        className="mt-2"
+        className="mt-2 font-mono text-xs"
       />
-      {input && !derived ? (
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        {baselineUrl ? (
+          <Link
+            to="/"
+            search={(prev) => ({
+              ...presetSearchDefaults,
+              dataUrl: baselineUrl,
+              reference: "release",
+              locale: prev.locale ?? "",
+            })}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white ${areaAccent.presets.button}`}
+          >
+            Compare against release →
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="cursor-not-allowed rounded-lg bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-400"
+          >
+            Compare against release →
+          </button>
+        )}
+        {baselineUrl ? (
+          <a
+            href={`${baselineUrl}presets.min.json`}
+            target="_blank"
+            rel="noreferrer"
+            className={externalLinkClass("text-sm")}
+          >
+            Test <code className="font-mono">presets.min.json</code> ↗
+          </a>
+        ) : null}
+      </div>
+      {input && !baselineUrl ? (
         <p className="mt-2 text-sm text-amber-700">Enter a valid http(s) URL.</p>
-      ) : null}
-      {derived ? (
-        <div className="mt-3 space-y-2">
-          <p className="text-xs font-medium text-slate-500">Generated data URL</p>
-          <code className="block overflow-x-auto rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
-            {derived}
-          </code>
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            <Link
-              to="/"
-              search={(prev) => ({
-                ...presetSearchDefaults,
-                dataUrl: derived,
-                locale: prev.locale ?? "",
-              })}
-              className={`rounded-lg px-3 py-1.5 font-medium text-white ${areaAccent.presets.button}`}
-            >
-              Open in browser →
-            </Link>
-            <a
-              href={`${derived}presets.min.json`}
-              target="_blank"
-              rel="noreferrer"
-              className={externalLinkClass()}
-            >
-              To test, open <code className="font-mono">presets.min.json</code> ↗
-            </a>
-          </div>
-          <p className="text-xs text-slate-500">
-            The test link should show JSON. If it shows an HTML page (starting with{" "}
-            <code className="font-mono">&lt;!doctype</code>), the URL points at an app/editor, not a
-            schema <code className="font-mono">dist/</code> folder. Hosts without CORS headers (e.g.
-            Netlify staging or PR previews) are fetched through a public CORS proxy automatically.
-          </p>
-        </div>
       ) : null}
     </div>
   );
@@ -131,19 +132,25 @@ export function PageAbout() {
       <h2>Pointing at a different build</h2>
       <p>
         Point the app at any compatible <code>dist/</code> base URL via the <code>dataUrl</code>{" "}
-        search param to compare branches or PR preview builds. The base URL is the folder that{" "}
-        <em>directly contains</em> <code>presets.min.json</code> (alongside{" "}
-        <code>fields.min.json</code>, <code>preset_categories.min.json</code>, and{" "}
-        <code>translations/en.min.json</code>).
+        search param. The base URL is the folder that <em>directly contains</em>{" "}
+        <code>presets.min.json</code> (alongside <code>fields.min.json</code>,{" "}
+        <code>preset_categories.min.json</code>, and <code>translations/en.min.json</code>).
       </p>
       <p>
-        A netlify PR-preview link usually points at the bundled iD editor, e.g.{" "}
-        <code>https://pr-2276--ideditor-presets-preview.netlify.app/id/dist/#locale=en&map=…</code>.
-        That <code>/id/dist/</code> path (and its <code>#…</code> hash) is the editor itself — not
-        the schema, which lives at the site's <code>/dist/</code> root. Paste any such URL below to
-        generate the right <code>dataUrl</code>:
+        Each id-tagging-schema pull request gets a Netlify preview at{" "}
+        <code>https://pr-{"{N}"}--ideditor-presets-preview.netlify.app/</code>. The schema JSON is
+        served from <code>/dist/</code>; GitHub bot comments usually link to the bundled iD editor
+        at <code>/id/dist/</code> instead. Pick a PR from the list below — when its preview is
+        ready, <strong>Open in browser</strong> loads that build compared against staging.
       </p>
-      <DataUrlGenerator />
+      <PrPreviewList />
+      <h3>Compare release vs staging</h3>
+      <p>
+        Open the published release with staging as the comparison reference — useful for seeing what
+        will ship in the next npm version. You can swap the staging URL for a PR preview if you want
+        to compare release against a specific pull request instead.
+      </p>
+      <ReleaseStagingCompare />
       <h2>Area colors</h2>
       <div className="not-prose space-y-2">
         <p className="text-sm text-slate-600">

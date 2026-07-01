@@ -1,8 +1,13 @@
 import { ensureIconsForPresetUsage } from "@/components/PageIcons/iconRegistry";
 import { loadSchemaData } from "@/components/PagePresets/dataLoader";
 import { denormalize } from "@/components/PagePresets/denormalize";
-import { INTEREM_DATA_URL } from "@/utils/constants";
-import { isCanonicalDataUrl } from "@/utils/dataUrl";
+import {
+  type SchemaReference,
+  compareBaselineLabel,
+  isCanonicalDataUrl,
+  isReleaseCompareMode,
+  resolveCompareBaselineUrl,
+} from "@/utils/dataUrl";
 import { type ComparisonResult, comparePresets } from "@/utils/presetDiff";
 import { resolveReleaseVersion, resolveStagingUpdatedAt } from "@/utils/schemaVersion";
 import type { DenormalizedPreset } from "@/utils/types";
@@ -13,20 +18,36 @@ function ensureSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
 
+function hostnameFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+}
+
+export type CompareMode = "preview" | "release";
+
 type ComparisonContextValue = {
-  /** Whether the active dataset is a custom build (PR preview) being compared. */
+  /** Whether a custom build is being compared (PR preview or release-compare mode). */
   isComparing: boolean;
+  /** How the active dataset relates to the comparison baseline. */
+  compareMode: CompareMode | null;
   /** Resolved active data URL. */
   dataUrl: string;
-  /** Hostname of the active data URL (identifies a PR preview build). */
+  /** Hostname of the active data URL. */
   domain: string;
+  /** Hostname of the comparison baseline (staging main or a PR preview). */
+  compareDomain: string | null;
+  /** Short label for the comparison baseline in UI copy. */
+  compareLabel: string | null;
   /** Direct link to the active dataset's `presets.min.json`. */
   presetsUrl: string;
   /** Concrete release version string (e.g. "6.18.0"), once resolved. */
   releaseVersion: string | null;
   /** ISO timestamp of the latest commit on staging `main`, once resolved. */
   stagingUpdatedAt: string | null;
-  /** Diff of the active dataset against staging (null on canonical datasets). */
+  /** Diff of the active dataset against the baseline (null on canonical datasets). */
   result: ComparisonResult | null;
   loading: boolean;
   error: string | null;
@@ -41,14 +62,30 @@ export function useComparison() {
 }
 
 export function ComparisonProvider({
-  dataUrl,
+  rawDataUrl,
+  reference,
+  activeDataUrl,
   children,
 }: {
-  dataUrl: string;
+  /** Raw `dataUrl` search param (may hold a PR preview while release is active). */
+  rawDataUrl: string;
+  reference: SchemaReference;
+  activeDataUrl: string;
   children: React.ReactNode;
 }) {
   const { presets } = useSchema();
-  const isComparing = !isCanonicalDataUrl(dataUrl);
+  const trimmedCompare = rawDataUrl.trim();
+  const releaseCompareMode = isReleaseCompareMode(trimmedCompare, reference);
+  const previewCompareMode =
+    trimmedCompare.length > 0 && !isCanonicalDataUrl(trimmedCompare) && !releaseCompareMode;
+  const isComparing = releaseCompareMode || previewCompareMode;
+  const compareMode: CompareMode | null = releaseCompareMode
+    ? "release"
+    : previewCompareMode
+      ? "preview"
+      : null;
+  const baselineUrl = resolveCompareBaselineUrl(trimmedCompare, reference);
+
   const [releaseVersion, setReleaseVersion] = useState<string | null>(null);
   const [stagingUpdatedAt, setStagingUpdatedAt] = useState<string | null>(null);
 
@@ -71,15 +108,14 @@ export function ComparisonProvider({
     error: string | null;
   }>({ presets: null, loading: false, error: null });
 
-  // Load interem in the background only when viewing a custom PR preview build.
   useEffect(() => {
-    if (!isComparing) {
+    if (!baselineUrl) {
       setBaseline({ presets: null, loading: false, error: null });
       return;
     }
     let cancelled = false;
     setBaseline({ presets: null, loading: true, error: null });
-    loadSchemaData(INTEREM_DATA_URL)
+    loadSchemaData(baselineUrl)
       .then(async (raw) => {
         if (cancelled) return;
         if (raw.loadErrors.length > 0) {
@@ -102,7 +138,7 @@ export function ComparisonProvider({
     return () => {
       cancelled = true;
     };
-  }, [isComparing]);
+  }, [baselineUrl]);
 
   const result = useMemo(
     () =>
@@ -111,17 +147,21 @@ export function ComparisonProvider({
   );
 
   const value = useMemo<ComparisonContextValue>(() => {
-    let domain = "";
-    try {
-      domain = new URL(dataUrl).hostname;
-    } catch {
-      domain = dataUrl;
-    }
+    const compareDomain = baselineUrl ? hostnameFromUrl(baselineUrl) : null;
+    const compareLabel = baselineUrl
+      ? compareBaselineLabel(baselineUrl)
+      : previewCompareMode
+        ? "staging"
+        : null;
+
     return {
       isComparing,
-      dataUrl,
-      domain,
-      presetsUrl: `${ensureSlash(dataUrl)}presets.min.json`,
+      compareMode,
+      dataUrl: activeDataUrl,
+      domain: hostnameFromUrl(activeDataUrl),
+      compareDomain,
+      compareLabel,
+      presetsUrl: `${ensureSlash(activeDataUrl)}presets.min.json`,
       releaseVersion,
       stagingUpdatedAt,
       result,
@@ -130,7 +170,10 @@ export function ComparisonProvider({
     };
   }, [
     isComparing,
-    dataUrl,
+    compareMode,
+    activeDataUrl,
+    baselineUrl,
+    previewCompareMode,
     releaseVersion,
     stagingUpdatedAt,
     result,

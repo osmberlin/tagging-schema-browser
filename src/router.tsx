@@ -149,7 +149,11 @@ function RootContent() {
 
   return (
     <SchemaProvider dataUrl={resolvedDataUrl} setDataUrl={setDataUrl}>
-      <ComparisonProvider dataUrl={resolvedDataUrl}>
+      <ComparisonProvider
+        rawDataUrl={dataUrl}
+        reference={reference}
+        activeDataUrl={resolvedDataUrl}
+      >
         <LocaleProvider dataUrl={resolvedDataUrl} locale={locale} setLocale={setLocale}>
           <SidebarLayout sidebar={sidebar} topSearch={topSearch}>
             <Outlet />
