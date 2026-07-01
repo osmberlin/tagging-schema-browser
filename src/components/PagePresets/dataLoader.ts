@@ -1,3 +1,4 @@
+import { applyRuntimeDereference } from "@/schemaRuntimeDereference";
 import type { RawCategories, RawFields, RawPresets, RawTranslations } from "@/utils/types";
 
 const REQUIRED_FILES = [
@@ -49,6 +50,10 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
       const msg = e instanceof Error ? e.message : String(e);
       loadErrors.push(`${file}: ${msg}`);
     }
+  }
+
+  if (loadErrors.length === 0) {
+    applyRuntimeDereference({ presets, translations, fields });
   }
 
   return { presets, translations, categories, fields, defaults, loadErrors };

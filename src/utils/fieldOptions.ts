@@ -21,8 +21,15 @@ export function resolveFieldIcons(field: RawField, allFields: RawFields): Record
   return resolved;
 }
 
-export function getFieldOptionValues(field: RawField): string[] {
-  return field.options ?? [];
+export function getFieldOptionValues(
+  field: RawField,
+  fieldTranslations?: Record<string, { options?: Record<string, string> }>,
+  fieldId?: string,
+): string[] {
+  if (field.options?.length) return field.options;
+  const optionStrings = fieldId ? fieldTranslations?.[fieldId]?.options : undefined;
+  if (optionStrings) return Object.keys(optionStrings);
+  return [];
 }
 
 export type OptionIconUsage = {
@@ -115,7 +122,7 @@ function buildOptionRowsForField(
   allFields: RawFields,
 ): PresetOptionRow[] {
   if (!field) return [];
-  const options = getFieldOptionValues(field);
+  const options = getFieldOptionValues(field, fieldTranslations, fieldId);
   if (options.length === 0) return [];
 
   const icons = resolveFieldIcons(field, allFields);

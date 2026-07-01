@@ -42,6 +42,8 @@ export type RawField = {
   options?: string[];
   icons?: Record<string, string>;
   iconsCrossReference?: string;
+  /** v6 only — removed from v7 dist after schema-builder dereferences at build time. */
+  stringsCrossReference?: string;
 };
 
 export type RawFields = Record<string, RawField>;

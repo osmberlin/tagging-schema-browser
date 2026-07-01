@@ -1,3 +1,4 @@
+import { dereferenceLocaleStrings, getSchemaReferences } from "@/schemaRuntimeDereference";
 import type { FieldTranslations } from "@/utils/types";
 import { useEffect, useState } from "react";
 
@@ -126,16 +127,24 @@ async function loadLocale(
       };
     }
   >;
-  const presets = json[locale]?.presets?.presets ?? {};
+  const tstrings = {
+    presets: json[locale]?.presets?.presets ?? {},
+    fields: json[locale]?.presets?.fields ?? {},
+  };
+  const references = getSchemaReferences();
+  if (references) {
+    dereferenceLocaleStrings(tstrings, references);
+  }
+
   const map: LocaleMap = new Map();
-  for (const [id, value] of Object.entries(presets)) {
+  for (const [id, value] of Object.entries(tstrings.presets)) {
     map.set(id, {
       name: value.name,
       terms: parseTerms(value.terms),
       aliases: parseAliases(value.aliases),
     });
   }
-  return { presets: map, fields: json[locale]?.presets?.fields ?? {} };
+  return { presets: map, fields: tstrings.fields };
 }
 
 export function useLocaleTranslations(dataUrl: string | null, locale: string) {
