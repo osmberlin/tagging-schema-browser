@@ -1,18 +1,24 @@
 import {
   fieldMatchesGeometry,
+  getAssumedTagsForField,
   getFieldTagKeys,
   resolvePresetFieldIds,
 } from "@/utils/resolvePresetFieldIds";
 import type { RawFields, RawPreset, RawPresets } from "@/utils/types";
 
-export type TagRemovalReason = "removeTags" | "fieldKeys" | "both";
+export type TagRemovalCause = "fieldKeys" | "removeTags" | "both";
+
+export type TagSwitchAction =
+  | "nothing"
+  | "change based on preset"
+  | "remove due to missing in new/second preset"
+  | "remove due to removeTags in source/first preset";
 
 export type TagSwitchRow = {
   key: string;
   before: string | undefined;
   after: string | undefined;
-  change: "added" | "removed" | "changed" | "unchanged";
-  removalReason?: TagRemovalReason;
+  action: TagSwitchAction;
 };
 
 export type TagSwitchResult = {
@@ -21,6 +27,7 @@ export type TagSwitchResult = {
   endingTags: Record<string, string>;
   rows: TagSwitchRow[];
   usedFieldKeyRemoval: boolean;
+  fieldCount: number;
 };
 
 function effectiveAddTags(preset: RawPreset): Record<string, string> {
@@ -37,6 +44,26 @@ function pickGeometry(oldPreset: RawPreset, newPreset: RawPreset): string {
   const shared = oldGeom.find((g) => newGeom.includes(g));
   if (shared) return shared;
   return newGeom[0] ?? oldGeom[0] ?? "area";
+}
+
+function buildStartingTags(
+  presetId: string,
+  preset: RawPreset,
+  rawPresets: RawPresets,
+  fields: RawFields,
+  geometry: string,
+): Record<string, string> {
+  const tags = { ...effectiveAddTags(preset) };
+
+  for (const fieldId of resolvePresetFieldIds(presetId, preset, rawPresets)) {
+    const field = fields[fieldId];
+    if (!fieldMatchesGeometry(field, geometry)) continue;
+    for (const [key, value] of Object.entries(getAssumedTagsForField(fieldId, field))) {
+      if (!(key in tags)) tags[key] = value;
+    }
+  }
+
+  return tags;
 }
 
 function presetMatchScore(preset: RawPreset, tags: Record<string, string>): number {
@@ -120,7 +147,7 @@ function collectPreserveKeys(
 function trackUnsetRemovals(
   before: Record<string, string>,
   after: Record<string, string>,
-  reasons: Map<string, TagRemovalReason>,
+  reasons: Map<string, TagRemovalCause>,
 ) {
   for (const key of Object.keys(before)) {
     if (before[key] !== undefined && after[key] === undefined) {
@@ -130,38 +157,46 @@ function trackUnsetRemovals(
   }
 }
 
+function actionForRow(
+  before: string | undefined,
+  after: string | undefined,
+  removalCause?: TagRemovalCause,
+): TagSwitchAction {
+  if (before !== undefined && after !== undefined && before === after) return "nothing";
+  if (before !== undefined && after === undefined) {
+    if (removalCause === "fieldKeys" || removalCause === "both") {
+      return "remove due to missing in new/second preset";
+    }
+    return "remove due to removeTags in source/first preset";
+  }
+  if (before === undefined && after === undefined) return "nothing";
+  return "change based on preset";
+}
+
 function buildRows(
   startingTags: Record<string, string>,
   endingTags: Record<string, string>,
-  removalReasons: Map<string, TagRemovalReason>,
+  removalCauses: Map<string, TagRemovalCause>,
 ): TagSwitchRow[] {
   const keys = new Set([...Object.keys(startingTags), ...Object.keys(endingTags)]);
-  const rows: TagSwitchRow[] = [];
 
-  for (const key of [...keys].sort()) {
+  return [...keys].sort().map((key) => {
     const before = startingTags[key];
     const after = endingTags[key];
-    let change: TagSwitchRow["change"];
-    if (before === undefined && after !== undefined) change = "added";
-    else if (before !== undefined && after === undefined) change = "removed";
-    else if (before !== after) change = "changed";
-    else change = "unchanged";
-
-    rows.push({
+    const removalCause =
+      before !== undefined && after === undefined ? removalCauses.get(key) : undefined;
+    return {
       key,
       before,
       after,
-      change,
-      removalReason: change === "removed" ? removalReasons.get(key) : undefined,
-    });
-  }
-
-  return rows;
+      action: actionForRow(before, after, removalCause),
+    };
+  });
 }
 
 /**
  * Simulate iD's `actionChangePreset` tag updates when switching presets.
- * Assumes the feature currently has all tags from preset 1's `addTags` (or `tags`).
+ * Assumes preset 1's `addTags`/`tags` plus every field key on preset 1 is populated.
  *
  * @see https://github.com/openstreetmap/iD/blob/develop/modules/actions/change_preset.js
  */
@@ -176,9 +211,13 @@ export function simulatePresetTagSwitch(
   if (!oldPreset || !newPreset) return null;
 
   const geometry = pickGeometry(oldPreset, newPreset);
-  const startingTags = effectiveAddTags(oldPreset);
+  const startingTags = buildStartingTags(oldPresetId, oldPreset, rawPresets, fields, geometry);
+  const fieldCount = resolvePresetFieldIds(oldPresetId, oldPreset, rawPresets).filter((fieldId) =>
+    fieldMatchesGeometry(fields[fieldId], geometry),
+  ).length;
+
   let tags = { ...startingTags };
-  const removalReasons = new Map<string, TagRemovalReason>();
+  const removalCauses = new Map<string, TagRemovalCause>();
   let usedFieldKeyRemoval = false;
 
   const preserveKeys = collectPreserveKeys(
@@ -197,7 +236,7 @@ export function simulatePresetTagSwitch(
       (fieldId) => {
         const field = fields[fieldId];
         if (!fieldMatchesGeometry(field, geometry)) return [];
-        return getFieldTagKeys(fieldId, field, tags);
+        return getFieldTagKeys(fieldId, field, tags).filter((key) => key in tags);
       },
     );
 
@@ -208,7 +247,7 @@ export function simulatePresetTagSwitch(
     let reducedTags = { ...tags };
     for (const key of fieldKeysToRemove) {
       if (key in reducedTags) {
-        removalReasons.set(key, "fieldKeys");
+        removalCauses.set(key, "fieldKeys");
         const { [key]: _removed, ...rest } = reducedTags;
         reducedTags = rest;
       }
@@ -216,7 +255,7 @@ export function simulatePresetTagSwitch(
 
     const beforeUnset = { ...reducedTags };
     reducedTags = unsetTags(oldPreset, reducedTags, preserveKeys);
-    trackUnsetRemovals(beforeUnset, reducedTags, removalReasons);
+    trackUnsetRemovals(beforeUnset, reducedTags, removalCauses);
     reducedTags = setTags(newPreset, reducedTags, geometry);
 
     if (presetMatchScore(oldPreset, reducedTags) === -1) {
@@ -224,22 +263,23 @@ export function simulatePresetTagSwitch(
       usedFieldKeyRemoval = fieldKeysToRemove.length > 0;
     } else {
       for (const key of fieldKeysToRemove) {
-        removalReasons.delete(key);
+        removalCauses.delete(key);
       }
     }
   }
 
   const beforeFinalUnset = { ...tags };
   tags = unsetTags(oldPreset, tags, preserveKeys);
-  trackUnsetRemovals(beforeFinalUnset, tags, removalReasons);
+  trackUnsetRemovals(beforeFinalUnset, tags, removalCauses);
   tags = setTags(newPreset, tags, geometry);
 
   return {
     geometry,
     startingTags,
     endingTags: tags,
-    rows: buildRows(startingTags, tags, removalReasons),
+    rows: buildRows(startingTags, tags, removalCauses),
     usedFieldKeyRemoval,
+    fieldCount,
   };
 }
 

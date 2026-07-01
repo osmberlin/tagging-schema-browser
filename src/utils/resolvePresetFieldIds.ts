@@ -1,5 +1,5 @@
 import { presetIdFromRef } from "@/components/PagePresets/presetFieldInheritance";
-import type { RawPreset, RawPresets } from "@/utils/types";
+import type { RawField, RawPreset, RawPresets } from "@/utils/types";
 
 function resolveFieldList(
   presetId: string,
@@ -70,15 +70,77 @@ export function fieldMatchesGeometry(
 
 const PREFIX_FIELD_TYPES = new Set(["multiCombo", "semiCombo", "manyCombo", "check"]);
 
-/** Tag keys a field controls — mirrors a simplified iD `Field#allKeys`. */
+function firstOption(field: RawField): string {
+  const opt = field.options?.find((o) => o !== "undefined");
+  return opt ?? "yes";
+}
+
+/** Placeholder tags for a field — every key the field can edit is set as if the user filled it in. */
+export function getAssumedTagsForField(
+  fieldId: string,
+  field: RawField | undefined,
+): Record<string, string> {
+  if (!field) return { [fieldId]: "…" };
+
+  const type = field.type;
+  const value = firstOption(field);
+
+  if (type === "structureRadio") {
+    const structureKey = field.options?.[0] ?? field.keys?.[0] ?? "bridge";
+    return { [structureKey]: "yes" };
+  }
+
+  if (field.keys?.length) {
+    const tags: Record<string, string> = {};
+    for (const key of field.keys) {
+      tags[key] = value;
+    }
+    return tags;
+  }
+
+  const key = field.key ?? fieldId;
+
+  if (type && PREFIX_FIELD_TYPES.has(type)) {
+    const tags: Record<string, string> = {};
+    if (field.options?.length) {
+      for (const opt of field.options) {
+        if (opt === "undefined") continue;
+        tags[`${key}:${opt}`] = "yes";
+      }
+    }
+    if (Object.keys(tags).length === 0) tags[key] = "yes";
+    return tags;
+  }
+
+  if (type === "check" || type === "onewayCheck") {
+    return { [key]: "yes" };
+  }
+
+  return { [key]: value };
+}
+
+/** Tag keys a field currently controls — mirrors a simplified iD `Field#allKeys`. */
 export function getFieldTagKeys(
   fieldId: string,
-  field: { key?: string; type?: string } | undefined,
+  field: RawField | undefined,
   tags: Record<string, string>,
 ): string[] {
-  const key = field?.key ?? fieldId;
-  if (field?.type && PREFIX_FIELD_TYPES.has(field.type)) {
+  if (!field) return [fieldId];
+
+  if (field.keys?.length) {
+    return field.keys.filter((key) => key in tags);
+  }
+
+  const key = field.key ?? fieldId;
+
+  if (field.type === "structureRadio") {
+    const candidates = field.keys ?? field.options ?? [];
+    return candidates.filter((k) => k in tags);
+  }
+
+  if (field.type && PREFIX_FIELD_TYPES.has(field.type)) {
     return Object.keys(tags).filter((tagKey) => tagKey === key || tagKey.startsWith(`${key}:`));
   }
-  return [key];
+
+  return key in tags ? [key] : [key];
 }

@@ -30,12 +30,14 @@ export function PresetCombobox({
   onChange,
   presets,
   placeholder = "Search preset name or path…",
+  onOpenPreset,
 }: {
   label: string;
   value: string;
   onChange: (id: string) => void;
   presets: DenormalizedPreset[];
   placeholder?: string;
+  onOpenPreset?: (id: string) => void;
 }) {
   const selected = value ? presets.find((p) => p.id === value) : undefined;
   const [query, setQuery] = useState(selected?.name ?? "");
@@ -79,7 +81,20 @@ export function PresetCombobox({
           </ComboboxButton>
         </div>
         {selected ? (
-          <p className="mt-1 font-mono text-[11px] text-slate-500">{selected.id}</p>
+          <p className="mt-1 font-mono text-[11px] text-slate-500">
+            {onOpenPreset ? (
+              <button
+                type="button"
+                onClick={() => onOpenPreset(selected.id)}
+                className="hover:text-amber-700 hover:underline"
+                title="Open preset details"
+              >
+                {selected.id}
+              </button>
+            ) : (
+              selected.id
+            )}
+          </p>
         ) : value ? (
           <p className="mt-1 font-mono text-[11px] text-amber-700">Unknown preset: {value}</p>
         ) : null}

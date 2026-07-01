@@ -39,6 +39,8 @@ export type RawCategories = Record<string, { icon?: string; members?: string[] }
 
 export type RawField = {
   key?: string
+  /** Some fields (access, structure, directional) control multiple tag keys. */
+  keys?: string[]
   type?: string
   geometry?: string[]
   label?: string
