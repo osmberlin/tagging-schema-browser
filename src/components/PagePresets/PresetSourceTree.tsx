@@ -11,6 +11,7 @@ import {
 } from "@/components/PagePresets/presetLabelInheritance";
 import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
+import { isFieldCrossRefKey, resolveFieldRefDisplay } from "@/schemaRuntimeDereference/displayRefs";
 import { areaAccent, areaSourceLinkClass } from "@/theme/areaAccent";
 import { externalPillClass } from "@/theme/externalAccent";
 import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
@@ -142,6 +143,8 @@ type HostPresetContext = {
   hostPresetDenorm?: DenormalizedPreset;
   allPresets: DenormalizedPreset[];
   rawPresets: RawPresets;
+  /** When rendering a field's source JSON, the field id being viewed. */
+  sourceFieldId?: string;
 };
 
 /** Inherited name / terms / aliases when `name` references another preset. */
@@ -562,6 +565,43 @@ function JsonNode({
   );
 }
 
+function FieldCrossRefLine({
+  keyName,
+  refDisplay,
+  level,
+  dataUrl,
+  trailingComma,
+}: {
+  keyName: string;
+  refDisplay: { ref: string; refFieldId: string; resolved: string };
+  level: number;
+  dataUrl: string;
+  trailingComma?: boolean;
+}) {
+  const repoPath = schemaRepoPath("field", refDisplay.refFieldId);
+
+  return (
+    <JsonLine level={level} trailingComma={trailingComma}>
+      <JsonKey name={keyName} />
+      <span className="text-slate-500">: </span>
+      <JsonScalar value={refDisplay.resolved} />
+      <span className="text-[10px] text-slate-400" title="Reference in source JSON">
+        ref {refDisplay.ref}
+      </span>
+      <code className="truncate text-[10px] text-slate-400">{repoPath}</code>
+      <GithubLink href={githubFileUrl(dataUrl, repoPath)} />
+      <SourceAreaLink
+        area="fields"
+        to="/field/$"
+        params={{ _splat: refDisplay.refFieldId }}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+        label="Field"
+        title={`Open field "${refDisplay.refFieldId}"`}
+      />
+    </JsonLine>
+  );
+}
+
 function JsonObjectEntry({
   keyName,
   value,
@@ -581,6 +621,8 @@ function JsonObjectEntry({
   sortMode?: KeySortMode;
   jsonRootKind?: JsonRootKind;
 }) {
+  const { fields, fieldTranslations } = useSchema();
+
   if (isScalar(value)) {
     if (keyName === "name" && typeof value === "string" && presetIdFromRef(value)) {
       return (
@@ -591,6 +633,31 @@ function JsonObjectEntry({
           trailingComma={trailingComma}
         />
       );
+    }
+    if (
+      jsonRootKind === "field" &&
+      host.sourceFieldId &&
+      typeof value === "string" &&
+      isFieldCrossRefKey(keyName)
+    ) {
+      const refDisplay = resolveFieldRefDisplay(
+        host.sourceFieldId,
+        keyName,
+        value,
+        fields,
+        fieldTranslations,
+      );
+      if (refDisplay) {
+        return (
+          <FieldCrossRefLine
+            keyName={keyName}
+            refDisplay={refDisplay}
+            level={level}
+            dataUrl={dataUrl}
+            trailingComma={trailingComma}
+          />
+        );
+      }
     }
     if (keyName === "type" && typeof value === "string" && jsonRootKind === "field") {
       return (
@@ -731,6 +798,7 @@ export function PresetSourceTree({
     hostPresetDenorm: preset,
     allPresets: presets ?? [],
     rawPresets,
+    sourceFieldId: sourceKind === "field" ? presetId : undefined,
   };
 
   return (

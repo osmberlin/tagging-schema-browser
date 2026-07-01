@@ -221,6 +221,15 @@ test("field detail resolves stringsCrossReference label and options", async ({ p
   await expect(page.getByText("Limited to some stalls")).toBeVisible();
 });
 
+test("field source JSON shows dereferenced values with reference annotation", async ({ page }) => {
+  await page.goto("/field/test/menstrual_products_poi?dataUrl=/test-schema");
+  await expect(page.getByRole("button", { name: /Source field/i })).toBeVisible();
+  const source = page.locator(".overflow-x-auto.bg-slate-50.font-mono");
+  await expect(source.getByText("Free Menstrual Products Available").first()).toBeVisible();
+  await expect(source.getByText("ref {test/menstrual_products}")).toHaveCount(2);
+  await expect(source.getByText("3 option strings")).toBeVisible();
+});
+
 test("preset table icon row truncates long icon names", async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await loadTestSchema(page);
