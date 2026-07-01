@@ -98,7 +98,7 @@ export function PageTranslations() {
           <DownloadButton
             filename={exportFilename}
             data={exportData}
-            disabled={exportData.length === 0}
+            disabled={!canExportTranslations}
           />
         </div>
         <p className="text-sm text-slate-500">
