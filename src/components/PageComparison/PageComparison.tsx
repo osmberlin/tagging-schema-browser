@@ -6,6 +6,7 @@ import { useSchema } from "@/contexts/SchemaContext";
 import { comparisonAccent } from "@/theme/comparisonAccent";
 import { exportComparison } from "@/utils/pageExports";
 import type { FieldDiff } from "@/utils/presetDiff";
+import { formatStagingUpdatedAt } from "@/utils/schemaVersion";
 import type { DenormalizedPreset } from "@/utils/types";
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
@@ -41,7 +42,7 @@ function PresetRow({
           {head}
         </Link>
       ) : (
-        <div className="flex items-start gap-2 px-3 py-2" title="Only in the release">
+        <div className="flex items-start gap-2 px-3 py-2" title="Only in staging">
           {head}
         </div>
       )}
@@ -90,7 +91,8 @@ function Section({
 }
 
 export function PageComparison() {
-  const { isRelease, result, loading, error, domain, releaseVersion } = useComparison();
+  const { isComparing, result, loading, error, domain, stagingUpdatedAt } = useComparison();
+  const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt);
   const { dataUrl, data } = useSchema();
   const exportData = useMemo(() => (result ? exportComparison(result) : null), [result]);
 
@@ -98,14 +100,14 @@ export function PageComparison() {
     return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;
   }
 
-  if (isRelease) {
+  if (!isComparing) {
     return (
       <div className="space-y-3">
         <h1 className="font-display text-2xl font-semibold text-slate-900">Comparison</h1>
         <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          You're viewing the published release, so there's nothing to compare. Load a custom build
-          (a PR preview <code className="font-mono">dataUrl</code>) to see what changed against the
-          release.
+          You're viewing a release or staging build, so there's nothing to compare. Load a custom
+          build (a PR preview <code className="font-mono">dataUrl</code>) to see what changed
+          against staging.
         </p>
       </div>
     );
@@ -119,16 +121,16 @@ export function PageComparison() {
           {exportData ? <DownloadButton filename="comparison.json" data={exportData} /> : null}
         </div>
         <p className="text-sm text-slate-500">
-          <span className={`font-mono ${comparisonAccent.text}`}>{domain}</span> vs release
-          {releaseVersion ? ` ${releaseVersion}` : ""}.
+          <span className={`font-mono ${comparisonAccent.text}`}>{domain}</span> vs staging
+          {stagingAge ? ` · ${stagingAge}` : ""}.
         </p>
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">Loading the release to compare…</p>
+        <p className="text-sm text-slate-500">Loading staging to compare…</p>
       ) : error ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Could not load the release for comparison: {error}
+          Could not load staging for comparison: {error}
         </p>
       ) : result ? (
         <div className="space-y-8">

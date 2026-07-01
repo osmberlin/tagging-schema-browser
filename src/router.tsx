@@ -20,8 +20,10 @@ import { SidebarLayout } from "@/components/ui/SidebarLayout";
 import { ComparisonProvider } from "@/contexts/ComparisonContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
 import { SchemaProvider } from "@/contexts/SchemaContext";
-import { DEFAULT_DATA_URL } from "@/utils/constants";
+import { useReferenceStore } from "@/stores/referenceStore";
+import { dataUrlForReference, resolveActiveDataUrl, resolveSchemaReference } from "@/utils/dataUrl";
 import { routerSearch } from "@/utils/routerSearch";
+import { preloadSchemaData } from "@/utils/schemaCache";
 import {
   Outlet,
   createRootRoute,
@@ -33,7 +35,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { z } from "zod";
 
 const LazyPageIcons = lazy(() =>
@@ -70,6 +72,8 @@ const rootSearchSchema = z.object({
   dataUrl: z.string().catch(""),
   /** Global comparison locale (used by the Translations page + preset details). */
   locale: z.string().catch(""),
+  /** Canonical dataset when `dataUrl` is empty: npm release or interem staging. */
+  reference: z.enum(["release", "interem"]).optional().catch(undefined),
 });
 type RootSearch = z.infer<typeof rootSearchSchema>;
 
@@ -77,7 +81,25 @@ function RootContent() {
   const navigate = useNavigate();
   const dataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? "" });
   const locale = useSearch({ strict: false, select: (s) => s.locale ?? "" });
+  const urlReference = useSearch({ strict: false, select: (s) => s.reference });
+  const persistedReference = useReferenceStore((s) => s.reference);
+  const setPersistedReference = useReferenceStore((s) => s.setReference);
   const location = useLocation();
+
+  // URL `reference=release` wins; otherwise fall back to persisted preference (default interem).
+  const reference = resolveSchemaReference(urlReference, persistedReference);
+
+  useEffect(() => {
+    if (urlReference === "release") setPersistedReference("release");
+    if (urlReference === "interem") setPersistedReference("interem");
+  }, [urlReference, setPersistedReference]);
+
+  // Preload the alternate canonical reference so toggling can commit from cache.
+  useEffect(() => {
+    if (dataUrl.trim()) return;
+    const other: "release" | "interem" = reference === "interem" ? "release" : "interem";
+    void preloadSchemaData(dataUrlForReference(other));
+  }, [dataUrl, reference]);
 
   const setDataUrl = (url: string | null) => {
     void navigate({ to: ".", search: (prev) => ({ ...prev, dataUrl: url ?? "" }) });
@@ -86,7 +108,7 @@ function RootContent() {
     void navigate({ to: ".", search: (prev) => ({ ...prev, locale: next || undefined }) });
   };
 
-  const resolvedDataUrl = (dataUrl.trim() || DEFAULT_DATA_URL).trim();
+  const resolvedDataUrl = resolveActiveDataUrl(dataUrl, reference);
   const topSearch =
     location.pathname === "/icons" ? (
       <IconSearchBar />
@@ -136,8 +158,8 @@ const rootRoute = createRootRoute({
   // default ("") so shared links stay clean.
   search: {
     middlewares: [
-      retainSearchParams<RootSearch>(["dataUrl", "locale"]),
-      stripSearchParams({ dataUrl: "", locale: "" }),
+      retainSearchParams<RootSearch>(["dataUrl", "locale", "reference"]),
+      stripSearchParams({ dataUrl: "", locale: "", reference: undefined }),
     ],
   },
 });

@@ -77,7 +77,8 @@ export function PageTranslations() {
   );
   const exportFilename = locale ? `translations-${locale}.json` : "translations.json";
   const showLocale = Boolean(locale);
-  const canExportTranslations = exportData.length > 0 && (!showLocale || (!loading && !error && localeMap));
+  const canExportTranslations =
+    exportData.length > 0 && (!showLocale || (!loading && !error && localeMap));
 
   if (!dataUrl && !data) {
     return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;

@@ -5,6 +5,8 @@ import { translationsSearchDefaults } from "@/components/PageTranslations/transl
 import { DataSourceBanner } from "@/components/ui/DataSourceBanner";
 import { Kbd } from "@/components/ui/Kbd";
 import { LanguagePicker } from "@/components/ui/LanguagePicker";
+import { ReferenceToggle } from "@/components/ui/ReferenceToggle";
+import { SchemaLoadIndicator } from "@/components/ui/SchemaLoadIndicator";
 import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useComparison } from "@/contexts/ComparisonContext";
@@ -37,7 +39,10 @@ function NavLinkItem({
   active: boolean;
   area: "presets" | "icons" | "fields" | "translations" | "about";
   label: string;
-  search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>;
+  search: (prev: { dataUrl?: string; locale?: string; reference?: string }) => Record<
+    string,
+    unknown
+  >;
   onNavigate?: () => void;
   className?: (active: boolean) => string;
   title?: string;
@@ -67,7 +72,7 @@ function NavLinkItem({
 // Reset each page's own params to defaults on navigation, but keep `dataUrl`.
 function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
-  const { isRelease, result } = useComparison();
+  const { isComparing, result } = useComparison();
   const changeCount = result
     ? result.added.length + result.removed.length + result.modified.length
     : null;
@@ -121,7 +126,7 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
         })}
         onNavigate={onNavigate}
       />
-      {!isRelease ? (
+      {isComparing ? (
         <Link
           to="/comparison"
           search={(prev) => ({
@@ -131,7 +136,7 @@ function PrimaryNavLinks({ onNavigate }: { onNavigate?: () => void }) {
           })}
           onClick={onNavigate}
           className={comparisonNavClass(pathname === "/comparison")}
-          title="What changed vs the release"
+          title="What changed vs staging"
         >
           Comparison
           {changeCount != null ? (
@@ -213,7 +218,6 @@ export function SidebarLayout({
   const [helpOpen, setHelpOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { releaseVersion } = useComparison();
   const showSidebar =
     location.pathname === "/" ||
     location.pathname === "/icons" ||
@@ -295,44 +299,51 @@ export function SidebarLayout({
               </button>
             ) : null}
 
-            <Link
-              to="/"
-              search={(prev) => ({
-                ...presetSearchDefaults,
-                dataUrl: prev.dataUrl ?? "",
-                locale: prev.locale ?? "",
-              })}
-              className="flex shrink-0 items-center gap-2.5"
-            >
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm ${brandAccent.logo}`}
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                to="/"
+                search={(prev) => ({
+                  ...presetSearchDefaults,
+                  dataUrl: prev.dataUrl ?? "",
+                  locale: prev.locale ?? "",
+                })}
+                className="shrink-0"
+                aria-label="Tagging Schema Browser home"
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-                  <path
-                    d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
-                    stroke="currentColor"
-                    strokeWidth={1.6}
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M11 3v18M3 7.5 11 12l8-4.5"
-                    stroke="currentColor"
-                    strokeWidth={1.6}
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              <span className="hidden flex-col leading-tight sm:flex">
-                <span className="font-display text-base font-semibold whitespace-nowrap text-slate-900">
-                  Tagging Schema <span className={brandAccent.wordmark}>Browser</span>
+                <span
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg text-white shadow-sm ${brandAccent.logo}`}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none">
+                    <path
+                      d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
+                      stroke="currentColor"
+                      strokeWidth={1.6}
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M11 3v18M3 7.5 11 12l8-4.5"
+                      stroke="currentColor"
+                      strokeWidth={1.6}
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </span>
-                {releaseVersion ? (
-                  <span className="text-[11px] font-medium text-slate-400">
-                    Release {releaseVersion}
-                  </span>
-                ) : null}
-              </span>
-            </Link>
+              </Link>
+              <div className="hidden min-w-0 flex-col gap-0.5 sm:flex">
+                <Link
+                  to="/"
+                  search={(prev) => ({
+                    ...presetSearchDefaults,
+                    dataUrl: prev.dataUrl ?? "",
+                    locale: prev.locale ?? "",
+                  })}
+                  className="font-display text-sm leading-none font-semibold whitespace-nowrap text-slate-900"
+                >
+                  Tagging Schema <span className={brandAccent.wordmark}>Browser</span>
+                </Link>
+                <ReferenceToggle />
+              </div>
+            </div>
           </div>
 
           <nav
@@ -360,6 +371,7 @@ export function SidebarLayout({
         </div>
 
         <DataSourceBanner />
+        <SchemaLoadIndicator />
       </header>
 
       <div className="flex w-full flex-auto overflow-x-clip">

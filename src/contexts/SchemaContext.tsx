@@ -1,9 +1,6 @@
 import { ensureIconsForPresetUsage } from "@/components/PageIcons/iconRegistry";
-import { loadSchemaData } from "@/components/PagePresets/dataLoader";
-import { denormalize } from "@/components/PagePresets/denormalize";
-import { buildPresetSearchIndex } from "@/components/PagePresets/presetSearch";
 import type { References } from "@/schemaRuntimeDereference";
-import { DEFAULT_DATA_URL } from "@/utils/constants";
+import { getCachedSchemaData, preloadSchemaData } from "@/utils/schemaCache";
 import type { DenormalizedPreset, RawPresets, SchemaData } from "@/utils/types";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
@@ -31,8 +28,6 @@ export function useSchema() {
   return ctx;
 }
 
-const DEFAULT_CDN = DEFAULT_DATA_URL;
-
 export function SchemaProvider({
   children,
   dataUrl,
@@ -49,49 +44,37 @@ export function SchemaProvider({
   useEffect(() => {
     if (!dataUrl?.trim()) return;
     let cancelled = false;
+
+    const cached = getCachedSchemaData(dataUrl);
+    if (cached) {
+      setData(cached);
+      setError(null);
+      setLoading(false);
+      void ensureIconsForPresetUsage(cached.rawPresets);
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    loadSchemaData(dataUrl)
-      .then(async (raw) => {
+    void preloadSchemaData(dataUrl)
+      .then((schemaData) => {
         if (cancelled) return;
-        if (raw.loadErrors.length > 0) {
-          setError(raw.loadErrors.join("; "));
+        if (!schemaData) {
+          setError("Failed to load schema data");
+          setData(null);
           setLoading(false);
           return;
         }
-        await ensureIconsForPresetUsage(raw.presets);
-        if (cancelled) return;
-        const diagnostics: string[] = [];
-        const presets = denormalize(raw.presets, raw.translations, raw.categories, raw.fields);
-        buildPresetSearchIndex(presets);
-        const presetsById = new Map(presets.map((p) => [p.id, p]));
-        const categoryNames: Record<string, string> = {};
-        for (const [cid] of Object.entries(raw.categories)) {
-          categoryNames[cid] = raw.translations.en?.presets?.categories?.[cid]?.name ?? cid;
-        }
-        setData({
-          presets,
-          presetsById,
-          rawPresets: raw.presets,
-          categories: raw.categories,
-          categoryNames,
-          fields: raw.fields,
-          translations: raw.translations,
-          fieldTranslations: raw.translations.en?.presets?.fields ?? {},
-          schemaReferences: raw.references,
-          loadError: null,
-          diagnostics,
-        });
+        setData(schemaData);
         setError(null);
+        setLoading(false);
       })
       .catch((e) => {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : String(e));
           setData(null);
+          setLoading(false);
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -129,5 +112,3 @@ export function SchemaProvider({
 
   return <SchemaContext.Provider value={value}>{children}</SchemaContext.Provider>;
 }
-
-export { DEFAULT_CDN };

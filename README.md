@@ -16,15 +16,18 @@ This app loads a built `dist/` of the schema and makes it explorable in the brow
 - **Icons** — browse the icon sets presets draw from (Maki, Temaki, Roentgen, FontAwesome), filter by supplier / usage / asset status, and spot duplicates.
 - **Shareable state** — all search and filter state lives in the URL (TanStack Router + Zod), so any view can be linked. Press <kbd>?</kbd> in the app for keyboard shortcuts.
 
-## Loading a schema build (`?dataUrl=`)
+## Loading a schema build
 
-The app reads the schema from the `dataUrl` query parameter — the base URL of a tagging-schema `dist/` folder:
+Use the header toggle or URL params to pick the dataset:
 
 | Goal | URL |
 | --- | --- |
-| Latest release (default) | open the app |
+| Latest staging / unreleased (default) | open the app |
+| Published release | `…/?reference=release` |
 | A specific version | `…/?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6/dist` |
 | A pull-request preview | `…/?dataUrl=<the PR's built dist/ URL>` |
+
+**Staging** (default) loads the dist built from id-tagging-schema `main` on every push; the toggle shows when `main` last changed, not the npm version. **Release** loads the published npm package (`@latest`) when you add `?reference=release`. When you open a PR preview via `dataUrl`, the app compares it against staging.
 
 ## Develop
 

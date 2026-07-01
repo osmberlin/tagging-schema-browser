@@ -77,9 +77,8 @@ function DataUrlGenerator() {
           <p className="text-xs text-slate-500">
             The test link should show JSON. If it shows an HTML page (starting with{" "}
             <code className="font-mono">&lt;!doctype</code>), the URL points at an app/editor, not a
-            schema <code className="font-mono">dist/</code> folder. The host must send CORS headers
-            (e.g. <code className="font-mono">Access-Control-Allow-Origin</code>); hosts without
-            them (such as some Netlify PR previews) will not load in the browser.
+            schema <code className="font-mono">dist/</code> folder. Hosts without CORS headers (e.g.
+            Netlify staging or PR previews) are fetched through a public CORS proxy automatically.
           </p>
         </div>
       ) : null}
@@ -121,6 +120,14 @@ export function PageAbout() {
           — tooling that builds the schema distribution consumed by editors.
         </li>
       </ul>
+      <h2>Release vs staging</h2>
+      <p>
+        Use the toggle under the logo to switch between <strong>staging</strong> — the default,
+        latest unreleased build from id-tagging-schema <code>main</code> (labeled with when{" "}
+        <code>main</code> last changed) — and the published <strong>release</strong> (npm{" "}
+        <code>@latest</code>, with its version number). Deep-link the release with{" "}
+        <code>?reference=release</code>. Your last choice is remembered in the browser.
+      </p>
       <h2>Pointing at a different build</h2>
       <p>
         Point the app at any compatible <code>dist/</code> base URL via the <code>dataUrl</code>{" "}
@@ -165,15 +172,14 @@ export function PageAbout() {
           />
         </ul>
       </div>
-      <h2>Spotting non-release data</h2>
+      <h2>Spotting PR preview data</h2>
       <p>
-        Whenever you load a custom build,{" "}
-        <span className="font-medium text-violet-700">violet</span> is the app-wide signal that
-        you’re looking at non-release data: the banner under the header, a{" "}
-        <span className="font-medium text-violet-700">Comparison</span> tab in the nav, and a violet
-        dot on each preset that was added or modified versus the release. Open{" "}
-        <span className="font-medium text-violet-700">Comparison</span> for the full list of added,
-        modified, and removed presets.
+        Whenever you load a custom build via <code>dataUrl</code>,{" "}
+        <span className="font-medium text-violet-700">violet</span> is the app-wide signal: the
+        banner under the header, a <span className="font-medium text-violet-700">Comparison</span>{" "}
+        tab in the nav, and a violet dot on each preset that was added or modified versus staging.
+        Open <span className="font-medium text-violet-700">Comparison</span> for the full list of
+        added, modified, and removed presets.
       </p>
     </article>
   );

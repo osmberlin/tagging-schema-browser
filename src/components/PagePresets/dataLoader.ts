@@ -23,11 +23,29 @@ function ensureTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
 }
 
+/**
+ * Public CORS proxy used only as a fallback. Some hosts (notably Netlify staging
+ * and PR previews) serve the schema JSON without `Access-Control-Allow-Origin`,
+ * so a browser-side fetch is blocked. The proxy re-serves it with CORS.
+ */
+const CORS_PROXY = "https://corsproxy.io/?url=";
+
 async function fetchJson<T>(baseUrl: string, path: string): Promise<T> {
   const url = `${baseUrl}${path}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  return (await res.json()) as T;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+    return (await res.json()) as T;
+  } catch (err) {
+    // CORS/network failure surfaces as TypeError ("Failed to fetch") with no response.
+    if (err instanceof TypeError) {
+      const proxied = `${CORS_PROXY}${encodeURIComponent(url)}`;
+      const res = await fetch(proxied);
+      if (!res.ok) throw new Error(`HTTP ${res.status} (via CORS proxy): ${url}`);
+      return (await res.json()) as T;
+    }
+    throw err;
+  }
 }
 
 export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload> {
@@ -40,18 +58,29 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
   let defaults: unknown = {};
   let references: References | null = null;
 
-  for (const file of REQUIRED_FILES) {
-    try {
-      const data = await fetchJson<unknown>(base, file);
-      if (file === "presets.min.json") presets = data as RawPresets;
-      else if (file === "translations/en.min.json") translations = data as RawTranslations;
-      else if (file === "preset_categories.min.json") categories = data as RawCategories;
-      else if (file === "fields.min.json") fields = data as RawFields;
-      else if (file === "preset_defaults.min.json") defaults = data;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      loadErrors.push(`${file}: ${msg}`);
+  const results = await Promise.all(
+    REQUIRED_FILES.map(async (file) => {
+      try {
+        const data = await fetchJson<unknown>(base, file);
+        return { file, data } as const;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return { file, error: msg } as const;
+      }
+    }),
+  );
+
+  for (const result of results) {
+    if ("error" in result) {
+      loadErrors.push(`${result.file}: ${result.error}`);
+      continue;
     }
+    const { file, data } = result;
+    if (file === "presets.min.json") presets = data as RawPresets;
+    else if (file === "translations/en.min.json") translations = data as RawTranslations;
+    else if (file === "preset_categories.min.json") categories = data as RawCategories;
+    else if (file === "fields.min.json") fields = data as RawFields;
+    else if (file === "preset_defaults.min.json") defaults = data;
   }
 
   if (loadErrors.length === 0) {

@@ -1,5 +1,6 @@
 import { CountPill } from "@/components/ui/CountPill";
 import { DownloadButton } from "@/components/ui/DownloadButton";
+import { SchemaLoadingPanel } from "@/components/ui/LoadingSpinner";
 import { AreaIcon } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
@@ -31,15 +32,11 @@ export function PageFields() {
     );
   }
 
-  if (loading || !data) {
-    return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-36 animate-pulse rounded-lg bg-slate-200" />
-        ))}
-      </div>
-    );
+  if (loading && !data) {
+    return <SchemaLoadingPanel />;
   }
+
+  if (!data) return null;
 
   return (
     <div className="space-y-4">

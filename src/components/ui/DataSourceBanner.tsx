@@ -1,22 +1,34 @@
 import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
 import { useComparison } from "@/contexts/ComparisonContext";
 import { externalLinkClass } from "@/theme/externalAccent";
+import { formatStagingUpdatedAt } from "@/utils/schemaVersion";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 /**
  * Full-width strip under the header, shown only on a custom/PR build — the
  * app-wide violet signal that you're looking at non-release data. The release
- * version itself is shown under the logo (see SidebarLayout), not here. Left:
- * which build + how many changes; right: a button back to the release.
+ * / staging toggle is under the logo (see SidebarLayout). Left: which build +
+ * how many changes; right: buttons back to staging or release.
  */
 export function DataSourceBanner() {
-  const { isRelease, domain, presetsUrl, releaseVersion, result, loading } = useComparison();
+  const { isComparing, domain, presetsUrl, stagingUpdatedAt, releaseVersion, result, loading } =
+    useComparison();
   const navigate = useNavigate();
+  const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt);
 
-  if (isRelease) return null;
+  if (!isComparing) return null;
 
+  const showStaging = () => {
+    void navigate({
+      to: ".",
+      search: (prev) => ({ ...prev, dataUrl: undefined, reference: undefined }),
+    });
+  };
   const showRelease = () => {
-    void navigate({ to: ".", search: (prev) => ({ ...prev, dataUrl: undefined }) });
+    void navigate({
+      to: ".",
+      search: (prev) => ({ ...prev, dataUrl: undefined, reference: "release" }),
+    });
   };
   const changeCount = result
     ? result.added.length + result.removed.length + result.modified.length
@@ -46,27 +58,37 @@ export function DataSourceBanner() {
                 ...presetSearchDefaults,
                 dataUrl: prev.dataUrl ?? "",
                 locale: prev.locale ?? "",
+                reference: prev.reference,
               })}
               className="font-medium hover:underline"
             >
-              {changeCount} change{changeCount === 1 ? "" : "s"} vs release
-              {releaseVersion ? ` ${releaseVersion}` : ""}
+              {changeCount} change{changeCount === 1 ? "" : "s"} vs staging
+              {stagingAge ? ` · ${stagingAge}` : ""}
             </Link>
           </>
         ) : loading ? (
           <>
             <span className="text-violet-300">·</span>
-            <span className="text-violet-400">comparing to release…</span>
+            <span className="text-violet-400">comparing to staging…</span>
           </>
         ) : null}
       </span>
-      <button
-        type="button"
-        onClick={showRelease}
-        className="shrink-0 rounded-md bg-violet-600 px-2.5 py-1 font-medium text-white transition hover:bg-violet-700"
-      >
-        Show release{releaseVersion ? ` ${releaseVersion}` : ""}
-      </button>
+      <span className="flex shrink-0 flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={showStaging}
+          className="rounded-md bg-violet-600 px-2.5 py-1 font-medium text-white transition hover:bg-violet-700"
+        >
+          Show staging{stagingAge ? ` · ${stagingAge}` : ""}
+        </button>
+        <button
+          type="button"
+          onClick={showRelease}
+          className="rounded-md px-2.5 py-1 font-medium text-violet-700 ring-1 ring-violet-200 transition hover:bg-violet-100"
+        >
+          Show release{releaseVersion ? ` ${releaseVersion}` : ""}
+        </button>
+      </span>
     </div>
   );
 }

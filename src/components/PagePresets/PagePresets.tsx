@@ -1,11 +1,12 @@
 import { CountPill } from "@/components/ui/CountPill";
 import { DownloadButton } from "@/components/ui/DownloadButton";
 import { Input } from "@/components/ui/Input";
+import { SchemaLoadingPanel } from "@/components/ui/LoadingSpinner";
 import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
-import { DEFAULT_CDN } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
 import { brandAccent } from "@/theme/brandAccent";
+import { RELEASE_DATA_URL } from "@/utils/constants";
 import { exportPresets } from "@/utils/pageExports";
 import { Fragment, useMemo } from "react";
 import { PresetTable } from "./PresetTable";
@@ -124,7 +125,12 @@ export function PagePresets() {
           preview dist URL.
         </p>
         <form onSubmit={handleLoad} className="flex flex-col gap-2">
-          <Input name="dataUrl" type="url" placeholder={DEFAULT_CDN} defaultValue={DEFAULT_CDN} />
+          <Input
+            name="dataUrl"
+            type="url"
+            placeholder={RELEASE_DATA_URL}
+            defaultValue={RELEASE_DATA_URL}
+          />
           <button
             type="submit"
             className={`rounded-lg px-4 py-2 text-sm font-medium text-white ${areaAccent.presets.button}`}
@@ -137,14 +143,11 @@ export function PagePresets() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="h-10 w-full animate-pulse rounded-lg bg-slate-200" />
-        <div className="h-[60vh] animate-pulse rounded-lg bg-slate-200" />
-      </div>
-    );
+  if (loading && !data) {
+    return <SchemaLoadingPanel label="Loading schema…" />;
   }
+
+  if (!data) return null;
 
   if (error) {
     return (

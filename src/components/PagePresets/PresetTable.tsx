@@ -174,7 +174,7 @@ function PresetHeaderCell({
           {changed ? (
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${comparisonAccent.dot}`}
-              title={status === "added" ? "Added vs release" : "Modified vs release"}
+              title={status === "added" ? "Added vs staging" : "Modified vs staging"}
             />
           ) : null}
           <span className="truncate" title={preset.name}>
