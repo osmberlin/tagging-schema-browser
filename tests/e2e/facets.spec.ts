@@ -62,6 +62,15 @@ test("preset detail shows field options with child preset links", async ({ page 
   await expect(page.getByText("man_made/crane/portal_crane")).toBeVisible();
 });
 
+test("field detail page loads without showing not found while schema loads", async ({ page }) => {
+  await page.goto("/field/name?dataUrl=/test-schema");
+
+  await expect(page.getByRole("heading", { name: "Field not found" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: /^name$/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Source field/i })).toBeVisible();
+  await expect(page.getByText("data/fields/name.json")).toBeVisible();
+});
+
 test("preset detail page shows source JSON", async ({ page }) => {
   await page.goto("/?dataUrl=/test-schema");
   await page.getByRole("button", { name: /cafe/i }).first().click();
