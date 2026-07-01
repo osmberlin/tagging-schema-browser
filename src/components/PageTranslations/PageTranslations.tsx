@@ -99,7 +99,6 @@ export function PageTranslations() {
             filename={exportFilename}
             data={exportData}
             disabled={exportData.length === 0}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${areaAccent.translations.button}`}
           />
         </div>
         <p className="text-sm text-slate-500">

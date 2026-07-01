@@ -49,7 +49,6 @@ export function PageIcons() {
             filename="icons.json"
             data={exportData}
             disabled={exportData.length === 0}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${areaAccent.icons.button}`}
           />
           <label className="flex items-center gap-2 text-sm text-slate-500">
             Sort

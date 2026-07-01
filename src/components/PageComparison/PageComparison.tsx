@@ -116,13 +116,7 @@ export function PageComparison() {
       <div className="space-y-1">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="font-display text-2xl font-semibold text-slate-900">Comparison</h1>
-          {exportData ? (
-            <DownloadButton
-              filename="comparison.json"
-              data={exportData}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white shadow-sm transition ${comparisonAccent.button}`}
-            />
-          ) : null}
+          {exportData ? <DownloadButton filename="comparison.json" data={exportData} /> : null}
         </div>
         <p className="text-sm text-slate-500">
           <span className={`font-mono ${comparisonAccent.text}`}>{domain}</span> vs release
