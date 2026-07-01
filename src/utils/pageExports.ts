@@ -1,58 +1,58 @@
-import type { LocaleEntry } from "@/components/PageTranslations/useLocaleData";
-import type { ComparisonResult } from "@/utils/presetDiff";
-import type { DenormalizedPreset, FieldViewModel, IconViewModel } from "@/utils/types";
+import type { LocaleEntry } from '@/queries/locale'
+import type { ComparisonResult } from '@/utils/presetDiff'
+import type { DenormalizedPreset, FieldViewModel, IconViewModel } from '@/utils/types'
 
 export type PresetExport = {
-  id: string;
-  name: string;
-  geometry: string[];
-  tags: Record<string, string>;
-  fields: string[];
-  moreFields: string[];
-  terms: string[];
-  aliases: string[];
-  icon?: string;
-  categoryNames: string[];
-};
+  id: string
+  name: string
+  geometry: string[]
+  tags: Record<string, string>
+  fields: string[]
+  moreFields: string[]
+  terms: string[]
+  aliases: string[]
+  icon?: string
+  categoryNames: string[]
+}
 
 export type IconExport = {
-  name: string;
-  prefix: string;
-  presetUsageCount: number;
-  optionUsageCount: number;
-  presetIds: string[];
-};
+  name: string
+  prefix: string
+  presetUsageCount: number
+  optionUsageCount: number
+  presetIds: string[]
+}
 
 export type FieldExport = {
-  id: string;
-  key: string;
-  type: string;
-  label: string;
-  geometry: string[];
-  universal: boolean;
-  usageCount: number;
-  primaryCount: number;
-  moreCount: number;
-  presetIds: string[];
-};
+  id: string
+  key: string
+  type: string
+  label: string
+  geometry: string[]
+  universal: boolean
+  usageCount: number
+  primaryCount: number
+  moreCount: number
+  presetIds: string[]
+}
 
 export type TranslationExport = {
-  id: string;
-  en: { name: string; terms: string[]; aliases: string[] };
-  locale?: string;
-  localized?: { name?: string; terms?: string[]; aliases?: string[] };
-  translated: boolean;
-};
+  id: string
+  en: { name: string; terms: string[]; aliases: string[] }
+  locale?: string
+  localized?: { name?: string; terms?: string[]; aliases?: string[] }
+  translated: boolean
+}
 
 export type ComparisonExport = {
-  added: PresetExport[];
-  removed: PresetExport[];
+  added: PresetExport[]
+  removed: PresetExport[]
   modified: Array<{
-    id: string;
-    name: string;
-    diffs: ComparisonResult["modified"][number]["diffs"];
-  }>;
-};
+    id: string
+    name: string
+    diffs: ComparisonResult['modified'][number]['diffs']
+  }>
+}
 
 export function exportPresets(presets: DenormalizedPreset[]): PresetExport[] {
   return presets.map((preset) => ({
@@ -66,7 +66,7 @@ export function exportPresets(presets: DenormalizedPreset[]): PresetExport[] {
     aliases: preset.aliases,
     icon: preset.icon,
     categoryNames: preset.categoryNames,
-  }));
+  }))
 }
 
 export function exportIcons(icons: IconViewModel[]): IconExport[] {
@@ -76,7 +76,7 @@ export function exportIcons(icons: IconViewModel[]): IconExport[] {
     presetUsageCount: icon.presetUsageCount,
     optionUsageCount: icon.optionUsageCount,
     presetIds: icon.presets.map((preset) => preset.id),
-  }));
+  }))
 }
 
 export function exportFields(fields: FieldViewModel[]): FieldExport[] {
@@ -91,7 +91,7 @@ export function exportFields(fields: FieldViewModel[]): FieldExport[] {
     primaryCount: field.primaryCount,
     moreCount: field.moreCount,
     presetIds: field.presets.map((preset) => preset.id),
-  }));
+  }))
 }
 
 export function exportTranslations(
@@ -100,7 +100,7 @@ export function exportTranslations(
   localeMap: Map<string, LocaleEntry> | null | undefined,
 ): TranslationExport[] {
   return presets.map((preset) => {
-    const localized = localeMap?.get(preset.id);
+    const localized = localeMap?.get(preset.id)
     return {
       id: preset.id,
       en: {
@@ -117,8 +117,8 @@ export function exportTranslations(
           }
         : undefined,
       translated: Boolean(localized?.name),
-    };
-  });
+    }
+  })
 }
 
 export function exportComparison(result: ComparisonResult): ComparisonExport {
@@ -130,5 +130,5 @@ export function exportComparison(result: ComparisonResult): ComparisonExport {
       name: entry.current.name,
       diffs: entry.diffs,
     })),
-  };
+  }
 }

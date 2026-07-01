@@ -1,16 +1,16 @@
-import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
-import { CountPill } from "@/components/ui/CountPill";
-import { ExpandIcon } from "@/components/ui/ExpandIcon";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { areaAccent } from "@/theme/areaAccent";
-import type { FieldViewModel } from "@/utils/types";
-import { Link } from "@tanstack/react-router";
+import { Link } from '@tanstack/react-router'
+import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { AreaIcon } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
+import { ExpandIcon } from '@/components/ui/ExpandIcon'
+import { areaAccent } from '@/theme/areaAccent'
+import type { FieldViewModel } from '@/utils/types'
 
 const fieldCardClass =
-  "group/fc relative flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 transition duration-200 hover:shadow-md hover:shadow-slate-900/5";
+  'group/fc relative flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 transition duration-200 hover:shadow-md hover:shadow-slate-900/5'
 
 export function FieldCard({ field }: { field: FieldViewModel }) {
-  const names = field.presets.map((p) => p.name).join(", ");
+  const names = field.presets.map((p) => p.name).join(', ')
 
   const body = (
     <div className="pointer-events-none flex flex-col">
@@ -49,15 +49,15 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
           <span className="inline-flex items-center gap-1 font-medium text-slate-700">
             <AreaIcon area="presets" className={`h-3 w-3 ${areaAccent.presets.icon}`} />
             Presets
-          </span>{" "}
-          <CountPill className="bg-slate-100 align-text-bottom">{field.usageCount}</CountPill>:{" "}
+          </span>{' '}
+          <CountPill className="bg-slate-100 align-text-bottom">{field.usageCount}</CountPill>:{' '}
           {names}
         </p>
       ) : (
         <p className="mt-2 text-xs text-slate-400">Unused by presets</p>
       )}
     </div>
-  );
+  )
 
   return (
     <article
@@ -67,7 +67,7 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
       <Link
         to="/field/$"
         params={{ _splat: field.id }}
-        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
         title={`Open field "${field.id}"`}
         className="absolute inset-0 rounded-xl"
         aria-label={`Open field "${field.label}"`}
@@ -78,8 +78,8 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
           to="/"
           search={(prev) => ({
             ...presetSearchDefaults,
-            dataUrl: prev.dataUrl ?? "",
-            locale: prev.locale ?? "",
+            dataUrl: prev.dataUrl ?? '',
+            locale: prev.locale ?? '',
             fieldIds: [field.id],
           })}
           title={`Show all ${field.usageCount} presets using "${field.id}"`}
@@ -96,5 +96,5 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
         <ExpandIcon className="h-3 w-3" />
       </span>
     </article>
-  );
+  )
 }

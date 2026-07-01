@@ -1,7 +1,7 @@
-import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
-import { areaAccent } from "@/theme/areaAccent";
-import { clsx } from "clsx";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState } from 'react'
+import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
+import { areaAccent } from '@/theme/areaAccent'
+import { cn } from '@/utils/tw'
 
 function DisclosureChevron({ open }: { open: boolean }) {
   return (
@@ -13,7 +13,7 @@ function DisclosureChevron({ open }: { open: boolean }) {
         viewBox="0 0 20 20"
         fill="currentColor"
         aria-hidden
-        className={clsx("h-4 w-4 transition-transform duration-150", open && "rotate-90")}
+        className={cn('h-4 w-4 transition-transform duration-150', open && 'rotate-90')}
       >
         <title>Toggle section</title>
         <path
@@ -23,7 +23,7 @@ function DisclosureChevron({ open }: { open: boolean }) {
         />
       </svg>
     </span>
-  );
+  )
 }
 
 export function DetailDisclosure({
@@ -35,36 +35,33 @@ export function DetailDisclosure({
   children,
   className,
 }: {
-  title: string;
-  area?: SchemaArea;
-  subtitle?: ReactNode;
-  actions?: ReactNode;
-  defaultOpen?: boolean;
-  children: ReactNode;
-  className?: string;
+  title: string
+  area?: SchemaArea
+  subtitle?: ReactNode
+  actions?: ReactNode
+  defaultOpen?: boolean
+  children: ReactNode
+  className?: string
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(defaultOpen)
 
   return (
     <section
-      className={clsx("overflow-hidden rounded-xl border border-slate-200 bg-white", className)}
+      className={cn('overflow-hidden rounded-xl border border-slate-200 bg-white', className)}
     >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={clsx(
-          "group flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-left text-sm font-semibold text-slate-900 transition hover:bg-slate-50",
+        className={cn(
+          'group flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 text-left text-sm font-semibold text-slate-900 transition hover:bg-slate-50',
         )}
       >
         <DisclosureChevron open={open} />
         <span className="min-w-0 flex-1">
           <span className="inline-flex items-center gap-1.5">
             {area ? (
-              <AreaIcon
-                area={area}
-                className={clsx("h-3.5 w-3.5 shrink-0", areaAccent[area].icon)}
-              />
+              <AreaIcon area={area} className={cn('h-3.5 w-3.5 shrink-0', areaAccent[area].icon)} />
             ) : null}
             <span>{title}</span>
           </span>
@@ -82,5 +79,5 @@ export function DetailDisclosure({
       </button>
       {open ? <div className="border-t border-slate-200">{children}</div> : null}
     </section>
-  );
+  )
 }

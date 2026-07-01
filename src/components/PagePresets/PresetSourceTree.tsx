@@ -1,76 +1,76 @@
-import { fieldFacetDefaults } from "@/components/PageFields/useFieldFacetState";
-import { FieldSourceEnrichment } from "@/components/PagePresets/FieldSourceEnrichment";
+import { Link } from '@tanstack/react-router'
+import { Fragment, type ReactNode, useState } from 'react'
+import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
+import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
   getInheritedFieldItems,
   presetIdFromRef,
-} from "@/components/PagePresets/presetFieldInheritance";
-import { type KeySortMode, sortObjectEntries } from "@/components/PagePresets/presetKeyOrder";
+} from '@/components/PagePresets/presetFieldInheritance'
+import { type KeySortMode, sortObjectEntries } from '@/components/PagePresets/presetKeyOrder'
 import {
   getInheritedLabels,
   resolveLabelSourcePresetId,
-} from "@/components/PagePresets/presetLabelInheritance";
-import { AreaIcon, type SchemaArea } from "@/components/ui/areaIcons";
-import { useSchema } from "@/contexts/SchemaContext";
-import { isFieldCrossRefKey, resolveFieldRefDisplay } from "@/schemaRuntimeDereference/displayRefs";
-import { areaAccent, areaSourceLinkClass } from "@/theme/areaAccent";
-import { externalPillClass } from "@/theme/externalAccent";
-import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
-import type { DenormalizedPreset, RawPreset, RawPresets } from "@/utils/types";
-import { Link } from "@tanstack/react-router";
-import { clsx } from "clsx";
-import { Fragment, type ReactNode, useState } from "react";
-import { presetSearchDefaults } from "./useSearchState";
+} from '@/components/PagePresets/presetLabelInheritance'
+import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
+import { useSchema } from '@/hooks/useSchema'
+import { isFieldCrossRefKey, resolveFieldRefDisplay } from '@/schemaRuntimeDereference/displayRefs'
+import { areaAccent, areaSourceLinkClass } from '@/theme/areaAccent'
+import { externalPillClass } from '@/theme/externalAccent'
+import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import { cn } from '@/utils/tw'
+import type { DenormalizedPreset, RawPreset, RawPresets } from '@/utils/types'
+import { presetSearchDefaults } from './useSearchState'
 
-const REF_REGEX = /^\{(.+)\}$/;
+const REF_REGEX = /^\{(.+)\}$/
 
 type RefInfo = {
-  kind: "field" | "preset";
-  id: string;
-  repoPath: string;
-};
+  kind: 'field' | 'preset'
+  id: string
+  repoPath: string
+}
 
 function presetSearchable(rawPresets: RawPresets, id: string): boolean {
-  return rawPresets[id]?.searchable !== false;
+  return rawPresets[id]?.searchable !== false
 }
 
 function refInFieldList(value: string, rawPresets: RawPresets): RefInfo | null {
-  const m = value.match(REF_REGEX);
+  const m = value.match(REF_REGEX)
   if (m) {
-    const id = m[1];
+    const id = m[1]
     return {
-      kind: "preset",
+      kind: 'preset',
       id,
-      repoPath: schemaRepoPath("preset", id, { searchable: presetSearchable(rawPresets, id) }),
-    };
+      repoPath: schemaRepoPath('preset', id, { searchable: presetSearchable(rawPresets, id) }),
+    }
   }
-  return { kind: "field", id: value, repoPath: schemaRepoPath("field", value) };
+  return { kind: 'field', id: value, repoPath: schemaRepoPath('field', value) }
 }
 
 function isScalar(value: unknown): value is string | number | boolean | null {
   return (
     value === null ||
-    typeof value === "string" ||
-    typeof value === "number" ||
-    typeof value === "boolean"
-  );
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  )
 }
 
-function GithubLink({ href, label = "GitHub" }: { href: string; label?: string }) {
+function GithubLink({ href, label = 'GitHub' }: { href: string; label?: string }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={externalPillClass("shrink-0")}
+      className={externalPillClass('shrink-0')}
       title="Open in id-tagging-schema repository"
     >
       {label} ↗
     </a>
-  );
+  )
 }
 
 const sourceRefButtonClass =
-  "inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset";
+  'inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset'
 
 function SourceAreaLink({
   area,
@@ -80,14 +80,14 @@ function SourceAreaLink({
   label,
   title,
 }: {
-  area: SchemaArea;
-  to: string;
-  params?: { _splat: string };
-  search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>;
-  label: string;
-  title: string;
+  area: SchemaArea
+  to: string
+  params?: { _splat: string }
+  search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>
+  label: string
+  title: string
 }) {
-  const toneClass = areaSourceLinkClass(area);
+  const toneClass = areaSourceLinkClass(area)
 
   return (
     <Link
@@ -95,12 +95,12 @@ function SourceAreaLink({
       params={params}
       search={search}
       title={title}
-      className={clsx(sourceRefButtonClass, toneClass)}
+      className={cn(sourceRefButtonClass, toneClass)}
     >
       <AreaIcon area={area} className="h-3 w-3" />
       {label}
     </Link>
-  );
+  )
 }
 
 function JsonLine({
@@ -108,9 +108,9 @@ function JsonLine({
   children,
   trailingComma,
 }: {
-  level: number;
-  children: ReactNode;
-  trailingComma?: boolean;
+  level: number
+  children: ReactNode
+  trailingComma?: boolean
 }) {
   return (
     <div
@@ -120,32 +120,32 @@ function JsonLine({
       {children}
       {trailingComma ? <span className="text-slate-500">,</span> : null}
     </div>
-  );
+  )
 }
 
 function JsonScalar({ value }: { value: string | number | boolean | null }) {
-  if (value === null) return <span className="text-slate-400">null</span>;
-  if (typeof value === "boolean") return <span className="text-purple-700">{String(value)}</span>;
-  if (typeof value === "number") return <span className="text-purple-700">{value}</span>;
-  return <span className="text-emerald-800">"{value}"</span>;
+  if (value === null) return <span className="text-slate-400">null</span>
+  if (typeof value === 'boolean') return <span className="text-purple-700">{String(value)}</span>
+  if (typeof value === 'number') return <span className="text-purple-700">{value}</span>
+  return <span className="text-emerald-800">"{value}"</span>
 }
 
 function JsonKey({ name }: { name: string }) {
-  return <span className="text-rose-800">"{name}"</span>;
+  return <span className="text-rose-800">"{name}"</span>
 }
 
-type JsonRootKind = "field" | "preset";
+type JsonRootKind = 'field' | 'preset'
 
 type HostPresetContext = {
-  hostPreset: RawPreset;
-  hostOriginalFields: string[];
-  hostOriginalMoreFields: string[];
-  hostPresetDenorm?: DenormalizedPreset;
-  allPresets: DenormalizedPreset[];
-  rawPresets: RawPresets;
+  hostPreset: RawPreset
+  hostOriginalFields: string[]
+  hostOriginalMoreFields: string[]
+  hostPresetDenorm?: DenormalizedPreset
+  allPresets: DenormalizedPreset[]
+  rawPresets: RawPresets
   /** When rendering a field's source JSON, the field id being viewed. */
-  sourceFieldId?: string;
-};
+  sourceFieldId?: string
+}
 
 /** Inherited name / terms / aliases when `name` references another preset. */
 function PresetRefInheritedLabels({
@@ -153,12 +153,12 @@ function PresetRefInheritedLabels({
   level,
   trailingComma,
 }: {
-  labels: { name: string; terms: string[]; aliases: string[] };
-  level: number;
-  trailingComma?: boolean;
+  labels: { name: string; terms: string[]; aliases: string[] }
+  level: number
+  trailingComma?: boolean
 }) {
-  const hasTerms = labels.terms.length > 0;
-  const hasAliases = labels.aliases.length > 0;
+  const hasTerms = labels.terms.length > 0
+  const hasAliases = labels.aliases.length > 0
 
   return (
     <>
@@ -200,7 +200,7 @@ function PresetRefInheritedLabels({
         </Fragment>
       ) : null}
     </>
-  );
+  )
 }
 
 function NameRefDisclosure({
@@ -209,18 +209,18 @@ function NameRefDisclosure({
   dataUrl,
   trailingComma,
 }: {
-  nameRef: string;
-  level: number;
-  dataUrl: string;
-  trailingComma?: boolean;
+  nameRef: string
+  level: number
+  dataUrl: string
+  trailingComma?: boolean
 }) {
-  const [open, setOpen] = useState(false);
-  const { rawPresets, presetsById } = useSchema();
-  const sourceId = resolveLabelSourcePresetId(nameRef, rawPresets);
-  const labels = getInheritedLabels(nameRef, rawPresets, presetsById);
+  const [open, setOpen] = useState(false)
+  const { rawPresets, presetsById } = useSchema()
+  const sourceId = resolveLabelSourcePresetId(nameRef, rawPresets)
+  const labels = getInheritedLabels(nameRef, rawPresets, presetsById)
   const repoPath = sourceId
-    ? schemaRepoPath("preset", sourceId, { searchable: presetSearchable(rawPresets, sourceId) })
-    : "";
+    ? schemaRepoPath('preset', sourceId, { searchable: presetSearchable(rawPresets, sourceId) })
+    : ''
 
   return (
     <>
@@ -234,7 +234,7 @@ function NameRefDisclosure({
           className={`inline-flex min-w-0 items-center gap-1 text-left ${areaAccent.presets.linkRingHover}`}
         >
           <span aria-hidden className="w-3 shrink-0 text-slate-400">
-            {open ? "▾" : "▸"}
+            {open ? '▾' : '▸'}
           </span>
           <span className="text-emerald-800">"{nameRef}"</span>
         </button>
@@ -245,8 +245,8 @@ function NameRefDisclosure({
             <SourceAreaLink
               area="presets"
               to="/preset/$"
-              params={{ _splat: sourceId ?? "" }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+              params={{ _splat: sourceId ?? '' }}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
               label="Preset"
               title={`Open preset "${sourceId}"`}
             />
@@ -262,41 +262,41 @@ function NameRefDisclosure({
           />
         ) : (
           <JsonLine level={level + 1} trailingComma={trailingComma}>
-            <span className="text-slate-400 italic">{"/* not loaded */"}</span>
+            <span className="text-slate-400 italic">{'/* not loaded */'}</span>
           </JsonLine>
         )
       ) : null}
     </>
-  );
+  )
 }
 
 function RefDisclosure({
   label,
-  ref,
+  refInfo,
   level,
   dataUrl,
   trailingComma,
   parentKey,
   host,
-  sortMode = "alpha",
+  sortMode = 'alpha',
 }: {
-  label: string;
-  ref: RefInfo;
-  level: number;
-  dataUrl: string;
-  trailingComma?: boolean;
-  parentKey?: string;
-  host: HostPresetContext;
-  sortMode?: KeySortMode;
+  label: string
+  refInfo: RefInfo
+  level: number
+  dataUrl: string
+  trailingComma?: boolean
+  parentKey?: string
+  host: HostPresetContext
+  sortMode?: KeySortMode
 }) {
-  const [open, setOpen] = useState(false);
-  const { fields, rawPresets } = useSchema();
-  const fieldListKey = parentKey === "fields" || parentKey === "moreFields" ? parentKey : undefined;
-  const inheritPresetFields = ref.kind === "preset" && fieldListKey;
+  const [open, setOpen] = useState(false)
+  const { fields, rawPresets } = useSchema()
+  const fieldListKey = parentKey === 'fields' || parentKey === 'moreFields' ? parentKey : undefined
+  const inheritPresetFields = refInfo.kind === 'preset' && fieldListKey
   const expandedRaw =
-    ref.kind === "field"
-      ? (fields[ref.id] as Record<string, unknown> | undefined)
-      : (rawPresets[ref.id] as Record<string, unknown> | undefined);
+    refInfo.kind === 'field'
+      ? (fields[refInfo.id] as Record<string, unknown> | undefined)
+      : (rawPresets[refInfo.id] as Record<string, unknown> | undefined)
 
   return (
     <>
@@ -308,43 +308,43 @@ function RefDisclosure({
           className={`inline-flex min-w-0 items-center gap-1 text-left ${areaAccent.presets.linkRingHover}`}
         >
           <span aria-hidden className="w-3 shrink-0 text-slate-400">
-            {open ? "▾" : "▸"}
+            {open ? '▾' : '▸'}
           </span>
           <span className="text-emerald-800">"{label}"</span>
         </button>
-        <code className="truncate text-[10px] text-slate-400">{ref.repoPath}</code>
-        <GithubLink href={githubFileUrl(dataUrl, ref.repoPath)} />
-        {ref.kind === "preset" ? (
+        <code className="truncate text-[10px] text-slate-400">{refInfo.repoPath}</code>
+        <GithubLink href={githubFileUrl(dataUrl, refInfo.repoPath)} />
+        {refInfo.kind === 'preset' ? (
           <SourceAreaLink
             area="presets"
             to="/preset/$"
-            params={{ _splat: ref.id }}
-            search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+            params={{ _splat: refInfo.id }}
+            search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
             label="Preset"
-            title={`Open preset "${ref.id}"`}
+            title={`Open preset "${refInfo.id}"`}
           />
         ) : (
           <>
             <SourceAreaLink
               area="fields"
               to="/field/$"
-              params={{ _splat: ref.id }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+              params={{ _splat: refInfo.id }}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
               label="Field"
-              title={`Open field "${ref.id}"`}
+              title={`Open field "${refInfo.id}"`}
             />
             <SourceAreaLink
               area="presets"
               to="/"
               search={(prev) => ({
                 ...presetSearchDefaults,
-                dataUrl: prev.dataUrl ?? "",
-                locale: prev.locale ?? "",
-                ...(fieldListKey === "moreFields"
-                  ? { moreFieldIds: [ref.id] }
-                  : fieldListKey === "fields"
-                    ? { primaryFieldIds: [ref.id] }
-                    : { fieldIds: [ref.id] }),
+                dataUrl: prev.dataUrl ?? '',
+                locale: prev.locale ?? '',
+                ...(fieldListKey === 'moreFields'
+                  ? { moreFieldIds: [refInfo.id] }
+                  : fieldListKey === 'fields'
+                    ? { primaryFieldIds: [refInfo.id] }
+                    : { fieldIds: [refInfo.id] }),
                 page: 1,
               })}
               label="Presets"
@@ -371,12 +371,12 @@ function RefDisclosure({
               dataUrl={dataUrl}
               trailingComma={trailingComma}
               host={host}
-              sortMode={ref.kind === "preset" ? "preset" : sortMode}
-              jsonRootKind={ref.kind === "field" ? "field" : "preset"}
+              sortMode={refInfo.kind === 'preset' ? 'preset' : sortMode}
+              jsonRootKind={refInfo.kind === 'field' ? 'field' : 'preset'}
             />
-            {ref.kind === "field" && host.hostPresetDenorm ? (
+            {refInfo.kind === 'field' && host.hostPresetDenorm ? (
               <FieldSourceEnrichment
-                fieldId={ref.id}
+                fieldId={refInfo.id}
                 preset={host.hostPresetDenorm}
                 presets={host.allPresets}
               />
@@ -384,12 +384,12 @@ function RefDisclosure({
           </>
         ) : (
           <JsonLine level={level + 1} trailingComma={trailingComma}>
-            <span className="text-slate-400 italic">{"/* not loaded */"}</span>
+            <span className="text-slate-400 italic">{'/* not loaded */'}</span>
           </JsonLine>
         )
       ) : null}
     </>
-  );
+  )
 }
 
 /** Inherited field ids when a preset ref is expanded inside fields or moreFields. */
@@ -401,14 +401,14 @@ function PresetRefInheritedFields({
   trailingComma,
   host,
 }: {
-  presetRef: string;
-  fieldListKey: "fields" | "moreFields";
-  level: number;
-  dataUrl: string;
-  trailingComma?: boolean;
-  host: HostPresetContext;
+  presetRef: string
+  fieldListKey: 'fields' | 'moreFields'
+  level: number
+  dataUrl: string
+  trailingComma?: boolean
+  host: HostPresetContext
 }) {
-  const { fields: allFields, rawPresets } = useSchema();
+  const { fields: allFields, rawPresets } = useSchema()
   const inheritedItems = getInheritedFieldItems(
     host.hostPreset,
     presetRef,
@@ -417,14 +417,14 @@ function PresetRefInheritedFields({
     host.hostOriginalMoreFields,
     rawPresets,
     allFields,
-  );
+  )
 
   if (inheritedItems.length === 0) {
     return (
       <JsonLine level={level} trailingComma={trailingComma}>
-        <span className="text-slate-400 italic">{"/* no inherited fields */"}</span>
+        <span className="text-slate-400 italic">{'/* no inherited fields */'}</span>
       </JsonLine>
-    );
+    )
   }
 
   return (
@@ -441,7 +441,7 @@ function PresetRefInheritedFields({
         />
       ))}
     </>
-  );
+  )
 }
 
 function JsonNode({
@@ -451,26 +451,26 @@ function JsonNode({
   dataUrl,
   trailingComma,
   host,
-  sortMode = "alpha",
-  jsonRootKind = "preset",
+  sortMode = 'alpha',
+  jsonRootKind = 'preset',
 }: {
-  value: unknown;
-  level: number;
-  parentKey?: string;
-  dataUrl: string;
-  trailingComma?: boolean;
-  host: HostPresetContext;
-  sortMode?: KeySortMode;
-  jsonRootKind?: JsonRootKind;
+  value: unknown
+  level: number
+  parentKey?: string
+  dataUrl: string
+  trailingComma?: boolean
+  host: HostPresetContext
+  sortMode?: KeySortMode
+  jsonRootKind?: JsonRootKind
 }) {
   if (isScalar(value)) {
-    if (typeof value === "string" && (parentKey === "fields" || parentKey === "moreFields")) {
-      const ref = refInFieldList(value, host.rawPresets);
-      if (ref) {
+    if (typeof value === 'string' && (parentKey === 'fields' || parentKey === 'moreFields')) {
+      const fieldRef = refInFieldList(value, host.rawPresets)
+      if (fieldRef) {
         return (
           <RefDisclosure
             label={value}
-            ref={ref}
+            refInfo={fieldRef}
             level={level}
             dataUrl={dataUrl}
             trailingComma={trailingComma}
@@ -478,14 +478,14 @@ function JsonNode({
             host={host}
             sortMode={sortMode}
           />
-        );
+        )
       }
     }
     return (
       <JsonLine level={level} trailingComma={trailingComma}>
         <JsonScalar value={value} />
       </JsonLine>
-    );
+    )
   }
 
   if (Array.isArray(value)) {
@@ -494,7 +494,7 @@ function JsonNode({
         <JsonLine level={level} trailingComma={trailingComma}>
           <span className="text-slate-500">[]</span>
         </JsonLine>
-      );
+      )
     }
     return (
       <>
@@ -503,7 +503,7 @@ function JsonNode({
         </JsonLine>
         {value.map((item, i) => (
           <JsonNode
-            key={typeof item === "string" ? item : `item-${i}-${JSON.stringify(item)}`}
+            key={typeof item === 'string' ? item : `item-${i}-${JSON.stringify(item)}`}
             value={item}
             level={level + 1}
             parentKey={parentKey}
@@ -518,25 +518,25 @@ function JsonNode({
           <span className="text-slate-500">]</span>
         </JsonLine>
       </>
-    );
+    )
   }
 
-  if (typeof value === "object" && value !== null) {
+  if (typeof value === 'object' && value !== null) {
     const entries = sortObjectEntries(Object.entries(value as Record<string, unknown>), {
       parentKey,
       sortMode,
-    });
+    })
     if (entries.length === 0) {
       return (
         <JsonLine level={level} trailingComma={trailingComma}>
-          <span className="text-slate-500">{"{}"}</span>
+          <span className="text-slate-500">{'{}'}</span>
         </JsonLine>
-      );
+      )
     }
     return (
       <>
         <JsonLine level={level}>
-          <span className="text-slate-500">{"{"}</span>
+          <span className="text-slate-500">{'{'}</span>
         </JsonLine>
         {entries.map(([key, child], i) => (
           <JsonObjectEntry
@@ -552,17 +552,17 @@ function JsonNode({
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
-          <span className="text-slate-500">{"}"}</span>
+          <span className="text-slate-500">{'}'}</span>
         </JsonLine>
       </>
-    );
+    )
   }
 
   return (
     <JsonLine level={level} trailingComma={trailingComma}>
       <span className="text-slate-400">undefined</span>
     </JsonLine>
-  );
+  )
 }
 
 function FieldCrossRefLine({
@@ -572,13 +572,13 @@ function FieldCrossRefLine({
   dataUrl,
   trailingComma,
 }: {
-  keyName: string;
-  refDisplay: { ref: string; refFieldId: string; resolved: string };
-  level: number;
-  dataUrl: string;
-  trailingComma?: boolean;
+  keyName: string
+  refDisplay: { ref: string; refFieldId: string; resolved: string }
+  level: number
+  dataUrl: string
+  trailingComma?: boolean
 }) {
-  const repoPath = schemaRepoPath("field", refDisplay.refFieldId);
+  const repoPath = schemaRepoPath('field', refDisplay.refFieldId)
 
   return (
     <JsonLine level={level} trailingComma={trailingComma}>
@@ -594,12 +594,12 @@ function FieldCrossRefLine({
         area="fields"
         to="/field/$"
         params={{ _splat: refDisplay.refFieldId }}
-        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
         label="Field"
         title={`Open field "${refDisplay.refFieldId}"`}
       />
     </JsonLine>
-  );
+  )
 }
 
 function JsonObjectEntry({
@@ -609,22 +609,22 @@ function JsonObjectEntry({
   dataUrl,
   trailingComma,
   host,
-  sortMode = "alpha",
-  jsonRootKind = "preset",
+  sortMode = 'alpha',
+  jsonRootKind = 'preset',
 }: {
-  keyName: string;
-  value: unknown;
-  level: number;
-  dataUrl: string;
-  trailingComma?: boolean;
-  host: HostPresetContext;
-  sortMode?: KeySortMode;
-  jsonRootKind?: JsonRootKind;
+  keyName: string
+  value: unknown
+  level: number
+  dataUrl: string
+  trailingComma?: boolean
+  host: HostPresetContext
+  sortMode?: KeySortMode
+  jsonRootKind?: JsonRootKind
 }) {
-  const { fields, fieldTranslations } = useSchema();
+  const { fields, fieldTranslations } = useSchema()
 
   if (isScalar(value)) {
-    if (keyName === "name" && typeof value === "string" && presetIdFromRef(value)) {
+    if (keyName === 'name' && typeof value === 'string' && presetIdFromRef(value)) {
       return (
         <NameRefDisclosure
           nameRef={value}
@@ -632,12 +632,12 @@ function JsonObjectEntry({
           dataUrl={dataUrl}
           trailingComma={trailingComma}
         />
-      );
+      )
     }
     if (
-      jsonRootKind === "field" &&
+      jsonRootKind === 'field' &&
       host.sourceFieldId &&
-      typeof value === "string" &&
+      typeof value === 'string' &&
       isFieldCrossRefKey(keyName)
     ) {
       const refDisplay = resolveFieldRefDisplay(
@@ -646,7 +646,7 @@ function JsonObjectEntry({
         value,
         fields,
         fieldTranslations,
-      );
+      )
       if (refDisplay) {
         return (
           <FieldCrossRefLine
@@ -656,10 +656,10 @@ function JsonObjectEntry({
             dataUrl={dataUrl}
             trailingComma={trailingComma}
           />
-        );
+        )
       }
     }
-    if (keyName === "type" && typeof value === "string" && jsonRootKind === "field") {
+    if (keyName === 'type' && typeof value === 'string' && jsonRootKind === 'field') {
       return (
         <JsonLine level={level} trailingComma={trailingComma}>
           <JsonKey name={keyName} />
@@ -670,15 +670,15 @@ function JsonObjectEntry({
             to="/fields"
             search={(prev) => ({
               ...fieldFacetDefaults,
-              dataUrl: prev.dataUrl ?? "",
-              locale: prev.locale ?? "",
+              dataUrl: prev.dataUrl ?? '',
+              locale: prev.locale ?? '',
               f_type: value,
             })}
             label="Fields"
             title={`Browse all ${value} fields`}
           />
         </JsonLine>
-      );
+      )
     }
     return (
       <JsonLine level={level} trailingComma={trailingComma}>
@@ -686,7 +686,7 @@ function JsonObjectEntry({
         <span className="text-slate-500">: </span>
         <JsonScalar value={value} />
       </JsonLine>
-    );
+    )
   }
 
   if (Array.isArray(value)) {
@@ -696,7 +696,7 @@ function JsonObjectEntry({
           <JsonKey name={keyName} />
           <span className="text-slate-500">: []</span>
         </JsonLine>
-      );
+      )
     }
     return (
       <Fragment>
@@ -706,7 +706,7 @@ function JsonObjectEntry({
         </JsonLine>
         {value.map((item, i) => (
           <JsonNode
-            key={typeof item === "string" ? item : `item-${i}-${JSON.stringify(item)}`}
+            key={typeof item === 'string' ? item : `item-${i}-${JSON.stringify(item)}`}
             value={item}
             level={level + 1}
             parentKey={keyName}
@@ -721,27 +721,27 @@ function JsonObjectEntry({
           <span className="text-slate-500">]</span>
         </JsonLine>
       </Fragment>
-    );
+    )
   }
 
-  if (typeof value === "object" && value !== null) {
+  if (typeof value === 'object' && value !== null) {
     const entries = sortObjectEntries(Object.entries(value as Record<string, unknown>), {
       parentKey: keyName,
       sortMode,
-    });
+    })
     if (entries.length === 0) {
       return (
         <JsonLine level={level} trailingComma={trailingComma}>
           <JsonKey name={keyName} />
-          <span className="text-slate-500">: {"{}"}</span>
+          <span className="text-slate-500">: {'{}'}</span>
         </JsonLine>
-      );
+      )
     }
     return (
       <Fragment>
         <JsonLine level={level}>
           <JsonKey name={keyName} />
-          <span className="text-slate-500">: {"{"}</span>
+          <span className="text-slate-500">: {'{'}</span>
         </JsonLine>
         {entries.map(([key, child], i) => (
           <JsonObjectEntry
@@ -757,10 +757,10 @@ function JsonObjectEntry({
           />
         ))}
         <JsonLine level={level} trailingComma={trailingComma}>
-          <span className="text-slate-500">{"}"}</span>
+          <span className="text-slate-500">{'}'}</span>
         </JsonLine>
       </Fragment>
-    );
+    )
   }
 
   return (
@@ -769,7 +769,7 @@ function JsonObjectEntry({
       <span className="text-slate-500">: </span>
       <span className="text-slate-400">undefined</span>
     </JsonLine>
-  );
+  )
 }
 
 export function PresetSourceTree({
@@ -777,45 +777,45 @@ export function PresetSourceTree({
   raw,
   preset,
   presets,
-  sourceKind = "preset",
+  sourceKind = 'preset',
 }: {
-  presetId: string;
-  raw: Record<string, unknown>;
-  preset?: DenormalizedPreset;
-  presets?: DenormalizedPreset[];
-  sourceKind?: JsonRootKind;
+  presetId: string
+  raw: Record<string, unknown>
+  preset?: DenormalizedPreset
+  presets?: DenormalizedPreset[]
+  sourceKind?: JsonRootKind
 }) {
-  void presetId;
-  const { dataUrl, rawPresets } = useSchema();
+  void presetId
+  const { dataUrl, rawPresets } = useSchema()
   const host: HostPresetContext = {
     hostPreset: raw as RawPreset,
     hostOriginalFields: Array.isArray(raw.fields)
-      ? (raw.fields as string[]).filter((f) => typeof f === "string")
+      ? (raw.fields as string[]).filter((f) => typeof f === 'string')
       : [],
     hostOriginalMoreFields: Array.isArray(raw.moreFields)
-      ? (raw.moreFields as string[]).filter((f) => typeof f === "string")
+      ? (raw.moreFields as string[]).filter((f) => typeof f === 'string')
       : [],
     hostPresetDenorm: preset,
     allPresets: presets ?? [],
     rawPresets,
-    sourceFieldId: sourceKind === "field" ? presetId : undefined,
-  };
+    sourceFieldId: sourceKind === 'field' ? presetId : undefined,
+  }
 
   return (
     <div
-      className={clsx(
-        "overflow-x-auto bg-slate-50 p-4",
-        "font-mono text-xs leading-relaxed text-slate-800",
+      className={cn(
+        'overflow-x-auto bg-slate-50 p-4',
+        'font-mono text-xs leading-relaxed text-slate-800',
       )}
     >
       <JsonNode
         value={raw}
         level={0}
-        dataUrl={dataUrl ?? ""}
+        dataUrl={dataUrl ?? ''}
         host={host}
         sortMode="preset"
         jsonRootKind={sourceKind}
       />
     </div>
-  );
+  )
 }

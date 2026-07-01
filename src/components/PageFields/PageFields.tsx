@@ -1,42 +1,42 @@
-import { CountPill } from "@/components/ui/CountPill";
-import { DownloadButton } from "@/components/ui/DownloadButton";
-import { SchemaLoadingPanel } from "@/components/ui/LoadingSpinner";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { exportFields } from "@/utils/pageExports";
-import { useMemo } from "react";
-import { FieldCard } from "./FieldCard";
-import { applyFieldFacets, useFieldFacetState } from "./useFieldFacetState";
-import { useFieldSearch } from "./useFieldSearch";
+import { useMemo } from 'react'
+import { AreaIcon } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
+import { DownloadButton } from '@/components/ui/DownloadButton'
+import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { exportFields } from '@/utils/pageExports'
+import { FieldCard } from './FieldCard'
+import { applyFieldFacets, useFieldFacetState } from './useFieldFacetState'
+import { useFieldSearch } from './useFieldSearch'
 
 export function PageFields() {
-  const { data, loading, dataUrl } = useSchema();
-  const [facetState, setFacetState] = useFieldFacetState();
+  const { data, loading, dataUrl } = useSchema()
+  const [facetState, setFacetState] = useFieldFacetState()
   const { fields } = useFieldSearch(
     data?.fields ?? {},
     data?.presets ?? [],
     data?.fieldTranslations ?? {},
-  );
+  )
   const filtered = useMemo(() => {
-    if (!data) return [];
-    return applyFieldFacets(fields, facetState);
-  }, [data, fields, facetState]);
-  const exportData = useMemo(() => exportFields(filtered), [filtered]);
+    if (!data) return []
+    return applyFieldFacets(fields, facetState)
+  }, [data, fields, facetState])
+  const exportData = useMemo(() => exportFields(filtered), [filtered])
 
   if (!dataUrl && !data) {
     return (
       <p className="text-sm text-slate-500">
         Load schema data from the Presets page first (enter a data URL and click Load).
       </p>
-    );
+    )
   }
 
   if (loading && !data) {
-    return <SchemaLoadingPanel />;
+    return <SchemaLoadingPanel />
   }
 
-  if (!data) return null;
+  if (!data) return null
 
   return (
     <div className="space-y-4">
@@ -52,7 +52,7 @@ export function PageFields() {
               value={facetState.f_sort}
               onChange={(e) =>
                 setFacetState({
-                  f_sort: e.target.value as "name" | "label" | "usage_desc" | "usage_asc",
+                  f_sort: e.target.value as 'name' | 'label' | 'usage_desc' | 'usage_asc',
                 })
               }
               className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.fields.focus}`}
@@ -83,5 +83,5 @@ export function PageFields() {
         </p>
       ) : null}
     </div>
-  );
+  )
 }

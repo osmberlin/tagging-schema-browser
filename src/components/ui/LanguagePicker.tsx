@@ -1,6 +1,6 @@
-import { useLocale } from "@/contexts/LocaleContext";
+import { useLocale } from '@/hooks/useLocale'
 
-function ChevronDownIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+function ChevronDownIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
       <path
@@ -9,13 +9,13 @@ function ChevronDownIcon(props: React.ComponentPropsWithoutRef<"svg">) {
         clipRule="evenodd"
       />
     </svg>
-  );
+  )
 }
 
 /** Global comparison-language picker shown in the header (drives `locale` state). */
 export function LanguagePicker() {
-  const { locale, setLocale, locales } = useLocale();
-  const valueLabel = locale || "Choose";
+  const { locale, setLocale, locales } = useLocale()
+  const valueLabel = locale || 'Choose'
 
   return (
     <div className="group relative h-10 w-[5.25rem]">
@@ -23,7 +23,7 @@ export function LanguagePicker() {
         aria-hidden
         className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-0.5 rounded-lg border border-slate-300 bg-white px-1.5 py-0.5 shadow-sm transition group-focus-within:border-sky-500 group-focus-within:ring-2 group-focus-within:ring-sky-500/30"
       >
-        <span className="whitespace-nowrap text-[10px] leading-none text-slate-500">
+        <span className="text-[10px] leading-none whitespace-nowrap text-slate-500">
           Compare Lang
         </span>
         <div className="flex min-w-0 items-center gap-0.5">
@@ -37,7 +37,7 @@ export function LanguagePicker() {
         value={locale}
         onChange={(e) => setLocale(e.target.value)}
         aria-label="Comparison language"
-        title={locale ? `Compare with ${locale}` : "Compare language (EN only)"}
+        title={locale ? `Compare with ${locale}` : 'Compare language (EN only)'}
         className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none opacity-0"
       >
         <option value="">Choose</option>
@@ -48,5 +48,5 @@ export function LanguagePicker() {
         ))}
       </select>
     </div>
-  );
+  )
 }

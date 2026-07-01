@@ -1,24 +1,24 @@
-import { getIconSvgDataUrl, isIconSvgConfirmedMissing } from "@/components/PageIcons/iconRegistry";
-import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
-import { AreaLink } from "@/components/ui/AreaLink";
-import { ExpandIcon } from "@/components/ui/ExpandIcon";
-import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
-import { useComparison } from "@/contexts/ComparisonContext";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { comparisonAccent } from "@/theme/comparisonAccent";
-import { getPresetOptionIconNames } from "@/utils/fieldOptions";
-import type { DenormalizedPreset } from "@/utils/types";
-import { Link } from "@tanstack/react-router";
-import { type VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
-import { clsx } from "clsx";
-import { Fragment, type ReactNode, useMemo, useRef } from "react";
-import { usePresetSearch } from "./usePresetSearch";
-import { presetSearchDefaults } from "./useSearchState";
+import { Link } from '@tanstack/react-router'
+import { type VirtualItem, useVirtualizer } from '@tanstack/react-virtual'
+import { Fragment, type ReactNode, useMemo, useRef } from 'react'
+import { getIconSvgDataUrl, isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
+import { AreaIcon, AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
+import { AreaLink } from '@/components/ui/AreaLink'
+import { ExpandIcon } from '@/components/ui/ExpandIcon'
+import { useComparison } from '@/hooks/useComparison'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { comparisonAccent } from '@/theme/comparisonAccent'
+import { getPresetOptionIconNames } from '@/utils/fieldOptions'
+import { cn } from '@/utils/tw'
+import type { DenormalizedPreset } from '@/utils/types'
+import { usePresetSearch } from './usePresetSearch'
+import { presetSearchDefaults } from './useSearchState'
 
-const COLUMN_WIDTH = 160;
+const COLUMN_WIDTH = 160
 
-const dash = <span className="text-slate-300">—</span>;
+const dash = <span className="text-slate-300">—</span>
 
 function CellOverflow({
   children,
@@ -26,40 +26,40 @@ function CellOverflow({
   wrap,
   breakText,
 }: {
-  children: ReactNode;
-  truncate?: boolean;
-  wrap?: boolean;
+  children: ReactNode
+  truncate?: boolean
+  wrap?: boolean
   /** Line break + hyphenation inside the fixed column (instead of ellipsis). */
-  breakText?: boolean;
+  breakText?: boolean
 }) {
   return (
     <span
-      className={clsx(
-        "block min-w-0",
-        truncate && "truncate",
-        wrap && "break-all",
-        breakText && "break-words hyphens-auto",
+      className={cn(
+        'block min-w-0',
+        truncate && 'truncate',
+        wrap && 'break-all',
+        breakText && 'break-words hyphens-auto',
       )}
     >
       {children}
     </span>
-  );
+  )
 }
 
 function renderCellContent(row: Row, preset: DenormalizedPreset) {
-  const content = row.render(preset);
+  const content = row.render(preset)
   if (row.truncate || row.wrap || row.breakText) {
     return (
       <CellOverflow truncate={row.truncate} wrap={row.wrap} breakText={row.breakText}>
         {content}
       </CellOverflow>
-    );
+    )
   }
-  return content;
+  return content
 }
 
 function IconNameCell({ iconName, broken }: { iconName: string; broken: boolean }) {
-  const src = getIconSvgDataUrl(iconName);
+  const src = getIconSvgDataUrl(iconName)
   return (
     <span className="flex min-w-0 items-center gap-1.5">
       {src ? (
@@ -73,51 +73,51 @@ function IconNameCell({ iconName, broken }: { iconName: string; broken: boolean 
         </span>
       ) : null}
       <span
-        className={clsx("min-w-0 truncate font-mono text-xs", broken && "font-medium text-red-700")}
+        className={cn('min-w-0 truncate font-mono text-xs', broken && 'font-medium text-red-700')}
         title={iconName}
       >
         {iconName}
       </span>
     </span>
-  );
+  )
 }
 
 function uniqueSorted(values: string[]): string[] {
-  return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+  return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b))
 }
 
 type CellLink = {
-  search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>;
-  title: string;
-};
+  search: (prev: { dataUrl?: string; locale?: string }) => Record<string, unknown>
+  title: string
+}
 
 type Row = {
-  label: ReactNode;
+  label: ReactNode
   /** Stable key for table rows (defaults to string label when omitted). */
-  rowKey?: string;
-  labelTitle?: string;
-  mono?: boolean;
+  rowKey?: string
+  labelTitle?: string
+  mono?: boolean
   /** Truncate overflowing text with ellipsis; pair with `title` for the full value. */
-  truncate?: boolean;
+  truncate?: boolean
   /** Wrap with line breaks and hyphenation inside the fixed column. */
-  breakText?: boolean;
+  breakText?: boolean
   /** Break long unbroken strings (e.g. URLs) across lines inside the fixed column. */
-  wrap?: boolean;
-  render: (p: DenormalizedPreset) => ReactNode;
-  title?: (p: DenormalizedPreset) => string | undefined;
-  highlight?: (p: DenormalizedPreset) => boolean;
+  wrap?: boolean
+  render: (p: DenormalizedPreset) => ReactNode
+  title?: (p: DenormalizedPreset) => string | undefined
+  highlight?: (p: DenormalizedPreset) => boolean
   /** Tailwind background class when `highlight` is true (default presets highlight). */
-  highlightClass?: string;
-  errorHighlight?: (p: DenormalizedPreset) => boolean;
-  link?: (p: DenormalizedPreset) => CellLink | null;
-};
-type Section = { title: string; area?: SchemaArea; rows: Row[] };
+  highlightClass?: string
+  errorHighlight?: (p: DenormalizedPreset) => boolean
+  link?: (p: DenormalizedPreset) => CellLink | null
+}
+type Section = { title: string; area?: SchemaArea; rows: Row[] }
 
-function ColumnSpacer({ width, as: Tag = "th" }: { width: number; as?: "th" | "td" }) {
-  if (width <= 0) return null;
+function ColumnSpacer({ width, as: Tag = 'th' }: { width: number; as?: 'th' | 'td' }) {
+  if (width <= 0) return null
   return (
     <Tag aria-hidden className="border-0 p-0" style={{ width, minWidth: width, maxWidth: width }} />
-  );
+  )
 }
 
 function VirtualizedPresetColumns({
@@ -126,35 +126,35 @@ function VirtualizedPresetColumns({
   paddingLeft,
   paddingRight,
   renderColumn,
-  spacerAs = "th",
+  spacerAs = 'th',
 }: {
-  presets: DenormalizedPreset[];
-  virtualColumns: VirtualItem[];
-  paddingLeft: number;
-  paddingRight: number;
-  renderColumn: (preset: DenormalizedPreset, index: number) => ReactNode;
-  spacerAs?: "th" | "td";
+  presets: DenormalizedPreset[]
+  virtualColumns: VirtualItem[]
+  paddingLeft: number
+  paddingRight: number
+  renderColumn: (preset: DenormalizedPreset, index: number) => ReactNode
+  spacerAs?: 'th' | 'td'
 }) {
   return (
     <>
       <ColumnSpacer width={paddingLeft} as={spacerAs} />
       {virtualColumns.map((virtualColumn) => {
-        const preset = presets[virtualColumn.index];
-        if (!preset) return null;
-        return <Fragment key={preset.id}>{renderColumn(preset, virtualColumn.index)}</Fragment>;
+        const preset = presets[virtualColumn.index]
+        if (!preset) return null
+        return <Fragment key={preset.id}>{renderColumn(preset, virtualColumn.index)}</Fragment>
       })}
       <ColumnSpacer width={paddingRight} as={spacerAs} />
     </>
-  );
+  )
 }
 function PresetHeaderCell({
   preset,
   changed,
   status,
 }: {
-  preset: DenormalizedPreset;
-  changed: boolean;
-  status: string | undefined;
+  preset: DenormalizedPreset
+  changed: boolean
+  status: string | undefined
 }) {
   return (
     <th
@@ -164,7 +164,7 @@ function PresetHeaderCell({
       <Link
         to="/preset/$"
         params={{ _splat: preset.id }}
-        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
         title={`Open preset "${preset.id}"`}
         className={`group/col relative block h-full w-full overflow-hidden px-3 py-2 pr-8 text-left transition ${areaAccent.presets.rowHover}`}
       >
@@ -174,7 +174,7 @@ function PresetHeaderCell({
           {changed ? (
             <span
               className={`h-2 w-2 shrink-0 rounded-full ${comparisonAccent.dot}`}
-              title={status === "added" ? "Added vs staging" : "Modified vs staging"}
+              title={status === 'added' ? 'Added vs staging' : 'Modified vs staging'}
             />
           ) : null}
           <span className="truncate" title={preset.name}>
@@ -193,33 +193,27 @@ function PresetHeaderCell({
         </span>
       </Link>
     </th>
-  );
+  )
 }
 
-function PresetValueCell({
-  preset,
-  row,
-}: {
-  preset: DenormalizedPreset;
-  row: Row;
-}) {
-  const cellLink = row.link?.(preset);
-  const errorHighlighted = row.errorHighlight?.(preset);
-  const infoHighlighted = !errorHighlighted && row.highlight?.(preset);
-  const highlightClass = row.highlightClass ?? areaAccent.presets.highlight;
+function PresetValueCell({ preset, row }: { preset: DenormalizedPreset; row: Row }) {
+  const cellLink = row.link?.(preset)
+  const errorHighlighted = row.errorHighlight?.(preset)
+  const infoHighlighted = !errorHighlighted && row.highlight?.(preset)
+  const highlightClass = row.highlightClass ?? areaAccent.presets.highlight
 
   return (
     <td
       title={row.link ? undefined : row.title?.(preset)}
-      className={clsx(
-        "overflow-hidden border-r border-b border-slate-100 align-top text-slate-700",
-        row.mono && "font-mono text-xs",
-        row.link ? "h-0 p-0" : "px-3 py-1.5",
+      className={cn(
+        'overflow-hidden border-r border-b border-slate-100 align-top text-slate-700',
+        row.mono && 'font-mono text-xs',
+        row.link ? 'h-0 p-0' : 'px-3 py-1.5',
         errorHighlighted
-          ? "bg-red-50/70"
+          ? 'bg-red-50/70'
           : infoHighlighted
             ? highlightClass
-            : !row.link && "group-hover:bg-slate-50",
+            : !row.link && 'group-hover:bg-slate-50',
       )}
       style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
     >
@@ -229,9 +223,9 @@ function PresetValueCell({
             to="/"
             search={cellLink.search as never}
             title={cellLink.title}
-            className={clsx(
+            className={cn(
               `group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition ${areaAccent.presets.rowHover}`,
-              errorHighlighted && "bg-red-50/70",
+              errorHighlighted && 'bg-red-50/70',
             )}
           >
             <span className="min-w-0">{renderCellContent(row, preset)}</span>
@@ -243,7 +237,7 @@ function PresetValueCell({
             </span>
           </Link>
         ) : (
-          <span className={clsx("block h-full px-3 py-1.5", errorHighlighted && "bg-red-50/70")}>
+          <span className={cn('block h-full px-3 py-1.5', errorHighlighted && 'bg-red-50/70')}>
             {renderCellContent(row, preset)}
           </span>
         )
@@ -251,73 +245,73 @@ function PresetValueCell({
         renderCellContent(row, preset)
       )}
     </td>
-  );
+  )
 }
 
 export function PresetTable() {
-  const { data } = useSchema();
-  const { result: comparison } = useComparison();
-  const result = usePresetSearch();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const { data } = useSchema()
+  const { result: comparison } = useComparison()
+  const result = usePresetSearch()
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const iconCounts = useMemo(() => {
-    const m = new Map<string, number>();
+    const m = new Map<string, number>()
     for (const p of data?.presets ?? []) {
-      if (p.icon) m.set(p.icon, (m.get(p.icon) ?? 0) + 1);
+      if (p.icon) m.set(p.icon, (m.get(p.icon) ?? 0) + 1)
     }
-    return m;
-  }, [data]);
+    return m
+  }, [data])
 
   const sections = useMemo<Section[]>(() => {
-    const presets = result?.data.items ?? [];
-    const fields = data?.fields ?? {};
-    const tagKeys = uniqueSorted(presets.flatMap((p) => Object.keys(p.tags ?? {})));
-    const fieldIds = uniqueSorted(presets.flatMap((p) => [...p.fields, ...p.moreFields]));
+    const presets = result?.data.items ?? []
+    const fields = data?.fields ?? {}
+    const tagKeys = uniqueSorted(presets.flatMap((p) => Object.keys(p.tags ?? {})))
+    const fieldIds = uniqueSorted(presets.flatMap((p) => [...p.fields, ...p.moreFields]))
     return [
       {
-        title: "Identity",
+        title: 'Identity',
         rows: [
-          { label: "ID", mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
-          { label: "Name", breakText: true, render: (p) => p.name, title: (p) => p.name },
+          { label: 'ID', mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
+          { label: 'Name', breakText: true, render: (p) => p.name, title: (p) => p.name },
           {
-            label: "Terms",
+            label: 'Terms',
             breakText: true,
-            render: (p) => (p.terms.length ? p.terms.join(", ") : dash),
-            title: (p) => p.terms.join(", "),
+            render: (p) => (p.terms.length ? p.terms.join(', ') : dash),
+            title: (p) => p.terms.join(', '),
           },
           {
-            label: "Aliases",
+            label: 'Aliases',
             breakText: true,
-            render: (p) => (p.aliases.length ? p.aliases.join(", ") : dash),
-            title: (p) => p.aliases.join(", "),
+            render: (p) => (p.aliases.length ? p.aliases.join(', ') : dash),
+            title: (p) => p.aliases.join(', '),
           },
           {
-            label: "Geometry",
+            label: 'Geometry',
             render: (p) => (p.geometry.length ? <GeometryIcons geometry={p.geometry} /> : dash),
-            title: (p) => (p.geometry.length ? p.geometry.join(", ") : undefined),
+            title: (p) => (p.geometry.length ? p.geometry.join(', ') : undefined),
           },
           {
-            label: "Category",
+            label: 'Category',
             truncate: true,
-            render: (p) => (p.categoryNames.length ? p.categoryNames.join(", ") : dash),
+            render: (p) => (p.categoryNames.length ? p.categoryNames.join(', ') : dash),
             link: (p) =>
               p.categoryNames.length
                 ? {
                     search: (prev) => ({
                       ...presetSearchDefaults,
-                      dataUrl: prev.dataUrl ?? "",
-                      locale: prev.locale ?? "",
+                      dataUrl: prev.dataUrl ?? '',
+                      locale: prev.locale ?? '',
                       categoryNames: p.categoryNames,
                     }),
-                    title: "Show all presets of this category",
+                    title: 'Show all presets of this category',
                   }
                 : null,
           },
           {
-            label: "Icon",
+            label: 'Icon',
             render: (p) => {
-              if (!p.icon) return dash;
-              return <IconNameCell iconName={p.icon} broken={p.iconBroken} />;
+              if (!p.icon) return dash
+              return <IconNameCell iconName={p.icon} broken={p.iconBroken} />
             },
             title: (p) => p.icon ?? undefined,
             highlight: (p) => p.iconBroken,
@@ -327,20 +321,20 @@ export function PresetTable() {
                 ? {
                     search: (prev) => ({
                       ...presetSearchDefaults,
-                      dataUrl: prev.dataUrl ?? "",
-                      locale: prev.locale ?? "",
+                      dataUrl: prev.dataUrl ?? '',
+                      locale: prev.locale ?? '',
                       iconName: [p.icon as string],
                     }),
-                    title: "Show all presets of this icon",
+                    title: 'Show all presets of this icon',
                   }
                 : null,
           },
           {
             label: <AreaLabel area="icons">Options icons</AreaLabel>,
-            labelTitle: "Icons used by field options on this preset",
+            labelTitle: 'Icons used by field options on this preset',
             render: (p) => {
-              const icons = getPresetOptionIconNames(p, fields);
-              if (icons.length === 0) return dash;
+              const icons = getPresetOptionIconNames(p, fields)
+              if (icons.length === 0) return dash
               return (
                 <span className="flex flex-col gap-1">
                   {icons.map((iconName) => (
@@ -351,7 +345,7 @@ export function PresetTable() {
                     />
                   ))}
                 </span>
-              );
+              )
             },
             highlight: (p) =>
               getPresetOptionIconNames(p, fields).some((icon) => isIconSvgConfirmedMissing(icon)),
@@ -359,7 +353,7 @@ export function PresetTable() {
               getPresetOptionIconNames(p, fields).some((icon) => isIconSvgConfirmedMissing(icon)),
           },
           {
-            label: "imageURL",
+            label: 'imageURL',
             mono: true,
             wrap: true,
             render: (p) => (p.imageURL ? p.imageURL : dash),
@@ -379,7 +373,7 @@ export function PresetTable() {
       },
       {
         title: `Fields (${fieldIds.length})`,
-        area: "fields",
+        area: 'fields',
         rows: fieldIds.map((f) => ({
           rowKey: f,
           label: (
@@ -387,7 +381,7 @@ export function PresetTable() {
               area="fields"
               to="/field/$"
               params={{ _splat: f }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
               className="font-mono text-xs no-underline hover:underline"
               title={`Open field "${f}"`}
             >
@@ -412,12 +406,12 @@ export function PresetTable() {
             ),
         })),
       },
-    ];
-  }, [result, iconCounts, data?.fields]);
+    ]
+  }, [result, iconCounts, data?.fields])
 
-  const presets = result?.data.items ?? [];
-  const total = result?.data.total ?? 0;
-  const truncated = total > presets.length;
+  const presets = result?.data.items ?? []
+  const total = result?.data.total ?? 0
+  const truncated = total > presets.length
 
   const columnVirtualizer = useVirtualizer({
     count: presets.length,
@@ -425,21 +419,21 @@ export function PresetTable() {
     estimateSize: () => COLUMN_WIDTH,
     horizontal: true,
     overscan: 3,
-  });
+  })
 
-  const virtualColumns = columnVirtualizer.getVirtualItems();
-  const totalColumnWidth = columnVirtualizer.getTotalSize();
-  const paddingLeft = virtualColumns[0]?.start ?? 0;
-  const paddingRight = totalColumnWidth - (virtualColumns.at(-1)?.end ?? 0);
+  const virtualColumns = columnVirtualizer.getVirtualItems()
+  const totalColumnWidth = columnVirtualizer.getTotalSize()
+  const paddingLeft = virtualColumns[0]?.start ?? 0
+  const paddingRight = totalColumnWidth - (virtualColumns.at(-1)?.end ?? 0)
 
-  if (!result) return null;
+  if (!result) return null
 
   if (presets.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
         No presets match. Try clearing filters or changing the search query.
       </p>
-    );
+    )
   }
 
   return (
@@ -466,9 +460,9 @@ export function PresetTable() {
                 paddingLeft={paddingLeft}
                 paddingRight={paddingRight}
                 renderColumn={(preset) => {
-                  const status = comparison?.statusById.get(preset.id);
-                  const changed = status === "added" || status === "modified";
-                  return <PresetHeaderCell preset={preset} changed={changed} status={status} />;
+                  const status = comparison?.statusById.get(preset.id)
+                  const changed = status === 'added' || status === 'modified'
+                  return <PresetHeaderCell preset={preset} changed={changed} status={status} />
                 }}
               />
             </tr>
@@ -500,14 +494,14 @@ export function PresetTable() {
                 </tr>
                 {section.rows.map((row) => (
                   <tr
-                    key={row.rowKey ?? (typeof row.label === "string" ? row.label : section.title)}
+                    key={row.rowKey ?? (typeof row.label === 'string' ? row.label : section.title)}
                     className="group"
                   >
                     <th
                       title={row.labelTitle}
-                      className={clsx(
-                        "sticky left-0 z-10 border-r border-b border-slate-200 bg-white px-3 py-1.5 text-left align-top font-normal text-slate-600 group-hover:bg-slate-50",
-                        row.mono && "font-mono text-xs",
+                      className={cn(
+                        'sticky left-0 z-10 border-r border-b border-slate-200 bg-white px-3 py-1.5 text-left align-top font-normal text-slate-600 group-hover:bg-slate-50',
+                        row.mono && 'font-mono text-xs',
                       )}
                     >
                       {row.label}
@@ -528,5 +522,5 @@ export function PresetTable() {
         </table>
       </div>
     </div>
-  );
+  )
 }

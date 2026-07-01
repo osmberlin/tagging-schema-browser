@@ -1,10 +1,10 @@
-import { SidebarSection } from "@/components/ui/Sidebar";
-import { AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { clsx } from "clsx";
-import { useIconFacetMeta, useIconFacetState } from "./useIconFacetState";
-import { useIconSearch } from "./useIconSearch";
+import { AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
+import { SidebarSection } from '@/components/ui/Sidebar'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { cn } from '@/utils/tw'
+import { useIconFacetMeta, useIconFacetState } from './useIconFacetState'
+import { useIconSearch } from './useIconSearch'
 
 function FacetButton({
   active,
@@ -13,22 +13,22 @@ function FacetButton({
   count,
   onClick,
 }: {
-  active: boolean;
-  label: string;
-  labelArea?: SchemaArea;
-  count: number;
-  onClick: () => void;
+  active: boolean
+  label: string
+  labelArea?: SchemaArea
+  count: number
+  onClick: () => void
 }) {
   return (
     <li className="relative">
       <button
         type="button"
         onClick={onClick}
-        className={clsx(
-          "flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",
+        className={cn(
+          'flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full',
           active
             ? areaAccent.icons.facetSelected
-            : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
+            : 'text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block',
         )}
       >
         <span className="truncate">
@@ -45,51 +45,51 @@ function FacetButton({
         </span>
       </button>
     </li>
-  );
+  )
 }
 
 export function IconFacetSidebar() {
-  const { data } = useSchema();
-  const { icons, prefixes } = useIconSearch(data?.presets ?? [], data?.fields ?? {});
-  const [state, setState] = useIconFacetState();
-  const meta = useIconFacetMeta(icons);
+  const { data } = useSchema()
+  const { icons, prefixes } = useIconSearch(data?.presets ?? [], data?.fields ?? {})
+  const [state, setState] = useIconFacetState()
+  const meta = useIconFacetMeta(icons)
 
   return (
     <div className="mt-4 flex flex-col gap-4">
       <SidebarSection title="Usage" area="icons">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
-            active={state.i_usage === "all"}
+            active={state.i_usage === 'all'}
             label="All"
             count={icons.length}
-            onClick={() => setState({ i_usage: "all" })}
+            onClick={() => setState({ i_usage: 'all' })}
           />
           <FacetButton
-            active={state.i_usage === "any"}
+            active={state.i_usage === 'any'}
             label="Used by presets or options"
             labelArea="presets"
             count={meta.anyCount}
-            onClick={() => setState({ i_usage: "any" })}
+            onClick={() => setState({ i_usage: 'any' })}
           />
           <FacetButton
-            active={state.i_usage === "presets"}
+            active={state.i_usage === 'presets'}
             label="Used by presets"
             labelArea="presets"
             count={meta.presetsCount}
-            onClick={() => setState({ i_usage: "presets" })}
+            onClick={() => setState({ i_usage: 'presets' })}
           />
           <FacetButton
-            active={state.i_usage === "options"}
+            active={state.i_usage === 'options'}
             label="Used by options"
             labelArea="fields"
             count={meta.optionsCount}
-            onClick={() => setState({ i_usage: "options" })}
+            onClick={() => setState({ i_usage: 'options' })}
           />
           <FacetButton
-            active={state.i_usage === "unused"}
+            active={state.i_usage === 'unused'}
             label="Unused"
             count={meta.unusedCount}
-            onClick={() => setState({ i_usage: "unused" })}
+            onClick={() => setState({ i_usage: 'unused' })}
           />
         </ul>
       </SidebarSection>
@@ -97,10 +97,10 @@ export function IconFacetSidebar() {
       <SidebarSection title="Supplier">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
-            active={state.i_supplier === "all"}
+            active={state.i_supplier === 'all'}
             label="All suppliers"
             count={icons.length}
-            onClick={() => setState({ i_supplier: "all" })}
+            onClick={() => setState({ i_supplier: 'all' })}
           />
           {prefixes.map((prefix) => (
             <FacetButton
@@ -117,25 +117,25 @@ export function IconFacetSidebar() {
       <SidebarSection title="Asset status">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
-            active={state.i_hasSvg === "all"}
+            active={state.i_hasSvg === 'all'}
             label="All"
             count={icons.length}
-            onClick={() => setState({ i_hasSvg: "all" })}
+            onClick={() => setState({ i_hasSvg: 'all' })}
           />
           <FacetButton
-            active={state.i_hasSvg === "with"}
+            active={state.i_hasSvg === 'with'}
             label="With SVG"
             count={meta.withSvg}
-            onClick={() => setState({ i_hasSvg: "with" })}
+            onClick={() => setState({ i_hasSvg: 'with' })}
           />
           <FacetButton
-            active={state.i_hasSvg === "missing"}
+            active={state.i_hasSvg === 'missing'}
             label="Missing SVG"
             count={meta.missingSvg}
-            onClick={() => setState({ i_hasSvg: "missing" })}
+            onClick={() => setState({ i_hasSvg: 'missing' })}
           />
         </ul>
       </SidebarSection>
     </div>
-  );
+  )
 }

@@ -1,31 +1,31 @@
-import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
-import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
-import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslationTable";
-import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
-import { DetailDisclosure } from "@/components/ui/DetailDisclosure";
-import { RelatedBlock } from "@/components/ui/RelatedBlock";
-import { useComparison } from "@/contexts/ComparisonContext";
-import { useLocale } from "@/contexts/LocaleContext";
-import { useSchema } from "@/contexts/SchemaContext";
-import { externalAccent, externalLinkClass, externalPillClass } from "@/theme/externalAccent";
-import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
-import type { DenormalizedPreset } from "@/utils/types";
-import { useParams } from "@tanstack/react-router";
+import { useParams } from '@tanstack/react-router'
+import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
+import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
+import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
+import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
+import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
+import { RelatedBlock } from '@/components/ui/RelatedBlock'
+import { useComparison } from '@/hooks/useComparison'
+import { useLocale } from '@/hooks/useLocale'
+import { useSchema } from '@/hooks/useSchema'
+import { externalAccent, externalLinkClass, externalPillClass } from '@/theme/externalAccent'
+import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import type { DenormalizedPreset } from '@/utils/types'
 
-type RelatedItem = { id: string; name: string };
+type RelatedItem = { id: string; name: string }
 
 export function PresetDetailPage() {
-  const { _splat: presetId } = useParams({ strict: false });
-  const { presetsById, presets, rawPresets, dataUrl, loading, error } = useSchema();
-  const preset = presetId ? presetsById.get(presetId) : undefined;
-  const raw = presetId ? rawPresets[presetId] : undefined;
+  const { _splat: presetId } = useParams({ strict: false })
+  const { presetsById, presets, rawPresets, dataUrl, loading, error } = useSchema()
+  const preset = presetId ? presetsById.get(presetId) : undefined
+  const raw = presetId ? rawPresets[presetId] : undefined
 
   if (!presetId) {
-    return <p className="text-sm text-slate-600">No preset id in URL.</p>;
+    return <p className="text-sm text-slate-600">No preset id in URL.</p>
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading schema…</p>;
+    return <p className="text-sm text-slate-600">Loading schema…</p>
   }
 
   if (error) {
@@ -34,7 +34,7 @@ export function PresetDetailPage() {
         <h1 className="font-display text-xl font-semibold text-slate-900">Schema failed to load</h1>
         <p className="text-sm text-slate-600">{error}</p>
       </div>
-    );
+    )
   }
 
   if (!preset || !raw) {
@@ -46,7 +46,7 @@ export function PresetDetailPage() {
           schema.
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -54,9 +54,9 @@ export function PresetDetailPage() {
       preset={preset}
       raw={raw as Record<string, unknown>}
       presets={presets}
-      dataUrl={dataUrl ?? ""}
+      dataUrl={dataUrl ?? ''}
     />
-  );
+  )
 }
 
 function PresetDetailContent({
@@ -65,44 +65,44 @@ function PresetDetailContent({
   presets,
   dataUrl,
 }: {
-  preset: DenormalizedPreset;
-  raw: Record<string, unknown>;
-  presets: DenormalizedPreset[];
-  dataUrl: string;
+  preset: DenormalizedPreset
+  raw: Record<string, unknown>
+  presets: DenormalizedPreset[]
+  dataUrl: string
 }) {
-  const { locale, localeMap, loading: localeLoading, error: localeError } = useLocale();
-  const loc = locale ? localeMap?.get(preset.id) : undefined;
+  const { locale, localeMap, loading: localeLoading, error: localeError } = useLocale()
+  const loc = locale ? localeMap?.get(preset.id) : undefined
 
-  const { result: comparison } = useComparison();
-  const changeStatus = comparison?.statusById.get(preset.id);
-  const modified = comparison?.modified.find((m) => m.current.id === preset.id);
+  const { result: comparison } = useComparison()
+  const changeStatus = comparison?.statusById.get(preset.id)
+  const modified = comparison?.modified.find((m) => m.current.id === preset.id)
 
-  const filePath = schemaRepoPath("preset", preset.id, { searchable: preset.searchable });
-  const githubUrl = githubFileUrl(dataUrl, filePath);
+  const filePath = schemaRepoPath('preset', preset.id, { searchable: preset.searchable })
+  const githubUrl = githubFileUrl(dataUrl, filePath)
 
-  const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name });
+  const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name })
 
   const categorySections = preset.categoryNames.map((categoryName, index) => {
-    const categoryId = preset.categoryIds[index];
+    const categoryId = preset.categoryIds[index]
     const related = presets
       .filter((c) => c.id !== preset.id && c.categoryIds.includes(categoryId))
-      .map(toItem);
+      .map(toItem)
     return {
       title: `Presets of this category "${categoryName}"`,
       titleFilter: { categoryNames: [categoryName] },
       related,
-    };
-  });
+    }
+  })
 
   const uncategorizedRelated =
     preset.categoryNames.length === 0
       ? presets.filter((c) => c.id !== preset.id && c.categoryNames.length === 0).map(toItem)
-      : [];
+      : []
 
-  const iconId = preset.icon;
+  const iconId = preset.icon
   const iconRelated = iconId
     ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toItem)
-    : [];
+    : []
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
@@ -121,7 +121,7 @@ function PresetDetailContent({
                 <span className="text-slate-500">imageURL: </span>
                 <a
                   href={preset.imageURL}
-                  className={`break-all underline ${externalLinkClass("break-all")}`}
+                  className={`break-all underline ${externalLinkClass('break-all')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -150,7 +150,7 @@ function PresetDetailContent({
               EN ↔ <span className="font-mono">{locale}</span>
             </>
           ) : (
-            "English"
+            'English'
           )
         }
         defaultOpen
@@ -196,14 +196,14 @@ function PresetDetailContent({
         />
       </DetailDisclosure>
 
-      {changeStatus === "added" || changeStatus === "modified" ? (
+      {changeStatus === 'added' || changeStatus === 'modified' ? (
         <DetailDisclosure
-          title={changeStatus === "added" ? "Added vs staging" : "Changes vs staging"}
+          title={changeStatus === 'added' ? 'Added vs staging' : 'Changes vs staging'}
           defaultOpen
           className="border-violet-200 bg-violet-50/40"
         >
           <div className="px-4 py-3">
-            {changeStatus === "added" ? (
+            {changeStatus === 'added' ? (
               <p className="text-sm text-violet-700">This preset does not exist in the release.</p>
             ) : (
               <ul className="space-y-1 text-xs">
@@ -213,9 +213,9 @@ function PresetDetailContent({
                       {d.label}
                     </span>
                     <span className="min-w-0">
-                      <span className="text-rose-600 line-through">{d.before || "—"}</span>
+                      <span className="text-rose-600 line-through">{d.before || '—'}</span>
                       <span className="mx-1 text-slate-400">→</span>
-                      <span className="text-emerald-700">{d.after || "—"}</span>
+                      <span className="text-emerald-700">{d.after || '—'}</span>
                     </span>
                   </li>
                 ))}
@@ -240,7 +240,7 @@ function PresetDetailContent({
             <RelatedBlock
               title="Presets with no category"
               count={uncategorizedRelated.length}
-              titleFilter={{ categoryNames: ["No Category"] }}
+              titleFilter={{ categoryNames: ['No Category'] }}
               presets={uncategorizedRelated}
             />
           )}
@@ -256,5 +256,5 @@ function PresetDetailContent({
         </div>
       </DetailDisclosure>
     </div>
-  );
+  )
 }

@@ -1,24 +1,24 @@
-import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
-import { CountPill } from "@/components/ui/CountPill";
-import { DownloadButton } from "@/components/ui/DownloadButton";
-import { useComparison } from "@/contexts/ComparisonContext";
-import { useSchema } from "@/contexts/SchemaContext";
-import { comparisonAccent } from "@/theme/comparisonAccent";
-import { exportComparison } from "@/utils/pageExports";
-import type { FieldDiff } from "@/utils/presetDiff";
-import { formatStagingUpdatedAt } from "@/utils/schemaVersion";
-import type { DenormalizedPreset } from "@/utils/types";
-import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { Link } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
+import { CountPill } from '@/components/ui/CountPill'
+import { DownloadButton } from '@/components/ui/DownloadButton'
+import { useComparison } from '@/hooks/useComparison'
+import { useSchema } from '@/hooks/useSchema'
+import { comparisonAccent } from '@/theme/comparisonAccent'
+import { exportComparison } from '@/utils/pageExports'
+import type { FieldDiff } from '@/utils/presetDiff'
+import { formatStagingUpdatedAt } from '@/utils/schemaVersion'
+import type { DenormalizedPreset } from '@/utils/types'
 
 function PresetRow({
   preset,
   diffs,
   linkable = true,
 }: {
-  preset: DenormalizedPreset;
-  diffs?: FieldDiff[];
-  linkable?: boolean;
+  preset: DenormalizedPreset
+  diffs?: FieldDiff[]
+  linkable?: boolean
 }) {
   const head = (
     <>
@@ -28,14 +28,14 @@ function PresetRow({
         <div className="font-mono text-[11px] text-slate-400">{preset.id}</div>
       </div>
     </>
-  );
+  )
   return (
     <li className="rounded-xl border border-slate-200 bg-white">
       {linkable ? (
         <Link
           to="/preset/$"
           params={{ _splat: preset.id }}
-          search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+          search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
           className={`flex w-full items-start gap-2 px-3 py-2 text-left transition ${comparisonAccent.rowHover}`}
           title="Show details of preset"
         >
@@ -52,16 +52,16 @@ function PresetRow({
             <div key={d.label} className="grid grid-cols-[5rem_1fr] gap-x-3 py-0.5">
               <dt className="font-semibold tracking-wide text-slate-500 uppercase">{d.label}</dt>
               <dd className="min-w-0">
-                <span className="text-rose-600 line-through">{d.before || "—"}</span>
+                <span className="text-rose-600 line-through">{d.before || '—'}</span>
                 <span className="mx-1 text-slate-300">→</span>
-                <span className="text-emerald-700">{d.after || "—"}</span>
+                <span className="text-emerald-700">{d.after || '—'}</span>
               </dd>
             </div>
           ))}
         </dl>
       ) : null}
     </li>
-  );
+  )
 }
 
 function Section({
@@ -70,10 +70,10 @@ function Section({
   accent,
   children,
 }: {
-  title: string;
-  count: number;
-  accent: string;
-  children: React.ReactNode;
+  title: string
+  count: number
+  accent: string
+  children: React.ReactNode
 }) {
   return (
     <section className="space-y-2">
@@ -87,7 +87,7 @@ function Section({
         <ul className="space-y-2">{children}</ul>
       )}
     </section>
-  );
+  )
 }
 
 export function PageComparison() {
@@ -101,13 +101,13 @@ export function PageComparison() {
     loading,
     error,
     stagingUpdatedAt,
-  } = useComparison();
-  const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt);
-  const { dataUrl, data } = useSchema();
-  const exportData = useMemo(() => (result ? exportComparison(result) : null), [result]);
+  } = useComparison()
+  const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt)
+  const { dataUrl, data } = useSchema()
+  const exportData = useMemo(() => (result ? exportComparison(result) : null), [result])
 
   if (!dataUrl && !data) {
-    return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;
+    return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>
   }
 
   if (!isComparing) {
@@ -120,23 +120,23 @@ export function PageComparison() {
           against staging or release.
         </p>
       </div>
-    );
+    )
   }
 
   const activeLabel =
-    compareMode === "release" ? `Release${releaseVersion ? ` ${releaseVersion}` : ""}` : domain;
+    compareMode === 'release' ? `Release${releaseVersion ? ` ${releaseVersion}` : ''}` : domain
   const baselineLabel =
-    compareMode === "release"
-      ? `${compareLabel}${compareLabel === "staging" && stagingAge ? ` · ${stagingAge}` : ""}`
-      : `staging${stagingAge ? ` · ${stagingAge}` : ""}`;
+    compareMode === 'release'
+      ? `${compareLabel}${compareLabel === 'staging' && stagingAge ? ` · ${stagingAge}` : ''}`
+      : `staging${stagingAge ? ` · ${stagingAge}` : ''}`
   const loadingLabel =
-    compareMode === "release" && compareLabel !== "staging"
-      ? "Loading PR preview to compare…"
-      : "Loading staging to compare…";
+    compareMode === 'release' && compareLabel !== 'staging'
+      ? 'Loading PR preview to compare…'
+      : 'Loading staging to compare…'
   const errorLabel =
-    compareMode === "release" && compareLabel !== "staging"
-      ? "Could not load PR preview for comparison"
-      : "Could not load staging for comparison";
+    compareMode === 'release' && compareLabel !== 'staging'
+      ? 'Could not load PR preview for comparison'
+      : 'Could not load staging for comparison'
 
   return (
     <div className="space-y-6">
@@ -146,7 +146,7 @@ export function PageComparison() {
           {exportData ? <DownloadButton filename="comparison.json" data={exportData} /> : null}
         </div>
         <p className="text-sm text-slate-500">
-          <span className={`font-mono ${comparisonAccent.text}`}>{activeLabel}</span> vs{" "}
+          <span className={`font-mono ${comparisonAccent.text}`}>{activeLabel}</span> vs{' '}
           {baselineLabel}.
         </p>
       </div>
@@ -177,5 +177,5 @@ export function PageComparison() {
         </div>
       ) : null}
     </div>
-  );
+  )
 }

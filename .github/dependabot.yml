@@ -20,16 +20,20 @@ updates:
     exclude-paths:
       - .cursor/**
     commit-message:
-      prefix: "[skip netlify]"
+      prefix: '[skip netlify]'
       include: scope
     groups:
       security-dev-tools:
         applies-to: security-updates
         patterns:
-          - '@biomejs/*'
+          - 'oxlint*'
+          - 'oxfmt*'
+          - 'vitest*'
           - '@playwright/*'
           - '@types/*'
           - 'typescript'
+          - '@typescript/typescript-*'
+          - 'eslint*'
           - 'vite'
 
       icon-libraries:
@@ -48,14 +52,19 @@ updates:
         applies-to: version-updates
         patterns:
           - '@babel/*'
-          - '@biomejs/*'
+          - 'oxlint*'
+          - 'oxfmt*'
+          - 'vitest*'
           - '@playwright/*'
           - '@rolldown/*'
           - '@types/*'
           - '@vitejs/*'
           - 'babel-plugin-*'
+          - 'browserslist*'
+          - 'eslint*'
           - 'postcss'
           - 'typescript'
+          - '@typescript/typescript-*'
           - 'vite'
         update-types:
           - minor

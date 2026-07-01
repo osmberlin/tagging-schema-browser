@@ -1,19 +1,19 @@
-import { googleTranslateUrl } from "@/components/PagePresets/PresetTranslationTable";
-import { TranslationAttrRow, TranslationColumnHeader } from "@/components/TranslationTableLayout";
-import { externalLinkClass } from "@/theme/externalAccent";
-import type { RawFieldTranslation } from "@/utils/types";
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react'
+import { googleTranslateUrl } from '@/components/PagePresets/PresetTranslationTable'
+import { TranslationAttrRow, TranslationColumnHeader } from '@/components/TranslationTableLayout'
+import { externalLinkClass } from '@/theme/externalAccent'
+import type { RawFieldTranslation } from '@/utils/types'
 
 function TextWithTranslate({
   locale,
   text,
   children,
 }: {
-  locale: string;
-  text: string;
-  children: ReactNode;
+  locale: string
+  text: string
+  children: ReactNode
 }) {
-  if (!text.trim()) return <>{children}</>;
+  if (!text.trim()) return <>{children}</>
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
       {children}
@@ -21,12 +21,12 @@ function TextWithTranslate({
         href={googleTranslateUrl(locale, text)}
         target="_blank"
         rel="noopener noreferrer"
-        className={externalLinkClass("text-[11px]")}
+        className={externalLinkClass('text-[11px]')}
       >
         Google Translate ↗
       </a>
     </span>
-  );
+  )
 }
 
 export function FieldTranslationTable({
@@ -35,22 +35,22 @@ export function FieldTranslationTable({
   localized,
   locale,
 }: {
-  fieldId: string;
-  english: RawFieldTranslation;
-  localized?: RawFieldTranslation;
-  locale: string;
+  fieldId: string
+  english: RawFieldTranslation
+  localized?: RawFieldTranslation
+  locale: string
 }) {
-  const showLocale = Boolean(locale);
+  const showLocale = Boolean(locale)
   const optionKeys = Array.from(
     new Set([...Object.keys(english.options ?? {}), ...Object.keys(localized?.options ?? {})]),
-  ).sort((a, b) => a.localeCompare(b));
+  ).sort((a, b) => a.localeCompare(b))
 
   const englishTexts = [
     english.label,
     english.placeholder,
     english.terms,
     ...optionKeys.map((key) => english.options?.[key]),
-  ].filter((value): value is string => Boolean(value?.trim()));
+  ].filter((value): value is string => Boolean(value?.trim()))
 
   return (
     <div className="overflow-hidden">
@@ -65,7 +65,7 @@ export function FieldTranslationTable({
             <span className="flex items-center gap-2">
               <span>English</span>
               <a
-                href={googleTranslateUrl(locale, englishTexts.join("\n"))}
+                href={googleTranslateUrl(locale, englishTexts.join('\n'))}
                 target="_blank"
                 rel="noreferrer"
                 className={externalLinkClass()}
@@ -75,32 +75,32 @@ export function FieldTranslationTable({
               </a>
             </span>
           ) : (
-            "English"
+            'English'
           )
         }
       />
       <TranslationAttrRow
         label="Label"
-        english={english.label ?? "—"}
-        localized={localized?.label ?? "—"}
+        english={english.label ?? '—'}
+        localized={localized?.label ?? '—'}
         showLocale={showLocale}
       />
       <TranslationAttrRow
         label="Placeholder"
-        english={english.placeholder ?? "—"}
-        localized={localized?.placeholder ?? "—"}
+        english={english.placeholder ?? '—'}
+        localized={localized?.placeholder ?? '—'}
         showLocale={showLocale}
       />
       <TranslationAttrRow
         label="Terms"
-        english={english.terms ?? "—"}
+        english={english.terms ?? '—'}
         localized={
           localized?.terms ? (
-            <TextWithTranslate locale={locale} text={english.terms ?? ""}>
+            <TextWithTranslate locale={locale} text={english.terms ?? ''}>
               {localized.terms}
             </TextWithTranslate>
           ) : (
-            "—"
+            '—'
           )
         }
         showLocale={showLocale}
@@ -114,13 +114,13 @@ export function FieldTranslationTable({
             <TranslationAttrRow
               key={key}
               label={key}
-              english={english.options?.[key] ?? "—"}
-              localized={localized?.options?.[key] ?? "—"}
+              english={english.options?.[key] ?? '—'}
+              localized={localized?.options?.[key] ?? '—'}
               showLocale={showLocale}
             />
           ))}
         </div>
       ) : null}
     </div>
-  );
+  )
 }

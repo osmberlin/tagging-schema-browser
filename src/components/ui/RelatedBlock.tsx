@@ -1,23 +1,23 @@
-import { type SearchState, presetSearchDefaults } from "@/components/PagePresets/useSearchState";
-import { AreaLink } from "@/components/ui/AreaLink";
-import { CountPill } from "@/components/ui/CountPill";
-import type { SchemaArea } from "@/components/ui/areaIcons";
-import { Link } from "@tanstack/react-router";
+import { Link } from '@tanstack/react-router'
+import { type SearchState, presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import type { SchemaArea } from '@/components/ui/areaIcons'
+import { AreaLink } from '@/components/ui/AreaLink'
+import { CountPill } from '@/components/ui/CountPill'
 
-type RelatedItem = { id: string; name: string };
+type RelatedItem = { id: string; name: string }
 
 type RelatedBlockProps = {
-  title: string;
-  count: number;
-  area?: SchemaArea;
-  titleFilter: Partial<SearchState>;
-  presets: RelatedItem[];
-};
+  title: string
+  count: number
+  area?: SchemaArea
+  titleFilter: Partial<SearchState>
+  presets: RelatedItem[]
+}
 
 export function RelatedBlock({
   title,
   count,
-  area = "presets",
+  area = 'presets',
   titleFilter,
   presets,
 }: RelatedBlockProps) {
@@ -29,8 +29,8 @@ export function RelatedBlock({
           to="/"
           search={(prev) => ({
             ...presetSearchDefaults,
-            dataUrl: prev.dataUrl ?? "",
-            locale: prev.locale ?? "",
+            dataUrl: prev.dataUrl ?? '',
+            locale: prev.locale ?? '',
             ...titleFilter,
             page: 1,
           })}
@@ -49,7 +49,7 @@ export function RelatedBlock({
               key={p.id}
               to="/preset/$"
               params={{ _splat: p.id }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
               title={p.id}
               className="max-w-full truncate rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200 ring-inset hover:bg-slate-100"
             >
@@ -62,5 +62,5 @@ export function RelatedBlock({
         </div>
       )}
     </section>
-  );
+  )
 }

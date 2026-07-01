@@ -1,35 +1,35 @@
-import { ensureIconsForPresetUsage } from "@/components/PageIcons/iconRegistry";
-import { type RawSchemaPayload, loadSchemaData } from "@/components/PagePresets/dataLoader";
-import { denormalize } from "@/components/PagePresets/denormalize";
-import { buildPresetSearchIndex } from "@/components/PagePresets/presetSearch";
-import type { SchemaData } from "@/utils/types";
+import { ensureIconsForPresetUsage } from '@/components/PageIcons/iconRegistry'
+import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
+import { denormalize } from '@/components/PagePresets/denormalize'
+import { buildPresetSearchIndex } from '@/components/PagePresets/presetSearch'
+import type { SchemaData } from '@/utils/types'
 
 function normalizeDataUrl(url: string): string {
-  return url.endsWith("/") ? url : `${url}/`;
+  return url.endsWith('/') ? url : `${url}/`
 }
 
-const cache = new Map<string, SchemaData>();
-const inflight = new Map<string, Promise<SchemaData | null>>();
-const loadErrors = new Map<string, string>();
+const cache = new Map<string, SchemaData>()
+const inflight = new Map<string, Promise<SchemaData | null>>()
+const loadErrors = new Map<string, string>()
 
 export function getSchemaLoadError(dataUrl: string): string | null {
-  return loadErrors.get(normalizeDataUrl(dataUrl)) ?? null;
+  return loadErrors.get(normalizeDataUrl(dataUrl)) ?? null
 }
 
 function clearSchemaLoadError(dataUrl: string): void {
-  loadErrors.delete(normalizeDataUrl(dataUrl));
+  loadErrors.delete(normalizeDataUrl(dataUrl))
 }
 
 export function processRawSchemaPayload(raw: RawSchemaPayload): SchemaData | null {
-  if (raw.loadErrors.length > 0) return null;
+  if (raw.loadErrors.length > 0) return null
 
-  const diagnostics: string[] = [];
-  const presets = denormalize(raw.presets, raw.translations, raw.categories, raw.fields);
-  buildPresetSearchIndex(presets);
-  const presetsById = new Map(presets.map((p) => [p.id, p]));
-  const categoryNames: Record<string, string> = {};
+  const diagnostics: string[] = []
+  const presets = denormalize(raw.presets, raw.translations, raw.categories, raw.fields)
+  buildPresetSearchIndex(presets)
+  const presetsById = new Map(presets.map((p) => [p.id, p]))
+  const categoryNames: Record<string, string> = {}
   for (const [cid] of Object.entries(raw.categories)) {
-    categoryNames[cid] = raw.translations.en?.presets?.categories?.[cid]?.name ?? cid;
+    categoryNames[cid] = raw.translations.en?.presets?.categories?.[cid]?.name ?? cid
   }
 
   return {
@@ -44,50 +44,50 @@ export function processRawSchemaPayload(raw: RawSchemaPayload): SchemaData | nul
     schemaReferences: raw.references,
     loadError: null,
     diagnostics,
-  };
+  }
 }
 
 export function getCachedSchemaData(dataUrl: string): SchemaData | null {
-  return cache.get(normalizeDataUrl(dataUrl)) ?? null;
+  return cache.get(normalizeDataUrl(dataUrl)) ?? null
 }
 
 function storeSchemaData(dataUrl: string, data: SchemaData): void {
-  cache.set(normalizeDataUrl(dataUrl), data);
+  cache.set(normalizeDataUrl(dataUrl), data)
 }
 
 /** Fetch and denormalize schema JSON; dedupes concurrent requests and caches the result. */
 export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | null> {
-  const key = normalizeDataUrl(dataUrl);
-  const cached = cache.get(key);
-  if (cached) return cached;
+  const key = normalizeDataUrl(dataUrl)
+  const cached = cache.get(key)
+  if (cached) return cached
 
-  const existing = inflight.get(key);
-  if (existing) return existing;
+  const existing = inflight.get(key)
+  if (existing) return existing
 
   const promise = loadSchemaData(dataUrl)
     .then((raw) => {
       if (raw.loadErrors.length > 0) {
-        const message = raw.loadErrors.join("; ");
-        loadErrors.set(key, message);
-        inflight.delete(key);
-        return null;
+        const message = raw.loadErrors.join('; ')
+        loadErrors.set(key, message)
+        inflight.delete(key)
+        return null
       }
-      clearSchemaLoadError(dataUrl);
-      const data = processRawSchemaPayload(raw);
+      clearSchemaLoadError(dataUrl)
+      const data = processRawSchemaPayload(raw)
       if (data) {
-        storeSchemaData(dataUrl, data);
-        void ensureIconsForPresetUsage(data.rawPresets);
+        storeSchemaData(dataUrl, data)
+        void ensureIconsForPresetUsage(data.rawPresets)
       }
-      inflight.delete(key);
-      return data;
+      inflight.delete(key)
+      return data
     })
     .catch((e) => {
-      const message = e instanceof Error ? e.message : String(e);
-      loadErrors.set(key, message);
-      inflight.delete(key);
-      return null;
-    });
+      const message = e instanceof Error ? e.message : String(e)
+      loadErrors.set(key, message)
+      inflight.delete(key)
+      return null
+    })
 
-  inflight.set(key, promise);
-  return promise;
+  inflight.set(key, promise)
+  return promise
 }

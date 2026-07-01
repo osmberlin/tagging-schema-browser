@@ -1,8 +1,9 @@
-import { copyFileSync, existsSync } from "node:fs";
-import path from "node:path";
-import babel from "@rolldown/plugin-babel";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import { type Plugin, defineConfig } from "vite";
+import { copyFileSync, existsSync } from 'node:fs'
+import path from 'node:path'
+import babel from '@rolldown/plugin-babel'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
+import browserslistToEsbuild from 'browserslist-to-esbuild'
+import { type Plugin, defineConfig } from 'vite'
 
 /**
  * GitHub Pages has no SPA rewrite, so a refresh/deep-link to a client route
@@ -10,24 +11,27 @@ import { type Plugin, defineConfig } from "vite";
  * makes Pages serve the app for any unknown path, and the router takes over.
  */
 function spaFallback(): Plugin {
-  let outDir = "dist";
+  let outDir = 'dist'
   return {
-    name: "spa-404-fallback",
-    apply: "build",
+    name: 'spa-404-fallback',
+    apply: 'build',
     configResolved(config) {
-      outDir = config.build.outDir;
+      outDir = config.build.outDir
     },
     closeBundle() {
-      const index = path.resolve(outDir, "index.html");
-      if (existsSync(index)) copyFileSync(index, path.resolve(outDir, "404.html"));
+      const index = path.resolve(outDir, 'index.html')
+      if (existsSync(index)) copyFileSync(index, path.resolve(outDir, '404.html'))
     },
-  };
+  }
 }
 
 export default defineConfig({
-  base: process.env.BASE_PATH || "/",
+  base: process.env.BASE_PATH || '/',
   plugins: [react(), babel({ presets: [reactCompilerPreset()] }), spaFallback()],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: { '@': path.resolve(__dirname, './src') },
   },
-});
+  build: {
+    target: browserslistToEsbuild(),
+  },
+})

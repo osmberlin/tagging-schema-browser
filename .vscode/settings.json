@@ -1,0 +1,12 @@
+{
+  "js/ts.experimental.useTsgo": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.native-preview.tsdk": "node_modules/typescript",
+  "oxc.fixKind": "dangerous_fix_or_suggestion",
+  "oxc.typeAware": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "always",
+    "source.fixAllDangerous.oxc": "always"
+  }
+}

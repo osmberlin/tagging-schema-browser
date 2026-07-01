@@ -1,17 +1,17 @@
+import { useMemo } from 'react'
 import type {
   DenormalizedPreset,
   FieldTranslations,
   FieldViewModel,
   RawFields,
-} from "@/utils/types";
-import { useMemo } from "react";
+} from '@/utils/types'
 
 function fieldLabel(
   id: string,
   raw: RawFields[string] | undefined,
   fieldTranslations: FieldTranslations,
 ): string {
-  return fieldTranslations[id]?.label ?? ((typeof raw?.label === "string" ? raw.label : "") || id);
+  return fieldTranslations[id]?.label ?? ((typeof raw?.label === 'string' ? raw.label : '') || id)
 }
 
 export function useFieldSearch(
@@ -23,30 +23,30 @@ export function useFieldSearch(
     const usage = new Map<
       string,
       { presets: DenormalizedPreset[]; primary: number; more: number }
-    >();
+    >()
 
     for (const preset of presets) {
       for (const fieldId of preset.fields) {
-        const entry = usage.get(fieldId) ?? { presets: [], primary: 0, more: 0 };
-        if (!entry.presets.some((p) => p.id === preset.id)) entry.presets.push(preset);
-        entry.primary += 1;
-        usage.set(fieldId, entry);
+        const entry = usage.get(fieldId) ?? { presets: [], primary: 0, more: 0 }
+        if (!entry.presets.some((p) => p.id === preset.id)) entry.presets.push(preset)
+        entry.primary += 1
+        usage.set(fieldId, entry)
       }
       for (const fieldId of preset.moreFields) {
-        const entry = usage.get(fieldId) ?? { presets: [], primary: 0, more: 0 };
-        if (!entry.presets.some((p) => p.id === preset.id)) entry.presets.push(preset);
-        entry.more += 1;
-        usage.set(fieldId, entry);
+        const entry = usage.get(fieldId) ?? { presets: [], primary: 0, more: 0 }
+        if (!entry.presets.some((p) => p.id === preset.id)) entry.presets.push(preset)
+        entry.more += 1
+        usage.set(fieldId, entry)
       }
     }
 
     const fieldEntries: FieldViewModel[] = Object.entries(fields).map(([id, raw]) => {
-      const used = usage.get(id);
-      const presetsForField = used?.presets ?? [];
+      const used = usage.get(id)
+      const presetsForField = used?.presets ?? []
       return {
         id,
         key: raw.key ?? id,
-        type: raw.type ?? "unknown",
+        type: raw.type ?? 'unknown',
         label: fieldLabel(id, raw, fieldTranslations),
         geometry: raw.geometry ?? [],
         universal: Boolean(raw.universal),
@@ -54,13 +54,13 @@ export function useFieldSearch(
         primaryCount: used?.primary ?? 0,
         moreCount: used?.more ?? 0,
         presets: presetsForField,
-      };
-    });
+      }
+    })
 
     const types = Array.from(new Set(fieldEntries.map((f) => f.type))).sort((a, b) =>
       a.localeCompare(b),
-    );
+    )
 
-    return { fields: fieldEntries, types };
-  }, [fields, presets, fieldTranslations]);
+    return { fields: fieldEntries, types }
+  }, [fields, presets, fieldTranslations])
 }

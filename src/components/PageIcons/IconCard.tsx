@@ -1,19 +1,19 @@
-import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
-import { CountPill } from "@/components/ui/CountPill";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { areaAccent } from "@/theme/areaAccent";
-import type { DenormalizedPreset, OptionIconUsageRef } from "@/utils/types";
-import { Link } from "@tanstack/react-router";
+import { Link } from '@tanstack/react-router'
+import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { AreaIcon } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
+import { areaAccent } from '@/theme/areaAccent'
+import type { DenormalizedPreset, OptionIconUsageRef } from '@/utils/types'
 
 function formatOptionUsages(usages: OptionIconUsageRef[]): string {
   return usages
     .map((u) => `${u.fieldId}=${u.optionValue}`)
     .slice(0, 8)
-    .join(", ");
+    .join(', ')
 }
 
 const iconCardClass =
-  "flex h-full min-h-36 flex-col rounded-xl border border-slate-200 bg-white p-2.5";
+  'flex h-full min-h-36 flex-col rounded-xl border border-slate-200 bg-white p-2.5'
 
 export function IconCard({
   iconName,
@@ -23,17 +23,17 @@ export function IconCard({
   presets,
   optionUsages,
 }: {
-  iconName: string;
-  svgRaw?: string;
-  presetUsageCount: number;
-  optionUsageCount: number;
-  presets: DenormalizedPreset[];
-  optionUsages: OptionIconUsageRef[];
+  iconName: string
+  svgRaw?: string
+  presetUsageCount: number
+  optionUsageCount: number
+  presets: DenormalizedPreset[]
+  optionUsages: OptionIconUsageRef[]
 }) {
-  const svgDataUrl = svgRaw ? `data:image/svg+xml;utf8,${encodeURIComponent(svgRaw)}` : null;
-  const presetNames = presets.map((p) => p.name).join(", ");
-  const optionSummary = formatOptionUsages(optionUsages);
-  const isUsed = presetUsageCount > 0 || optionUsageCount > 0;
+  const svgDataUrl = svgRaw ? `data:image/svg+xml;utf8,${encodeURIComponent(svgRaw)}` : null
+  const presetNames = presets.map((p) => p.name).join(', ')
+  const optionSummary = formatOptionUsages(optionUsages)
+  const isUsed = presetUsageCount > 0 || optionUsageCount > 0
 
   const body = (
     <>
@@ -55,7 +55,7 @@ export function IconCard({
           {svgDataUrl ? (
             <img src={svgDataUrl} alt="" className="h-3 w-3" />
           ) : (
-            <span className="text-[6px] font-mono">12</span>
+            <span className="font-mono text-[6px]">12</span>
           )}
         </div>
       </div>
@@ -67,8 +67,8 @@ export function IconCard({
           <span className="inline-flex items-center gap-1 font-medium text-slate-700">
             <AreaIcon area="presets" className={`h-3 w-3 ${areaAccent.presets.icon}`} />
             Presets
-          </span>{" "}
-          <CountPill className="bg-slate-100 align-text-bottom">{presetUsageCount}</CountPill>:{" "}
+          </span>{' '}
+          <CountPill className="bg-slate-100 align-text-bottom">{presetUsageCount}</CountPill>:{' '}
           {presetNames}
         </p>
       ) : null}
@@ -77,15 +77,15 @@ export function IconCard({
           <span className="inline-flex items-center gap-1 font-medium text-slate-700">
             <AreaIcon area="fields" className={`h-3 w-3 ${areaAccent.fields.icon}`} />
             Options
-          </span>{" "}
-          <CountPill className="bg-slate-100 align-text-bottom">{optionUsageCount}</CountPill>:{" "}
+          </span>{' '}
+          <CountPill className="bg-slate-100 align-text-bottom">{optionUsageCount}</CountPill>:{' '}
           {optionSummary}
-          {optionUsages.length > 8 ? "…" : ""}
+          {optionUsages.length > 8 ? '…' : ''}
         </p>
       ) : null}
       {!isUsed ? <p className="mt-1 text-xs text-slate-400">Unused</p> : null}
     </>
-  );
+  )
 
   if (presetUsageCount > 0) {
     return (
@@ -93,8 +93,8 @@ export function IconCard({
         to="/"
         search={(prev) => ({
           ...presetSearchDefaults,
-          dataUrl: prev.dataUrl ?? "",
-          locale: prev.locale ?? "",
+          dataUrl: prev.dataUrl ?? '',
+          locale: prev.locale ?? '',
           iconName: [iconName],
         })}
         title={`Show all ${presetUsageCount} presets using "${iconName}"`}
@@ -109,12 +109,12 @@ export function IconCard({
           ›
         </span>
       </Link>
-    );
+    )
   }
 
   return (
     <article className={iconCardClass} data-icon={iconName}>
       {body}
     </article>
-  );
+  )
 }

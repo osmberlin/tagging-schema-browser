@@ -1,25 +1,25 @@
-import { getIconSvgDataUrl } from "@/components/PageIcons/iconRegistry";
-import type { DenormalizedPreset } from "@/utils/types";
-import { useState } from "react";
+import { useState } from 'react'
+import { getIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
+import type { DenormalizedPreset } from '@/utils/types'
 
 type PresetIconBoxProps = {
-  preset: DenormalizedPreset;
-  size?: "sm" | "md";
-};
+  preset: DenormalizedPreset
+  size?: 'sm' | 'md'
+}
 
-export function PresetIconBox({ preset, size = "sm" }: PresetIconBoxProps) {
-  const [rasterFailed, setRasterFailed] = useState(false);
-  const iconSrc = getIconSvgDataUrl(preset.icon);
-  const raster = preset.imageURL?.trim();
-  const showRaster = Boolean(raster && !rasterFailed);
+export function PresetIconBox({ preset, size = 'sm' }: PresetIconBoxProps) {
+  const [rasterFailed, setRasterFailed] = useState(false)
+  const iconSrc = getIconSvgDataUrl(preset.icon)
+  const raster = preset.imageURL?.trim()
+  const showRaster = Boolean(raster && !rasterFailed)
   const frame =
-    size === "sm"
-      ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-500 "
-      : "flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 ";
-  const imgClass = size === "sm" ? "h-6 w-6 object-contain" : "h-9 w-9 object-contain";
+    size === 'sm'
+      ? 'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg text-slate-500 '
+      : 'flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 '
+  const imgClass = size === 'sm' ? 'h-6 w-6 object-contain' : 'h-9 w-9 object-contain'
 
-  const titleParts = [preset.icon, preset.imageURL].filter(Boolean);
-  const title = titleParts.length ? titleParts.join(" · ") : "No icon";
+  const titleParts = [preset.icon, preset.imageURL].filter(Boolean)
+  const title = titleParts.length ? titleParts.join(' · ') : 'No icon'
 
   return (
     <div className={frame} title={title}>
@@ -46,5 +46,5 @@ export function PresetIconBox({ preset, size = "sm" }: PresetIconBoxProps) {
         <span aria-hidden>—</span>
       )}
     </div>
-  );
+  )
 }

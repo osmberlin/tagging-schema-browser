@@ -1,12 +1,12 @@
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useSchema } from "@/contexts/SchemaContext";
-import { useReferenceStore } from "@/stores/referenceStore";
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useReferencePreloading } from '@/features/data-source/reference-store'
+import { useSchema } from '@/hooks/useSchema'
 
 /** Slim header hint while schema JSON is loading — does not block the reference toggle. */
 export function SchemaLoadIndicator() {
-  const { loading } = useSchema();
-  const referencePreloading = useReferenceStore((s) => s.referencePreloading);
-  if (!loading && !referencePreloading) return null;
+  const { loading } = useSchema()
+  const referencePreloading = useReferencePreloading()
+  if (!loading && !referencePreloading) return null
 
   return (
     <div
@@ -14,7 +14,7 @@ export function SchemaLoadIndicator() {
       aria-live="polite"
     >
       <LoadingSpinner size="sm" />
-      <span>{referencePreloading ? "Preparing schema…" : "Loading schema data…"}</span>
+      <span>{referencePreloading ? 'Preparing schema…' : 'Loading schema data…'}</span>
     </div>
-  );
+  )
 }

@@ -1,126 +1,126 @@
-import { CountPill } from "@/components/ui/CountPill";
-import { DownloadButton } from "@/components/ui/DownloadButton";
-import { Input } from "@/components/ui/Input";
-import { SchemaLoadingPanel } from "@/components/ui/LoadingSpinner";
-import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { brandAccent } from "@/theme/brandAccent";
-import { RELEASE_DATA_URL } from "@/utils/constants";
-import { exportPresets } from "@/utils/pageExports";
-import { Fragment, useMemo } from "react";
-import { PresetTable } from "./PresetTable";
-import { getExpectedFilesHelp } from "./dataLoader";
-import { usePresetSearch } from "./usePresetSearch";
-import { useSearchState } from "./useSearchState";
+import { Fragment, useMemo } from 'react'
+import { AreaIcon, AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
+import { DownloadButton } from '@/components/ui/DownloadButton'
+import { Input } from '@/components/ui/Input'
+import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { brandAccent } from '@/theme/brandAccent'
+import { RELEASE_DATA_URL } from '@/utils/constants'
+import { exportPresets } from '@/utils/pageExports'
+import { getExpectedFilesHelp } from './dataLoader'
+import { PresetTable } from './PresetTable'
+import { usePresetSearch } from './usePresetSearch'
+import { useSearchState } from './useSearchState'
 
 export function PagePresets() {
-  const { dataUrl, setDataUrl, load, loading, error, data } = useSchema();
-  const [searchState, setSearchState] = useSearchState();
-  const searchResult = usePresetSearch();
-  const totalCount = searchResult?.data.total ?? 0;
-  const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult]);
+  const { dataUrl, setDataUrl, load, loading, error, data } = useSchema()
+  const [searchState, setSearchState] = useSearchState()
+  const searchResult = usePresetSearch()
+  const totalCount = searchResult?.data.total ?? 0
+  const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
   const brokenPresetIconCount = useMemo(
     () => data?.presets.filter((preset) => preset.iconBroken).length ?? 0,
     [data],
-  );
+  )
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const input = form.querySelector<HTMLInputElement>('input[name="dataUrl"]');
-    const url = input?.value?.trim();
-    if (url) load(url);
-  };
+    e.preventDefault()
+    const form = e.currentTarget
+    const input = form.querySelector<HTMLInputElement>('input[name="dataUrl"]')
+    const url = input?.value?.trim()
+    if (url) load(url)
+  }
 
   const removeValue = (facet: keyof typeof searchState, value: string) => {
-    if (!Array.isArray(searchState[facet])) return;
-    const next = (searchState[facet] as string[]).filter((v) => v !== value);
-    setSearchState({ [facet]: next, page: 1 });
-  };
+    if (!Array.isArray(searchState[facet])) return
+    const next = (searchState[facet] as string[]).filter((v) => v !== value)
+    setSearchState({ [facet]: next, page: 1 })
+  }
 
   const facetArea: Partial<Record<string, SchemaArea>> = {
-    fieldIds: "fields",
-    primaryFieldIds: "fields",
-    moreFieldIds: "fields",
-    iconName: "icons",
-    iconPrefix: "icons",
-    hasIcon: "icons",
-  };
+    fieldIds: 'fields',
+    primaryFieldIds: 'fields',
+    moreFieldIds: 'fields',
+    iconName: 'icons',
+    iconPrefix: 'icons',
+    hasIcon: 'icons',
+  }
 
   const activePills = [
     ...searchState.primaryTagKey.map((value) => ({
       key: `primary-${value}`,
-      facet: "primaryTagKey",
+      facet: 'primaryTagKey',
       label: `Primary: ${value}`,
-      onRemove: () => removeValue("primaryTagKey", value),
+      onRemove: () => removeValue('primaryTagKey', value),
     })),
     ...searchState.geometry.map((value) => ({
       key: `geometry-${value}`,
-      facet: "geometry",
+      facet: 'geometry',
       label: `Geometry: ${value}`,
-      onRemove: () => removeValue("geometry", value),
+      onRemove: () => removeValue('geometry', value),
     })),
     ...searchState.iconPrefix.map((value) => ({
       key: `iconPrefix-${value}`,
-      facet: "iconPrefix",
+      facet: 'iconPrefix',
       label: `Icon set: ${value}`,
-      onRemove: () => removeValue("iconPrefix", value),
+      onRemove: () => removeValue('iconPrefix', value),
     })),
     ...searchState.fieldIds.map((value) => ({
       key: `field-${value}`,
-      facet: "fieldIds",
+      facet: 'fieldIds',
       label: `Field: ${value}`,
-      onRemove: () => removeValue("fieldIds", value),
+      onRemove: () => removeValue('fieldIds', value),
     })),
     ...searchState.primaryFieldIds.map((value) => ({
       key: `primary-field-${value}`,
-      facet: "primaryFieldIds",
+      facet: 'primaryFieldIds',
       label: `Primary field: ${value}`,
-      onRemove: () => removeValue("primaryFieldIds", value),
+      onRemove: () => removeValue('primaryFieldIds', value),
     })),
     ...searchState.moreFieldIds.map((value) => ({
       key: `more-field-${value}`,
-      facet: "moreFieldIds",
+      facet: 'moreFieldIds',
       label: `More field: ${value}`,
-      onRemove: () => removeValue("moreFieldIds", value),
+      onRemove: () => removeValue('moreFieldIds', value),
     })),
     ...searchState.categoryNames.map((value) => ({
       key: `category-${value}`,
-      facet: "categoryNames",
+      facet: 'categoryNames',
       label: `Category: ${value}`,
-      onRemove: () => removeValue("categoryNames", value),
+      onRemove: () => removeValue('categoryNames', value),
     })),
     ...searchState.hasIcon.map((value) => ({
       key: `hasIcon-${value}`,
-      facet: "hasIcon",
+      facet: 'hasIcon',
       label: `Has icon: ${value}`,
-      onRemove: () => removeValue("hasIcon", value),
+      onRemove: () => removeValue('hasIcon', value),
     })),
     ...searchState.iconName.map((value) => ({
       key: `iconName-${value}`,
-      facet: "iconName",
+      facet: 'iconName',
       label: `Icon: ${value}`,
-      onRemove: () => removeValue("iconName", value),
+      onRemove: () => removeValue('iconName', value),
     })),
     ...(searchState.q
       ? [
           {
-            key: "query",
-            facet: "query",
+            key: 'query',
+            facet: 'query',
             label: `Search: ${searchState.q}`,
-            onRemove: () => setSearchState({ q: "", page: 1 }),
+            onRemove: () => setSearchState({ q: '', page: 1 }),
           },
         ]
       : []),
-  ];
+  ]
 
   if (!dataUrl && !data) {
     return (
       <div className="mx-auto max-w-xl space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-6">
         <h2 className="text-lg font-semibold text-slate-900">Load schema data</h2>
         <p className="text-sm text-slate-600">
-          Enter the base URL of the id-tagging-schema{" "}
+          Enter the base URL of the id-tagging-schema{' '}
           <code className="rounded bg-slate-200 px-1">dist/</code> folder. For PR previews, use the
           preview dist URL.
         </p>
@@ -140,14 +140,14 @@ export function PagePresets() {
         </form>
         <p className="text-xs text-slate-500">{getExpectedFilesHelp()}</p>
       </div>
-    );
+    )
   }
 
   if (loading && !data) {
-    return <SchemaLoadingPanel label="Loading schema…" />;
+    return <SchemaLoadingPanel label="Loading schema…" />
   }
 
-  if (!data) return null;
+  if (!data) return null
 
   if (error) {
     return (
@@ -163,10 +163,10 @@ export function PagePresets() {
           Enter a different URL
         </button>
       </div>
-    );
+    )
   }
 
-  if (!data) return null;
+  if (!data) return null
 
   return (
     <div className="space-y-4">
@@ -185,12 +185,12 @@ export function PagePresets() {
         {activePills.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5">
             {activePills.map((pill, i) => {
-              const pillArea = facetArea[pill.facet];
+              const pillArea = facetArea[pill.facet]
               return (
                 <Fragment key={pill.key}>
                   {i > 0 ? (
                     <span className="text-[11px] font-medium text-slate-400">
-                      {activePills[i - 1].facet === pill.facet ? "or" : "and"}
+                      {activePills[i - 1].facet === pill.facet ? 'or' : 'and'}
                     </span>
                   ) : null}
                   <button
@@ -208,19 +208,19 @@ export function PagePresets() {
                     <span aria-hidden>×</span>
                   </button>
                 </Fragment>
-              );
+              )
             })}
           </div>
         ) : null}
       </div>
       {brokenPresetIconCount > 0 ? (
         <p className={brandAccent.errorBanner}>
-          <strong>{brokenPresetIconCount}</strong>{" "}
-          {brokenPresetIconCount === 1 ? "preset references" : "presets reference"} a missing preset
-          icon —{" "}
+          <strong>{brokenPresetIconCount}</strong>{' '}
+          {brokenPresetIconCount === 1 ? 'preset references' : 'presets reference'} a missing preset
+          icon —{' '}
           <button
             type="button"
-            onClick={() => setSearchState({ hasIcon: ["broken"], page: 1 })}
+            onClick={() => setSearchState({ hasIcon: ['broken'], page: 1 })}
             className={brandAccent.errorBannerLink}
           >
             show broken preset icons
@@ -230,5 +230,5 @@ export function PagePresets() {
       ) : null}
       <PresetTable />
     </div>
-  );
+  )
 }

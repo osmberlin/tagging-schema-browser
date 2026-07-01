@@ -1,8 +1,8 @@
-import { HeaderSearch } from "@/components/ui/HeaderSearch";
-import { useIconFacetState } from "./useIconFacetState";
+import { HeaderSearch } from '@/components/ui/HeaderSearch'
+import { useIconFacetState } from './useIconFacetState'
 
 export function IconSearchBar() {
-  const [state, setState] = useIconFacetState();
+  const [state, setState] = useIconFacetState()
 
   return (
     <HeaderSearch
@@ -11,5 +11,5 @@ export function IconSearchBar() {
       placeholder="Search icons by name..."
       area="icons"
     />
-  );
+  )
 }

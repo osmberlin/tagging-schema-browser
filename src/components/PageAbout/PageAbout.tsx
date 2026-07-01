@@ -1,19 +1,19 @@
-import { PrPreviewList } from "@/components/PageAbout/PrPreviewList";
-import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
-import { Input } from "@/components/ui/Input";
-import { areaAccent } from "@/theme/areaAccent";
-import { externalLinkClass } from "@/theme/externalAccent";
-import { INTEREM_DATA_URL } from "@/utils/constants";
-import { deriveDataUrl } from "@/utils/deriveDataUrl";
-import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Link } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
+import { PrPreviewList } from '@/components/PageAbout/PrPreviewList'
+import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { Input } from '@/components/ui/Input'
+import { areaAccent } from '@/theme/areaAccent'
+import { externalLinkClass } from '@/theme/externalAccent'
+import { INTEREM_DATA_URL } from '@/utils/constants'
+import { deriveDataUrl } from '@/utils/deriveDataUrl'
 
 function ColorDot({ halo, dot }: { halo: string; dot: string }) {
   return (
     <span className={`flex-none rounded-full p-1 ${halo}`}>
       <span className={`block size-1.5 rounded-full ${dot}`} />
     </span>
-  );
+  )
 }
 
 function ColorLegendItem({ halo, dot, text }: { halo: string; dot: string; text: string }) {
@@ -22,13 +22,13 @@ function ColorLegendItem({ halo, dot, text }: { halo: string; dot: string; text:
       <ColorDot halo={halo} dot={dot} />
       <span className="text-sm text-slate-600">{text}</span>
     </li>
-  );
+  )
 }
 
 /** Staging URL in the input → open release compared against that baseline. */
 function ReleaseStagingCompare() {
-  const [input, setInput] = useState(INTEREM_DATA_URL);
-  const baselineUrl = useMemo(() => deriveDataUrl(input), [input]);
+  const [input, setInput] = useState(INTEREM_DATA_URL)
+  const baselineUrl = useMemo(() => deriveDataUrl(input), [input])
 
   return (
     <div className="not-prose rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -53,8 +53,8 @@ function ReleaseStagingCompare() {
             search={(prev) => ({
               ...presetSearchDefaults,
               dataUrl: baselineUrl,
-              reference: "release",
-              locale: prev.locale ?? "",
+              reference: 'release',
+              locale: prev.locale ?? '',
             })}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white ${areaAccent.presets.button}`}
           >
@@ -74,7 +74,7 @@ function ReleaseStagingCompare() {
             href={`${baselineUrl}presets.min.json`}
             target="_blank"
             rel="noreferrer"
-            className={externalLinkClass("text-sm")}
+            className={externalLinkClass('text-sm')}
           >
             Test <code className="font-mono">presets.min.json</code> ↗
           </a>
@@ -84,7 +84,7 @@ function ReleaseStagingCompare() {
         <p className="mt-2 text-sm text-amber-700">Enter a valid http(s) URL.</p>
       ) : null}
     </div>
-  );
+  )
 }
 
 export function PageAbout() {
@@ -106,7 +106,7 @@ export function PageAbout() {
             className={externalLinkClass()}
           >
             id-tagging-schema
-          </a>{" "}
+          </a>{' '}
           — preset definitions, categories, fields, and published <code>dist/</code> JSON.
         </li>
         <li>
@@ -117,28 +117,28 @@ export function PageAbout() {
             className={externalLinkClass()}
           >
             schema-builder
-          </a>{" "}
+          </a>{' '}
           — tooling that builds the schema distribution consumed by editors.
         </li>
       </ul>
       <h2>Release vs staging</h2>
       <p>
         Use the toggle under the logo to switch between <strong>staging</strong> — the default,
-        latest unreleased build from id-tagging-schema <code>main</code> (labeled with when{" "}
-        <code>main</code> last changed) — and the published <strong>release</strong> (npm{" "}
-        <code>@latest</code>, with its version number). Deep-link the release with{" "}
+        latest unreleased build from id-tagging-schema <code>main</code> (labeled with when{' '}
+        <code>main</code> last changed) — and the published <strong>release</strong> (npm{' '}
+        <code>@latest</code>, with its version number). Deep-link the release with{' '}
         <code>?reference=release</code>. Your last choice is remembered in the browser.
       </p>
       <h2>Pointing at a different build</h2>
       <p>
-        Point the app at any compatible <code>dist/</code> base URL via the <code>dataUrl</code>{" "}
-        search param. The base URL is the folder that <em>directly contains</em>{" "}
-        <code>presets.min.json</code> (alongside <code>fields.min.json</code>,{" "}
+        Point the app at any compatible <code>dist/</code> base URL via the <code>dataUrl</code>{' '}
+        search param. The base URL is the folder that <em>directly contains</em>{' '}
+        <code>presets.min.json</code> (alongside <code>fields.min.json</code>,{' '}
         <code>preset_categories.min.json</code>, and <code>translations/en.min.json</code>).
       </p>
       <p>
-        Each id-tagging-schema pull request gets a Netlify preview at{" "}
-        <code>https://pr-{"{N}"}--ideditor-presets-preview.netlify.app/</code>. The schema JSON is
+        Each id-tagging-schema pull request gets a Netlify preview at{' '}
+        <code>https://pr-{'{N}'}--ideditor-presets-preview.netlify.app/</code>. The schema JSON is
         served from <code>/dist/</code>; GitHub bot comments usually link to the bundled iD editor
         at <code>/id/dist/</code> instead. Pick a PR from the list below — when its preview is
         ready, <strong>Open in browser</strong> loads that build compared against staging.
@@ -181,13 +181,13 @@ export function PageAbout() {
       </div>
       <h2>Spotting PR preview data</h2>
       <p>
-        Whenever you load a custom build via <code>dataUrl</code>,{" "}
+        Whenever you load a custom build via <code>dataUrl</code>,{' '}
         <span className="font-medium text-violet-700">violet</span> is the app-wide signal: the
-        banner under the header, a <span className="font-medium text-violet-700">Comparison</span>{" "}
+        banner under the header, a <span className="font-medium text-violet-700">Comparison</span>{' '}
         tab in the nav, and a violet dot on each preset that was added or modified versus staging.
         Open <span className="font-medium text-violet-700">Comparison</span> for the full list of
         added, modified, and removed presets.
       </p>
     </article>
-  );
+  )
 }

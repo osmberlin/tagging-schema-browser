@@ -1,42 +1,42 @@
-import { CountPill } from "@/components/ui/CountPill";
-import { DownloadButton } from "@/components/ui/DownloadButton";
-import { SchemaLoadingPanel } from "@/components/ui/LoadingSpinner";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { exportIcons } from "@/utils/pageExports";
-import { useMemo } from "react";
-import { IconCard } from "./IconCard";
-import { applyIconFacets, useIconFacetState } from "./useIconFacetState";
-import { useIconSearch } from "./useIconSearch";
+import { useMemo } from 'react'
+import { AreaIcon } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
+import { DownloadButton } from '@/components/ui/DownloadButton'
+import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { exportIcons } from '@/utils/pageExports'
+import { IconCard } from './IconCard'
+import { applyIconFacets, useIconFacetState } from './useIconFacetState'
+import { useIconSearch } from './useIconSearch'
 
 export function PageIcons() {
-  const { data, loading, dataUrl } = useSchema();
-  const [facetState, setFacetState] = useIconFacetState();
+  const { data, loading, dataUrl } = useSchema()
+  const [facetState, setFacetState] = useIconFacetState()
   const { icons } = useIconSearch(
     data?.presets ?? [],
     data?.fields ?? {},
     data?.fieldTranslations ?? {},
-  );
+  )
   const filtered = useMemo(() => {
-    if (!data) return [];
-    return applyIconFacets(icons, facetState);
-  }, [data, icons, facetState]);
-  const exportData = useMemo(() => exportIcons(filtered), [filtered]);
+    if (!data) return []
+    return applyIconFacets(icons, facetState)
+  }, [data, icons, facetState])
+  const exportData = useMemo(() => exportIcons(filtered), [filtered])
 
   if (!dataUrl && !data) {
     return (
       <p className="text-sm text-slate-500">
         Load schema data from the Presets page first (enter a data URL and click Load).
       </p>
-    );
+    )
   }
 
   if (loading && !data) {
-    return <SchemaLoadingPanel />;
+    return <SchemaLoadingPanel />
   }
 
-  if (!data) return null;
+  if (!data) return null
 
   return (
     <div className="space-y-4">
@@ -51,7 +51,7 @@ export function PageIcons() {
             <select
               value={facetState.i_sort}
               onChange={(e) =>
-                setFacetState({ i_sort: e.target.value as "name" | "usage_desc" | "usage_asc" })
+                setFacetState({ i_sort: e.target.value as 'name' | 'usage_desc' | 'usage_asc' })
               }
               className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.icons.focus}`}
             >
@@ -87,5 +87,5 @@ export function PageIcons() {
         </p>
       )}
     </div>
-  );
+  )
 }

@@ -1,28 +1,22 @@
-import { areaAccent } from "@/theme/areaAccent";
-import { clsx } from "clsx";
+import { areaAccent } from '@/theme/areaAccent'
+import { cn } from '@/utils/tw'
 
-export type SchemaArea = "presets" | "icons" | "fields" | "translations";
+export type SchemaArea = 'presets' | 'icons' | 'fields' | 'translations'
 
 const areaTitles: Record<SchemaArea, string> = {
-  presets: "Presets",
-  icons: "Icons",
-  fields: "Fields",
-  translations: "Translations",
-};
+  presets: 'Presets',
+  icons: 'Icons',
+  fields: 'Fields',
+  translations: 'Translations',
+}
 
 /** Distinct icons for each schema browsing area — reused in nav and cross-links. */
-export function AreaIcon({
-  area,
-  className,
-}: {
-  area: SchemaArea;
-  className?: string;
-}) {
-  const cn = clsx("shrink-0", className);
+export function AreaIcon({ area, className }: { area: SchemaArea; className?: string }) {
+  const iconClassName = cn('shrink-0', className)
   switch (area) {
-    case "presets":
+    case 'presets':
       return (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={cn}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={iconClassName}>
           <title>{areaTitles.presets}</title>
           <path
             d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
@@ -37,10 +31,10 @@ export function AreaIcon({
             strokeLinejoin="round"
           />
         </svg>
-      );
-    case "icons":
+      )
+    case 'icons':
       return (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={cn}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={iconClassName}>
           <title>{areaTitles.icons}</title>
           <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth={1.6} />
           <circle cx="8.5" cy="10" r="1.5" fill="currentColor" />
@@ -52,10 +46,10 @@ export function AreaIcon({
             strokeLinejoin="round"
           />
         </svg>
-      );
-    case "fields":
+      )
+    case 'fields':
       return (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={cn}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={iconClassName}>
           <title>{areaTitles.fields}</title>
           <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" strokeWidth={1.6} />
           <path
@@ -65,10 +59,10 @@ export function AreaIcon({
             strokeLinecap="round"
           />
         </svg>
-      );
-    case "translations":
+      )
+    case 'translations':
       return (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={cn}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={iconClassName}>
           <title>{areaTitles.translations}</title>
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={1.6} />
           <path
@@ -78,12 +72,12 @@ export function AreaIcon({
             strokeLinecap="round"
           />
         </svg>
-      );
+      )
   }
 }
 
 export function areaLabel(area: SchemaArea): string {
-  return areaTitles[area];
+  return areaTitles[area]
 }
 
 /** Inline label with the area icon — for headings, facets, and filter pills. */
@@ -93,18 +87,18 @@ export function AreaLabel({
   className,
   iconClassName,
 }: {
-  area: SchemaArea;
-  children: React.ReactNode;
-  className?: string;
-  iconClassName?: string;
+  area: SchemaArea
+  children: React.ReactNode
+  className?: string
+  iconClassName?: string
 }) {
   return (
-    <span className={clsx("inline-flex items-center gap-1.5", className)}>
+    <span className={cn('inline-flex items-center gap-1.5', className)}>
       <AreaIcon
         area={area}
-        className={clsx("h-3.5 w-3.5 shrink-0", areaAccent[area].icon, iconClassName)}
+        className={cn('h-3.5 w-3.5 shrink-0', areaAccent[area].icon, iconClassName)}
       />
       <span>{children}</span>
     </span>
-  );
+  )
 }

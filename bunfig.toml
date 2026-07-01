@@ -7,6 +7,7 @@
 # (Replaces the old `min-release-age=5` in .npmrc, which neither npm nor bun
 # actually read — so the delay was never being enforced.)
 minimumReleaseAge = 432000
+minimumReleaseAgeExcludes = ["typescript", "@typescript/typescript-*"]
 
 [run]
 # Run scripts (vite, tsc, biome, playwright) on the bun runtime instead of

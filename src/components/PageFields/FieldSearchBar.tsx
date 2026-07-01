@@ -1,8 +1,8 @@
-import { HeaderSearch } from "@/components/ui/HeaderSearch";
-import { useFieldFacetState } from "./useFieldFacetState";
+import { HeaderSearch } from '@/components/ui/HeaderSearch'
+import { useFieldFacetState } from './useFieldFacetState'
 
 export function FieldSearchBar() {
-  const [state, setState] = useFieldFacetState();
+  const [state, setState] = useFieldFacetState()
 
   return (
     <HeaderSearch
@@ -11,5 +11,5 @@ export function FieldSearchBar() {
       placeholder="Search fields by id, key, label, or type…"
       area="fields"
     />
-  );
+  )
 }

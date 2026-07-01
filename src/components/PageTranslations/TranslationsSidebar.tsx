@@ -1,16 +1,16 @@
-import { FacetSidebar } from "@/components/PagePresets/FacetSidebar";
-import { PRESET_SEARCH_ALL, searchPresets } from "@/components/PagePresets/presetSearch";
-import { filtersFromState, useSearchState } from "@/components/PagePresets/useSearchState";
-import { SidebarSection } from "@/components/ui/Sidebar";
-import { useLocale } from "@/contexts/LocaleContext";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { isDefaultTranslationPreset } from "@/utils/presetTextMatch";
-import { clsx } from "clsx";
-import { useMemo } from "react";
-import { type TranslationStatus, useTranslationStatus } from "./translationsSearch";
+import { useMemo } from 'react'
+import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
+import { PRESET_SEARCH_ALL, searchPresets } from '@/components/PagePresets/presetSearch'
+import { filtersFromState, useSearchState } from '@/components/PagePresets/useSearchState'
+import { SidebarSection } from '@/components/ui/Sidebar'
+import { useLocale } from '@/hooks/useLocale'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { isDefaultTranslationPreset } from '@/utils/presetTextMatch'
+import { cn } from '@/utils/tw'
+import { type TranslationStatus, useTranslationStatus } from './translationsSearch'
 
-type StatusOption = { value: Exclude<TranslationStatus, "">; label: string; count: number };
+type StatusOption = { value: Exclude<TranslationStatus, ''>; label: string; count: number }
 
 /** A single facet-style row (matches FacetSidebar's FacetGroup look). */
 function StatusRow({
@@ -19,21 +19,21 @@ function StatusRow({
   selected,
   onClick,
 }: {
-  label: string;
-  count: number;
-  selected: boolean;
-  onClick: () => void;
+  label: string
+  count: number
+  selected: boolean
+  onClick: () => void
 }) {
   return (
     <li className="relative">
       <button
         type="button"
         onClick={onClick}
-        className={clsx(
-          "flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",
+        className={cn(
+          'flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full',
           selected
             ? areaAccent.translations.facetSelected
-            : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
+            : 'text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block',
         )}
       >
         <span className="truncate">{label}</span>
@@ -42,36 +42,36 @@ function StatusRow({
         </span>
       </button>
     </li>
-  );
+  )
 }
 
 /** Translations sidebar: the translation-status filter first, then the shared facets. */
 export function TranslationsSidebar() {
-  const [status, setStatus] = useTranslationStatus();
-  const { locale, localeMap } = useLocale();
-  const { data } = useSchema();
-  const [state] = useSearchState();
+  const [status, setStatus] = useTranslationStatus()
+  const { locale, localeMap } = useLocale()
+  const { data } = useSchema()
+  const [state] = useSearchState()
 
   // Status breakdown of the current facet selection (same `matched` set the page uses).
   // `data` is a dep so the counts recompute once the search index is built.
   const counts = useMemo(() => {
-    if (!data) return { translated: 0, untranslated: 0 };
+    if (!data) return { translated: 0, untranslated: 0 }
     const res = searchPresets({
-      query: "",
+      query: '',
       filters: filtersFromState(state),
       page: 1,
       per_page: PRESET_SEARCH_ALL,
       sort: state.sort,
-    });
-    const matched = (res?.data.items ?? []).filter((p) => isDefaultTranslationPreset(p));
-    const translated = localeMap ? matched.filter((p) => localeMap.get(p.id)?.name).length : 0;
-    return { translated, untranslated: matched.length - translated };
-  }, [data, state, localeMap]);
+    })
+    const matched = (res?.data.items ?? []).filter((p) => isDefaultTranslationPreset(p))
+    const translated = localeMap ? matched.filter((p) => localeMap.get(p.id)?.name).length : 0
+    return { translated, untranslated: matched.length - translated }
+  }, [data, state, localeMap])
 
   const options: StatusOption[] = [
-    { value: "translated", label: "Translated", count: counts.translated },
-    { value: "untranslated", label: "Untranslated", count: counts.untranslated },
-  ];
+    { value: 'translated', label: 'Translated', count: counts.translated },
+    { value: 'untranslated', label: 'Untranslated', count: counts.untranslated },
+  ]
 
   return (
     <div className="flex flex-col">
@@ -85,7 +85,7 @@ export function TranslationsSidebar() {
                 count={o.count}
                 selected={status === o.value}
                 // Re-selecting the active status clears it (back to all).
-                onClick={() => setStatus(status === o.value ? "" : o.value)}
+                onClick={() => setStatus(status === o.value ? '' : o.value)}
               />
             ))}
           </ul>
@@ -93,5 +93,5 @@ export function TranslationsSidebar() {
       ) : null}
       <FacetSidebar />
     </div>
-  );
+  )
 }

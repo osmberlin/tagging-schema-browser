@@ -1,90 +1,90 @@
-import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
-import { PresetTranslationTable } from "@/components/PagePresets/PresetTranslationTable";
-import { PRESET_SEARCH_ALL, searchPresets } from "@/components/PagePresets/presetSearch";
-import { filtersFromState, useSearchState } from "@/components/PagePresets/useSearchState";
-import { CountPill } from "@/components/ui/CountPill";
-import { DownloadButton } from "@/components/ui/DownloadButton";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { useLocale } from "@/contexts/LocaleContext";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { exportTranslations } from "@/utils/pageExports";
+import { Link } from '@tanstack/react-router'
+import { useMemo } from 'react'
+import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
+import { PRESET_SEARCH_ALL, searchPresets } from '@/components/PagePresets/presetSearch'
+import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
+import { filtersFromState, useSearchState } from '@/components/PagePresets/useSearchState'
+import { AreaIcon } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
+import { DownloadButton } from '@/components/ui/DownloadButton'
+import { useLocale } from '@/hooks/useLocale'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { exportTranslations } from '@/utils/pageExports'
 import {
   isDefaultTranslationPreset,
   isTranslationPresetEligible,
   presetMatchesTextQuery,
-} from "@/utils/presetTextMatch";
-import type { DenormalizedPreset } from "@/utils/types";
-import { Link } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { useTranslationStatus } from "./translationsSearch";
+} from '@/utils/presetTextMatch'
+import type { DenormalizedPreset } from '@/utils/types'
+import { useTranslationStatus } from './translationsSearch'
 
-const PER_PAGE = 50;
+const PER_PAGE = 50
 
 export function PageTranslations() {
-  const { data, dataUrl } = useSchema();
-  const [state, setState] = useSearchState();
-  const [translationStatus] = useTranslationStatus();
-  const { locale, localeMap, loading, error } = useLocale();
+  const { data, dataUrl } = useSchema()
+  const [state, setState] = useSearchState()
+  const [translationStatus] = useTranslationStatus()
+  const { locale, localeMap, loading, error } = useLocale()
 
-  const filters = useMemo(() => filtersFromState(state), [state]);
+  const filters = useMemo(() => filtersFromState(state), [state])
 
   const facetFiltered = useMemo(() => {
-    if (!data) return [] as DenormalizedPreset[];
+    if (!data) return [] as DenormalizedPreset[]
     const res = searchPresets({
-      query: "",
+      query: '',
       filters,
       page: 1,
       per_page: PRESET_SEARCH_ALL,
       sort: state.sort,
-    });
-    return res?.data.items ?? [];
-  }, [data, filters, state.sort]);
+    })
+    return res?.data.items ?? []
+  }, [data, filters, state.sort])
 
   // Default list: searchable presets with a display name.
   const matched = useMemo(
     () => facetFiltered.filter((p) => isDefaultTranslationPreset(p)),
     [facetFiltered],
-  );
+  )
 
-  const q = state.q.trim();
+  const q = state.q.trim()
   const rows = useMemo(() => {
-    let r = q ? facetFiltered.filter((p) => isTranslationPresetEligible(p, q)) : matched;
+    let r = q ? facetFiltered.filter((p) => isTranslationPresetEligible(p, q)) : matched
     if (q) {
       r = r.filter((p) => {
-        const loc = localeMap?.get(p.id);
-        return presetMatchesTextQuery(p, q, { locale: loc, includeTranslationKeys: true });
-      });
+        const loc = localeMap?.get(p.id)
+        return presetMatchesTextQuery(p, q, { locale: loc, includeTranslationKeys: true })
+      })
     }
     if (translationStatus && localeMap) {
       r = r.filter((p) => {
-        const translated = Boolean(localeMap.get(p.id)?.name);
-        return translationStatus === "translated" ? translated : !translated;
-      });
+        const translated = Boolean(localeMap.get(p.id)?.name)
+        return translationStatus === 'translated' ? translated : !translated
+      })
     }
-    return r;
-  }, [facetFiltered, matched, q, translationStatus, localeMap]);
+    return r
+  }, [facetFiltered, matched, q, translationStatus, localeMap])
 
   const translatedCount = useMemo(
     () => (localeMap ? matched.filter((p) => localeMap.get(p.id)?.name).length : 0),
     [matched, localeMap],
-  );
+  )
   const exportData = useMemo(
     () => exportTranslations(rows, locale || undefined, localeMap),
     [rows, locale, localeMap],
-  );
-  const exportFilename = locale ? `translations-${locale}.json` : "translations.json";
-  const showLocale = Boolean(locale);
+  )
+  const exportFilename = locale ? `translations-${locale}.json` : 'translations.json'
+  const showLocale = Boolean(locale)
   const canExportTranslations =
-    exportData.length > 0 && (!showLocale || (!loading && !error && localeMap));
+    exportData.length > 0 && (!showLocale || (!loading && !error && localeMap))
 
   if (!dataUrl && !data) {
-    return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>;
+    return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>
   }
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
-  const page = Math.min(state.page, totalPages);
-  const pageRows = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PER_PAGE))
+  const page = Math.min(state.page, totalPages)
+  const pageRows = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   return (
     <div className="space-y-4">
@@ -103,11 +103,11 @@ export function PageTranslations() {
         <p className="text-sm text-slate-500">
           {showLocale ? (
             <>
-              Comparing the preset's English source with{" "}
+              Comparing the preset's English source with{' '}
               <strong className="font-mono text-slate-700">{locale}</strong>
               {localeMap ? (
                 <>
-                  {" "}
+                  {' '}
                   — {translatedCount} of {matched.length} translated
                 </>
               ) : null}
@@ -129,8 +129,8 @@ export function PageTranslations() {
         <>
           <ul className="space-y-3">
             {pageRows.map((p) => {
-              const loc = localeMap?.get(p.id);
-              const untranslated = showLocale && !loc?.name;
+              const loc = localeMap?.get(p.id)
+              const untranslated = showLocale && !loc?.name
               return (
                 <li
                   key={p.id}
@@ -139,7 +139,7 @@ export function PageTranslations() {
                   <Link
                     to="/preset/$"
                     params={{ _splat: p.id }}
-                    search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+                    search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
                     className={`group/ac relative flex w-full items-start justify-between gap-3 bg-slate-50/70 px-3 py-2 pr-9 text-left transition ${areaAccent.translations.rowHover}`}
                     title="Show details of preset"
                   >
@@ -175,7 +175,7 @@ export function PageTranslations() {
                     }
                   />
                 </li>
-              );
+              )
             })}
           </ul>
 
@@ -188,7 +188,7 @@ export function PageTranslations() {
           {totalPages > 1 ? (
             <div className="flex items-center justify-between text-sm text-slate-600">
               <span>
-                {rows.length} preset{rows.length !== 1 ? "s" : ""}
+                {rows.length} preset{rows.length !== 1 ? 's' : ''}
               </span>
               <div className="flex items-center gap-3">
                 <button
@@ -216,5 +216,5 @@ export function PageTranslations() {
         </>
       )}
     </div>
-  );
+  )
 }

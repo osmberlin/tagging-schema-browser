@@ -1,37 +1,37 @@
-import { CatalystDialog, CatalystDialogBody, CatalystDialogTitle } from "@/components/ui/Dialog";
-import { Kbd, modLabel } from "@/components/ui/Kbd";
+import { CatalystDialog, CatalystDialogBody, CatalystDialogTitle } from '@/components/ui/Dialog'
+import { Kbd, modLabel } from '@/components/ui/Kbd'
 
 /** A single keyboard combo, rendered as a row of keycaps. */
-type Combo = string[];
+type Combo = string[]
 
 type ShortcutItem = {
-  label: string;
+  label: string
   /** Alternative combos that all trigger the action (joined by "or"). */
-  keys: Combo[];
-};
+  keys: Combo[]
+}
 
 export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const mod = modLabel();
+  const mod = modLabel()
   const groups: { title: string; items: ShortcutItem[] }[] = [
     {
-      title: "General",
+      title: 'General',
       items: [
-        { label: "Focus search", keys: [[mod, "K"], ["/"]] },
-        { label: "Show this dialog", keys: [["?"]] },
-        { label: "Close dialog", keys: [["Esc"]] },
+        { label: 'Focus search', keys: [[mod, 'K'], ['/']] },
+        { label: 'Show this dialog', keys: [['?']] },
+        { label: 'Close dialog', keys: [['Esc']] },
       ],
     },
     {
-      title: "Go to page",
+      title: 'Go to page',
       items: [
-        { label: "Presets", keys: [["g", "p"]] },
-        { label: "Icons", keys: [["g", "i"]] },
-        { label: "Fields", keys: [["g", "f"]] },
-        { label: "Translations", keys: [["g", "t"]] },
-        { label: "About", keys: [["g", "a"]] },
+        { label: 'Presets', keys: [['g', 'p']] },
+        { label: 'Icons', keys: [['g', 'i']] },
+        { label: 'Fields', keys: [['g', 'f']] },
+        { label: 'Translations', keys: [['g', 't']] },
+        { label: 'About', keys: [['g', 'a']] },
       ],
     },
-  ];
+  ]
 
   return (
     <CatalystDialog open={open} onClose={onClose} size="lg">
@@ -49,7 +49,7 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
       <CatalystDialogBody className="space-y-6">
         {groups.map((group) => (
           <div key={group.title}>
-            <h3 className="mb-2 font-display text-xs font-medium uppercase tracking-wide text-slate-500">
+            <h3 className="mb-2 font-display text-xs font-medium tracking-wide text-slate-500 uppercase">
               {group.title}
             </h3>
             <ul className="space-y-2">
@@ -61,7 +61,7 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
                   <span>{item.label}</span>
                   <span className="flex items-center gap-1.5">
                     {item.keys.map((combo, comboIndex) => (
-                      <span key={combo.join("+")} className="flex items-center gap-1">
+                      <span key={combo.join('+')} className="flex items-center gap-1">
                         {comboIndex > 0 ? <span className="text-xs text-slate-400">or</span> : null}
                         {combo.map((key) => (
                           <Kbd key={key}>{key}</Kbd>
@@ -76,5 +76,5 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
         ))}
       </CatalystDialogBody>
     </CatalystDialog>
-  );
+  )
 }

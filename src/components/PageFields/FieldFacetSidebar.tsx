@@ -1,10 +1,10 @@
-import { SidebarSection } from "@/components/ui/Sidebar";
-import { AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { clsx } from "clsx";
-import { useFieldFacetMeta, useFieldFacetState } from "./useFieldFacetState";
-import { useFieldSearch } from "./useFieldSearch";
+import { AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
+import { SidebarSection } from '@/components/ui/Sidebar'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { cn } from '@/utils/tw'
+import { useFieldFacetMeta, useFieldFacetState } from './useFieldFacetState'
+import { useFieldSearch } from './useFieldSearch'
 
 function FacetButton({
   active,
@@ -13,22 +13,22 @@ function FacetButton({
   count,
   onClick,
 }: {
-  active: boolean;
-  label: string;
-  labelArea?: SchemaArea;
-  count: number;
-  onClick: () => void;
+  active: boolean
+  label: string
+  labelArea?: SchemaArea
+  count: number
+  onClick: () => void
 }) {
   return (
     <li className="relative">
       <button
         type="button"
         onClick={onClick}
-        className={clsx(
-          "flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full",
+        className={cn(
+          'flex w-full items-center justify-between gap-2 py-0.5 pl-4 text-left text-sm transition before:pointer-events-none before:absolute before:top-1/2 before:-left-1 before:h-1.5 before:w-1.5 before:-translate-y-1/2 before:rounded-full',
           active
             ? areaAccent.fields.facetSelected
-            : "text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block",
+            : 'text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block',
         )}
       >
         <span className="truncate">
@@ -45,41 +45,41 @@ function FacetButton({
         </span>
       </button>
     </li>
-  );
+  )
 }
 
 export function FieldFacetSidebar() {
-  const { data } = useSchema();
+  const { data } = useSchema()
   const { fields, types } = useFieldSearch(
     data?.fields ?? {},
     data?.presets ?? [],
     data?.fieldTranslations ?? {},
-  );
-  const [state, setState] = useFieldFacetState();
-  const meta = useFieldFacetMeta(fields);
+  )
+  const [state, setState] = useFieldFacetState()
+  const meta = useFieldFacetMeta(fields)
 
   return (
     <div className="mt-4 flex flex-col gap-4">
       <SidebarSection title="Usage" area="fields">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
-            active={state.f_usage === "all"}
+            active={state.f_usage === 'all'}
             label="All"
             count={fields.length}
-            onClick={() => setState({ f_usage: "all" })}
+            onClick={() => setState({ f_usage: 'all' })}
           />
           <FacetButton
-            active={state.f_usage === "used"}
+            active={state.f_usage === 'used'}
             label="Used by presets"
             labelArea="presets"
             count={meta.usedCount}
-            onClick={() => setState({ f_usage: "used" })}
+            onClick={() => setState({ f_usage: 'used' })}
           />
           <FacetButton
-            active={state.f_usage === "unused"}
+            active={state.f_usage === 'unused'}
             label="Unused"
             count={meta.unusedCount}
-            onClick={() => setState({ f_usage: "unused" })}
+            onClick={() => setState({ f_usage: 'unused' })}
           />
         </ul>
       </SidebarSection>
@@ -87,10 +87,10 @@ export function FieldFacetSidebar() {
       <SidebarSection title="Type">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton
-            active={state.f_type === "all"}
+            active={state.f_type === 'all'}
             label="All"
             count={fields.length}
-            onClick={() => setState({ f_type: "all" })}
+            onClick={() => setState({ f_type: 'all' })}
           />
           {types.map((type) => (
             <FacetButton
@@ -104,5 +104,5 @@ export function FieldFacetSidebar() {
         </ul>
       </SidebarSection>
     </div>
-  );
+  )
 }

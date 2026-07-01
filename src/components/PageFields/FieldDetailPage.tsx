@@ -1,28 +1,28 @@
-import { FieldTranslationTable } from "@/components/PageFields/FieldTranslationTable";
-import { PresetSourceTree } from "@/components/PagePresets/PresetSourceTree";
-import { GeometryIcons } from "@/components/PagePresets/geometryIcons";
-import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
-import { AreaLink } from "@/components/ui/AreaLink";
-import { DetailDisclosure } from "@/components/ui/DetailDisclosure";
-import { RelatedBlock } from "@/components/ui/RelatedBlock";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { useLocale } from "@/contexts/LocaleContext";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { externalAccent, externalPillClass } from "@/theme/externalAccent";
-import { githubFileUrl, schemaRepoPath } from "@/utils/githubFileUrl";
-import type { DenormalizedPreset, RawFieldTranslation } from "@/utils/types";
-import { useParams } from "@tanstack/react-router";
+import { useParams } from '@tanstack/react-router'
+import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
+import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
+import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
+import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { AreaIcon } from '@/components/ui/areaIcons'
+import { AreaLink } from '@/components/ui/AreaLink'
+import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
+import { RelatedBlock } from '@/components/ui/RelatedBlock'
+import { useLocale } from '@/hooks/useLocale'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { externalAccent, externalPillClass } from '@/theme/externalAccent'
+import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import type { DenormalizedPreset, RawFieldTranslation } from '@/utils/types'
 
-type RelatedItem = { id: string; name: string };
+type RelatedItem = { id: string; name: string }
 
 export function FieldDetailPage() {
-  const { _splat: fieldId } = useParams({ strict: false });
-  const { fields, presets, dataUrl, data } = useSchema();
-  const raw = fieldId ? fields[fieldId] : undefined;
+  const { _splat: fieldId } = useParams({ strict: false })
+  const { fields, presets, dataUrl, data } = useSchema()
+  const raw = fieldId ? fields[fieldId] : undefined
 
   if (!fieldId) {
-    return <p className="text-sm text-slate-600">No field id in URL.</p>;
+    return <p className="text-sm text-slate-600">No field id in URL.</p>
   }
 
   if (!raw) {
@@ -34,18 +34,18 @@ export function FieldDetailPage() {
           schema.
         </p>
       </div>
-    );
+    )
   }
 
   const english: RawFieldTranslation = data?.fieldTranslations[fieldId] ?? {
-    label: typeof raw.label === "string" ? raw.label : undefined,
-    placeholder: typeof raw.placeholder === "string" ? raw.placeholder : undefined,
-  };
+    label: typeof raw.label === 'string' ? raw.label : undefined,
+    placeholder: typeof raw.placeholder === 'string' ? raw.placeholder : undefined,
+  }
 
-  const primaryPresets = presets.filter((p) => p.fields.includes(fieldId));
+  const primaryPresets = presets.filter((p) => p.fields.includes(fieldId))
   const morePresets = presets.filter(
     (p) => p.moreFields.includes(fieldId) && !p.fields.includes(fieldId),
-  );
+  )
 
   return (
     <FieldDetailContent
@@ -54,9 +54,9 @@ export function FieldDetailPage() {
       english={english}
       primaryPresets={primaryPresets}
       morePresets={morePresets}
-      dataUrl={dataUrl ?? ""}
+      dataUrl={dataUrl ?? ''}
     />
-  );
+  )
 }
 
 function FieldDetailContent({
@@ -67,27 +67,27 @@ function FieldDetailContent({
   morePresets,
   dataUrl,
 }: {
-  fieldId: string;
-  raw: Record<string, unknown>;
-  english: RawFieldTranslation;
-  primaryPresets: DenormalizedPreset[];
-  morePresets: DenormalizedPreset[];
-  dataUrl: string;
+  fieldId: string
+  raw: Record<string, unknown>
+  english: RawFieldTranslation
+  primaryPresets: DenormalizedPreset[]
+  morePresets: DenormalizedPreset[]
+  dataUrl: string
 }) {
-  const { locale, fieldLocaleMap, loading: localeLoading, error: localeError } = useLocale();
-  const fieldLocale = locale ? fieldLocaleMap?.[fieldId] : undefined;
+  const { locale, fieldLocaleMap, loading: localeLoading, error: localeError } = useLocale()
+  const fieldLocale = locale ? fieldLocaleMap?.[fieldId] : undefined
 
-  const filePath = schemaRepoPath("field", fieldId);
-  const githubUrl = githubFileUrl(dataUrl, filePath);
-  const label = english.label ?? fieldId;
-  const key = typeof raw.key === "string" ? raw.key : fieldId;
-  const type = typeof raw.type === "string" ? raw.type : "unknown";
-  const geometry = Array.isArray(raw.geometry) ? (raw.geometry as string[]) : [];
+  const filePath = schemaRepoPath('field', fieldId)
+  const githubUrl = githubFileUrl(dataUrl, filePath)
+  const label = english.label ?? fieldId
+  const key = typeof raw.key === 'string' ? raw.key : fieldId
+  const type = typeof raw.type === 'string' ? raw.type : 'unknown'
+  const geometry = Array.isArray(raw.geometry) ? (raw.geometry as string[]) : []
 
-  const onFilterPrimaryPresets = { primaryFieldIds: [fieldId] };
-  const onFilterMorePresets = { moreFieldIds: [fieldId] };
+  const onFilterPrimaryPresets = { primaryFieldIds: [fieldId] }
+  const onFilterMorePresets = { moreFieldIds: [fieldId] }
 
-  const toItem = (p: DenormalizedPreset): RelatedItem => ({ id: p.id, name: p.name });
+  const toItem = (p: DenormalizedPreset): RelatedItem => ({ id: p.id, name: p.name })
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
@@ -136,8 +136,8 @@ function FieldDetailContent({
             to="/"
             search={(prev) => ({
               ...presetSearchDefaults,
-              dataUrl: prev.dataUrl ?? "",
-              locale: prev.locale ?? "",
+              dataUrl: prev.dataUrl ?? '',
+              locale: prev.locale ?? '',
               fieldIds: [fieldId],
               page: 1,
             })}
@@ -157,7 +157,7 @@ function FieldDetailContent({
               EN ↔ <span className="font-mono">{locale}</span>
             </>
           ) : (
-            "English"
+            'English'
           )
         }
         defaultOpen
@@ -215,5 +215,5 @@ function FieldDetailContent({
         </div>
       </DetailDisclosure>
     </div>
-  );
+  )
 }

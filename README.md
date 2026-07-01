@@ -20,12 +20,12 @@ This app loads a built `dist/` of the schema and makes it explorable in the brow
 
 Use the header toggle or URL params to pick the dataset:
 
-| Goal | URL |
-| --- | --- |
-| Latest staging / unreleased (default) | open the app |
-| Published release | `…/?reference=release` |
-| A specific version | `…/?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6/dist` |
-| A pull-request preview | `…/?dataUrl=<the PR's built dist/ URL>` |
+| Goal                                  | URL                                                                               |
+| ------------------------------------- | --------------------------------------------------------------------------------- |
+| Latest staging / unreleased (default) | open the app                                                                      |
+| Published release                     | `…/?reference=release`                                                            |
+| A specific version                    | `…/?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6/dist` |
+| A pull-request preview                | `…/?dataUrl=<the PR's built dist/ URL>`                                           |
 
 **Staging** (default) loads the dist built from id-tagging-schema `main` on every push; the toggle shows when `main` last changed, not the npm version. **Release** loads the published npm package (`@latest`) when you add `?reference=release`. When you open a PR preview via `dataUrl`, the app compares it against staging.
 

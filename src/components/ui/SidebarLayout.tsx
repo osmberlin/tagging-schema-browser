@@ -1,47 +1,41 @@
-import { fieldFacetDefaults } from "@/components/PageFields/useFieldFacetState";
-import { iconFacetDefaults } from "@/components/PageIcons/useIconFacetState";
-import { presetSearchDefaults } from "@/components/PagePresets/useSearchState";
-import { translationsSearchDefaults } from "@/components/PageTranslations/translationsSearch";
-import { DataSourceBanner } from "@/components/ui/DataSourceBanner";
-import { Kbd } from "@/components/ui/Kbd";
-import { LanguagePicker } from "@/components/ui/LanguagePicker";
-import { PrimaryNav } from "@/components/ui/PrimaryNav";
-import { ReferenceToggle } from "@/components/ui/ReferenceToggle";
-import { SchemaLoadIndicator } from "@/components/ui/SchemaLoadIndicator";
-import { ShortcutsDialog } from "@/components/ui/ShortcutsDialog";
-import { utilityNavClass } from "@/theme/areaAccent";
-import { brandAccent } from "@/theme/brandAccent";
-import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
-import { useHotkey, useHotkeySequence } from "@tanstack/react-hotkeys";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { PAGE_SEARCH_INPUT_ID } from "./HeaderSearch";
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
+import { useHotkey, useHotkeySequence } from '@tanstack/react-hotkeys'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
+import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
+import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
+import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
+import { DataSourceBanner } from '@/components/ui/DataSourceBanner'
+import { Kbd } from '@/components/ui/Kbd'
+import { LanguagePicker } from '@/components/ui/LanguagePicker'
+import { PrimaryNav } from '@/components/ui/PrimaryNav'
+import { ReferenceToggle } from '@/components/ui/ReferenceToggle'
+import { SchemaLoadIndicator } from '@/components/ui/SchemaLoadIndicator'
+import { ShortcutsDialog } from '@/components/ui/ShortcutsDialog'
+import { utilityNavClass } from '@/theme/areaAccent'
+import { brandAccent } from '@/theme/brandAccent'
+import { PAGE_SEARCH_INPUT_ID } from './HeaderSearch'
 
-function UtilityNavLinks({
-  onNavigate,
-  onHelp,
-}: {
-  onNavigate?: () => void;
-  onHelp: () => void;
-}) {
-  const { pathname } = useLocation();
+function UtilityNavLinks({ onNavigate, onHelp }: { onNavigate?: () => void; onHelp: () => void }) {
+  const { pathname } = useLocation()
   return (
     <>
       <LanguagePicker />
       <HelpButton onClick={onHelp} />
       <Link
         to="/about"
-        search={(prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" })}
+        search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
         onClick={onNavigate}
-        className={utilityNavClass(pathname === "/about")}
+        className={utilityNavClass(pathname === '/about')}
       >
         About
       </Link>
     </>
-  );
+  )
 }
 
-function FiltersIcon(props: React.ComponentPropsWithoutRef<"svg">) {
+function FiltersIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
     <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
       <path
@@ -51,7 +45,7 @@ function FiltersIcon(props: React.ComponentPropsWithoutRef<"svg">) {
         d="M4 6h16M6 12h12M9 18h6"
       />
     </svg>
-  );
+  )
 }
 
 function HelpButton({ onClick }: { onClick: () => void }) {
@@ -65,7 +59,7 @@ function HelpButton({ onClick }: { onClick: () => void }) {
     >
       <Kbd>?</Kbd>
     </button>
-  );
+  )
 }
 
 export function SidebarLayout({
@@ -73,78 +67,78 @@ export function SidebarLayout({
   sidebar,
   topSearch,
 }: {
-  children: React.ReactNode;
-  sidebar: React.ReactNode;
-  topSearch?: React.ReactNode;
+  children: React.ReactNode
+  sidebar: React.ReactNode
+  topSearch?: React.ReactNode
 }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
   const showSidebar =
-    location.pathname === "/" ||
-    location.pathname === "/icons" ||
-    location.pathname === "/fields" ||
-    location.pathname === "/translations";
+    location.pathname === '/' ||
+    location.pathname === '/icons' ||
+    location.pathname === '/fields' ||
+    location.pathname === '/translations'
 
   const focusSearch = () => {
-    const input = document.getElementById(PAGE_SEARCH_INPUT_ID) as HTMLInputElement | null;
-    if (!input || document.activeElement === input) return;
-    input.focus();
-    input.select();
-  };
+    const input = document.getElementById(PAGE_SEARCH_INPUT_ID) as HTMLInputElement | null
+    if (!input || document.activeElement === input) return
+    input.focus()
+    input.select()
+  }
 
   // Mod+K / "/" focus search; "?" opens help; "g" then p/i/a navigates.
   // The library auto-ignores single-key/sequence hotkeys while typing in inputs.
-  useHotkey("Mod+K", focusSearch);
-  useHotkey("/", focusSearch);
-  useHotkey({ key: "?", shift: true }, () => setHelpOpen(true));
-  useHotkeySequence(["G", "P"], () =>
+  useHotkey('Mod+K', focusSearch)
+  useHotkey('/', focusSearch)
+  useHotkey({ key: '?', shift: true }, () => setHelpOpen(true))
+  useHotkeySequence(['G', 'P'], () =>
     navigate({
-      to: "/",
+      to: '/',
       search: (prev) => ({
         ...presetSearchDefaults,
-        dataUrl: prev.dataUrl ?? "",
-        locale: prev.locale ?? "",
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
       }),
     }),
-  );
-  useHotkeySequence(["G", "I"], () =>
+  )
+  useHotkeySequence(['G', 'I'], () =>
     navigate({
-      to: "/icons",
+      to: '/icons',
       search: (prev) => ({
         ...iconFacetDefaults,
-        dataUrl: prev.dataUrl ?? "",
-        locale: prev.locale ?? "",
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
       }),
     }),
-  );
-  useHotkeySequence(["G", "F"], () =>
+  )
+  useHotkeySequence(['G', 'F'], () =>
     navigate({
-      to: "/fields",
+      to: '/fields',
       search: (prev) => ({
         ...fieldFacetDefaults,
-        dataUrl: prev.dataUrl ?? "",
-        locale: prev.locale ?? "",
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
       }),
     }),
-  );
-  useHotkeySequence(["G", "T"], () =>
+  )
+  useHotkeySequence(['G', 'T'], () =>
     navigate({
-      to: "/translations",
+      to: '/translations',
       search: (prev) => ({
         ...translationsSearchDefaults,
-        dataUrl: prev.dataUrl ?? "",
-        locale: prev.locale ?? "",
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
       }),
     }),
-  );
-  useHotkeySequence(["G", "A"], () =>
+  )
+  useHotkeySequence(['G', 'A'], () =>
     navigate({
-      to: "/about",
-      search: (prev) => ({ dataUrl: prev.dataUrl ?? "", locale: prev.locale ?? "" }),
+      to: '/about',
+      search: (prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' }),
     }),
-  );
+  )
 
   return (
     <div className="flex min-h-svh w-full flex-col bg-white text-slate-900">
@@ -168,8 +162,8 @@ export function SidebarLayout({
                 to="/"
                 search={(prev) => ({
                   ...presetSearchDefaults,
-                  dataUrl: prev.dataUrl ?? "",
-                  locale: prev.locale ?? "",
+                  dataUrl: prev.dataUrl ?? '',
+                  locale: prev.locale ?? '',
                 })}
                 className="shrink-0"
                 aria-label="Tagging Schema Browser home"
@@ -198,8 +192,8 @@ export function SidebarLayout({
                   to="/"
                   search={(prev) => ({
                     ...presetSearchDefaults,
-                    dataUrl: prev.dataUrl ?? "",
-                    locale: prev.locale ?? "",
+                    dataUrl: prev.dataUrl ?? '',
+                    locale: prev.locale ?? '',
                   })}
                   className="hidden font-display text-sm leading-none font-semibold whitespace-nowrap text-slate-900 sm:inline"
                 >
@@ -216,12 +210,12 @@ export function SidebarLayout({
           <div
             className={
               topSearch
-                ? "order-last flex w-full min-w-[min(100%,calc(45px+33rem))] flex-1 basis-[calc(45px+33rem)] items-center gap-3 lg:order-none"
-                : "order-last flex w-full min-w-[min(100%,33rem)] flex-1 basis-132 items-center gap-3 lg:order-none"
+                ? 'order-last flex w-full min-w-[min(100%,calc(45px+33rem))] flex-1 basis-[calc(45px+33rem)] items-center gap-3 lg:order-none'
+                : 'order-last flex w-full min-w-[min(100%,33rem)] flex-1 basis-132 items-center gap-3 lg:order-none'
             }
           >
             {topSearch ? (
-              <div className="min-w-[45px] max-w-[450px] flex-1">{topSearch}</div>
+              <div className="max-w-[450px] min-w-[45px] flex-1">{topSearch}</div>
             ) : null}
             <nav aria-label="Settings" className="ml-auto flex shrink-0 items-center gap-1">
               <UtilityNavLinks onHelp={() => setHelpOpen(true)} />
@@ -290,5 +284,5 @@ export function SidebarLayout({
 
       <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
-  );
+  )
 }

@@ -1,36 +1,36 @@
-import { FieldOptionsPreview } from "@/components/PagePresets/FieldOptionsPreview";
-import { useLocale } from "@/contexts/LocaleContext";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { getPresetFieldSections } from "@/utils/fieldOptions";
-import type { DenormalizedPreset } from "@/utils/types";
+import { FieldOptionsPreview } from '@/components/PagePresets/FieldOptionsPreview'
+import { useLocale } from '@/hooks/useLocale'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { getPresetFieldSections } from '@/utils/fieldOptions'
+import type { DenormalizedPreset } from '@/utils/types'
 
 export function FieldSourceEnrichment({
   fieldId,
   preset,
   presets,
 }: {
-  fieldId: string;
-  preset: DenormalizedPreset;
-  presets: DenormalizedPreset[];
+  fieldId: string
+  preset: DenormalizedPreset
+  presets: DenormalizedPreset[]
 }) {
-  const { locale, fieldLocaleMap } = useLocale();
-  const { fields, fieldTranslations } = useSchema();
+  const { locale, fieldLocaleMap } = useLocale()
+  const { fields, fieldTranslations } = useSchema()
   const section = getPresetFieldSections(preset, fields, fieldTranslations, presets).find(
     (s) => s.fieldId === fieldId,
-  );
+  )
 
-  if (!section) return null;
+  if (!section) return null
 
   const optionRows = section.options.filter((row) => {
-    const strings = fieldTranslations[fieldId]?.options ?? {};
-    return Boolean(row.icon || strings[row.optionValue] || row.childPreset);
-  });
+    const strings = fieldTranslations[fieldId]?.options ?? {}
+    return Boolean(row.icon || strings[row.optionValue] || row.childPreset)
+  })
 
-  if (optionRows.length === 0) return null;
+  if (optionRows.length === 0) return null
 
   return (
-    <div className="mb-2 ml-5 mt-2 max-w-2xl space-y-2 border-l-2 border-emerald-100 pl-4 font-sans">
+    <div className="mt-2 mb-2 ml-5 max-w-2xl space-y-2 border-l-2 border-emerald-100 pl-4 font-sans">
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
         <span className="font-medium text-slate-800">{section.labelEn}</span>
         {section.inPrimary ? (
@@ -48,5 +48,5 @@ export function FieldSourceEnrichment({
       </div>
       <FieldOptionsPreview options={optionRows} locale={locale} fieldLocaleMap={fieldLocaleMap} />
     </div>
-  );
+  )
 }
