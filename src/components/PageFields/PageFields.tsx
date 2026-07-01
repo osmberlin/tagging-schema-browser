@@ -46,11 +46,6 @@ export function PageFields() {
           Fields <CountPill className="text-sm">{filtered.length}</CountPill>
         </h1>
         <div className="flex flex-wrap items-center gap-3">
-          <DownloadButton
-            filename="fields.json"
-            data={exportData}
-            disabled={exportData.length === 0}
-          />
           <label className="flex items-center gap-2 text-sm text-slate-500">
             Sort
             <select
@@ -68,6 +63,11 @@ export function PageFields() {
               <option value="name">Id</option>
             </select>
           </label>
+          <DownloadButton
+            filename="fields.json"
+            data={exportData}
+            disabled={exportData.length === 0}
+          />
         </div>
       </div>
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
