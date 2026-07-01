@@ -1,10 +1,12 @@
 import { CountPill } from "@/components/ui/CountPill";
+import { DownloadButton } from "@/components/ui/DownloadButton";
 import { Input } from "@/components/ui/Input";
 import { AreaIcon, AreaLabel, type SchemaArea } from "@/components/ui/areaIcons";
 import { useSchema } from "@/contexts/SchemaContext";
 import { DEFAULT_CDN } from "@/contexts/SchemaContext";
 import { areaAccent } from "@/theme/areaAccent";
 import { brandAccent } from "@/theme/brandAccent";
+import { exportPresets } from "@/utils/pageExports";
 import { Fragment, useMemo } from "react";
 import { PresetTable } from "./PresetTable";
 import { getExpectedFilesHelp } from "./dataLoader";
@@ -14,7 +16,9 @@ import { useSearchState } from "./useSearchState";
 export function PagePresets() {
   const { dataUrl, setDataUrl, load, loading, error, data } = useSchema();
   const [searchState, setSearchState] = useSearchState();
-  const totalCount = usePresetSearch()?.data.total ?? 0;
+  const searchResult = usePresetSearch();
+  const totalCount = searchResult?.data.total ?? 0;
+  const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult]);
   const brokenPresetIconCount = useMemo(
     () => data?.presets.filter((preset) => preset.iconBroken).length ?? 0,
     [data],
@@ -164,10 +168,18 @@ export function PagePresets() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
-          <AreaIcon area="presets" className={`h-7 w-7 ${areaAccent.presets.icon}`} />
-          Presets <CountPill className="text-sm">{totalCount}</CountPill>
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
+            <AreaIcon area="presets" className={`h-7 w-7 ${areaAccent.presets.icon}`} />
+            Presets <CountPill className="text-sm">{totalCount}</CountPill>
+          </h1>
+          <DownloadButton
+            filename="presets.json"
+            data={exportData}
+            disabled={exportData.length === 0}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${areaAccent.presets.button}`}
+          />
+        </div>
         {activePills.length > 0 ? (
           <div className="flex flex-wrap items-center gap-1.5">
             {activePills.map((pill, i) => {
