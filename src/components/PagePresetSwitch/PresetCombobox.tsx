@@ -1,26 +1,25 @@
-import {
-  Combobox,
-  ComboboxButton,
-  ComboboxInput,
-  ComboboxOption,
-  ComboboxOptions,
-} from '@headlessui/react'
+import { Combobox, ComboboxButton, ComboboxOption, ComboboxOptions } from '@headlessui/react'
 import { useState } from 'react'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { Input } from '@/components/ui/Input'
 import { areaAccent } from '@/theme/areaAccent'
-import { schemaRepoPath } from '@/utils/githubFileUrl'
+import { presetMatchesTextQuery } from '@/utils/presetTextMatch'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const MAX_RESULTS = 40
+const SEARCH_PLACEHOLDER = 'Search presets by name, path (amenity/cafe), tags…'
 
-function matchesQuery(preset: DenormalizedPreset, query: string): boolean {
-  const q = query.trim().toLowerCase()
-  if (!q) return true
-  const path = schemaRepoPath('preset', preset.id).toLowerCase()
+function SearchIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
-    preset.name.toLowerCase().includes(q) || preset.id.toLowerCase().includes(q) || path.includes(q)
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" {...props}>
+      <path
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12.01 12a4.25 4.25 0 1 0-6.02-6 4.25 4.25 0 0 0 6.02 6Zm0 0 3.24 3.25"
+      />
+    </svg>
   )
 }
 
@@ -69,11 +68,10 @@ type PresetComboboxProps = {
   value: string
   onChange: (id: string) => void
   presets: DenormalizedPreset[]
-  placeholder?: string
   onOpenPreset?: (id: string) => void
 }
 
-/** Remount when `value` changes so the search field resets (swap, URL load). */
+/** Remount when `value` changes so dropdown search resets (swap, URL load). */
 export function PresetCombobox(props: PresetComboboxProps) {
   return <PresetComboboxInner key={props.value} {...props} />
 }
@@ -85,69 +83,43 @@ function PresetComboboxInner({
   value,
   onChange,
   presets,
-  placeholder = 'Search preset name or path…',
   onOpenPreset,
 }: PresetComboboxProps) {
   const selected = value ? presets.find((p) => p.id === value) : undefined
-  const [query, setQuery] = useState(selected?.name ?? '')
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const isFiltering = selected ? query !== selected.name : query.trim().length > 0
-  const list = isFiltering ? presets.filter((p) => matchesQuery(p, query)) : presets
-  const filtered = list.slice(0, MAX_RESULTS)
-  const showRichDisplay = Boolean(selected && !isFiltering)
+  const filtered = (
+    searchQuery.trim()
+      ? presets.filter((preset) => presetMatchesTextQuery(preset, searchQuery))
+      : presets
+  ).slice(0, MAX_RESULTS)
 
   return (
     <Combobox
       value={selected ?? null}
       onChange={(preset: DenormalizedPreset | null) => {
         onChange(preset?.id ?? '')
-        setQuery(preset?.name ?? '')
+        setSearchQuery('')
       }}
-      onClose={() => {
-        if (selected) setQuery(selected.name)
-      }}
+      onClose={() => setSearchQuery('')}
     >
       <div className="block text-sm font-medium text-slate-700">
         <span>{label}</span>
-        <div
+        <ComboboxButton
           className={cn(
-            'relative mt-1.5 flex items-center rounded-lg border border-slate-300 bg-white shadow-sm',
+            'relative mt-1.5 flex w-full cursor-pointer items-center rounded-lg border border-slate-300 bg-white text-left shadow-sm',
             TRIGGER_MIN_H,
-            areaAccent.presetSwitch.focus.replaceAll('focus:', 'focus-within:'),
+            areaAccent.presetSwitch.focus,
           )}
         >
-          {showRichDisplay ? (
-            <div
-              className="pointer-events-none flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-10 pl-2"
-              aria-hidden
-            >
-              <PresetOptionContent preset={selected!} onOpenPreset={onOpenPreset} idInteractive />
+          {selected ? (
+            <div className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-10 pl-2">
+              <PresetOptionContent preset={selected} onOpenPreset={onOpenPreset} idInteractive />
             </div>
-          ) : selected ? (
-            <div className="ml-2 shrink-0">
-              <PresetIconBox preset={selected} size="sm" />
-            </div>
-          ) : null}
-
-          <ComboboxInput
-            as={Input}
-            area="presetSwitch"
-            displayValue={() => query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-            onFocus={(event: React.FocusEvent<HTMLInputElement>) => {
-              if (selected && !isFiltering) event.target.select()
-            }}
-            placeholder={placeholder}
-            className={cn(
-              'border-0 bg-transparent shadow-none focus:ring-0',
-              showRichDisplay
-                ? 'absolute inset-0 opacity-0'
-                : cn('min-w-0 flex-1 py-2', selected ? 'pr-10 pl-2' : 'pr-10'),
-            )}
-            autoComplete="off"
-          />
-
-          <ComboboxButton className="absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+          ) : (
+            <span className="px-3 text-sm text-slate-400">Select a preset…</span>
+          )}
+          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
               <path
                 fillRule="evenodd"
@@ -155,8 +127,8 @@ function PresetComboboxInner({
                 clipRule="evenodd"
               />
             </svg>
-          </ComboboxButton>
-        </div>
+          </span>
+        </ComboboxButton>
 
         {!selected && value ? (
           <p className="mt-1 font-mono text-[11px] text-amber-700">Unknown preset: {value}</p>
@@ -166,28 +138,50 @@ function PresetComboboxInner({
       <ComboboxOptions
         anchor="bottom start"
         className={cn(
-          'z-50 mt-1 max-h-72 w-[var(--input-width)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg',
+          'z-50 mt-1 max-h-80 w-[var(--button-width)] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg',
           'empty:invisible',
         )}
       >
-        {filtered.length === 0 ? (
-          <p className="px-3 py-2 text-sm text-slate-500">No presets match.</p>
-        ) : (
-          filtered.map((preset) => (
-            <ComboboxOption
-              key={preset.id}
-              value={preset}
-              className="group flex cursor-pointer items-center gap-2 px-2 py-1.5 data-focus:bg-amber-50"
-            >
-              <PresetOptionContent preset={preset} onOpenPreset={onOpenPreset} />
-            </ComboboxOption>
-          ))
-        )}
-        {filtered.length === MAX_RESULTS ? (
-          <p className="border-t border-slate-100 px-3 py-1.5 text-xs text-slate-400">
-            Showing first {MAX_RESULTS} matches — refine your search.
-          </p>
-        ) : null}
+        <div className="sticky top-0 z-10 border-b border-slate-100 bg-white p-2">
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <SearchIcon className="h-4 w-4" />
+            </span>
+            <Input
+              autoFocus
+              type="search"
+              area="presetSwitch"
+              value={searchQuery}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchQuery(event.target.value)
+              }
+              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => event.stopPropagation()}
+              placeholder={SEARCH_PLACEHOLDER}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        <div className="max-h-64 overflow-y-auto py-1">
+          {filtered.length === 0 ? (
+            <p className="px-3 py-2 text-sm text-slate-500">No presets match.</p>
+          ) : (
+            filtered.map((preset) => (
+              <ComboboxOption
+                key={preset.id}
+                value={preset}
+                className="group flex cursor-pointer items-center gap-2 px-2 py-1.5 data-focus:bg-amber-50"
+              >
+                <PresetOptionContent preset={preset} onOpenPreset={onOpenPreset} />
+              </ComboboxOption>
+            ))
+          )}
+          {filtered.length === MAX_RESULTS ? (
+            <p className="border-t border-slate-100 px-3 py-1.5 text-xs text-slate-400">
+              Showing first {MAX_RESULTS} matches — refine your search.
+            </p>
+          ) : null}
+        </div>
       </ComboboxOptions>
     </Combobox>
   )
