@@ -10,27 +10,30 @@ import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalLinkClass } from '@/theme/externalAccent'
 import {
+  TAG_SWITCH_ACTION,
   type TagSwitchAction,
   type TagSwitchRow,
   simulatePresetTagSwitch,
 } from '@/utils/presetTagSwitch'
 
 const ACTION_STYLES: Record<TagSwitchAction, string> = {
-  nothing: 'bg-slate-50 text-slate-500 ring-slate-100',
-  'change based on preset': 'bg-emerald-50 text-emerald-800 ring-emerald-100',
-  'remove due to missing in new/second preset': 'bg-amber-50 text-amber-900 ring-amber-100',
-  'remove due to removeTags in source/first preset': 'bg-rose-50 text-rose-800 ring-rose-100',
+  unchanged: 'bg-slate-50 text-slate-500 ring-slate-100',
+  changed: 'bg-emerald-50 text-emerald-800 ring-emerald-100',
+  'removed-field': 'bg-amber-50 text-amber-900 ring-amber-100',
+  'removed-explicit': 'bg-rose-50 text-rose-800 ring-rose-100',
 }
 
 function ActionBadge({ action }: { action: TagSwitchAction }) {
+  const { label, title } = TAG_SWITCH_ACTION[action]
   return (
     <span
+      title={title}
       className={clsx(
-        'inline-block max-w-[14rem] rounded px-2 py-0.5 text-[11px] leading-snug font-medium ring-1 ring-inset',
+        'inline-block cursor-help rounded px-2 py-0.5 text-[11px] leading-snug font-medium ring-1 ring-inset',
         ACTION_STYLES[action],
       )}
     >
-      {action}
+      {label}
     </span>
   )
 }
@@ -41,7 +44,7 @@ function TagValue({ value }: { value: string | undefined }) {
 }
 
 function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOnly: boolean }) {
-  const visible = changesOnly ? rows.filter((r) => r.action !== 'nothing') : rows
+  const visible = changesOnly ? rows.filter((r) => r.action !== 'unchanged') : rows
 
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -65,7 +68,7 @@ function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOn
             visible.map((row) => (
               <tr
                 key={row.key}
-                className={row.action === 'nothing' ? 'text-slate-500' : 'hover:bg-slate-50/80'}
+                className={row.action === 'unchanged' ? 'text-slate-500' : 'hover:bg-slate-50/80'}
               >
                 <td className="px-4 py-2.5 font-mono text-xs">{row.key}</td>
                 <td className="px-4 py-2.5">
@@ -111,7 +114,7 @@ export function PagePresetSwitch() {
     return simulatePresetTagSwitch(preset1, preset2, rawPresets, fields)
   }, [preset1, preset2, rawPresets, fields])
 
-  const changedCount = result?.rows.filter((r) => r.action !== 'nothing').length ?? 0
+  const changedCount = result?.rows.filter((r) => r.action !== 'unchanged').length ?? 0
 
   if (loading) {
     return <p className="text-sm text-slate-600">Loading schema…</p>

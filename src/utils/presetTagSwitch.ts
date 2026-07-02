@@ -8,11 +8,27 @@ import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
 
 export type TagRemovalCause = 'fieldKeys' | 'removeTags' | 'both'
 
-export type TagSwitchAction =
-  | 'nothing'
-  | 'change based on preset'
-  | 'remove due to missing in new/second preset'
-  | 'remove due to removeTags in source/first preset'
+export type TagSwitchAction = 'unchanged' | 'changed' | 'removed-field' | 'removed-explicit'
+
+export const TAG_SWITCH_ACTION: Record<TagSwitchAction, { label: string; title: string }> = {
+  unchanged: {
+    label: 'Unchanged',
+    title: 'Same value after switching from preset 1 to preset 2.',
+  },
+  changed: {
+    label: 'Changed',
+    title: 'Added or updated when applying preset 2 (addTags/tags).',
+  },
+  'removed-field': {
+    label: 'No field',
+    title:
+      'Preset 2 has no field for this tag key (preset 1 did). iD drops keys not covered by any field on the target preset.',
+  },
+  'removed-explicit': {
+    label: 'removeTags',
+    title: "Removed by preset 1's removeTags when deselecting that preset.",
+  },
+}
 
 export type TagSwitchRow = {
   key: string
@@ -162,15 +178,15 @@ function actionForRow(
   after: string | undefined,
   removalCause?: TagRemovalCause,
 ): TagSwitchAction {
-  if (before !== undefined && after !== undefined && before === after) return 'nothing'
+  if (before !== undefined && after !== undefined && before === after) return 'unchanged'
   if (before !== undefined && after === undefined) {
     if (removalCause === 'fieldKeys' || removalCause === 'both') {
-      return 'remove due to missing in new/second preset'
+      return 'removed-field'
     }
-    return 'remove due to removeTags in source/first preset'
+    return 'removed-explicit'
   }
-  if (before === undefined && after === undefined) return 'nothing'
-  return 'change based on preset'
+  if (before === undefined && after === undefined) return 'unchanged'
+  return 'changed'
 }
 
 function buildRows(
