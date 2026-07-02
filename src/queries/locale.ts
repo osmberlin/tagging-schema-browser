@@ -1,5 +1,5 @@
 import { type References, dereferenceLocaleStrings } from '@/schemaRuntimeDereference'
-import { isBundledTestSchemaUrl, isProxiedReleaseSchemaUrl } from '@/utils/constants'
+import { isBundledTestSchemaUrl } from '@/utils/constants'
 import { fetchSchemaJson } from '@/utils/schemaFetch'
 import type { FieldTranslations } from '@/utils/types'
 
@@ -115,11 +115,6 @@ export async function discoverLocales(dataUrl: string): Promise<string[]> {
       const fromCdn = await discoverLocalesFromJsDelivr(pkg, version)
       if (fromCdn) return fromCdn
     }
-  }
-
-  if (isProxiedReleaseSchemaUrl(dataUrl)) {
-    const fromCdn = await discoverLocalesFromJsDelivr('@openstreetmap/id-tagging-schema', 'latest')
-    if (fromCdn) return fromCdn
   }
 
   return FALLBACK_LOCALES

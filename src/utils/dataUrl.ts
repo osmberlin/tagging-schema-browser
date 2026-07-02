@@ -1,9 +1,4 @@
-import {
-  INTEREM_DATA_URL,
-  RELEASE_DATA_URL,
-  effectiveReleaseDataUrl,
-  isProxiedReleaseSchemaUrl,
-} from '@/utils/constants'
+import { INTEREM_DATA_URL, RELEASE_DATA_URL } from '@/utils/constants'
 
 export type SchemaReference = 'release' | 'interem'
 
@@ -15,14 +10,12 @@ function ensureSlash(url: string): string {
 export function isCanonicalDataUrl(url: string): boolean {
   const normalized = ensureSlash(url)
   return (
-    normalized === ensureSlash(RELEASE_DATA_URL) ||
-    normalized === ensureSlash(INTEREM_DATA_URL) ||
-    isProxiedReleaseSchemaUrl(url)
+    normalized === ensureSlash(RELEASE_DATA_URL) || normalized === ensureSlash(INTEREM_DATA_URL)
   )
 }
 
 export function dataUrlForReference(reference: SchemaReference): string {
-  return reference === 'interem' ? INTEREM_DATA_URL : effectiveReleaseDataUrl()
+  return reference === 'interem' ? INTEREM_DATA_URL : RELEASE_DATA_URL
 }
 
 /** URL `reference=release` wins; otherwise use persisted preference (default interem). */
@@ -47,15 +40,14 @@ export function referenceSearchParam(reference: SchemaReference): SchemaReferenc
 export function isReleaseCompareMode(dataUrl: string, reference: SchemaReference): boolean {
   const trimmed = dataUrl.trim()
   if (!trimmed || reference !== 'release') return false
-  const releaseBases = [RELEASE_DATA_URL, effectiveReleaseDataUrl()]
-  return !releaseBases.some((base) => ensureSlash(trimmed) === ensureSlash(base))
+  return ensureSlash(trimmed) !== ensureSlash(RELEASE_DATA_URL)
 }
 
 /** Pick the active dist base. Custom `dataUrl` wins, except in release-compare mode. */
 export function resolveActiveDataUrl(dataUrl: string, reference: SchemaReference): string {
   const trimmed = dataUrl.trim()
   if (isReleaseCompareMode(trimmed, reference)) {
-    return effectiveReleaseDataUrl()
+    return RELEASE_DATA_URL
   }
   if (trimmed) return trimmed
   return dataUrlForReference(reference)

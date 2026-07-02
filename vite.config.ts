@@ -34,13 +34,4 @@ export default defineConfig({
   build: {
     target: browserslistToEsbuild(),
   },
-  server: {
-    proxy: {
-      '/release-schema': {
-        target: 'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@latest/dist',
-        changeOrigin: true,
-        rewrite: (requestPath) => requestPath.replace(/^\/release-schema\/?/, '/'),
-      },
-    },
-  },
 })

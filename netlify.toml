@@ -2,10 +2,3 @@
 # Production deploys (GitHub Pages) are unaffected — this applies to deploy-preview only.
 [context.deploy-preview]
 ignore = "bash -c 'git log -1 --pretty=%ae | grep -qi dependabot || git log -1 --pretty=%B | grep -qi \"\\[skip netlify\\]\"'"
-
-# Same-origin proxy to the published schema on jsDelivr (avoids browser CORS on previews).
-[[redirects]]
-from = "/release-schema/*"
-to = "https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@latest/dist/:splat"
-status = 200
-force = true
