@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { simulatePresetTagSwitch } from '@/utils/presetTagSwitch'
+import { simulatePresetTagSwitch, sortTagSwitchRows } from '@/utils/presetTagSwitch'
+import type { TagSwitchRow } from '@/utils/presetTagSwitch'
 import {
   getAssumedTagsForField,
   getFieldTagKeys,
@@ -199,5 +200,25 @@ describe('simulatePresetTagSwitch row order', () => {
 
     expect(changedKeys).toEqual([...changedKeys].sort((a, b) => a.localeCompare(b)))
     expect(unchangedKeys).toEqual([...unchangedKeys].sort((a, b) => a.localeCompare(b)))
+  })
+
+  it('sorts unchanged addr:* tags after other unchanged tags', () => {
+    const rows: TagSwitchRow[] = [
+      { key: 'addr:street', before: 'Main', after: 'Main', action: 'unchanged' },
+      { key: 'amenity', before: 'restaurant', after: 'bank', action: 'changed' },
+      { key: 'name', before: 'Foo', after: 'Foo', action: 'unchanged' },
+      { key: 'addr:city', before: 'Berlin', after: 'Berlin', action: 'unchanged' },
+      { key: 'addr:housenumber', before: '1', after: '2', action: 'changed' },
+      { key: 'cuisine', before: 'pizza', after: 'pizza', action: 'unchanged' },
+    ]
+
+    expect(sortTagSwitchRows(rows).map((row) => row.key)).toEqual([
+      'addr:housenumber',
+      'amenity',
+      'cuisine',
+      'name',
+      'addr:city',
+      'addr:street',
+    ])
   })
 })

@@ -189,6 +189,29 @@ function actionForRow(
   return 'changed'
 }
 
+function isAddrTag(key: string): boolean {
+  return key === 'addr' || key.startsWith('addr:')
+}
+
+function compareTagRows(a: TagSwitchRow, b: TagSwitchRow, deprioritizeAddr: boolean): number {
+  if (deprioritizeAddr) {
+    const aAddr = isAddrTag(a.key)
+    const bAddr = isAddrTag(b.key)
+    if (aAddr !== bAddr) return aAddr ? 1 : -1
+  }
+  return a.key.localeCompare(b.key)
+}
+
+export function sortTagSwitchRows(rows: TagSwitchRow[]): TagSwitchRow[] {
+  const changed = rows
+    .filter((row) => row.action !== 'unchanged')
+    .sort((a, b) => compareTagRows(a, b, false))
+  const unchanged = rows
+    .filter((row) => row.action === 'unchanged')
+    .sort((a, b) => compareTagRows(a, b, true))
+  return [...changed, ...unchanged]
+}
+
 function buildRows(
   startingTags: Record<string, string>,
   endingTags: Record<string, string>,
@@ -209,10 +232,7 @@ function buildRows(
     }
   })
 
-  const byKey = (a: TagSwitchRow, b: TagSwitchRow) => a.key.localeCompare(b.key)
-  const changed = rows.filter((row) => row.action !== 'unchanged').sort(byKey)
-  const unchanged = rows.filter((row) => row.action === 'unchanged').sort(byKey)
-  return [...changed, ...unchanged]
+  return sortTagSwitchRows(rows)
 }
 
 /**
