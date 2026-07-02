@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import type { IconRegistryEntry, RawPresets } from '@/utils/types'
 
 export type IconSupplier = 'maki' | 'temaki' | 'roentgen' | 'iD' | 'fas' | 'far' | 'fab'
@@ -21,6 +22,27 @@ const dataUrlCache = new Map<string, string | null>()
 const loadedSuppliers = new Set<IconSupplier>()
 const failedSuppliers = new Set<IconSupplier>()
 const supplierLoadPromises = new Map<IconSupplier, Promise<void>>()
+const registryListeners = new Set<() => void>()
+let registryEpoch = 0
+
+function notifyRegistryChange(): void {
+  registryEpoch += 1
+  for (const listener of registryListeners) listener()
+}
+
+export function subscribeIconRegistry(listener: () => void): () => void {
+  registryListeners.add(listener)
+  return () => registryListeners.delete(listener)
+}
+
+export function getIconRegistryEpoch(): number {
+  return registryEpoch
+}
+
+/** Re-render when icon supplier chunks finish loading and SVG URLs become available. */
+export function useIconRegistryEpoch(): number {
+  return useSyncExternalStore(subscribeIconRegistry, getIconRegistryEpoch, getIconRegistryEpoch)
+}
 
 export function iconSupplierFromName(iconName: string): IconSupplier | null {
   const prefix = iconName.split('-')[0]
@@ -51,6 +73,7 @@ export function collectPresetIconNames(presets: RawPresets): string[] {
 
 function mergeRegistryEntries(entries: IconRegistryEntry[]): void {
   for (const entry of entries) registryCache.set(entry.name, entry)
+  notifyRegistryChange()
 }
 
 function clearMissCacheForSupplier(supplier: IconSupplier): void {
@@ -83,6 +106,7 @@ export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
       })
       .catch(() => {
         failedSuppliers.add(supplier)
+        notifyRegistryChange()
       })
       .finally(() => {
         supplierLoadPromises.delete(supplier)

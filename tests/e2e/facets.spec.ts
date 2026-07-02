@@ -258,3 +258,26 @@ test('preset table icon row truncates long icon names', async ({ page }) => {
   expect(truncation.textOverflow).toBe('ellipsis')
   expect(truncation.isOverflowing).toBe(true)
 })
+
+test('preset table linked icon cells truncate icon names cleanly', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/?dataUrl=/test-schema&iconName=temaki-food')
+  await expect(page.getByRole('heading', { name: /^Presets\b/i })).toBeVisible()
+  await expect(page.locator('table tbody')).toBeVisible()
+
+  const iconRow = page.locator('tbody tr', { has: page.locator('th', { hasText: /^Icon$/ }) })
+  const iconCell = iconRow.locator('td a').filter({ hasText: 'temaki-food' }).first()
+  await expect(iconCell).toBeVisible()
+
+  const layout = await iconCell.locator('span.truncate.font-mono').evaluate((el) => ({
+    textOverflow: getComputedStyle(el).textOverflow,
+    flex: getComputedStyle(el).flex,
+    overflow: getComputedStyle(el).overflow,
+    parentOverflow: getComputedStyle(el.parentElement!).overflow,
+  }))
+
+  expect(layout.textOverflow).toBe('ellipsis')
+  expect(layout.flex).toContain('1')
+  expect(layout.overflow).toBe('hidden')
+  expect(layout.parentOverflow).toBe('hidden')
+})

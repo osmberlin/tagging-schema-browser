@@ -1,7 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import { type VirtualItem, useVirtualizer } from '@tanstack/react-virtual'
 import { Fragment, type ReactNode, useMemo, useRef } from 'react'
-import { getIconSvgDataUrl, isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import {
+  getIconSvgDataUrl,
+  isIconSvgConfirmedMissing,
+  useIconRegistryEpoch,
+} from '@/components/PageIcons/iconRegistry'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { AreaIcon, AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
@@ -58,12 +62,13 @@ function renderCellContent(row: Row, preset: DenormalizedPreset) {
   return content
 }
 
-function IconNameCell({ iconName, broken }: { iconName: string; broken: boolean }) {
+function IconNameCell({ iconName }: { iconName: string }) {
   const src = getIconSvgDataUrl(iconName)
+  const broken = !src && isIconSvgConfirmedMissing(iconName)
   return (
-    <span className="flex min-w-0 items-center gap-1.5">
+    <span className="flex w-full min-w-0 items-center gap-1.5 overflow-hidden">
       {src ? (
-        <img src={src} alt="" className="h-5 w-5 shrink-0" />
+        <img src={src} alt="" className="h-5 w-5 shrink-0 object-contain" />
       ) : broken ? (
         <span
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
@@ -73,13 +78,20 @@ function IconNameCell({ iconName, broken }: { iconName: string; broken: boolean 
         </span>
       ) : null}
       <span
-        className={cn('min-w-0 truncate font-mono text-xs', broken && 'font-medium text-red-700')}
+        className={cn(
+          'min-w-0 flex-1 truncate font-mono text-xs',
+          broken && 'font-medium text-red-700',
+        )}
         title={iconName}
       >
         {iconName}
       </span>
     </span>
   )
+}
+
+function isPresetIconCellBroken(icon?: string): boolean {
+  return Boolean(icon && isIconSvgConfirmedMissing(icon))
 }
 
 function uniqueSorted(values: string[]): string[] {
@@ -224,11 +236,13 @@ function PresetValueCell({ preset, row }: { preset: DenormalizedPreset; row: Row
             search={cellLink.search as never}
             title={cellLink.title}
             className={cn(
-              `group/ac relative flex h-full items-start overflow-hidden px-3 py-1.5 pr-8 transition ${areaAccent.presets.rowHover}`,
+              `group/ac relative flex h-full w-full items-start overflow-hidden px-3 py-1.5 pr-8 transition ${areaAccent.presets.rowHover}`,
               errorHighlighted && 'bg-red-50/70',
             )}
           >
-            <span className="min-w-0">{renderCellContent(row, preset)}</span>
+            <span className="block min-w-0 flex-1 overflow-hidden">
+              {renderCellContent(row, preset)}
+            </span>
             <span
               aria-hidden
               className={`absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-sm font-semibold group-hover/ac:flex ${areaAccent.presets.cardChevron}`}
@@ -249,6 +263,7 @@ function PresetValueCell({ preset, row }: { preset: DenormalizedPreset; row: Row
 }
 
 export function PresetTable() {
+  useIconRegistryEpoch()
   const { data } = useSchema()
   const { result: comparison } = useComparison()
   const result = usePresetSearch()
@@ -311,11 +326,11 @@ export function PresetTable() {
             label: 'Icon',
             render: (p) => {
               if (!p.icon) return dash
-              return <IconNameCell iconName={p.icon} broken={p.iconBroken} />
+              return <IconNameCell iconName={p.icon} />
             },
             title: (p) => p.icon ?? undefined,
-            highlight: (p) => p.iconBroken,
-            errorHighlight: (p) => p.iconBroken,
+            highlight: (p) => isPresetIconCellBroken(p.icon),
+            errorHighlight: (p) => isPresetIconCellBroken(p.icon),
             link: (p) =>
               p.icon && (iconCounts.get(p.icon) ?? 0) > 1
                 ? {
@@ -338,11 +353,7 @@ export function PresetTable() {
               return (
                 <span className="flex flex-col gap-1">
                   {icons.map((iconName) => (
-                    <IconNameCell
-                      key={iconName}
-                      iconName={iconName}
-                      broken={isIconSvgConfirmedMissing(iconName)}
-                    />
+                    <IconNameCell key={iconName} iconName={iconName} />
                   ))}
                 </span>
               )
