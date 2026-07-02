@@ -103,86 +103,89 @@ function PresetComboboxInner({
       }}
       onClose={() => setSearchQuery('')}
     >
-      <div className="block text-sm font-medium text-slate-700">
+      <div className="text-sm font-medium text-slate-700">
         <span>{label}</span>
-        <ComboboxButton
-          className={cn(
-            'relative mt-1.5 flex w-full cursor-pointer items-center rounded-lg border border-slate-300 bg-white text-left shadow-sm',
-            TRIGGER_MIN_H,
-            areaAccent.presetSwitch.focus,
-          )}
-        >
-          {selected ? (
-            <div className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-10 pl-2">
-              <PresetOptionContent preset={selected} onOpenPreset={onOpenPreset} idInteractive />
+        <div className="relative mt-1.5">
+          <ComboboxButton
+            className={cn(
+              'relative flex w-full cursor-pointer items-center rounded-lg border border-slate-300 bg-white text-left shadow-sm',
+              TRIGGER_MIN_H,
+              areaAccent.presetSwitch.focus,
+            )}
+          >
+            {selected ? (
+              <div className="flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-10 pl-2">
+                <PresetOptionContent preset={selected} onOpenPreset={onOpenPreset} idInteractive />
+              </div>
+            ) : (
+              <span className="px-3 text-sm text-slate-400">Select a preset…</span>
+            )}
+            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path
+                  fillRule="evenodd"
+                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.06z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </span>
+          </ComboboxButton>
+
+          <ComboboxOptions
+            className={cn(
+              'absolute top-full left-0 z-50 mt-1 max-h-80 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg',
+              'empty:invisible',
+            )}
+          >
+            <div className="sticky top-0 z-10 border-b border-slate-100 bg-white p-2">
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                  <SearchIcon className="h-4 w-4" />
+                </span>
+                <Input
+                  autoFocus
+                  type="search"
+                  area="presetSwitch"
+                  value={searchQuery}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearchQuery(event.target.value)
+                  }
+                  onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) =>
+                    event.stopPropagation()
+                  }
+                  placeholder={SEARCH_PLACEHOLDER}
+                  className="pl-9"
+                />
+              </div>
             </div>
-          ) : (
-            <span className="px-3 text-sm text-slate-400">Select a preset…</span>
-          )}
-          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-              <path
-                fillRule="evenodd"
-                d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.06z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </span>
-        </ComboboxButton>
+
+            <div className="max-h-64 overflow-y-auto py-1">
+              {filtered.length === 0 ? (
+                <p className="px-3 py-2 text-sm text-slate-500">No presets match.</p>
+              ) : (
+                filtered.map((preset) => (
+                  <ComboboxOption
+                    key={preset.id}
+                    value={preset}
+                    className="group flex cursor-pointer items-center gap-2 px-2 py-1.5 data-focus:bg-amber-50"
+                  >
+                    <PresetOptionContent preset={preset} onOpenPreset={onOpenPreset} />
+                  </ComboboxOption>
+                ))
+              )}
+              {filtered.length === MAX_RESULTS ? (
+                <p className="border-t border-slate-100 px-3 py-1.5 text-xs text-slate-400">
+                  Showing first {MAX_RESULTS} matches — refine your search.
+                </p>
+              ) : null}
+            </div>
+          </ComboboxOptions>
+        </div>
 
         {!selected && value ? (
           <p className="mt-1 font-mono text-[11px] text-amber-700">Unknown preset: {value}</p>
         ) : null}
       </div>
-
-      <ComboboxOptions
-        anchor="bottom start"
-        className={cn(
-          'z-50 mt-1 max-h-80 w-[var(--button-width)] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg',
-          'empty:invisible',
-        )}
-      >
-        <div className="sticky top-0 z-10 border-b border-slate-100 bg-white p-2">
-          <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-              <SearchIcon className="h-4 w-4" />
-            </span>
-            <Input
-              autoFocus
-              type="search"
-              area="presetSwitch"
-              value={searchQuery}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setSearchQuery(event.target.value)
-              }
-              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => event.stopPropagation()}
-              placeholder={SEARCH_PLACEHOLDER}
-              className="pl-9"
-            />
-          </div>
-        </div>
-
-        <div className="max-h-64 overflow-y-auto py-1">
-          {filtered.length === 0 ? (
-            <p className="px-3 py-2 text-sm text-slate-500">No presets match.</p>
-          ) : (
-            filtered.map((preset) => (
-              <ComboboxOption
-                key={preset.id}
-                value={preset}
-                className="group flex cursor-pointer items-center gap-2 px-2 py-1.5 data-focus:bg-amber-50"
-              >
-                <PresetOptionContent preset={preset} onOpenPreset={onOpenPreset} />
-              </ComboboxOption>
-            ))
-          )}
-          {filtered.length === MAX_RESULTS ? (
-            <p className="border-t border-slate-100 px-3 py-1.5 text-xs text-slate-400">
-              Showing first {MAX_RESULTS} matches — refine your search.
-            </p>
-          ) : null}
-        </div>
-      </ComboboxOptions>
     </Combobox>
   )
 }
