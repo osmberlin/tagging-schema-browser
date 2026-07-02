@@ -1,4 +1,5 @@
 import { type References, dereferenceLocaleStrings } from '@/schemaRuntimeDereference'
+import { isBundledTestSchemaUrl } from '@/utils/constants'
 import { fetchSchemaJson } from '@/utils/schemaFetch'
 import type { FieldTranslations } from '@/utils/types'
 
@@ -65,35 +66,57 @@ function findDir(nodes: JsDelivrNode[] | undefined, name: string): JsDelivrNode 
   return nodes?.find((n) => n.type === 'directory' && n.name === name)
 }
 
-/** Discover locale codes from the dist's translations/ folder (jsDelivr only; else a fallback list). */
+async function discoverLocalesFromJsDelivr(pkg: string, version: string): Promise<string[] | null> {
+  try {
+    let resolvedVersion = version
+    if (!/^\d/.test(version)) {
+      const r = await fetch(
+        `https://data.jsdelivr.com/v1/packages/npm/${pkg}/resolved?specifier=${encodeURIComponent(version)}`,
+      )
+      if (r.ok) resolvedVersion = ((await r.json()) as { version?: string }).version ?? version
+    }
+    const res = await fetch(`https://data.jsdelivr.com/v1/packages/npm/${pkg}@${resolvedVersion}`)
+    if (!res.ok) return null
+    const json = (await res.json()) as { files?: JsDelivrNode[] }
+    const dist = findDir(json.files, 'dist')
+    const translations = findDir(dist?.files, 'translations')
+    const locales = (translations?.files ?? [])
+      .filter((f) => f.type === 'file' && f.name.endsWith('.min.json'))
+      .map((f) => f.name.replace(/\.min\.json$/, ''))
+      .filter((code) => code !== 'en')
+    if (locales.length) return locales.sort((a, b) => a.localeCompare(b))
+  } catch {
+    return null
+  }
+  return null
+}
+
+/** Discover locale codes from the dist's translations/ folder. */
 export async function discoverLocales(dataUrl: string): Promise<string[]> {
+  try {
+    const manifestRes = await fetch(`${ensureSlash(dataUrl)}translations/locales.json`)
+    if (manifestRes.ok) {
+      const list = (await manifestRes.json()) as string[]
+      return list.filter((code) => code !== 'en').sort((a, b) => a.localeCompare(b))
+    }
+  } catch {
+    // continue
+  }
+
+  if (isBundledTestSchemaUrl(dataUrl)) {
+    return []
+  }
+
   const match = dataUrl.match(/cdn\.jsdelivr\.net\/npm\/(.+?)@([^/]+)\//)
   if (match) {
-    try {
-      const pkg = match[1]
-      let version = match[2]
-      if (!pkg || !version) return FALLBACK_LOCALES
-      if (!/^\d/.test(version)) {
-        const r = await fetch(
-          `https://data.jsdelivr.com/v1/packages/npm/${pkg}/resolved?specifier=${encodeURIComponent(version)}`,
-        )
-        if (r.ok) version = ((await r.json()) as { version?: string }).version ?? version
-      }
-      const res = await fetch(`https://data.jsdelivr.com/v1/packages/npm/${pkg}@${version}`)
-      if (res.ok) {
-        const json = (await res.json()) as { files?: JsDelivrNode[] }
-        const dist = findDir(json.files, 'dist')
-        const translations = findDir(dist?.files, 'translations')
-        const locales = (translations?.files ?? [])
-          .filter((f) => f.type === 'file' && f.name.endsWith('.min.json'))
-          .map((f) => f.name.replace(/\.min\.json$/, ''))
-          .filter((code) => code !== 'en')
-        if (locales.length) return locales.sort((a, b) => a.localeCompare(b))
-      }
-    } catch {
-      // fall through to the fallback list
+    const pkg = match[1]
+    const version = match[2]
+    if (pkg && version) {
+      const fromCdn = await discoverLocalesFromJsDelivr(pkg, version)
+      if (fromCdn) return fromCdn
     }
   }
+
   return FALLBACK_LOCALES
 }
 

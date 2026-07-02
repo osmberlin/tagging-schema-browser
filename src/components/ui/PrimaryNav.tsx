@@ -4,6 +4,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
 import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
 import { useComparison } from '@/hooks/useComparison'
@@ -40,6 +41,11 @@ const areaIndicators: Record<SchemaArea, NavIndicator> = {
     ring: areaAccent.translations.navIndicatorRing,
     text: areaAccent.translations.navIndicatorText,
   },
+  presetSwitch: {
+    bg: areaAccent.presetSwitch.navIndicatorBg,
+    ring: areaAccent.presetSwitch.navIndicatorRing,
+    text: areaAccent.presetSwitch.navIndicatorText,
+  },
 }
 
 const comparisonIndicator: NavIndicator = {
@@ -56,6 +62,7 @@ function getActiveKey(pathname: string): NavKey {
   if (pathname === '/icons') return 'icons'
   if (pathname === '/fields' || pathname.startsWith('/field/')) return 'fields'
   if (pathname === '/translations') return 'translations'
+  if (pathname === '/preset-switch') return 'presetSwitch'
   if (pathname === '/comparison') return 'comparison'
   return 'presets'
 }
@@ -144,6 +151,18 @@ export function PrimaryNav({
         dataUrl: prev.dataUrl ?? '',
         locale: prev.locale ?? '',
       }),
+    },
+    {
+      key: 'presetSwitch',
+      to: '/preset-switch',
+      label: 'Preset switch',
+      area: 'presetSwitch',
+      search: (prev) => ({
+        ...presetSwitchSearchDefaults,
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
+      }),
+      title: 'Compare tag changes when switching presets',
     },
     ...(isComparing
       ? [

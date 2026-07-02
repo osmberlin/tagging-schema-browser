@@ -1,15 +1,19 @@
-import { useParams } from '@tanstack/react-router'
+import { Link, useParams } from '@tanstack/react-router'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
+import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
+import { AreaIcon } from '@/components/ui/areaIcons'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
 import { externalAccent, externalLinkClass, externalPillClass } from '@/theme/externalAccent'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 type RelatedItem = { id: string; name: string }
@@ -140,6 +144,26 @@ function PresetDetailContent({
           View source ↗
         </a>
       </header>
+
+      <div className="flex flex-wrap gap-2">
+        <Link
+          to="/preset-switch"
+          search={(prev) => ({
+            ...presetSwitchSearchDefaults,
+            dataUrl: prev.dataUrl ?? '',
+            locale: prev.locale ?? '',
+            preset1: preset.id,
+          })}
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition ring-inset',
+            areaAccent.presetSwitch.sharedChip,
+            'hover:bg-amber-100',
+          )}
+        >
+          <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
+          Compare preset switch
+        </Link>
+      </div>
 
       <DetailDisclosure
         title="Translation"

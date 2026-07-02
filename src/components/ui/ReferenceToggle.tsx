@@ -44,12 +44,12 @@ function ToggleSegment({
 }
 
 /**
- * Staging / release toggle under the logo. Staging is the default; release is opt-in.
+ * Unreleased / release toggle under the logo. Unreleased is the default; release is opt-in.
  * Hidden while a custom `dataUrl` (PR preview) is active.
  */
 export function ReferenceToggle() {
   const { releaseVersion, stagingUpdatedAt } = useComparison()
-  const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt)
+  const unreleasedAge = formatStagingUpdatedAt(stagingUpdatedAt)
   const dataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? '' })
   const { displayReference, select, onPillAnimationComplete, isSwitching } = useReferenceSwitch()
 
@@ -73,11 +73,11 @@ export function ReferenceToggle() {
           }
           title={
             stagingUpdatedAt
-              ? `Staging — last change on main: ${new Date(stagingUpdatedAt).toLocaleString()}`
-              : 'Staging — unreleased build from main'
+              ? `Unreleased — last change on main: ${new Date(stagingUpdatedAt).toLocaleString()}`
+              : 'Unreleased — build from main, not yet published'
           }
         >
-          Staging{stagingAge ? ` · ${stagingAge}` : ''}
+          Unreleased{unreleasedAge ? ` · ${unreleasedAge}` : ''}
         </ToggleSegment>
         <ToggleSegment
           active={displayReference === 'release'}

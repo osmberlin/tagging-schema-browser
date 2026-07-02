@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { useReference } from '@/features/data-source/reference-store'
 import { useSchema } from '@/hooks/useSchema'
 import { fetchLocaleTranslations, fetchLocales, localeKeys } from '@/queries/locale'
@@ -42,6 +43,22 @@ export function useLocale() {
       : translationsQuery.error
         ? String(translationsQuery.error)
         : null
+
+  // Drop a stale locale from the URL when it isn't available for this dataUrl.
+  useEffect(
+    function clearStaleLocaleFromUrl() {
+      if (!locale || localesQuery.isLoading || !localesQuery.isSuccess) return
+      const locales = localesQuery.data ?? []
+      if (!locales.includes(locale)) {
+        void navigate({
+          to: '.',
+          search: (prev) => ({ ...prev, locale: undefined }),
+          replace: true,
+        })
+      }
+    },
+    [locale, localesQuery.data, localesQuery.isLoading, localesQuery.isSuccess, navigate],
+  )
 
   return {
     locale,

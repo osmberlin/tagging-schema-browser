@@ -169,6 +169,11 @@ export function PageAbout() {
             dot="bg-yellow-500"
             text="yellow for Translations"
           />
+          <ColorLegendItem
+            halo="bg-amber-500/20"
+            dot="bg-amber-500"
+            text="amber for Preset switch"
+          />
         </ul>
         <ul className="space-y-1.5 pt-1">
           <ColorLegendItem halo="bg-mist-500/20" dot="bg-mist-500" text="mist for the logo" />

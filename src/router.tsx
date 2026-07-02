@@ -1,4 +1,5 @@
 import {
+  HeadContent,
   Outlet,
   createRootRoute,
   createRoute,
@@ -25,6 +26,10 @@ import { PresetDetailPage } from '@/components/PagePresets/PresetDetailPage'
 import { SearchBar } from '@/components/PagePresets/SearchBar'
 import { presetSearchDefaults, presetSearchSchema } from '@/components/PagePresets/useSearchState'
 import {
+  presetSwitchSearchDefaults,
+  presetSwitchSearchSchema,
+} from '@/components/PagePresetSwitch/presetSwitchSearch'
+import {
   translationsSearchDefaults,
   translationsSearchSchema,
 } from '@/components/PageTranslations/translationsSearch'
@@ -34,6 +39,7 @@ import { useReference, useReferenceActions } from '@/features/data-source/refere
 import { queryClient, SCHEMA_STALE_TIME } from '@/queries/queryClient'
 import { prefetchSchemaData, schemaKeys } from '@/queries/schema'
 import { dataUrlForReference, resolveSchemaReference } from '@/utils/dataUrl'
+import { documentTitleHead } from '@/utils/documentTitle'
 import { routerSearch } from '@/utils/routerSearch'
 
 const LazyPageIcons = lazy(() =>
@@ -53,6 +59,12 @@ const LazyPageFields = lazy(() =>
 const LazyPageComparison = lazy(() =>
   import('@/components/PageComparison/PageComparison').then((m) => ({
     default: m.PageComparison,
+  })),
+)
+
+const LazyPagePresetSwitch = lazy(() =>
+  import('@/components/PagePresetSwitch/PagePresetSwitch').then((m) => ({
+    default: m.PagePresetSwitch,
   })),
 )
 
@@ -151,9 +163,12 @@ function RootContent() {
     )
 
   return (
-    <SidebarLayout sidebar={sidebar} topSearch={topSearch}>
-      <Outlet />
-    </SidebarLayout>
+    <>
+      <HeadContent />
+      <SidebarLayout sidebar={sidebar} topSearch={topSearch}>
+        <Outlet />
+      </SidebarLayout>
+    </>
   )
 }
 
@@ -176,6 +191,7 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  head: documentTitleHead('Presets'),
   validateSearch: presetSearchSchema,
   search: { middlewares: [stripSearchParams(presetSearchDefaults)] },
   component: PagePresets,
@@ -184,6 +200,7 @@ const indexRoute = createRoute({
 const iconsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/icons',
+  head: documentTitleHead('Icons'),
   validateSearch: iconFacetSchema,
   search: { middlewares: [stripSearchParams(iconFacetDefaults)] },
   component: () => (
@@ -196,6 +213,7 @@ const iconsRoute = createRoute({
 const fieldsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/fields',
+  head: documentTitleHead('Fields'),
   validateSearch: fieldFacetSchema,
   search: { middlewares: [stripSearchParams(fieldFacetDefaults)] },
   component: () => (
@@ -208,6 +226,7 @@ const fieldsRoute = createRoute({
 const translationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/translations',
+  head: documentTitleHead('Translations'),
   validateSearch: translationsSearchSchema,
   search: { middlewares: [stripSearchParams(translationsSearchDefaults)] },
   component: () => (
@@ -217,9 +236,23 @@ const translationsRoute = createRoute({
   ),
 })
 
+const presetSwitchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/preset-switch',
+  head: documentTitleHead('Preset switch'),
+  validateSearch: presetSwitchSearchSchema,
+  search: { middlewares: [stripSearchParams(presetSwitchSearchDefaults)] },
+  component: () => (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading preset switch...</p>}>
+      <LazyPagePresetSwitch />
+    </Suspense>
+  ),
+})
+
 const comparisonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/comparison',
+  head: documentTitleHead('Comparison'),
   component: () => (
     <Suspense fallback={<p className="text-sm text-slate-500">Loading comparison...</p>}>
       <LazyPageComparison />
@@ -230,18 +263,21 @@ const comparisonRoute = createRoute({
 const presetRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/preset/$',
+  head: documentTitleHead('Preset'),
   component: PresetDetailPage,
 })
 
 const fieldRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/field/$',
+  head: documentTitleHead('Field'),
   component: FieldDetailPage,
 })
 
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/about',
+  head: documentTitleHead('About'),
   component: PageAbout,
 })
 
@@ -250,6 +286,7 @@ const routeTree = rootRoute.addChildren([
   iconsRoute,
   fieldsRoute,
   translationsRoute,
+  presetSwitchRoute,
   comparisonRoute,
   presetRoute,
   fieldRoute,
