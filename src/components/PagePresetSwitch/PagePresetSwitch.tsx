@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { useSetPreset } from '@/components/PagePresets/useSearchState'
 import { PresetCombobox, SwapPresetsButton } from '@/components/PagePresetSwitch/PresetCombobox'
 import { usePresetSwitchSearch } from '@/components/PagePresetSwitch/usePresetSwitchSearch'
@@ -96,9 +95,6 @@ export function PagePresetSwitch() {
 
   const { preset1, preset2 } = search
 
-  const denorm1 = preset1 ? presets.find((p) => p.id === preset1) : undefined
-  const denorm2 = preset2 ? presets.find((p) => p.id === preset2) : undefined
-
   const result =
     preset1 && preset2 ? simulatePresetTagSwitch(preset1, preset2, rawPresets, fields) : null
 
@@ -161,20 +157,10 @@ export function PagePresetSwitch() {
         />
       </section>
 
-      {preset1 && preset2 && denorm1 && denorm2 && result ? (
+      {result ? (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
             <p>
-              <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
-                <PresetIconBox preset={denorm1} size="sm" />
-                {denorm1.name}
-              </span>
-              <span className="mx-2 text-slate-400">→</span>
-              <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
-                <PresetIconBox preset={denorm2} size="sm" />
-                {denorm2.name}
-              </span>
-              <span className="mx-2 text-slate-300">·</span>
               {result.fieldCount} fields · {result.rows.length} tags · {changedCount} changed
               <span className="mx-2 text-slate-300">·</span>
               geometry <code className="font-mono text-xs">{result.geometry}</code>
