@@ -1,6 +1,10 @@
 /**
  * Public CORS proxy used when a schema host does not send
  * `Access-Control-Allow-Origin` (Netlify staging / PR previews).
+ *
+ * GitHub Pages is a static SPA — no server-side proxy or Netlify-style rewrites.
+ * Release dist loads directly from jsDelivr; only Netlify-hosted schema URLs need
+ * the proxy until id-tagging-schema previews ship CORS headers.
  */
 const CORS_PROXY = 'https://corsproxy.io/?url='
 
