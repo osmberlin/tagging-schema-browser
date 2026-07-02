@@ -51,9 +51,9 @@ function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOn
         <thead className="bg-slate-50 text-xs font-semibold tracking-wide text-slate-500 uppercase">
           <tr>
             <th className="px-4 py-3">Tag</th>
-            <th className="px-4 py-3">Before</th>
-            <th className="px-4 py-3">After</th>
-            <th className="px-4 py-3">Action</th>
+            <th className="px-4 py-3">Before (Preset 1)</th>
+            <th className="px-4 py-3">After (Preset 2)</th>
+            <th className="px-4 py-3">Change</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
