@@ -203,8 +203,8 @@ export function SwapPresetsButton({ onClick }: { onClick: () => void }) {
         'hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700',
         areaAccent.presetSwitch.focus,
       )}
-      title="Swap preset 1 and preset 2"
-      aria-label="Swap preset 1 and preset 2"
+      title="Swap current and target presets"
+      aria-label="Swap current and target presets"
     >
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5">
         <path

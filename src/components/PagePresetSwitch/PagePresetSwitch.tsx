@@ -50,8 +50,8 @@ function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOn
         <thead className="bg-slate-50 text-xs font-semibold tracking-wide text-slate-500 uppercase">
           <tr>
             <th className="px-4 py-3">Tag</th>
-            <th className="px-4 py-3">Before (Preset 1)</th>
-            <th className="px-4 py-3">After (Preset 2)</th>
+            <th className="px-4 py-3">Current</th>
+            <th className="px-4 py-3">Target</th>
             <th className="px-4 py-3">Change</th>
           </tr>
         </thead>
@@ -123,10 +123,10 @@ export function PagePresetSwitch() {
           <h1 className="font-display text-2xl font-semibold text-slate-950">Preset tag switch</h1>
         </div>
         <p className="max-w-3xl text-sm text-slate-600">
-          Simulates iD switching from preset 1 to preset 2. Starting tags = preset 1{' '}
-          <code className="font-mono text-xs">addTags</code>/
-          <code className="font-mono text-xs">tags</code> plus every field key on preset 1 filled
-          with a placeholder value. Based on{' '}
+          Simulates iD switching from the current preset to the target preset. Starting tags = the
+          current preset&apos;s <code className="font-mono text-xs">addTags</code>/
+          <code className="font-mono text-xs">tags</code> plus every field key on the current preset
+          filled with a placeholder value. Based on{' '}
           <a
             href="https://github.com/openstreetmap/iD/blob/develop/modules/actions/change_preset.js"
             target="_blank"
@@ -141,7 +141,7 @@ export function PagePresetSwitch() {
 
       <section className="grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
         <PresetCombobox
-          label="Preset 1 (current)"
+          label="Current preset"
           value={preset1}
           onChange={(id) => setSearch({ preset1: id })}
           presets={presets}
@@ -149,7 +149,7 @@ export function PagePresetSwitch() {
         />
         <SwapPresetsButton onClick={() => setSearch({ preset1: preset2, preset2: preset1 })} />
         <PresetCombobox
-          label="Preset 2 (target)"
+          label="Target preset"
           value={preset2}
           onChange={(id) => setSearch({ preset2: id })}
           presets={presets}
@@ -187,7 +187,8 @@ export function PagePresetSwitch() {
         <p className="text-sm text-slate-500">Select both presets to see the tag diff.</p>
       ) : (
         <p className="text-sm text-slate-500">
-          Pick two presets above, or open from a preset detail page with preset 1 pre-filled.
+          Pick two presets above, or open from a preset detail page with the current preset
+          pre-filled.
         </p>
       )}
     </div>

@@ -13,20 +13,20 @@ export type TagSwitchAction = 'unchanged' | 'changed' | 'removed-field' | 'remov
 export const TAG_SWITCH_ACTION: Record<TagSwitchAction, { label: string; title: string }> = {
   unchanged: {
     label: 'Unchanged',
-    title: 'Same value after switching from preset 1 to preset 2.',
+    title: 'Same value after switching from the current preset to the target preset.',
   },
   changed: {
     label: 'Changed',
-    title: 'Added or updated when applying preset 2 (addTags/tags).',
+    title: 'Added or updated when applying the target preset (addTags/tags).',
   },
   'removed-field': {
     label: 'Removed',
     title:
-      'Preset 2 has no field for this tag key (preset 1 did). iD drops keys not covered by any field on the target preset.',
+      'The target preset has no field for this tag key (the current preset did). iD drops keys not covered by any field on the target preset.',
   },
   'removed-explicit': {
     label: 'removeTags',
-    title: "Removed by preset 1's removeTags when deselecting that preset.",
+    title: "Removed by the current preset's removeTags when deselecting it.",
   },
 }
 
@@ -217,7 +217,7 @@ function buildRows(
 
 /**
  * Simulate iD's `actionChangePreset` tag updates when switching presets.
- * Assumes preset 1's `addTags`/`tags` plus every field key on preset 1 is populated.
+ * Assumes the current preset's `addTags`/`tags` plus every field key on it is populated.
  *
  * @see https://github.com/openstreetmap/iD/blob/develop/modules/actions/change_preset.js
  */
