@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
 
-test('staging is the default reference', async ({ page }) => {
+test('unreleased is the default reference', async ({ page }) => {
   await page.goto('/')
   const toggle = page.getByRole('tablist', { name: 'Schema reference' })
   await expect(toggle).toBeVisible()
-  await expect(page.getByRole('tab', { name: /^Staging/i })).toHaveAttribute(
+  await expect(page.getByRole('tab', { name: /^Unreleased/i })).toHaveAttribute(
     'aria-selected',
     'true',
   )
@@ -15,7 +15,7 @@ test('reference toggle is visible on narrow viewports', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
   await expect(page.getByRole('tablist', { name: 'Schema reference' })).toBeVisible()
-  await expect(page.getByRole('tab', { name: /^Staging/i })).toBeVisible()
+  await expect(page.getByRole('tab', { name: /^Unreleased/i })).toBeVisible()
 })
 
 test('reference toggle switches to release in URL', async ({ page }) => {
