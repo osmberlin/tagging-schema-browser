@@ -12,7 +12,17 @@ function resolveFieldList(
   allFields: RawFields,
 ): string[] {
   const list = preset[fieldListKey]
-  if (!Array.isArray(list)) return []
+  if (!Array.isArray(list)) {
+    const endIndex = presetId.lastIndexOf('/')
+    if (endIndex > 0) {
+      const parentId = presetId.substring(0, endIndex)
+      const parent = rawPresets[parentId]
+      if (parent) {
+        return resolveFieldList(parentId, parent, fieldListKey, rawPresets, allFields)
+      }
+    }
+    return []
+  }
 
   const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
   const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
@@ -38,17 +48,6 @@ function resolveFieldList(
     }
 
     resolved.push(item)
-  }
-
-  if (!resolved.length) {
-    const endIndex = presetId.lastIndexOf('/')
-    if (endIndex > 0) {
-      const parentId = presetId.substring(0, endIndex)
-      const parent = rawPresets[parentId]
-      if (parent) {
-        return resolveFieldList(parentId, parent, fieldListKey, rawPresets, allFields)
-      }
-    }
   }
 
   return resolved

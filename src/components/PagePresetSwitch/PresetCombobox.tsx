@@ -38,9 +38,16 @@ function PresetOptionContent({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-slate-900">{preset.name}</span>
         {onOpenPreset ? (
-          <button
-            type="button"
+          <span
+            role="link"
+            tabIndex={0}
             onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onOpenPreset(preset.id)
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== 'Enter' && event.key !== ' ') return
               event.preventDefault()
               event.stopPropagation()
               onOpenPreset(preset.id)
@@ -48,13 +55,13 @@ function PresetOptionContent({
             className={cn(
               'block max-w-full truncate text-left font-mono text-[10px] text-slate-500',
               idInteractive
-                ? 'pointer-events-auto hover:text-amber-700 hover:underline'
+                ? 'pointer-events-auto cursor-pointer hover:text-amber-700 hover:underline'
                 : 'group-data-focus:text-amber-700',
             )}
             title="Open preset details"
           >
             {preset.id}
-          </button>
+          </span>
         ) : (
           <span className="block truncate font-mono text-[10px] text-slate-500">{preset.id}</span>
         )}

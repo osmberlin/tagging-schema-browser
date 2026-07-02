@@ -97,6 +97,53 @@ describe('resolvePresetFieldIds', () => {
 
     expect(ids).toEqual(['name'])
   })
+
+  it('inherits fields from the slash-parent when the property is omitted', () => {
+    const presets: RawPresets = {
+      shop: {
+        tags: { shop: 'yes' },
+        geometry: ['point'],
+        fields: ['name', 'operator'],
+      },
+      'shop/convenience': {
+        tags: { shop: 'convenience' },
+        geometry: ['point'],
+      },
+    }
+
+    const ids = resolvePresetFieldIds(
+      'shop/convenience',
+      presets['shop/convenience'] as RawPreset,
+      presets,
+      fields,
+    )
+
+    expect(ids).toEqual(['name', 'operator'])
+  })
+
+  it('keeps an explicit empty fields array instead of inheriting the parent list', () => {
+    const presets: RawPresets = {
+      shop: {
+        tags: { shop: 'yes' },
+        geometry: ['point'],
+        fields: ['name', 'operator'],
+      },
+      'shop/convenience': {
+        tags: { shop: 'convenience' },
+        geometry: ['point'],
+        fields: [],
+      },
+    }
+
+    const ids = resolvePresetFieldIds(
+      'shop/convenience',
+      presets['shop/convenience'] as RawPreset,
+      presets,
+      fields,
+    )
+
+    expect(ids).toEqual([])
+  })
 })
 
 describe('simulatePresetTagSwitch restaurant to bank', () => {
