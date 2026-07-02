@@ -78,6 +78,8 @@ export function PresetCombobox(props: PresetComboboxProps) {
   return <PresetComboboxInner key={props.value} {...props} />
 }
 
+const TRIGGER_MIN_H = 'min-h-[52px]'
+
 function PresetComboboxInner({
   label,
   value,
@@ -88,11 +90,10 @@ function PresetComboboxInner({
 }: PresetComboboxProps) {
   const selected = value ? presets.find((p) => p.id === value) : undefined
   const [query, setQuery] = useState(selected?.name ?? '')
-  const [isSearching, setIsSearching] = useState(false)
 
   const list = query.trim() ? presets.filter((p) => matchesQuery(p, query)) : presets
   const filtered = list.slice(0, MAX_RESULTS)
-  const showSelectedDisplay = Boolean(selected && !isSearching)
+  const showRichDisplay = Boolean(selected && query === selected.name)
 
   return (
     <Combobox
@@ -100,10 +101,8 @@ function PresetComboboxInner({
       onChange={(preset: DenormalizedPreset | null) => {
         onChange(preset?.id ?? '')
         setQuery(preset?.name ?? '')
-        setIsSearching(false)
       }}
       onClose={() => {
-        setIsSearching(false)
         if (selected) setQuery(selected.name)
       }}
     >
@@ -111,11 +110,12 @@ function PresetComboboxInner({
         <span>{label}</span>
         <div
           className={cn(
-            'relative mt-1.5 flex min-h-11 items-center rounded-lg border border-slate-300 bg-white shadow-sm',
+            'relative mt-1.5 flex items-center rounded-lg border border-slate-300 bg-white shadow-sm',
+            TRIGGER_MIN_H,
             areaAccent.presetSwitch.focus.replaceAll('focus:', 'focus-within:'),
           )}
         >
-          {showSelectedDisplay ? (
+          {showRichDisplay ? (
             <div
               className="pointer-events-none flex min-w-0 flex-1 items-center gap-2 py-1.5 pr-10 pl-2"
               aria-hidden
@@ -134,13 +134,12 @@ function PresetComboboxInner({
             displayValue={() => query}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
             onFocus={(event: React.FocusEvent<HTMLInputElement>) => {
-              setIsSearching(true)
-              if (selected) event.target.select()
+              if (selected && query === selected.name) event.target.select()
             }}
             placeholder={placeholder}
             className={cn(
               'border-0 bg-transparent shadow-none focus:ring-0',
-              showSelectedDisplay
+              showRichDisplay
                 ? 'absolute inset-0 opacity-0'
                 : cn('min-w-0 flex-1 py-2', selected ? 'pr-10 pl-2' : 'pr-10'),
             )}
@@ -199,7 +198,7 @@ export function SwapPresetsButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-11 w-10 shrink-0 items-center justify-center self-end rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition',
+        'flex h-[52px] w-10 shrink-0 items-center justify-center self-end rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition',
         'hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700',
         areaAccent.presetSwitch.focus,
       )}
