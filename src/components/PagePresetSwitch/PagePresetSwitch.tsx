@@ -98,6 +98,9 @@ export function PagePresetSwitch() {
   const result =
     preset1 && preset2 ? simulatePresetTagSwitch(preset1, preset2, rawPresets, fields) : null
 
+  const preset1Known = !preset1 || presets.some((preset) => preset.id === preset1)
+  const preset2Known = !preset2 || presets.some((preset) => preset.id === preset2)
+
   const changedCount = result?.rows.filter((row) => row.action !== 'unchanged').length ?? 0
 
   if (loading) {
@@ -183,6 +186,12 @@ export function PagePresetSwitch() {
 
           <TagSwitchTable rows={result.rows} changesOnly={changesOnly} />
         </>
+      ) : preset1 && preset2 ? (
+        <p className="text-sm text-slate-500">
+          {!preset1Known || !preset2Known
+            ? 'One or both preset ids are not in the loaded schema.'
+            : 'Could not simulate tag switch for this preset pair.'}
+        </p>
       ) : preset1 || preset2 ? (
         <p className="text-sm text-slate-500">Select both presets to see the tag diff.</p>
       ) : (

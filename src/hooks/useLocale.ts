@@ -47,7 +47,7 @@ export function useLocale() {
   // Drop a stale locale from the URL when it isn't available for this dataUrl.
   useEffect(
     function clearStaleLocaleFromUrl() {
-      if (localesQuery.isLoading || !locale) return
+      if (!locale || localesQuery.isLoading || !localesQuery.isSuccess) return
       const locales = localesQuery.data ?? []
       if (!locales.includes(locale)) {
         void navigate({
@@ -57,7 +57,7 @@ export function useLocale() {
         })
       }
     },
-    [locale, localesQuery.data, localesQuery.isLoading, navigate],
+    [locale, localesQuery.data, localesQuery.isLoading, localesQuery.isSuccess, navigate],
   )
 
   return {
