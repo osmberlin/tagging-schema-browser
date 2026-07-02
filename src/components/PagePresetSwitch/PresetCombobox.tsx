@@ -91,9 +91,10 @@ function PresetComboboxInner({
   const selected = value ? presets.find((p) => p.id === value) : undefined
   const [query, setQuery] = useState(selected?.name ?? '')
 
-  const list = query.trim() ? presets.filter((p) => matchesQuery(p, query)) : presets
+  const isFiltering = selected ? query !== selected.name : query.trim().length > 0
+  const list = isFiltering ? presets.filter((p) => matchesQuery(p, query)) : presets
   const filtered = list.slice(0, MAX_RESULTS)
-  const showRichDisplay = Boolean(selected && query === selected.name)
+  const showRichDisplay = Boolean(selected && !isFiltering)
 
   return (
     <Combobox
@@ -134,7 +135,7 @@ function PresetComboboxInner({
             displayValue={() => query}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
             onFocus={(event: React.FocusEvent<HTMLInputElement>) => {
-              if (selected && query === selected.name) event.target.select()
+              if (selected && !isFiltering) event.target.select()
             }}
             placeholder={placeholder}
             className={cn(
