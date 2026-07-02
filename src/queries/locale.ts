@@ -1,8 +1,5 @@
 import { type References, dereferenceLocaleStrings } from '@/schemaRuntimeDereference'
-import {
-  isBundledTestSchemaUrl,
-  isProxiedReleaseSchemaUrl,
-} from '@/utils/constants'
+import { isBundledTestSchemaUrl, isProxiedReleaseSchemaUrl } from '@/utils/constants'
 import { fetchSchemaJson } from '@/utils/schemaFetch'
 import type { FieldTranslations } from '@/utils/types'
 

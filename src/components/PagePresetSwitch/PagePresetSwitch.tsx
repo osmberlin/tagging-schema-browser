@@ -1,47 +1,47 @@
-import { PresetCombobox, SwapPresetsButton } from "@/components/PagePresetSwitch/PresetCombobox";
-import { presetSwitchSearchSchema } from "@/components/PagePresetSwitch/presetSwitchSearch";
-import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
-import { useSetPreset } from "@/components/PagePresets/useSearchState";
-import { AreaIcon } from "@/components/ui/areaIcons";
-import { useSchema } from "@/contexts/SchemaContext";
-import { areaAccent } from "@/theme/areaAccent";
-import { externalLinkClass } from "@/theme/externalAccent";
+import { useNavigate, useSearch } from '@tanstack/react-router'
+import { clsx } from 'clsx'
+import { useCallback, useMemo, useState } from 'react'
+import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
+import { useSetPreset } from '@/components/PagePresets/useSearchState'
+import { PresetCombobox, SwapPresetsButton } from '@/components/PagePresetSwitch/PresetCombobox'
+import { presetSwitchSearchSchema } from '@/components/PagePresetSwitch/presetSwitchSearch'
+import { AreaIcon } from '@/components/ui/areaIcons'
+import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
+import { externalLinkClass } from '@/theme/externalAccent'
 import {
   type TagSwitchAction,
   type TagSwitchRow,
   simulatePresetTagSwitch,
-} from "@/utils/presetTagSwitch";
-import { useNavigate, useSearch } from "@tanstack/react-router";
-import { clsx } from "clsx";
-import { useCallback, useMemo, useState } from "react";
+} from '@/utils/presetTagSwitch'
 
 const ACTION_STYLES: Record<TagSwitchAction, string> = {
-  nothing: "bg-slate-50 text-slate-500 ring-slate-100",
-  "change based on preset": "bg-emerald-50 text-emerald-800 ring-emerald-100",
-  "remove due to missing in new/second preset": "bg-amber-50 text-amber-900 ring-amber-100",
-  "remove due to removeTags in source/first preset": "bg-rose-50 text-rose-800 ring-rose-100",
-};
+  nothing: 'bg-slate-50 text-slate-500 ring-slate-100',
+  'change based on preset': 'bg-emerald-50 text-emerald-800 ring-emerald-100',
+  'remove due to missing in new/second preset': 'bg-amber-50 text-amber-900 ring-amber-100',
+  'remove due to removeTags in source/first preset': 'bg-rose-50 text-rose-800 ring-rose-100',
+}
 
 function ActionBadge({ action }: { action: TagSwitchAction }) {
   return (
     <span
       className={clsx(
-        "inline-block max-w-[14rem] rounded px-2 py-0.5 text-[11px] leading-snug font-medium ring-1 ring-inset",
+        'inline-block max-w-[14rem] rounded px-2 py-0.5 text-[11px] leading-snug font-medium ring-1 ring-inset',
         ACTION_STYLES[action],
       )}
     >
       {action}
     </span>
-  );
+  )
 }
 
 function TagValue({ value }: { value: string | undefined }) {
-  if (value === undefined) return <span className="text-slate-300">—</span>;
-  return <code className="font-mono text-xs text-slate-800">{value}</code>;
+  if (value === undefined) return <span className="text-slate-300">—</span>
+  return <code className="font-mono text-xs text-slate-800">{value}</code>
 }
 
 function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOnly: boolean }) {
-  const visible = changesOnly ? rows.filter((r) => r.action !== "nothing") : rows;
+  const visible = changesOnly ? rows.filter((r) => r.action !== 'nothing') : rows
 
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -65,7 +65,7 @@ function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOn
             visible.map((row) => (
               <tr
                 key={row.key}
-                className={row.action === "nothing" ? "text-slate-500" : "hover:bg-slate-50/80"}
+                className={row.action === 'nothing' ? 'text-slate-500' : 'hover:bg-slate-50/80'}
               >
                 <td className="px-4 py-2.5 font-mono text-xs">{row.key}</td>
                 <td className="px-4 py-2.5">
@@ -83,38 +83,38 @@ function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOn
         </tbody>
       </table>
     </div>
-  );
+  )
 }
 
 export function PagePresetSwitch() {
-  const { presets, rawPresets, fields, loading, error } = useSchema();
-  const navigate = useNavigate();
-  const search = useSearch({ strict: false, select: (raw) => presetSwitchSearchSchema.parse(raw) });
-  const setPreset = useSetPreset();
-  const [changesOnly, setChangesOnly] = useState(false);
+  const { presets, rawPresets, fields, loading, error } = useSchema()
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false, select: (raw) => presetSwitchSearchSchema.parse(raw) })
+  const setPreset = useSetPreset()
+  const [changesOnly, setChangesOnly] = useState(false)
 
   const setSearch = useCallback(
     (patch: Partial<typeof search>) => {
-      void navigate({ to: ".", search: (prev) => ({ ...prev, ...patch }), replace: true });
+      void navigate({ to: '.', search: (prev) => ({ ...prev, ...patch }), replace: true })
     },
     [navigate],
-  );
+  )
 
-  const preset1 = search.preset1;
-  const preset2 = search.preset2;
+  const preset1 = search.preset1
+  const preset2 = search.preset2
 
-  const denorm1 = preset1 ? presets.find((p) => p.id === preset1) : undefined;
-  const denorm2 = preset2 ? presets.find((p) => p.id === preset2) : undefined;
+  const denorm1 = preset1 ? presets.find((p) => p.id === preset1) : undefined
+  const denorm2 = preset2 ? presets.find((p) => p.id === preset2) : undefined
 
   const result = useMemo(() => {
-    if (!preset1 || !preset2) return null;
-    return simulatePresetTagSwitch(preset1, preset2, rawPresets, fields);
-  }, [preset1, preset2, rawPresets, fields]);
+    if (!preset1 || !preset2) return null
+    return simulatePresetTagSwitch(preset1, preset2, rawPresets, fields)
+  }, [preset1, preset2, rawPresets, fields])
 
-  const changedCount = result?.rows.filter((r) => r.action !== "nothing").length ?? 0;
+  const changedCount = result?.rows.filter((r) => r.action !== 'nothing').length ?? 0
 
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading schema…</p>;
+    return <p className="text-sm text-slate-600">Loading schema…</p>
   }
 
   if (error) {
@@ -123,7 +123,7 @@ export function PagePresetSwitch() {
         <h1 className="font-display text-xl font-semibold text-slate-900">Schema failed to load</h1>
         <p className="text-sm text-slate-600">{error}</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -136,10 +136,10 @@ export function PagePresetSwitch() {
           <h1 className="font-display text-2xl font-semibold text-slate-950">Preset tag switch</h1>
         </div>
         <p className="max-w-3xl text-sm text-slate-600">
-          Simulates iD switching from preset 1 to preset 2. Starting tags = preset 1{" "}
+          Simulates iD switching from preset 1 to preset 2. Starting tags = preset 1{' '}
           <code className="font-mono text-xs">addTags</code>/
           <code className="font-mono text-xs">tags</code> plus every field key on preset 1 filled
-          with a placeholder value. Based on{" "}
+          with a placeholder value. Based on{' '}
           <a
             href="https://github.com/openstreetmap/iD/blob/develop/modules/actions/change_preset.js"
             target="_blank"
@@ -212,5 +212,5 @@ export function PagePresetSwitch() {
         </p>
       )}
     </div>
-  );
+  )
 }

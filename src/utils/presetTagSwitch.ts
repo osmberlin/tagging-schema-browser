@@ -3,47 +3,47 @@ import {
   getAssumedTagsForField,
   getFieldTagKeys,
   resolvePresetFieldIds,
-} from "@/utils/resolvePresetFieldIds";
-import type { RawFields, RawPreset, RawPresets } from "@/utils/types";
+} from '@/utils/resolvePresetFieldIds'
+import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
 
-export type TagRemovalCause = "fieldKeys" | "removeTags" | "both";
+export type TagRemovalCause = 'fieldKeys' | 'removeTags' | 'both'
 
 export type TagSwitchAction =
-  | "nothing"
-  | "change based on preset"
-  | "remove due to missing in new/second preset"
-  | "remove due to removeTags in source/first preset";
+  | 'nothing'
+  | 'change based on preset'
+  | 'remove due to missing in new/second preset'
+  | 'remove due to removeTags in source/first preset'
 
 export type TagSwitchRow = {
-  key: string;
-  before: string | undefined;
-  after: string | undefined;
-  action: TagSwitchAction;
-};
+  key: string
+  before: string | undefined
+  after: string | undefined
+  action: TagSwitchAction
+}
 
 export type TagSwitchResult = {
-  geometry: string;
-  startingTags: Record<string, string>;
-  endingTags: Record<string, string>;
-  rows: TagSwitchRow[];
-  usedFieldKeyRemoval: boolean;
-  fieldCount: number;
-};
+  geometry: string
+  startingTags: Record<string, string>
+  endingTags: Record<string, string>
+  rows: TagSwitchRow[]
+  usedFieldKeyRemoval: boolean
+  fieldCount: number
+}
 
 function effectiveAddTags(preset: RawPreset): Record<string, string> {
-  return { ...(preset.addTags ?? preset.tags ?? {}) };
+  return { ...preset.addTags ?? preset.tags }
 }
 
 function effectiveRemoveTags(preset: RawPreset): Record<string, string> {
-  return { ...(preset.removeTags ?? preset.addTags ?? preset.tags ?? {}) };
+  return { ...preset.removeTags ?? preset.addTags ?? preset.tags }
 }
 
 function pickGeometry(oldPreset: RawPreset, newPreset: RawPreset): string {
-  const oldGeom = oldPreset.geometry ?? [];
-  const newGeom = newPreset.geometry ?? [];
-  const shared = oldGeom.find((g) => newGeom.includes(g));
-  if (shared) return shared;
-  return newGeom[0] ?? oldGeom[0] ?? "area";
+  const oldGeom = oldPreset.geometry ?? []
+  const newGeom = newPreset.geometry ?? []
+  const shared = oldGeom.find((g) => newGeom.includes(g))
+  if (shared) return shared
+  return newGeom[0] ?? oldGeom[0] ?? 'area'
 }
 
 function buildStartingTags(
@@ -53,25 +53,25 @@ function buildStartingTags(
   fields: RawFields,
   geometry: string,
 ): Record<string, string> {
-  const tags = { ...effectiveAddTags(preset) };
+  const tags = { ...effectiveAddTags(preset) }
 
   for (const fieldId of resolvePresetFieldIds(presetId, preset, rawPresets)) {
-    const field = fields[fieldId];
-    if (!fieldMatchesGeometry(field, geometry)) continue;
+    const field = fields[fieldId]
+    if (!fieldMatchesGeometry(field, geometry)) continue
     for (const [key, value] of Object.entries(getAssumedTagsForField(fieldId, field))) {
-      if (!(key in tags)) tags[key] = value;
+      if (!(key in tags)) tags[key] = value
     }
   }
 
-  return tags;
+  return tags
 }
 
 function presetMatchScore(preset: RawPreset, tags: Record<string, string>): number {
-  const presetTags = preset.tags ?? {};
+  const presetTags = preset.tags ?? {}
   for (const [key, value] of Object.entries(presetTags)) {
-    if (tags[key] !== value) return -1;
+    if (tags[key] !== value) return -1
   }
-  return Object.keys(presetTags).length;
+  return Object.keys(presetTags).length
 }
 
 function unsetTags(
@@ -79,17 +79,17 @@ function unsetTags(
   tags: Record<string, string>,
   preserveKeys: string[],
 ): Record<string, string> {
-  const removeTags = effectiveRemoveTags(preset);
-  const result: Record<string, string> = {};
+  const removeTags = effectiveRemoveTags(preset)
+  const result: Record<string, string> = {}
 
   for (const [key, value] of Object.entries(tags)) {
-    if (key === "area") continue;
+    if (key === 'area') continue
     if (!Object.hasOwn(removeTags, key) || preserveKeys.includes(key)) {
-      result[key] = value;
+      result[key] = value
     }
   }
 
-  return result;
+  return result
 }
 
 function setTags(
@@ -97,25 +97,25 @@ function setTags(
   tags: Record<string, string>,
   _geometry: string,
 ): Record<string, string> {
-  const addTags = effectiveAddTags(preset);
-  const result = { ...tags };
+  const addTags = effectiveAddTags(preset)
+  const result = { ...tags }
 
   for (const [key, value] of Object.entries(addTags)) {
-    if (value === "*") {
+    if (value === '*') {
       if (preset.tags?.[key] || !result[key]) {
-        result[key] = "yes";
+        result[key] = 'yes'
       }
     } else {
-      result[key] = value;
+      result[key] = value
     }
   }
 
-  if (!Object.hasOwn(addTags, "area")) {
-    const { area: _area, ...withoutArea } = result;
-    return withoutArea;
+  if (!Object.hasOwn(addTags, 'area')) {
+    const { area: _area, ...withoutArea } = result
+    return withoutArea
   }
 
-  return result;
+  return result
 }
 
 function collectPreserveKeys(
@@ -128,20 +128,20 @@ function collectPreserveKeys(
   rawPresets: RawPresets,
   fields: RawFields,
 ): string[] {
-  const preserveKeys = new Set(Object.keys(effectiveAddTags(newPreset)));
-  const wasSubPreset = oldPresetId !== newPresetId && oldPresetId.startsWith(`${newPresetId}/`);
+  const preserveKeys = new Set(Object.keys(effectiveAddTags(newPreset)))
+  const wasSubPreset = oldPresetId !== newPresetId && oldPresetId.startsWith(`${newPresetId}/`)
 
   for (const fieldId of resolvePresetFieldIds(newPresetId, newPreset, rawPresets)) {
-    const field = fields[fieldId];
-    if (!fieldMatchesGeometry(field, geometry)) continue;
+    const field = fields[fieldId]
+    if (!fieldMatchesGeometry(field, geometry)) continue
 
     for (const key of getFieldTagKeys(fieldId, field, tags)) {
-      if (wasSubPreset && oldPreset.tags?.[key] !== undefined) continue;
-      preserveKeys.add(key);
+      if (wasSubPreset && oldPreset.tags?.[key] !== undefined) continue
+      preserveKeys.add(key)
     }
   }
 
-  return [...preserveKeys];
+  return [...preserveKeys]
 }
 
 function trackUnsetRemovals(
@@ -151,8 +151,8 @@ function trackUnsetRemovals(
 ) {
   for (const key of Object.keys(before)) {
     if (before[key] !== undefined && after[key] === undefined) {
-      const existing = reasons.get(key);
-      reasons.set(key, existing === "fieldKeys" ? "both" : "removeTags");
+      const existing = reasons.get(key)
+      reasons.set(key, existing === 'fieldKeys' ? 'both' : 'removeTags')
     }
   }
 }
@@ -162,15 +162,15 @@ function actionForRow(
   after: string | undefined,
   removalCause?: TagRemovalCause,
 ): TagSwitchAction {
-  if (before !== undefined && after !== undefined && before === after) return "nothing";
+  if (before !== undefined && after !== undefined && before === after) return 'nothing'
   if (before !== undefined && after === undefined) {
-    if (removalCause === "fieldKeys" || removalCause === "both") {
-      return "remove due to missing in new/second preset";
+    if (removalCause === 'fieldKeys' || removalCause === 'both') {
+      return 'remove due to missing in new/second preset'
     }
-    return "remove due to removeTags in source/first preset";
+    return 'remove due to removeTags in source/first preset'
   }
-  if (before === undefined && after === undefined) return "nothing";
-  return "change based on preset";
+  if (before === undefined && after === undefined) return 'nothing'
+  return 'change based on preset'
 }
 
 function buildRows(
@@ -178,20 +178,20 @@ function buildRows(
   endingTags: Record<string, string>,
   removalCauses: Map<string, TagRemovalCause>,
 ): TagSwitchRow[] {
-  const keys = new Set([...Object.keys(startingTags), ...Object.keys(endingTags)]);
+  const keys = new Set([...Object.keys(startingTags), ...Object.keys(endingTags)])
 
   return [...keys].sort().map((key) => {
-    const before = startingTags[key];
-    const after = endingTags[key];
+    const before = startingTags[key]
+    const after = endingTags[key]
     const removalCause =
-      before !== undefined && after === undefined ? removalCauses.get(key) : undefined;
+      before !== undefined && after === undefined ? removalCauses.get(key) : undefined
     return {
       key,
       before,
       after,
       action: actionForRow(before, after, removalCause),
-    };
-  });
+    }
+  })
 }
 
 /**
@@ -206,19 +206,19 @@ export function simulatePresetTagSwitch(
   rawPresets: RawPresets,
   fields: RawFields,
 ): TagSwitchResult | null {
-  const oldPreset = rawPresets[oldPresetId];
-  const newPreset = rawPresets[newPresetId];
-  if (!oldPreset || !newPreset) return null;
+  const oldPreset = rawPresets[oldPresetId]
+  const newPreset = rawPresets[newPresetId]
+  if (!oldPreset || !newPreset) return null
 
-  const geometry = pickGeometry(oldPreset, newPreset);
-  const startingTags = buildStartingTags(oldPresetId, oldPreset, rawPresets, fields, geometry);
+  const geometry = pickGeometry(oldPreset, newPreset)
+  const startingTags = buildStartingTags(oldPresetId, oldPreset, rawPresets, fields, geometry)
   const fieldCount = resolvePresetFieldIds(oldPresetId, oldPreset, rawPresets).filter((fieldId) =>
     fieldMatchesGeometry(fields[fieldId], geometry),
-  ).length;
+  ).length
 
-  let tags = { ...startingTags };
-  const removalCauses = new Map<string, TagRemovalCause>();
-  let usedFieldKeyRemoval = false;
+  let tags = { ...startingTags }
+  const removalCauses = new Map<string, TagRemovalCause>()
+  let usedFieldKeyRemoval = false
 
   const preserveKeys = collectPreserveKeys(
     oldPresetId,
@@ -229,49 +229,49 @@ export function simulatePresetTagSwitch(
     geometry,
     rawPresets,
     fields,
-  );
+  )
 
   if (oldPresetId !== newPresetId) {
     const oldFieldKeys = resolvePresetFieldIds(oldPresetId, oldPreset, rawPresets).flatMap(
       (fieldId) => {
-        const field = fields[fieldId];
-        if (!fieldMatchesGeometry(field, geometry)) return [];
-        return getFieldTagKeys(fieldId, field, tags).filter((key) => key in tags);
+        const field = fields[fieldId]
+        if (!fieldMatchesGeometry(field, geometry)) return []
+        return getFieldTagKeys(fieldId, field, tags).filter((key) => key in tags)
       },
-    );
+    )
 
     const fieldKeysToRemove = [...new Set(oldFieldKeys)].filter(
       (key) => !preserveKeys.includes(key),
-    );
+    )
 
-    let reducedTags = { ...tags };
+    let reducedTags = { ...tags }
     for (const key of fieldKeysToRemove) {
       if (key in reducedTags) {
-        removalCauses.set(key, "fieldKeys");
-        const { [key]: _removed, ...rest } = reducedTags;
-        reducedTags = rest;
+        removalCauses.set(key, 'fieldKeys')
+        const { [key]: _removed, ...rest } = reducedTags
+        reducedTags = rest
       }
     }
 
-    const beforeUnset = { ...reducedTags };
-    reducedTags = unsetTags(oldPreset, reducedTags, preserveKeys);
-    trackUnsetRemovals(beforeUnset, reducedTags, removalCauses);
-    reducedTags = setTags(newPreset, reducedTags, geometry);
+    const beforeUnset = { ...reducedTags }
+    reducedTags = unsetTags(oldPreset, reducedTags, preserveKeys)
+    trackUnsetRemovals(beforeUnset, reducedTags, removalCauses)
+    reducedTags = setTags(newPreset, reducedTags, geometry)
 
     if (presetMatchScore(oldPreset, reducedTags) === -1) {
-      tags = reducedTags;
-      usedFieldKeyRemoval = fieldKeysToRemove.length > 0;
+      tags = reducedTags
+      usedFieldKeyRemoval = fieldKeysToRemove.length > 0
     } else {
       for (const key of fieldKeysToRemove) {
-        removalCauses.delete(key);
+        removalCauses.delete(key)
       }
     }
   }
 
-  const beforeFinalUnset = { ...tags };
-  tags = unsetTags(oldPreset, tags, preserveKeys);
-  trackUnsetRemovals(beforeFinalUnset, tags, removalCauses);
-  tags = setTags(newPreset, tags, geometry);
+  const beforeFinalUnset = { ...tags }
+  tags = unsetTags(oldPreset, tags, preserveKeys)
+  trackUnsetRemovals(beforeFinalUnset, tags, removalCauses)
+  tags = setTags(newPreset, tags, geometry)
 
   return {
     geometry,
@@ -280,13 +280,13 @@ export function simulatePresetTagSwitch(
     rows: buildRows(startingTags, tags, removalCauses),
     usedFieldKeyRemoval,
     fieldCount,
-  };
+  }
 }
 
 export function effectiveRemoveTagsForPreset(preset: RawPreset): Record<string, string> {
-  return effectiveRemoveTags(preset);
+  return effectiveRemoveTags(preset)
 }
 
 export function hasExplicitRemoveTags(preset: RawPreset): boolean {
-  return preset.removeTags !== undefined;
+  return preset.removeTags !== undefined
 }

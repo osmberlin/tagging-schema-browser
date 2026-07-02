@@ -1,27 +1,27 @@
-import { PresetIconBox } from "@/components/PagePresets/PresetIconBox";
-import { Input } from "@/components/ui/Input";
-import { areaAccent } from "@/theme/areaAccent";
-import { schemaRepoPath } from "@/utils/githubFileUrl";
-import type { DenormalizedPreset } from "@/utils/types";
 import {
   Combobox,
   ComboboxButton,
   ComboboxInput,
   ComboboxOption,
   ComboboxOptions,
-} from "@headlessui/react";
-import { clsx } from "clsx";
-import { useMemo, useState } from "react";
+} from '@headlessui/react'
+import { clsx } from 'clsx'
+import { useMemo, useState } from 'react'
+import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
+import { Input } from '@/components/ui/Input'
+import { areaAccent } from '@/theme/areaAccent'
+import { schemaRepoPath } from '@/utils/githubFileUrl'
+import type { DenormalizedPreset } from '@/utils/types'
 
-const MAX_RESULTS = 40;
+const MAX_RESULTS = 40
 
 function matchesQuery(preset: DenormalizedPreset, query: string): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  const path = schemaRepoPath("preset", preset.id).toLowerCase();
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  const path = schemaRepoPath('preset', preset.id).toLowerCase()
   return (
     preset.name.toLowerCase().includes(q) || preset.id.toLowerCase().includes(q) || path.includes(q)
-  );
+  )
 }
 
 export function PresetCombobox({
@@ -29,33 +29,33 @@ export function PresetCombobox({
   value,
   onChange,
   presets,
-  placeholder = "Search preset name or path…",
+  placeholder = 'Search preset name or path…',
   onOpenPreset,
 }: {
-  label: string;
-  value: string;
-  onChange: (id: string) => void;
-  presets: DenormalizedPreset[];
-  placeholder?: string;
-  onOpenPreset?: (id: string) => void;
+  label: string
+  value: string
+  onChange: (id: string) => void
+  presets: DenormalizedPreset[]
+  placeholder?: string
+  onOpenPreset?: (id: string) => void
 }) {
-  const selected = value ? presets.find((p) => p.id === value) : undefined;
-  const [query, setQuery] = useState(selected?.name ?? "");
+  const selected = value ? presets.find((p) => p.id === value) : undefined
+  const [query, setQuery] = useState(selected?.name ?? '')
 
   const filtered = useMemo(() => {
-    const list = query.trim() ? presets.filter((p) => matchesQuery(p, query)) : presets;
-    return list.slice(0, MAX_RESULTS);
-  }, [presets, query]);
+    const list = query.trim() ? presets.filter((p) => matchesQuery(p, query)) : presets
+    return list.slice(0, MAX_RESULTS)
+  }, [presets, query])
 
   return (
     <Combobox
       value={selected ?? null}
       onChange={(preset: DenormalizedPreset | null) => {
-        onChange(preset?.id ?? "");
-        setQuery(preset?.name ?? "");
+        onChange(preset?.id ?? '')
+        setQuery(preset?.name ?? '')
       }}
       onClose={() => {
-        if (selected) setQuery(selected.name);
+        if (selected) setQuery(selected.name)
       }}
     >
       <div className="block text-sm font-medium text-slate-700">
@@ -103,8 +103,8 @@ export function PresetCombobox({
       <ComboboxOptions
         anchor="bottom start"
         className={clsx(
-          "z-50 mt-1 max-h-72 w-[var(--input-width)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg",
-          "empty:invisible",
+          'z-50 mt-1 max-h-72 w-[var(--input-width)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg',
+          'empty:invisible',
         )}
       >
         {filtered.length === 0 ? (
@@ -135,7 +135,7 @@ export function PresetCombobox({
         ) : null}
       </ComboboxOptions>
     </Combobox>
-  );
+  )
 }
 
 export function SwapPresetsButton({ onClick }: { onClick: () => void }) {
@@ -144,8 +144,8 @@ export function SwapPresetsButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className={clsx(
-        "flex h-10 w-10 shrink-0 items-center justify-center self-end rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition",
-        "hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700",
+        'flex h-10 w-10 shrink-0 items-center justify-center self-end rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition',
+        'hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700',
         areaAccent.presetSwitch.focus,
       )}
       title="Swap preset 1 and preset 2"
@@ -161,5 +161,5 @@ export function SwapPresetsButton({ onClick }: { onClick: () => void }) {
         />
       </svg>
     </button>
-  );
+  )
 }

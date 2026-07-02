@@ -19,15 +19,15 @@ import { fieldFacetDefaults, fieldFacetSchema } from '@/components/PageFields/us
 import { IconFacetSidebar } from '@/components/PageIcons/IconFacetSidebar'
 import { IconSearchBar } from '@/components/PageIcons/IconSearchBar'
 import { iconFacetDefaults, iconFacetSchema } from '@/components/PageIcons/useIconFacetState'
-import {
-  presetSwitchSearchDefaults,
-  presetSwitchSearchSchema,
-} from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
 import { PagePresets } from '@/components/PagePresets/PagePresets'
 import { PresetDetailPage } from '@/components/PagePresets/PresetDetailPage'
 import { SearchBar } from '@/components/PagePresets/SearchBar'
 import { presetSearchDefaults, presetSearchSchema } from '@/components/PagePresets/useSearchState'
+import {
+  presetSwitchSearchDefaults,
+  presetSwitchSearchSchema,
+} from '@/components/PagePresetSwitch/presetSwitchSearch'
 import {
   translationsSearchDefaults,
   translationsSearchSchema,
@@ -61,10 +61,10 @@ const LazyPageComparison = lazy(() =>
 )
 
 const LazyPagePresetSwitch = lazy(() =>
-  import("@/components/PagePresetSwitch/PagePresetSwitch").then((m) => ({
+  import('@/components/PagePresetSwitch/PagePresetSwitch').then((m) => ({
     default: m.PagePresetSwitch,
   })),
-);
+)
 
 function routerBasepath(): string {
   const trimmed = import.meta.env.BASE_URL.replace(/^\/+|\/+$/g, '')
@@ -229,7 +229,7 @@ const translationsRoute = createRoute({
 
 const presetSwitchRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/preset-switch",
+  path: '/preset-switch',
   validateSearch: presetSwitchSearchSchema,
   search: { middlewares: [stripSearchParams(presetSwitchSearchDefaults)] },
   component: () => (
@@ -237,7 +237,7 @@ const presetSwitchRoute = createRoute({
       <LazyPagePresetSwitch />
     </Suspense>
   ),
-});
+})
 
 const comparisonRoute = createRoute({
   getParentRoute: () => rootRoute,

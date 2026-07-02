@@ -1,12 +1,12 @@
 import { Link, useParams } from '@tanstack/react-router'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
-import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
+import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
+import { AreaIcon } from '@/components/ui/areaIcons'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
-import { AreaIcon } from '@/components/ui/areaIcons'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
@@ -148,11 +148,11 @@ function PresetDetailContent({
           to="/preset-switch"
           search={(prev) => ({
             ...presetSwitchSearchDefaults,
-            dataUrl: prev.dataUrl ?? "",
-            locale: prev.locale ?? "",
+            dataUrl: prev.dataUrl ?? '',
+            locale: prev.locale ?? '',
             preset1: preset.id,
           })}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 ring-1 ring-amber-100 ring-inset transition hover:bg-amber-100"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 ring-1 ring-amber-100 transition ring-inset hover:bg-amber-100"
         >
           <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
           Compare preset switch
