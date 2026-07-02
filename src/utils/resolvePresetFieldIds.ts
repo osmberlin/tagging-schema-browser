@@ -82,14 +82,20 @@ function firstOption(field: RawField): string {
   return opt ?? 'yes'
 }
 
-function prefixTagKey(key: string, option: string): string {
-  return key.endsWith(':') ? `${key}${option}` : `${key}:${option}`
+function multiComboTagKey(key: string, option: string): string {
+  const base = key.endsWith(':') ? key.slice(0, -1) : key
+  const value = option.startsWith(':') ? option.slice(1) : option
+  return `${base}:${value}`
+}
+
+function multiComboKeyPrefix(key: string): string {
+  const base = key.endsWith(':') ? key.slice(0, -1) : key
+  return `${base}:`
 }
 
 function tagKeyMatchesPrefix(key: string, tagKey: string): boolean {
   if (tagKey === key) return true
-  if (key.endsWith(':')) return tagKey.startsWith(key)
-  return tagKey.startsWith(`${key}:`)
+  return tagKey.startsWith(multiComboKeyPrefix(key))
 }
 
 /** Placeholder tags for a field — every key the field can edit is set as if the user filled it in. */
@@ -126,7 +132,7 @@ export function getAssumedTagsForField(
     if (field.options?.length) {
       for (const opt of field.options) {
         if (opt === 'undefined') continue
-        tags[prefixTagKey(key, opt)] = 'yes'
+        tags[multiComboTagKey(key, opt)] = 'yes'
       }
     }
     if (Object.keys(tags).length === 0) tags[key] = 'yes'

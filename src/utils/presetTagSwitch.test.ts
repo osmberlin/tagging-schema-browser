@@ -85,6 +85,50 @@ describe('resolvePresetFieldIds', () => {
   })
 })
 
+describe('simulatePresetTagSwitch restaurant to bank', () => {
+  const fields: RawFields = {
+    cuisine: { key: 'cuisine', type: 'semiCombo', options: ['pizza', 'ramen'] },
+    diet_multi: {
+      key: 'diet:',
+      type: 'multiCombo',
+      options: ['vegetarian', 'vegan', 'halal', 'gluten_free'],
+    },
+    name: { key: 'name', type: 'text' },
+    operator: { key: 'operator', type: 'text' },
+    address: { key: 'addr:full', type: 'text' },
+    building_area_yes: { key: 'building', type: 'combo', options: ['yes'] },
+    opening_hours: { key: 'opening_hours', type: 'text' },
+    atm: { key: 'atm', type: 'check' },
+  }
+
+  const rawPresets: RawPresets = {
+    'amenity/restaurant': {
+      tags: { amenity: 'restaurant' },
+      geometry: ['point', 'area'],
+      fields: ['name', 'cuisine', 'diet_multi', 'address', 'building_area_yes', 'opening_hours'],
+    },
+    'amenity/bank': {
+      tags: { amenity: 'bank' },
+      geometry: ['point', 'area'],
+      fields: ['name', 'operator', 'address', 'building_area_yes', 'opening_hours', 'atm'],
+    },
+  }
+
+  it('does not produce double-colon diet tags', () => {
+    const result = simulatePresetTagSwitch('amenity/restaurant', 'amenity/bank', rawPresets, fields)
+
+    expect(result).not.toBeNull()
+
+    const doubleColonKeys = result!.rows
+      .filter((row) => row.key.includes('::'))
+      .map((row) => row.key)
+    expect(doubleColonKeys).toEqual([])
+    expect(result!.rows.some((row) => row.key === 'diet:gluten_free')).toBe(true)
+    expect(result!.rows.some((row) => row.key === 'cuisine')).toBe(true)
+    expect(result!.rows.some((row) => row.key.startsWith('cuisine:'))).toBe(false)
+  })
+})
+
 describe('simulatePresetTagSwitch row order', () => {
   const fields: RawFields = {
     highway: { key: 'highway', type: 'combo', options: ['track', 'unclassified'] },
