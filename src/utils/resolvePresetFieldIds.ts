@@ -74,8 +74,9 @@ export function fieldMatchesGeometry(
   return field.geometry.includes(geometry)
 }
 
-const MULTI_COMBO_TYPES = new Set(['multiCombo', 'check'])
+const MULTI_COMBO_TYPES = new Set(['multiCombo'])
 const SEMI_COMBO_TYPES = new Set(['semiCombo', 'manyCombo'])
+const CHECK_TYPES = new Set(['check', 'onewayCheck'])
 
 function firstOption(field: RawField): string {
   const opt = field.options?.find((o) => o !== 'undefined')
@@ -139,7 +140,7 @@ export function getAssumedTagsForField(
     return tags
   }
 
-  if (type === 'onewayCheck') {
+  if (type && CHECK_TYPES.has(type)) {
     return { [key]: 'yes' }
   }
 

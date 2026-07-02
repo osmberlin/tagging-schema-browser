@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { simulatePresetTagSwitch } from '@/utils/presetTagSwitch'
 import {
@@ -5,7 +6,11 @@ import {
   getFieldTagKeys,
   resolvePresetFieldIds,
 } from '@/utils/resolvePresetFieldIds'
-import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
+import type { RawField, RawFields, RawPreset, RawPresets } from '@/utils/types'
+
+const releaseCuisineField = JSON.parse(
+  readFileSync(new URL('./fixtures/cuisine-field.json', import.meta.url), 'utf8'),
+) as RawField
 
 describe('getAssumedTagsForField', () => {
   it('uses value tags for semiCombo fields like cuisine', () => {
@@ -17,6 +22,14 @@ describe('getAssumedTagsForField', () => {
 
     expect(tags).toEqual({ cuisine: 'pizza' })
     expect(tags).not.toHaveProperty('cuisine:ramen')
+  })
+
+  it('uses a single value tag for release cuisine semiCombo (not cuisine:option=yes)', () => {
+    const tags = getAssumedTagsForField('cuisine', releaseCuisineField)
+
+    expect(Object.keys(tags)).toEqual(['cuisine'])
+    expect(tags.cuisine).toBe('pizza')
+    expect(releaseCuisineField.options?.length).toBeGreaterThan(50)
   })
 
   it('uses prefix tags for multiCombo fields with trailing colon keys', () => {
@@ -87,7 +100,7 @@ describe('resolvePresetFieldIds', () => {
 
 describe('simulatePresetTagSwitch restaurant to bank', () => {
   const fields: RawFields = {
-    cuisine: { key: 'cuisine', type: 'semiCombo', options: ['pizza', 'ramen'] },
+    cuisine: releaseCuisineField,
     diet_multi: {
       key: 'diet:',
       type: 'multiCombo',
@@ -113,6 +126,19 @@ describe('simulatePresetTagSwitch restaurant to bank', () => {
       fields: ['name', 'operator', 'address', 'building_area_yes', 'opening_hours', 'atm'],
     },
   }
+
+  it('assumes only cuisine=VALUE, not cuisine:option=yes per option', () => {
+    const result = simulatePresetTagSwitch('amenity/restaurant', 'amenity/bank', rawPresets, fields)
+
+    expect(result).not.toBeNull()
+
+    const cuisineRows = result!.rows.filter(
+      (row) => row.key === 'cuisine' || row.key.startsWith('cuisine:'),
+    )
+    expect(cuisineRows).toEqual([
+      expect.objectContaining({ key: 'cuisine', before: 'pizza', after: undefined }),
+    ])
+  })
 
   it('does not produce double-colon diet tags', () => {
     const result = simulatePresetTagSwitch('amenity/restaurant', 'amenity/bank', rawPresets, fields)
