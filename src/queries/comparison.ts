@@ -1,6 +1,4 @@
-import { ensureIconsForPresetUsage } from '@/components/PageIcons/iconRegistry'
-import { loadSchemaData } from '@/components/PagePresets/dataLoader'
-import { denormalize } from '@/components/PagePresets/denormalize'
+import { preloadSchemaData } from '@/utils/schemaCache'
 import { resolveReleaseVersion, resolveStagingUpdatedAt } from '@/utils/schemaVersion'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -24,11 +22,9 @@ export async function fetchComparisonVersions(): Promise<ComparisonVersions> {
 }
 
 export async function fetchComparisonBaseline(baselineUrl: string): Promise<DenormalizedPreset[]> {
-  const raw = await loadSchemaData(baselineUrl)
-  if (raw.loadErrors.length > 0) {
-    throw new Error(raw.loadErrors.join('; '))
+  const data = await preloadSchemaData(baselineUrl)
+  if (!data) {
+    throw new Error(`Failed to load comparison baseline from ${baselineUrl}`)
   }
-  const denorm = denormalize(raw.presets, raw.translations, raw.categories, raw.fields)
-  void ensureIconsForPresetUsage(raw.presets)
-  return denorm
+  return data.presets
 }

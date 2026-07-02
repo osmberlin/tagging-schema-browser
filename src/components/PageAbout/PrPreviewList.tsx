@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { Badge } from '@/components/ui/Badge'
@@ -115,8 +116,14 @@ function PrPreviewRowItem({
   )
 }
 
+const autoLoadPrList = import.meta.env.PROD
+
 export function PrPreviewList() {
-  const { pulls, previewStatusByNumber, isLoading, isError, error, refetch } = usePrPreviews()
+  const [loadRequested, setLoadRequested] = useState(false)
+  const shouldLoad = autoLoadPrList || loadRequested
+  const { pulls, previewStatusByNumber, isLoading, isError, error, refetch } = usePrPreviews({
+    enabled: shouldLoad,
+  })
 
   return (
     <div className="not-prose mt-4">
@@ -131,17 +138,30 @@ export function PrPreviewList() {
         >
           id-tagging-schema
         </a>
-        , fetched from GitHub. Reload the page to refresh the list.
+        , fetched from GitHub.
+        {autoLoadPrList
+          ? ' Reload the page to refresh the list.'
+          : ' In local development the list is not loaded automatically (avoids GitHub API rate limits during hot reload).'}
       </p>
 
-      {isLoading ? (
+      {!shouldLoad ? (
+        <button
+          type="button"
+          onClick={() => setLoadRequested(true)}
+          className="mt-4 rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700"
+        >
+          Load from GitHub
+        </button>
+      ) : null}
+
+      {shouldLoad && isLoading ? (
         <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
           <LoadingSpinner size="sm" />
           Loading pull requests…
         </div>
       ) : null}
 
-      {isError ? (
+      {shouldLoad && isError ? (
         <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <p>{error instanceof Error ? error.message : 'Failed to load pull requests.'}</p>
           <button
@@ -154,7 +174,7 @@ export function PrPreviewList() {
         </div>
       ) : null}
 
-      {!isLoading && !isError && pulls.length > 0 ? (
+      {shouldLoad && !isLoading && !isError && pulls.length > 0 ? (
         <ul className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
           {pulls.map((pr) => (
             <PrPreviewRowItem

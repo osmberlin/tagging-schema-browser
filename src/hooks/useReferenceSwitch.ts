@@ -125,7 +125,14 @@ export function useReferenceSwitch() {
     tryCommit()
   }, [tryCommit])
 
-  useEffect(() => () => clearFallbackTimer(), [clearFallbackTimer])
+  useEffect(
+    function clearReferenceSwitchFallbackOnUnmount() {
+      return function stopReferenceSwitchFallbackTimer() {
+        clearFallbackTimer()
+      }
+    },
+    [clearFallbackTimer],
+  )
 
   return {
     committedReference,

@@ -37,7 +37,6 @@ const itemsJsConfig = {
     primaryTagKey: { title: 'Primary tag', size: 50, sort: 'count', order: 'desc' },
     geometry: { title: 'Geometry', size: 10, conjunction: false },
     iconPrefix: { title: 'Icon set', size: 15 },
-    // Filterable so "Show presets" from an icon (and the iconName pill) works.
     iconName: { title: 'Icon', size: 2000, conjunction: false },
     fieldIds: { title: 'Fields', size: 100, sort: 'count', order: 'desc', conjunction: false },
     primaryFieldIds: {
@@ -70,11 +69,30 @@ export type PresetSearchResult = {
 /** Upper bound for itemsjs `per_page` — well above any real schema size. */
 export const PRESET_SEARCH_ALL = 100_000
 
-let engine: ReturnType<typeof itemsjs> | null = null
+type PresetSearchEngine = {
+  search: (params: Record<string, unknown>) => unknown
+}
 
-export function buildPresetSearchIndex(presets: DenormalizedPreset[]): void {
-  const records = toItemsJsRecords(presets)
-  engine = itemsjs(records, itemsJsConfig as never)
+function normalizeDataUrl(url: string): string {
+  return url.endsWith('/') ? url : `${url}/`
+}
+
+let activeDataUrl: string | null = null
+let engine: PresetSearchEngine | null = null
+
+/** Bind the itemsjs engine to the active schema URL. Preload must not call this. */
+export function activatePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
+  const key = normalizeDataUrl(dataUrl)
+  if (activeDataUrl === key && engine) return
+  activeDataUrl = key
+  engine = itemsjs(toItemsJsRecords(presets), itemsJsConfig as never)
+}
+
+/** Idempotent — safe during render when the active schema is on screen. */
+export function ensurePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
+  const key = normalizeDataUrl(dataUrl)
+  if (activeDataUrl === key && engine) return
+  activatePresetSearchIndex(dataUrl, presets)
 }
 
 export function searchPresets(params: {
@@ -84,7 +102,7 @@ export function searchPresets(params: {
   per_page?: number
   sort?: string
 }): PresetSearchResult | null {
-  if (!engine) return null
+  if (!engine || !activeDataUrl) return null
   const mappedFilters: Record<string, string[]> = { ...params.filters }
   if (mappedFilters.hasIcon) {
     mappedFilters.hasIconFacet = mappedFilters.hasIcon

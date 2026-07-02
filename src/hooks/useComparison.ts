@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { useSearch } from '@tanstack/react-router'
-import { useMemo } from 'react'
 import { useReference } from '@/features/data-source/reference-store'
 import { useSchema } from '@/hooks/useSchema'
 import {
@@ -41,7 +40,7 @@ export function useComparison() {
   const reference = resolveSchemaReference(urlReference, persistedReference)
   const activeDataUrl = resolveActiveDataUrl(rawDataUrl, reference)
 
-  const { presets } = useSchema()
+  const { presets, loading: schemaLoading, error: schemaError } = useSchema()
 
   const trimmedCompare = rawDataUrl.trim()
   const releaseCompareMode = isReleaseCompareMode(trimmedCompare, reference)
@@ -68,51 +67,42 @@ export function useComparison() {
     staleTime: SCHEMA_STALE_TIME,
   })
 
-  const result = useMemo((): ComparisonResult | null => {
-    const baselinePresets = baselineQuery.data
-    if (!baselinePresets || presets.length === 0) return null
-    return comparePresets(baselinePresets, presets)
-  }, [baselineQuery.data, presets])
+  const baselinePresets = baselineQuery.data
+  const result: ComparisonResult | null =
+    baselinePresets && presets.length > 0 ? comparePresets(baselinePresets, presets) : null
 
-  return useMemo(() => {
-    const compareDomain = baselineUrl ? hostnameFromUrl(baselineUrl) : null
-    const compareLabel = baselineUrl
-      ? compareBaselineLabel(baselineUrl)
-      : previewCompareMode
-        ? 'staging'
+  const compareDomain = baselineUrl ? hostnameFromUrl(baselineUrl) : null
+  const compareLabel = baselineUrl
+    ? compareBaselineLabel(baselineUrl)
+    : previewCompareMode
+      ? 'staging'
+      : null
+
+  const baselineError =
+    baselineQuery.error instanceof Error
+      ? baselineQuery.error.message
+      : baselineQuery.error
+        ? String(baselineQuery.error)
         : null
 
-    return {
-      isComparing,
-      compareMode,
-      dataUrl: activeDataUrl,
-      domain: hostnameFromUrl(activeDataUrl),
-      compareDomain,
-      compareLabel,
-      presetsUrl: `${ensureSlash(activeDataUrl)}presets.min.json`,
-      releaseVersion: versionsQuery.data?.releaseVersion ?? null,
-      stagingUpdatedAt: versionsQuery.data?.stagingUpdatedAt ?? null,
-      result,
-      loading: baselineQuery.isLoading || baselineQuery.isFetching,
-      error:
-        baselineQuery.error instanceof Error
-          ? baselineQuery.error.message
-          : baselineQuery.error
-            ? String(baselineQuery.error)
-            : null,
-    }
-  }, [
+  return {
     isComparing,
     compareMode,
-    activeDataUrl,
-    baselineUrl,
-    previewCompareMode,
-    versionsQuery.data,
+    dataUrl: activeDataUrl,
+    domain: hostnameFromUrl(activeDataUrl),
+    compareDomain,
+    compareLabel,
+    presetsUrl: `${ensureSlash(activeDataUrl)}presets.min.json`,
+    releaseVersion: versionsQuery.data?.releaseVersion ?? null,
+    stagingUpdatedAt: versionsQuery.data?.stagingUpdatedAt ?? null,
     result,
-    baselineQuery.isLoading,
-    baselineQuery.isFetching,
-    baselineQuery.error,
-  ])
+    loading:
+      schemaLoading ||
+      baselineQuery.isLoading ||
+      baselineQuery.isFetching ||
+      (baselineUrl !== null && !baselineQuery.isError && baselinePresets === undefined),
+    error: schemaError ?? baselineError,
+  }
 }
 
 /** Props previously passed to ComparisonProvider — kept for typing router wiring. */

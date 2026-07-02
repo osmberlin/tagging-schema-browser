@@ -1,7 +1,6 @@
 import { ensureIconsForPresetUsage } from '@/components/PageIcons/iconRegistry'
 import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
 import { denormalize } from '@/components/PagePresets/denormalize'
-import { buildPresetSearchIndex } from '@/components/PagePresets/presetSearch'
 import type { SchemaData } from '@/utils/types'
 
 function normalizeDataUrl(url: string): string {
@@ -25,7 +24,6 @@ export function processRawSchemaPayload(raw: RawSchemaPayload): SchemaData | nul
 
   const diagnostics: string[] = []
   const presets = denormalize(raw.presets, raw.translations, raw.categories, raw.fields)
-  buildPresetSearchIndex(presets)
   const presetsById = new Map(presets.map((p) => [p.id, p]))
   const categoryNames: Record<string, string> = {}
   for (const [cid] of Object.entries(raw.categories)) {

@@ -10,10 +10,16 @@ import {
 
 export type PreviewStatus = 'pending' | 'ready' | 'missing'
 
-export function usePrPreviews() {
+type UsePrPreviewsOptions = {
+  /** When false, skips GitHub and preview HEAD requests until enabled. */
+  enabled?: boolean
+}
+
+export function usePrPreviews({ enabled = true }: UsePrPreviewsOptions = {}) {
   const pullsQuery = useQuery({
     queryKey: PR_LIST_KEY,
     queryFn: () => fetchRecentPulls(30),
+    enabled,
   })
 
   const pulls = useMemo(() => pullsQuery.data ?? [], [pullsQuery.data])
@@ -22,7 +28,7 @@ export function usePrPreviews() {
     queries: pulls.map((pr) => ({
       queryKey: previewStatusQueryKey(pr.number),
       queryFn: () => checkPreviewReady(pr.number),
-      enabled: pulls.length > 0,
+      enabled: enabled && pulls.length > 0,
     })),
   })
 

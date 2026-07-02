@@ -1,7 +1,11 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
-import { PRESET_SEARCH_ALL, searchPresets } from '@/components/PagePresets/presetSearch'
+import {
+  ensurePresetSearchIndex,
+  PRESET_SEARCH_ALL,
+  searchPresets,
+} from '@/components/PagePresets/presetSearch'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
 import { filtersFromState, useSearchState } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
@@ -31,6 +35,7 @@ export function PageTranslations() {
 
   const facetFiltered = useMemo(() => {
     if (!data) return [] as DenormalizedPreset[]
+    ensurePresetSearchIndex(dataUrl, data.presets)
     const res = searchPresets({
       query: '',
       filters,
@@ -39,7 +44,7 @@ export function PageTranslations() {
       sort: state.sort,
     })
     return res?.data.items ?? []
-  }, [data, filters, state.sort])
+  }, [data, dataUrl, filters, state.sort])
 
   // Default list: searchable presets with a display name.
   const matched = useMemo(

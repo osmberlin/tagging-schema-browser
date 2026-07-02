@@ -31,9 +31,10 @@ import {
 import { TranslationsSidebar } from '@/components/PageTranslations/TranslationsSidebar'
 import { SidebarLayout } from '@/components/ui/SidebarLayout'
 import { useReference, useReferenceActions } from '@/features/data-source/reference-store'
+import { queryClient, SCHEMA_STALE_TIME } from '@/queries/queryClient'
+import { prefetchSchemaData, schemaKeys } from '@/queries/schema'
 import { dataUrlForReference, resolveSchemaReference } from '@/utils/dataUrl'
 import { routerSearch } from '@/utils/routerSearch'
-import { preloadSchemaData } from '@/utils/schemaCache'
 
 const LazyPageIcons = lazy(() =>
   import('@/components/PageIcons/PageIcons').then((m) => ({ default: m.PageIcons })),
@@ -85,29 +86,43 @@ function RootContent() {
   // URL `reference=release` wins; otherwise fall back to persisted preference (default interem).
   const reference = resolveSchemaReference(urlReference, persistedReference)
 
-  useEffect(() => {
-    if (urlReference === 'release') setPersistedReference('release')
-    if (urlReference === 'interem') setPersistedReference('interem')
-  }, [urlReference, setPersistedReference])
+  useEffect(
+    function syncPersistedReferenceFromUrl() {
+      if (urlReference === 'release') setPersistedReference('release')
+      if (urlReference === 'interem') setPersistedReference('interem')
+    },
+    [urlReference, setPersistedReference],
+  )
 
   // Keep the URL aligned when release was persisted but the param was stripped.
-  useEffect(() => {
-    if (dataUrl.trim()) return
-    if (urlReference !== undefined) return
-    if (persistedReference !== 'release') return
-    void navigate({
-      to: '.',
-      search: (prev) => ({ ...prev, reference: 'release' }),
-      replace: true,
-    })
-  }, [dataUrl, urlReference, persistedReference, navigate])
+  useEffect(
+    function restoreReleaseReferenceInUrl() {
+      if (dataUrl.trim()) return
+      if (urlReference !== undefined) return
+      if (persistedReference !== 'release') return
+      void navigate({
+        to: '.',
+        search: (prev) => ({ ...prev, reference: 'release' }),
+        replace: true,
+      })
+    },
+    [dataUrl, urlReference, persistedReference, navigate],
+  )
 
   // Preload the alternate canonical reference so toggling can commit from cache.
-  useEffect(() => {
-    if (dataUrl.trim()) return
-    const other: 'release' | 'interem' = reference === 'interem' ? 'release' : 'interem'
-    void preloadSchemaData(dataUrlForReference(other))
-  }, [dataUrl, reference])
+  useEffect(
+    function prefetchAlternateReferenceSchema() {
+      if (dataUrl.trim()) return
+      const other: 'release' | 'interem' = reference === 'interem' ? 'release' : 'interem'
+      const otherUrl = dataUrlForReference(other)
+      void queryClient.prefetchQuery({
+        queryKey: schemaKeys.data(otherUrl),
+        queryFn: () => prefetchSchemaData(otherUrl),
+        staleTime: SCHEMA_STALE_TIME,
+      })
+    },
+    [dataUrl, reference],
+  )
 
   const topSearch =
     location.pathname === '/icons' ? (

@@ -1,6 +1,10 @@
 import { useMemo } from 'react'
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
-import { PRESET_SEARCH_ALL, searchPresets } from '@/components/PagePresets/presetSearch'
+import {
+  ensurePresetSearchIndex,
+  PRESET_SEARCH_ALL,
+  searchPresets,
+} from '@/components/PagePresets/presetSearch'
 import { filtersFromState, useSearchState } from '@/components/PagePresets/useSearchState'
 import { SidebarSection } from '@/components/ui/Sidebar'
 import { useLocale } from '@/hooks/useLocale'
@@ -49,13 +53,14 @@ function StatusRow({
 export function TranslationsSidebar() {
   const [status, setStatus] = useTranslationStatus()
   const { locale, localeMap } = useLocale()
-  const { data } = useSchema()
+  const { data, dataUrl } = useSchema()
   const [state] = useSearchState()
 
   // Status breakdown of the current facet selection (same `matched` set the page uses).
   // `data` is a dep so the counts recompute once the search index is built.
   const counts = useMemo(() => {
     if (!data) return { translated: 0, untranslated: 0 }
+    ensurePresetSearchIndex(dataUrl, data.presets)
     const res = searchPresets({
       query: '',
       filters: filtersFromState(state),
@@ -66,7 +71,7 @@ export function TranslationsSidebar() {
     const matched = (res?.data.items ?? []).filter((p) => isDefaultTranslationPreset(p))
     const translated = localeMap ? matched.filter((p) => localeMap.get(p.id)?.name).length : 0
     return { translated, untranslated: matched.length - translated }
-  }, [data, state, localeMap])
+  }, [data, dataUrl, state, localeMap])
 
   const options: StatusOption[] = [
     { value: 'translated', label: 'Translated', count: counts.translated },

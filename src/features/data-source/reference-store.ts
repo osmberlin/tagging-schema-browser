@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { SchemaReference } from '@/utils/dataUrl'
@@ -33,6 +34,15 @@ const useReferenceStore = create<ReferenceStore>()(
 )
 
 export const useReference = () => useReferenceStore((state) => state.reference)
+
+/** Avoid applying persisted reference before zustand persist has rehydrated. */
+export function useReferenceHydrated(): boolean {
+  return useSyncExternalStore(
+    useReferenceStore.persist.onFinishHydration,
+    () => useReferenceStore.persist.hasHydrated(),
+    () => true,
+  )
+}
 
 export const usePendingReference = () => useReferenceStore((state) => state.pendingReference)
 
