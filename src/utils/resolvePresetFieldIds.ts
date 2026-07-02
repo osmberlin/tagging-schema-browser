@@ -1,33 +1,39 @@
-import { presetIdFromRef } from '@/components/PagePresets/presetFieldInheritance'
-import type { RawField, RawPreset, RawPresets } from '@/utils/types'
+import {
+  getInheritedFieldItems,
+  presetIdFromRef,
+} from '@/components/PagePresets/presetFieldInheritance'
+import type { RawField, RawFields, RawPreset, RawPresets } from '@/utils/types'
 
 function resolveFieldList(
   presetId: string,
   preset: RawPreset,
   fieldListKey: 'fields' | 'moreFields',
   rawPresets: RawPresets,
-  seenPresetRefs: Set<string>,
+  allFields: RawFields,
 ): string[] {
   const list = preset[fieldListKey]
   if (!Array.isArray(list)) return []
+
+  const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
+  const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
 
   const resolved: string[] = []
 
   for (const item of list) {
     if (typeof item !== 'string') continue
 
-    const nestedPresetId = presetIdFromRef(item)
-    if (nestedPresetId) {
-      if (seenPresetRefs.has(nestedPresetId)) continue
-      const nested = rawPresets[nestedPresetId]
-      if (!nested) continue
-
-      seenPresetRefs.add(nestedPresetId)
+    if (presetIdFromRef(item)) {
       resolved.push(
-        ...resolveFieldList(nestedPresetId, nested, 'fields', rawPresets, seenPresetRefs),
-        ...resolveFieldList(nestedPresetId, nested, 'moreFields', rawPresets, seenPresetRefs),
+        ...getInheritedFieldItems(
+          preset,
+          item,
+          fieldListKey,
+          hostOriginalFields,
+          hostOriginalMoreFields,
+          rawPresets,
+          allFields,
+        ),
       )
-      seenPresetRefs.delete(nestedPresetId)
       continue
     }
 
@@ -40,7 +46,7 @@ function resolveFieldList(
       const parentId = presetId.substring(0, endIndex)
       const parent = rawPresets[parentId]
       if (parent) {
-        return resolveFieldList(parentId, parent, fieldListKey, rawPresets, seenPresetRefs)
+        return resolveFieldList(parentId, parent, fieldListKey, rawPresets, allFields)
       }
     }
   }
@@ -53,10 +59,10 @@ export function resolvePresetFieldIds(
   presetId: string,
   preset: RawPreset,
   rawPresets: RawPresets,
+  allFields: RawFields,
 ): string[] {
-  const seen = new Set<string>()
-  const fields = resolveFieldList(presetId, preset, 'fields', rawPresets, seen)
-  const moreFields = resolveFieldList(presetId, preset, 'moreFields', rawPresets, seen)
+  const fields = resolveFieldList(presetId, preset, 'fields', rawPresets, allFields)
+  const moreFields = resolveFieldList(presetId, preset, 'moreFields', rawPresets, allFields)
   return [...fields, ...moreFields]
 }
 
@@ -68,11 +74,22 @@ export function fieldMatchesGeometry(
   return field.geometry.includes(geometry)
 }
 
-const PREFIX_FIELD_TYPES = new Set(['multiCombo', 'semiCombo', 'manyCombo', 'check'])
+const MULTI_COMBO_TYPES = new Set(['multiCombo', 'check'])
+const SEMI_COMBO_TYPES = new Set(['semiCombo', 'manyCombo'])
 
 function firstOption(field: RawField): string {
   const opt = field.options?.find((o) => o !== 'undefined')
   return opt ?? 'yes'
+}
+
+function prefixTagKey(key: string, option: string): string {
+  return key.endsWith(':') ? `${key}${option}` : `${key}:${option}`
+}
+
+function tagKeyMatchesPrefix(key: string, tagKey: string): boolean {
+  if (tagKey === key) return true
+  if (key.endsWith(':')) return tagKey.startsWith(key)
+  return tagKey.startsWith(`${key}:`)
 }
 
 /** Placeholder tags for a field — every key the field can edit is set as if the user filled it in. */
@@ -100,19 +117,23 @@ export function getAssumedTagsForField(
 
   const key = field.key ?? fieldId
 
-  if (type && PREFIX_FIELD_TYPES.has(type)) {
+  if (type && SEMI_COMBO_TYPES.has(type)) {
+    return { [key]: value }
+  }
+
+  if (type && MULTI_COMBO_TYPES.has(type)) {
     const tags: Record<string, string> = {}
     if (field.options?.length) {
       for (const opt of field.options) {
         if (opt === 'undefined') continue
-        tags[`${key}:${opt}`] = 'yes'
+        tags[prefixTagKey(key, opt)] = 'yes'
       }
     }
     if (Object.keys(tags).length === 0) tags[key] = 'yes'
     return tags
   }
 
-  if (type === 'check' || type === 'onewayCheck') {
+  if (type === 'onewayCheck') {
     return { [key]: 'yes' }
   }
 
@@ -138,8 +159,12 @@ export function getFieldTagKeys(
     return candidates.filter((k) => k in tags)
   }
 
-  if (field.type && PREFIX_FIELD_TYPES.has(field.type)) {
-    return Object.keys(tags).filter((tagKey) => tagKey === key || tagKey.startsWith(`${key}:`))
+  if (field.type && SEMI_COMBO_TYPES.has(field.type)) {
+    return key in tags ? [key] : [key]
+  }
+
+  if (field.type && MULTI_COMBO_TYPES.has(field.type)) {
+    return Object.keys(tags).filter((tagKey) => tagKeyMatchesPrefix(key, tagKey))
   }
 
   return key in tags ? [key] : [key]

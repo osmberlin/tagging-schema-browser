@@ -20,7 +20,7 @@ export const TAG_SWITCH_ACTION: Record<TagSwitchAction, { label: string; title: 
     title: 'Added or updated when applying preset 2 (addTags/tags).',
   },
   'removed-field': {
-    label: 'No field',
+    label: 'Removed',
     title:
       'Preset 2 has no field for this tag key (preset 1 did). iD drops keys not covered by any field on the target preset.',
   },
@@ -71,7 +71,7 @@ function buildStartingTags(
 ): Record<string, string> {
   const tags = { ...effectiveAddTags(preset) }
 
-  for (const fieldId of resolvePresetFieldIds(presetId, preset, rawPresets)) {
+  for (const fieldId of resolvePresetFieldIds(presetId, preset, rawPresets, fields)) {
     const field = fields[fieldId]
     if (!fieldMatchesGeometry(field, geometry)) continue
     for (const [key, value] of Object.entries(getAssumedTagsForField(fieldId, field))) {
@@ -147,7 +147,7 @@ function collectPreserveKeys(
   const preserveKeys = new Set(Object.keys(effectiveAddTags(newPreset)))
   const wasSubPreset = oldPresetId !== newPresetId && oldPresetId.startsWith(`${newPresetId}/`)
 
-  for (const fieldId of resolvePresetFieldIds(newPresetId, newPreset, rawPresets)) {
+  for (const fieldId of resolvePresetFieldIds(newPresetId, newPreset, rawPresets, fields)) {
     const field = fields[fieldId]
     if (!fieldMatchesGeometry(field, geometry)) continue
 
@@ -196,7 +196,7 @@ function buildRows(
 ): TagSwitchRow[] {
   const keys = new Set([...Object.keys(startingTags), ...Object.keys(endingTags)])
 
-  return [...keys].sort().map((key) => {
+  const rows = [...keys].map((key) => {
     const before = startingTags[key]
     const after = endingTags[key]
     const removalCause =
@@ -208,6 +208,11 @@ function buildRows(
       action: actionForRow(before, after, removalCause),
     }
   })
+
+  const byKey = (a: TagSwitchRow, b: TagSwitchRow) => a.key.localeCompare(b.key)
+  const changed = rows.filter((row) => row.action !== 'unchanged').sort(byKey)
+  const unchanged = rows.filter((row) => row.action === 'unchanged').sort(byKey)
+  return [...changed, ...unchanged]
 }
 
 /**
@@ -228,8 +233,8 @@ export function simulatePresetTagSwitch(
 
   const geometry = pickGeometry(oldPreset, newPreset)
   const startingTags = buildStartingTags(oldPresetId, oldPreset, rawPresets, fields, geometry)
-  const fieldCount = resolvePresetFieldIds(oldPresetId, oldPreset, rawPresets).filter((fieldId) =>
-    fieldMatchesGeometry(fields[fieldId], geometry),
+  const fieldCount = resolvePresetFieldIds(oldPresetId, oldPreset, rawPresets, fields).filter(
+    (fieldId) => fieldMatchesGeometry(fields[fieldId], geometry),
   ).length
 
   let tags = { ...startingTags }
@@ -248,7 +253,7 @@ export function simulatePresetTagSwitch(
   )
 
   if (oldPresetId !== newPresetId) {
-    const oldFieldKeys = resolvePresetFieldIds(oldPresetId, oldPreset, rawPresets).flatMap(
+    const oldFieldKeys = resolvePresetFieldIds(oldPresetId, oldPreset, rawPresets, fields).flatMap(
       (fieldId) => {
         const field = fields[fieldId]
         if (!fieldMatchesGeometry(field, geometry)) return []
