@@ -45,13 +45,20 @@ export function useLocale() {
         : null
 
   // Drop a stale locale from the URL when it isn't available for this dataUrl.
-  useEffect(() => {
-    if (localesQuery.isLoading || !locale) return
-    const locales = localesQuery.data ?? []
-    if (!locales.includes(locale)) {
-      void navigate({ to: '.', search: (prev) => ({ ...prev, locale: undefined }), replace: true })
-    }
-  }, [locale, localesQuery.data, localesQuery.isLoading, navigate])
+  useEffect(
+    function clearStaleLocaleFromUrl() {
+      if (localesQuery.isLoading || !locale) return
+      const locales = localesQuery.data ?? []
+      if (!locales.includes(locale)) {
+        void navigate({
+          to: '.',
+          search: (prev) => ({ ...prev, locale: undefined }),
+          replace: true,
+        })
+      }
+    },
+    [locale, localesQuery.data, localesQuery.isLoading, navigate],
+  )
 
   return {
     locale,

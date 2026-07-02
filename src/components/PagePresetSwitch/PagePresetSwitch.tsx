@@ -1,10 +1,8 @@
-import { useNavigate, useSearch } from '@tanstack/react-router'
-import { clsx } from 'clsx'
-import { useCallback, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { useSetPreset } from '@/components/PagePresets/useSearchState'
 import { PresetCombobox, SwapPresetsButton } from '@/components/PagePresetSwitch/PresetCombobox'
-import { presetSwitchSearchSchema } from '@/components/PagePresetSwitch/presetSwitchSearch'
+import { usePresetSwitchSearch } from '@/components/PagePresetSwitch/usePresetSwitchSearch'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
@@ -15,6 +13,7 @@ import {
   type TagSwitchRow,
   simulatePresetTagSwitch,
 } from '@/utils/presetTagSwitch'
+import { cn } from '@/utils/tw'
 
 const ACTION_STYLES: Record<TagSwitchAction, string> = {
   unchanged: 'bg-slate-50 text-slate-500 ring-slate-100',
@@ -28,7 +27,7 @@ function ActionBadge({ action }: { action: TagSwitchAction }) {
   return (
     <span
       title={title}
-      className={clsx(
+      className={cn(
         'inline-block cursor-help rounded px-2 py-0.5 text-[11px] leading-snug font-medium ring-1 ring-inset',
         ACTION_STYLES[action],
       )}
@@ -44,7 +43,7 @@ function TagValue({ value }: { value: string | undefined }) {
 }
 
 function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOnly: boolean }) {
-  const visible = changesOnly ? rows.filter((r) => r.action !== 'unchanged') : rows
+  const visible = changesOnly ? rows.filter((row) => row.action !== 'unchanged') : rows
 
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -91,30 +90,19 @@ function TagSwitchTable({ rows, changesOnly }: { rows: TagSwitchRow[]; changesOn
 
 export function PagePresetSwitch() {
   const { presets, rawPresets, fields, loading, error } = useSchema()
-  const navigate = useNavigate()
-  const search = useSearch({ strict: false, select: (raw) => presetSwitchSearchSchema.parse(raw) })
+  const [search, setSearch] = usePresetSwitchSearch()
   const setPreset = useSetPreset()
   const [changesOnly, setChangesOnly] = useState(false)
 
-  const setSearch = useCallback(
-    (patch: Partial<typeof search>) => {
-      void navigate({ to: '.', search: (prev) => ({ ...prev, ...patch }), replace: true })
-    },
-    [navigate],
-  )
-
-  const preset1 = search.preset1
-  const preset2 = search.preset2
+  const { preset1, preset2 } = search
 
   const denorm1 = preset1 ? presets.find((p) => p.id === preset1) : undefined
   const denorm2 = preset2 ? presets.find((p) => p.id === preset2) : undefined
 
-  const result = useMemo(() => {
-    if (!preset1 || !preset2) return null
-    return simulatePresetTagSwitch(preset1, preset2, rawPresets, fields)
-  }, [preset1, preset2, rawPresets, fields])
+  const result =
+    preset1 && preset2 ? simulatePresetTagSwitch(preset1, preset2, rawPresets, fields) : null
 
-  const changedCount = result?.rows.filter((r) => r.action !== 'unchanged').length ?? 0
+  const changedCount = result?.rows.filter((row) => row.action !== 'unchanged').length ?? 0
 
   if (loading) {
     return <p className="text-sm text-slate-600">Loading schema…</p>
@@ -198,7 +186,9 @@ export function PagePresetSwitch() {
               <input
                 type="checkbox"
                 checked={changesOnly}
-                onChange={(e) => setChangesOnly(e.target.checked)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setChangesOnly(event.target.checked)
+                }
                 className="rounded border-slate-300 text-amber-600 focus:ring-amber-500/40"
               />
               Changes only

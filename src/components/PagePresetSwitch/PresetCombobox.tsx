@@ -5,12 +5,12 @@ import {
   ComboboxOption,
   ComboboxOptions,
 } from '@headlessui/react'
-import { clsx } from 'clsx'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { Input } from '@/components/ui/Input'
 import { areaAccent } from '@/theme/areaAccent'
 import { schemaRepoPath } from '@/utils/githubFileUrl'
+import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const MAX_RESULTS = 40
@@ -24,28 +24,33 @@ function matchesQuery(preset: DenormalizedPreset, query: string): boolean {
   )
 }
 
-export function PresetCombobox({
-  label,
-  value,
-  onChange,
-  presets,
-  placeholder = 'Search preset name or path…',
-  onOpenPreset,
-}: {
+type PresetComboboxProps = {
   label: string
   value: string
   onChange: (id: string) => void
   presets: DenormalizedPreset[]
   placeholder?: string
   onOpenPreset?: (id: string) => void
-}) {
+}
+
+/** Remount when `value` changes so the search field resets (swap, URL load). */
+export function PresetCombobox(props: PresetComboboxProps) {
+  return <PresetComboboxInner key={props.value} {...props} />
+}
+
+function PresetComboboxInner({
+  label,
+  value,
+  onChange,
+  presets,
+  placeholder = 'Search preset name or path…',
+  onOpenPreset,
+}: PresetComboboxProps) {
   const selected = value ? presets.find((p) => p.id === value) : undefined
   const [query, setQuery] = useState(selected?.name ?? '')
 
-  const filtered = useMemo(() => {
-    const list = query.trim() ? presets.filter((p) => matchesQuery(p, query)) : presets
-    return list.slice(0, MAX_RESULTS)
-  }, [presets, query])
+  const list = query.trim() ? presets.filter((p) => matchesQuery(p, query)) : presets
+  const filtered = list.slice(0, MAX_RESULTS)
 
   return (
     <Combobox
@@ -65,7 +70,7 @@ export function PresetCombobox({
             as={Input}
             area="presetSwitch"
             displayValue={(preset: DenormalizedPreset | null) => preset?.name ?? query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
             placeholder={placeholder}
             className="pr-10"
             autoComplete="off"
@@ -102,7 +107,7 @@ export function PresetCombobox({
 
       <ComboboxOptions
         anchor="bottom start"
-        className={clsx(
+        className={cn(
           'z-50 mt-1 max-h-72 w-[var(--input-width)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg',
           'empty:invisible',
         )}
@@ -143,7 +148,7 @@ export function SwapPresetsButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className={clsx(
+      className={cn(
         'flex h-10 w-10 shrink-0 items-center justify-center self-end rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition',
         'hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700',
         areaAccent.presetSwitch.focus,

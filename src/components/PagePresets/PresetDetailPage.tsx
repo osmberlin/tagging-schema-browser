@@ -10,8 +10,10 @@ import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
+import { areaAccent } from '@/theme/areaAccent'
 import { externalAccent, externalLinkClass, externalPillClass } from '@/theme/externalAccent'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 type RelatedItem = { id: string; name: string }
@@ -152,7 +154,11 @@ function PresetDetailContent({
             locale: prev.locale ?? '',
             preset1: preset.id,
           })}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-800 ring-1 ring-amber-100 transition ring-inset hover:bg-amber-100"
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition ring-inset',
+            areaAccent.presetSwitch.sharedChip,
+            'hover:bg-amber-100',
+          )}
         >
           <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
           Compare preset switch
