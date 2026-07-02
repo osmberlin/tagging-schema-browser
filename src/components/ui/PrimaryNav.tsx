@@ -81,7 +81,7 @@ type NavItem = {
   children?: React.ReactNode
 }
 
-const springTransition = { type: 'spring' as const, stiffness: 500, damping: 35 }
+const springTransition = { type: 'spring' as const, stiffness: 500, damping: 35, bounce: 0 }
 
 // Reset each page's own params to defaults on navigation, but keep `dataUrl`.
 export function PrimaryNav({
@@ -213,7 +213,7 @@ export function PrimaryNav({
     <nav
       ref={navRef}
       aria-label="Main"
-      className={cn('relative flex shrink-0 items-center gap-1 overflow-x-auto', className)}
+      className={cn('relative flex shrink-0 items-center gap-1', className)}
       onMouseLeave={() => setHoveredKey(null)}
     >
       {indicatorRect.width > 0 ? (
