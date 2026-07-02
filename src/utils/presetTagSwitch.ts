@@ -31,11 +31,11 @@ export type TagSwitchResult = {
 }
 
 function effectiveAddTags(preset: RawPreset): Record<string, string> {
-  return { ...preset.addTags ?? preset.tags }
+  return { ...(preset.addTags ?? preset.tags) }
 }
 
 function effectiveRemoveTags(preset: RawPreset): Record<string, string> {
-  return { ...preset.removeTags ?? preset.addTags ?? preset.tags }
+  return { ...(preset.removeTags ?? preset.addTags ?? preset.tags) }
 }
 
 function pickGeometry(oldPreset: RawPreset, newPreset: RawPreset): string {
