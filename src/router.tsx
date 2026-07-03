@@ -39,7 +39,7 @@ import { useReference, useReferenceActions } from '@/features/data-source/refere
 import { queryClient, SCHEMA_STALE_TIME } from '@/queries/queryClient'
 import { prefetchSchemaData, schemaKeys } from '@/queries/schema'
 import { dataUrlForReference, resolveSchemaReference } from '@/utils/dataUrl'
-import { documentTitleHead } from '@/utils/documentTitle'
+import { documentDetailTitleHead, documentTitleHead } from '@/utils/documentTitle'
 import { routerSearch } from '@/utils/routerSearch'
 
 const LazyPageIcons = lazy(() =>
@@ -263,14 +263,14 @@ const comparisonRoute = createRoute({
 const presetRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/preset/$',
-  head: documentTitleHead('Preset'),
+  head: documentDetailTitleHead('Preset'),
   component: PresetDetailPage,
 })
 
 const fieldRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/field/$',
-  head: documentTitleHead('Field'),
+  head: documentDetailTitleHead('Field'),
   component: FieldDetailPage,
 })
 

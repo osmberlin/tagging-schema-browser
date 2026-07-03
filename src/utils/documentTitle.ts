@@ -22,16 +22,36 @@ type RouteHeadContext = {
   matches: Array<{ search: Record<string, unknown> }>
 }
 
+function referenceSegmentFromMatches(matches: RouteHeadContext['matches']) {
+  const rootSearch = (matches[0]?.search ?? {}) as {
+    dataUrl?: string
+    reference?: 'release' | 'interem'
+  }
+  return documentReferenceSegment(rootSearch)
+}
+
 /** TanStack Router `head` helper for main routes. */
 export function documentTitleHead(pageName: string) {
   return ({ matches }: RouteHeadContext) => {
-    const rootSearch = (matches[0]?.search ?? {}) as {
-      dataUrl?: string
-      reference?: 'release' | 'interem'
-    }
-    const referenceSegment = documentReferenceSegment(rootSearch)
+    const referenceSegment = referenceSegmentFromMatches(matches)
     return {
       meta: [{ title: buildDocumentTitle(pageName, referenceSegment) }],
+    }
+  }
+}
+
+type DetailRouteHeadContext = RouteHeadContext & {
+  params: { _splat?: string }
+}
+
+/** TanStack Router `head` helper for `/preset/$` and `/field/$` detail routes. */
+export function documentDetailTitleHead(pageName: string) {
+  return ({ matches, params }: DetailRouteHeadContext) => {
+    const referenceSegment = referenceSegmentFromMatches(matches)
+    const entityId = typeof params._splat === 'string' ? params._splat.trim() : ''
+    const titlePageName = entityId ? `${entityId} ${pageName}` : pageName
+    return {
+      meta: [{ title: buildDocumentTitle(titlePageName, referenceSegment) }],
     }
   }
 }
