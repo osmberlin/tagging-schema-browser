@@ -108,4 +108,63 @@ describe('denormalize', () => {
     expect(abortion?.fields).toEqual(['name', 'operator'])
     expect(abortion?.moreFields).toEqual(['wheelchair'])
   })
+
+  it('omits inherited typeCombo when the preset already fixes that tag (landuse/grass)', () => {
+    const presets = {
+      landuse: {
+        tags: { landuse: '*' },
+        geometry: ['area'],
+        fields: ['name', 'landuse'],
+      },
+      'landuse/grass': {
+        tags: { landuse: 'grass' },
+        geometry: ['area'],
+        fields: ['{landuse}'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      landuse: { key: 'landuse', type: 'typeCombo' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const grass = result.find((p) => p.id === 'landuse/grass')
+    expect(grass?.fields).toEqual(['name'])
+    expect(grass?.fields).not.toContain('landuse')
+  })
+
+  it('keeps a directly listed field even when the preset tag is already fixed', () => {
+    const presets = {
+      landuse: {
+        tags: { landuse: '*' },
+        geometry: ['area'],
+        fields: ['name', 'landuse'],
+      },
+      'landuse/grass': {
+        tags: { landuse: 'grass' },
+        geometry: ['area'],
+        fields: ['{landuse}', 'landuse'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      landuse: { key: 'landuse', type: 'typeCombo' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const grass = result.find((p) => p.id === 'landuse/grass')
+    expect(grass?.fields).toEqual(['name', 'landuse'])
+  })
 })
