@@ -1,4 +1,9 @@
 import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import {
+  fieldOptionTitle,
+  hasFieldOptionTranslation,
+  type FieldOptionTranslation,
+} from '@/utils/fieldOptionTranslation'
 import type { DenormalizedPreset, FieldTranslations, RawField, RawFields } from '@/utils/types'
 
 const REF_REGEX = /^\{(.*)\}$/
@@ -23,7 +28,7 @@ export function resolveFieldIcons(field: RawField, allFields: RawFields): Record
 
 export function getFieldOptionValues(
   field: RawField,
-  fieldTranslations?: Record<string, { options?: Record<string, string> }>,
+  fieldTranslations?: Record<string, { options?: Record<string, FieldOptionTranslation> }>,
   fieldId?: string,
 ): string[] {
   if (field.options?.length) return field.options
@@ -140,7 +145,7 @@ function buildOptionRowsForField(
       optionValue: opt,
       icon,
       iconBroken: icon ? isIconSvgConfirmedMissing(icon) : false,
-      labelEn: strings[opt] ?? opt,
+      labelEn: fieldOptionTitle(strings[opt]) ?? opt,
       childPreset: child ? { id: child.id, name: child.name } : undefined,
     })
   }
@@ -195,7 +200,9 @@ export function getPresetOptionRows(
   return getPresetFieldSections(preset, fields, fieldTranslations, allPresets).flatMap((section) =>
     section.options.filter((row) => {
       const strings = fieldTranslations[section.fieldId]?.options ?? {}
-      return Boolean(row.icon || strings[row.optionValue] || row.childPreset)
+      return Boolean(
+        row.icon || hasFieldOptionTranslation(strings[row.optionValue]) || row.childPreset,
+      )
     }),
   )
 }

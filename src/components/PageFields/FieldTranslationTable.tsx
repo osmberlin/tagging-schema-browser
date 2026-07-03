@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react'
+import { Fragment } from 'react'
 import { googleTranslateUrl } from '@/components/PagePresets/PresetTranslationTable'
 import { TranslationAttrRow, TranslationColumnHeader } from '@/components/TranslationTableLayout'
 import { externalLinkClass } from '@/theme/externalAccent'
+import {
+  fieldOptionDescription,
+  fieldOptionTitle,
+  fieldOptionTranslateTexts,
+  isFieldOptionObject,
+} from '@/utils/fieldOptionTranslation'
 import type { RawFieldTranslation } from '@/utils/types'
 
 function TextWithTranslate({
@@ -49,7 +56,7 @@ export function FieldTranslationTable({
     english.label,
     english.placeholder,
     english.terms,
-    ...optionKeys.map((key) => english.options?.[key]),
+    ...optionKeys.flatMap((key) => fieldOptionTranslateTexts(english.options?.[key])),
   ].filter((value): value is string => Boolean(value?.trim()))
 
   return (
@@ -110,15 +117,44 @@ export function FieldTranslationTable({
           <div className="px-4 py-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
             Options
           </div>
-          {optionKeys.map((key) => (
-            <TranslationAttrRow
-              key={key}
-              label={key}
-              english={english.options?.[key] ?? '—'}
-              localized={localized?.options?.[key] ?? '—'}
-              showLocale={showLocale}
-            />
-          ))}
+          {optionKeys.map((key) => {
+            const englishOption = english.options?.[key]
+            const localizedOption = localized?.options?.[key]
+
+            if (isFieldOptionObject(englishOption) || isFieldOptionObject(localizedOption)) {
+              return (
+                <Fragment key={key}>
+                  {fieldOptionTitle(englishOption) || fieldOptionTitle(localizedOption) ? (
+                    <TranslationAttrRow
+                      label={`${key} / title`}
+                      english={fieldOptionTitle(englishOption) ?? '—'}
+                      localized={fieldOptionTitle(localizedOption) ?? '—'}
+                      showLocale={showLocale}
+                    />
+                  ) : null}
+                  {fieldOptionDescription(englishOption) ||
+                  fieldOptionDescription(localizedOption) ? (
+                    <TranslationAttrRow
+                      label={`${key} / description`}
+                      english={fieldOptionDescription(englishOption) ?? '—'}
+                      localized={fieldOptionDescription(localizedOption) ?? '—'}
+                      showLocale={showLocale}
+                    />
+                  ) : null}
+                </Fragment>
+              )
+            }
+
+            return (
+              <TranslationAttrRow
+                key={key}
+                label={key}
+                english={typeof englishOption === 'string' ? englishOption : '—'}
+                localized={typeof localizedOption === 'string' ? localizedOption : '—'}
+                showLocale={showLocale}
+              />
+            )
+          })}
         </div>
       ) : null}
     </div>

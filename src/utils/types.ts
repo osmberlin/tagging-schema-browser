@@ -18,11 +18,13 @@ export type RawPreset = {
   suggestion?: boolean
 }
 
+import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
+
 export type RawFieldTranslation = {
   label?: string
   placeholder?: string
   terms?: string
-  options?: Record<string, string>
+  options?: Record<string, FieldOptionTranslation>
 }
 
 export type RawTranslations = {
