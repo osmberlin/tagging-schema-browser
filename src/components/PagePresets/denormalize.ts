@@ -1,4 +1,5 @@
 import { isPresetIconBroken } from '@/components/PageIcons/iconRegistry'
+import { resolvePresetFieldList } from '@/components/PagePresets/presetFieldInheritance'
 import { nameRefFromRaw } from '@/components/PagePresets/presetLabelInheritance'
 import type {
   DenormalizedPreset,
@@ -90,34 +91,6 @@ function getAliases(
   return str ? str.split(/\s*[\r\n]+\s*/).filter(Boolean) : []
 }
 
-function resolveFieldIds(
-  fieldIds: string[] | undefined,
-  allPresets: RawPresets,
-  allFields: RawFields,
-  out: Set<string>,
-  visited: Set<string>,
-): void {
-  if (!fieldIds) return
-  for (const id of fieldIds) {
-    const refMatch = id.match(REF_REGEX)
-    if (refMatch) {
-      const presetId = refMatch[1]
-      if (visited.has(presetId)) continue
-      visited.add(presetId)
-      const preset = allPresets[presetId] as
-        | { fields?: string[]; moreFields?: string[] }
-        | undefined
-      if (preset) {
-        resolveFieldIds(preset.fields, allPresets, allFields, out, visited)
-        resolveFieldIds(preset.moreFields, allPresets, allFields, out, visited)
-      }
-      visited.delete(presetId)
-    } else {
-      out.add(id)
-    }
-  }
-}
-
 function iconPrefix(icon: string | undefined, imageURL?: string): string | undefined {
   if (icon) {
     if (icon.startsWith('fas-') || icon.startsWith('far-') || icon.startsWith('fab-'))
@@ -170,12 +143,8 @@ export function denormalize(
     const icon = typeof r.icon === 'string' && r.icon.trim() ? r.icon.trim() : undefined
     const imageURL =
       typeof r.imageURL === 'string' && r.imageURL.trim() ? r.imageURL.trim() : undefined
-    const fieldSet = new Set<string>()
-    resolveFieldIds(r.fields, presets, fields, fieldSet, new Set())
-    const resolvedFields = Array.from(fieldSet)
-    const moreSet = new Set<string>()
-    resolveFieldIds(r.moreFields, presets, fields, moreSet, new Set())
-    const resolvedMore = Array.from(moreSet)
+    const resolvedFields = resolvePresetFieldList(id, r, 'fields', presets, fields)
+    const resolvedMore = resolvePresetFieldList(id, r, 'moreFields', presets, fields)
 
     const categoryIds = Object.entries(categories)
       .filter(([, c]) => c.members?.includes(id))
@@ -199,8 +168,8 @@ export function denormalize(
       primaryTagValue,
       categoryIds,
       categoryNames: categoryNamesList,
-      fields: resolvedFields.length ? resolvedFields : (r.fields ?? []),
-      moreFields: resolvedMore.length ? resolvedMore : (r.moreFields ?? []),
+      fields: resolvedFields,
+      moreFields: resolvedMore,
       matchScore: r.matchScore ?? 1,
       hasIcon: Boolean(icon || imageURL),
       iconBroken,
