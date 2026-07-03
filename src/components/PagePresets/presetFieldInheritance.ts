@@ -1,4 +1,4 @@
-import type { RawFields, RawPreset } from '@/utils/types'
+import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
 
 const INHERITABLE_TYPES = new Set(['multiCombo', 'semiCombo', 'manyCombo', 'check'])
 
@@ -38,7 +38,7 @@ function shouldInherit(
   return true
 }
 
-function resolveFieldList(
+function resolveInheritedFieldList(
   preset: RawPreset,
   fieldListKey: 'fields' | 'moreFields',
   hostPreset: RawPreset,
@@ -64,7 +64,7 @@ function resolveFieldList(
 
       seenPresetRefs.add(nestedPresetId)
       resolved.push(
-        ...resolveFieldList(
+        ...resolveInheritedFieldList(
           nested,
           fieldListKey,
           hostPreset,
@@ -107,7 +107,7 @@ export function getInheritedFieldItems(
   const source = rawPresets[presetId]
   if (!source) return []
 
-  return resolveFieldList(
+  return resolveInheritedFieldList(
     source,
     fieldListKey,
     hostPreset,
@@ -117,4 +117,57 @@ export function getInheritedFieldItems(
     allFields,
     new Set(),
   )
+}
+
+/**
+ * Resolved field ids for one preset field list (`fields` or `moreFields`), including
+ * slash-parent fallback, `{preset}` inheritance, and iD `shouldInherit` filtering.
+ */
+export function resolvePresetFieldList(
+  presetId: string,
+  preset: RawPreset,
+  fieldListKey: 'fields' | 'moreFields',
+  rawPresets: RawPresets,
+  allFields: RawFields,
+): string[] {
+  const list = preset[fieldListKey]
+  if (!Array.isArray(list)) {
+    const endIndex = presetId.lastIndexOf('/')
+    if (endIndex > 0) {
+      const parentId = presetId.substring(0, endIndex)
+      const parent = rawPresets[parentId]
+      if (parent) {
+        return resolvePresetFieldList(parentId, parent, fieldListKey, rawPresets, allFields)
+      }
+    }
+    return []
+  }
+
+  const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
+  const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
+
+  const resolved: string[] = []
+
+  for (const item of list) {
+    if (typeof item !== 'string') continue
+
+    if (presetIdFromRef(item)) {
+      resolved.push(
+        ...getInheritedFieldItems(
+          preset,
+          item,
+          fieldListKey,
+          hostOriginalFields,
+          hostOriginalMoreFields,
+          rawPresets,
+          allFields,
+        ),
+      )
+      continue
+    }
+
+    resolved.push(item)
+  }
+
+  return resolved
 }

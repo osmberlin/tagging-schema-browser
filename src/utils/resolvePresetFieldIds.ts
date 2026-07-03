@@ -1,57 +1,5 @@
-import {
-  getInheritedFieldItems,
-  presetIdFromRef,
-} from '@/components/PagePresets/presetFieldInheritance'
+import { resolvePresetFieldList } from '@/components/PagePresets/presetFieldInheritance'
 import type { RawField, RawFields, RawPreset, RawPresets } from '@/utils/types'
-
-function resolveFieldList(
-  presetId: string,
-  preset: RawPreset,
-  fieldListKey: 'fields' | 'moreFields',
-  rawPresets: RawPresets,
-  allFields: RawFields,
-): string[] {
-  const list = preset[fieldListKey]
-  if (!Array.isArray(list)) {
-    const endIndex = presetId.lastIndexOf('/')
-    if (endIndex > 0) {
-      const parentId = presetId.substring(0, endIndex)
-      const parent = rawPresets[parentId]
-      if (parent) {
-        return resolveFieldList(parentId, parent, fieldListKey, rawPresets, allFields)
-      }
-    }
-    return []
-  }
-
-  const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
-  const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
-
-  const resolved: string[] = []
-
-  for (const item of list) {
-    if (typeof item !== 'string') continue
-
-    if (presetIdFromRef(item)) {
-      resolved.push(
-        ...getInheritedFieldItems(
-          preset,
-          item,
-          fieldListKey,
-          hostOriginalFields,
-          hostOriginalMoreFields,
-          rawPresets,
-          allFields,
-        ),
-      )
-      continue
-    }
-
-    resolved.push(item)
-  }
-
-  return resolved
-}
 
 /** Resolved field ids for a preset (fields + moreFields, including `{preset}` inheritance). */
 export function resolvePresetFieldIds(
@@ -60,8 +8,8 @@ export function resolvePresetFieldIds(
   rawPresets: RawPresets,
   allFields: RawFields,
 ): string[] {
-  const fields = resolveFieldList(presetId, preset, 'fields', rawPresets, allFields)
-  const moreFields = resolveFieldList(presetId, preset, 'moreFields', rawPresets, allFields)
+  const fields = resolvePresetFieldList(presetId, preset, 'fields', rawPresets, allFields)
+  const moreFields = resolvePresetFieldList(presetId, preset, 'moreFields', rawPresets, allFields)
   return [...fields, ...moreFields]
 }
 
