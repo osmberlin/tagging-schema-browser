@@ -3,6 +3,7 @@ import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { getPresetFieldSections } from '@/utils/fieldOptions'
+import { hasFieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 import type { DenormalizedPreset } from '@/utils/types'
 
 export function FieldSourceEnrichment({
@@ -24,7 +25,9 @@ export function FieldSourceEnrichment({
 
   const optionRows = section.options.filter((row) => {
     const strings = fieldTranslations[fieldId]?.options ?? {}
-    return Boolean(row.icon || strings[row.optionValue] || row.childPreset)
+    return Boolean(
+      row.icon || hasFieldOptionTranslation(strings[row.optionValue]) || row.childPreset,
+    )
   })
 
   if (optionRows.length === 0) return null

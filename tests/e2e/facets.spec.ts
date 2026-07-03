@@ -239,6 +239,17 @@ test('field source JSON shows dereferenced values with reference annotation', as
   await expect(source.getByText('3 option strings')).toBeVisible()
 })
 
+test('marker field detail renders structured option translations', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+
+  await page.goto('/field/marker?reference=release')
+  await expect(page.getByRole('heading', { name: /^Type$/i })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText('aerial / title')).toBeVisible()
+  await expect(page.getByText('Designed to be visible from the air.')).toBeVisible()
+  expect(errors).toEqual([])
+})
+
 test('preset table icon row truncates long icon names', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 })
   await loadTestSchema(page)

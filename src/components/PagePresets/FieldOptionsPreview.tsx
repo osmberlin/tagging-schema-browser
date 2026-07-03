@@ -3,6 +3,7 @@ import { getIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { areaAccent } from '@/theme/areaAccent'
 import type { PresetOptionRow } from '@/utils/fieldOptions'
+import { fieldOptionTitle, type FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 import { cn } from '@/utils/tw'
 
 function OptionLabelRow({
@@ -64,7 +65,7 @@ export function FieldOptionsPreview({
 }: {
   options: PresetOptionRow[]
   locale?: string
-  fieldLocaleMap?: Record<string, { options?: Record<string, string> }> | null
+  fieldLocaleMap?: Record<string, { options?: Record<string, FieldOptionTranslation> }> | null
 }) {
   const showLocale = Boolean(locale)
   if (options.length === 0) return null
@@ -80,7 +81,9 @@ export function FieldOptionsPreview({
         ) : null}
       </div>
       {options.map((row) => {
-        const labelLocale = fieldLocaleMap?.[row.fieldId]?.options?.[row.optionValue]
+        const labelLocale = fieldOptionTitle(
+          fieldLocaleMap?.[row.fieldId]?.options?.[row.optionValue],
+        )
         const childPreset = row.childPreset
         return (
           <div
