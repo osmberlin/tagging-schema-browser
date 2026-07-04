@@ -56,6 +56,45 @@ describe('missingFieldInheritance', () => {
 
   it('lists parent field ids missing from an explicit child list', () => {
     const presets = {
+      'tourism/information': {
+        tags: { tourism: 'information' },
+        geometry: ['point'],
+        fields: ['information', 'operator', 'address', 'building_area_yes'],
+        moreFields: ['level'],
+      },
+      'tourism/information/terminal': {
+        tags: { tourism: 'information', information: 'terminal' },
+        geometry: ['point'],
+        fields: ['operator'],
+        moreFields: ['{tourism/information}'],
+      },
+    }
+    const fields = {
+      information: { key: 'information', type: 'combo' },
+      operator: { key: 'operator', type: 'text' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      level: { key: 'level', type: 'text' },
+    }
+
+    expect(
+      detectMissingFieldInheritance(
+        'tourism/information/terminal',
+        presets['tourism/information/terminal'],
+        presets,
+        fields,
+      ),
+    ).toEqual({
+      fields: {
+        parentId: 'tourism/information',
+        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        explicitPresetRefs: [],
+      },
+    })
+  })
+
+  it('lists parent field ids missing from crane child without parent ref', () => {
+    const presets = {
       'man_made/crane': {
         tags: { man_made: 'crane' },
         geometry: ['point'],
@@ -91,28 +130,34 @@ describe('missingFieldInheritance', () => {
   it('classifies override status from snapshot', () => {
     const current = {
       fields: {
-        parentId: 'man_made/crane',
-        missedFieldIds: ['crane/type'],
+        parentId: 'tourism/information',
+        missedFieldIds: ['information', 'address', 'building_area_yes'],
         explicitPresetRefs: [],
       },
     }
 
     expect(
       resolveMissingInheritanceStatus(current, {
-        fields: { parentId: 'man_made/crane', missedFieldIds: ['crane/type'] },
+        fields: {
+          parentId: 'tourism/information',
+          missedFieldIds: ['information', 'address', 'building_area_yes'],
+        },
       }),
     ).toBe('intentional')
 
     expect(
       resolveMissingInheritanceStatus(current, {
-        fields: { parentId: 'man_made/crane', missedFieldIds: ['operator'] },
+        fields: { parentId: 'tourism/information', missedFieldIds: ['operator'] },
       }),
     ).toBe('stale')
 
     expect(resolveMissingInheritanceStatus(current, undefined)).toBe('unreviewed')
     expect(
       resolveMissingInheritanceStatus(null, {
-        fields: { parentId: 'man_made/crane', missedFieldIds: ['crane/type'] },
+        fields: {
+          parentId: 'tourism/information',
+          missedFieldIds: ['information', 'address', 'building_area_yes'],
+        },
       }),
     ).toBe('stale')
   })

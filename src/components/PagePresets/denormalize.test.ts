@@ -196,15 +196,22 @@ describe('denormalize', () => {
 
   it('flags missing slash-parent field inheritance on explicit child lists', () => {
     const presets = {
+      'tourism/information': {
+        tags: { tourism: 'information' },
+        geometry: ['point'],
+        fields: ['information', 'operator', 'address', 'building_area_yes'],
+        moreFields: ['level'],
+      },
+      'tourism/information/terminal': {
+        tags: { tourism: 'information', information: 'terminal' },
+        geometry: ['point'],
+        fields: ['operator'],
+        moreFields: ['{tourism/information}'],
+      },
       'man_made/crane': {
         tags: { man_made: 'crane' },
         geometry: ['point'],
         fields: ['name', 'crane/type'],
-      },
-      'man_made/crane/portal_crane': {
-        tags: { man_made: 'crane', 'crane:type': 'portal_crane' },
-        geometry: ['point'],
-        fields: ['name'],
       },
       'man_made/crane/gantry_crane': {
         tags: { man_made: 'crane', 'crane:type': 'gantry_crane' },
@@ -213,6 +220,11 @@ describe('denormalize', () => {
       },
     }
     const fields = {
+      information: { key: 'information', type: 'combo' },
+      operator: { key: 'operator', type: 'text' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      level: { key: 'level', type: 'text' },
       name: { key: 'name', type: 'text' },
       'crane/type': { key: 'crane:type', type: 'combo' },
     }
@@ -224,10 +236,14 @@ describe('denormalize', () => {
       fields,
     )
 
-    const portal = result.find((p) => p.id === 'man_made/crane/portal_crane')
+    const terminal = result.find((p) => p.id === 'tourism/information/terminal')
     const gantry = result.find((p) => p.id === 'man_made/crane/gantry_crane')
-    expect(portal?.missingInheritanceStatus).toBe('intentional')
-    expect(portal?.missingFieldInheritance?.fields?.missedFieldIds).toEqual(['crane/type'])
+    expect(terminal?.missingInheritanceStatus).toBe('intentional')
+    expect(terminal?.missingFieldInheritance?.fields?.missedFieldIds).toEqual([
+      'information',
+      'address',
+      'building_area_yes',
+    ])
     expect(gantry?.missingInheritanceStatus).toBe('unreviewed')
   })
 })
