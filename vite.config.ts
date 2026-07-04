@@ -4,6 +4,7 @@ import babel from '@rolldown/plugin-babel'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import browserslistToEsbuild from 'browserslist-to-esbuild'
 import { type Plugin, defineConfig } from 'vite'
+import { bunYamlPlugin } from './vite/bunYamlPlugin'
 
 /**
  * GitHub Pages has no SPA rewrite, so a refresh/deep-link to a client route
@@ -27,7 +28,7 @@ function spaFallback(): Plugin {
 
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), spaFallback()],
+  plugins: [bunYamlPlugin(), react(), babel({ presets: [reactCompilerPreset()] }), spaFallback()],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
