@@ -95,16 +95,6 @@ export async function discoverLocales(dataUrl: string): Promise<string[]> {
     return []
   }
 
-  try {
-    const manifestRes = await fetch(`${ensureSlash(dataUrl)}translations/locales.json`)
-    if (manifestRes.ok) {
-      const list = (await manifestRes.json()) as string[]
-      return list.filter((code) => code !== 'en').sort((a, b) => a.localeCompare(b))
-    }
-  } catch {
-    // continue
-  }
-
   if (isBundledTestSchemaUrl(dataUrl)) {
     return []
   }
@@ -119,7 +109,12 @@ export async function discoverLocales(dataUrl: string): Promise<string[]> {
     }
   }
 
-  return FALLBACK_LOCALES
+  try {
+    const list = await fetchSchemaJson<string[]>(`${ensureSlash(dataUrl)}translations/locales.json`)
+    return list.filter((code) => code !== 'en').sort((a, b) => a.localeCompare(b))
+  } catch {
+    return FALLBACK_LOCALES
+  }
 }
 
 async function loadLocale(

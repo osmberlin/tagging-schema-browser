@@ -36,7 +36,11 @@ import {
 import { TranslationsSidebar } from '@/components/PageTranslations/TranslationsSidebar'
 import { SidebarLayout } from '@/components/ui/SidebarLayout'
 import { UnsupportedSchemaNotice } from '@/components/ui/UnsupportedSchemaNotice'
-import { useReference, useReferenceActions } from '@/features/data-source/reference-store'
+import {
+  useReference,
+  useReferenceActions,
+  usePendingReference,
+} from '@/features/data-source/reference-store'
 import { useSchema } from '@/hooks/useSchema'
 import { queryClient, SCHEMA_STALE_TIME } from '@/queries/queryClient'
 import { prefetchSchemaData, schemaKeys } from '@/queries/schema'
@@ -108,6 +112,7 @@ function RootContent() {
   const dataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? '' })
   const urlReference = useSearch({ strict: false, select: (s) => s.reference })
   const persistedReference = useReference()
+  const pendingReference = usePendingReference()
   const { setReference: setPersistedReference } = useReferenceActions()
   const location = useLocation()
 
@@ -116,15 +121,17 @@ function RootContent() {
 
   useEffect(
     function syncPersistedReferenceFromUrl() {
+      if (pendingReference !== null) return
       if (urlReference === 'release') setPersistedReference('release')
       if (urlReference === 'interem') setPersistedReference('interem')
     },
-    [urlReference, setPersistedReference],
+    [urlReference, setPersistedReference, pendingReference],
   )
 
   // Keep the URL aligned when release was persisted but the param was stripped.
   useEffect(
     function restoreReleaseReferenceInUrl() {
+      if (pendingReference !== null) return
       if (dataUrl.trim()) return
       if (urlReference !== undefined) return
       if (persistedReference !== 'release') return
@@ -134,7 +141,7 @@ function RootContent() {
         replace: true,
       })
     },
-    [dataUrl, urlReference, persistedReference, navigate],
+    [dataUrl, urlReference, persistedReference, navigate, pendingReference],
   )
 
   // Preload the alternate canonical reference so toggling can commit from cache.
