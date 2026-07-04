@@ -1,0 +1,19 @@
+# Intentional omissions of slash-parent `fields` / `moreFields` inheritance.
+#
+# Add an entry when a preset deliberately defines an explicit field list without
+# `{parent}` and without inheriting some parent fields. Record `missedFieldIds`
+# as a snapshot — CI fails when the live schema no longer matches (stale override).
+#
+# Example:
+#   man_made/crane/portal_crane:
+#     fields:
+#       parentId: man_made/crane
+#       missedFieldIds:
+#         - crane/type
+version: 1
+presets:
+  man_made/crane/portal_crane:
+    fields:
+      parentId: man_made/crane
+      missedFieldIds:
+        - crane/type

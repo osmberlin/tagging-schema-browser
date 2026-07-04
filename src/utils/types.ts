@@ -1,3 +1,7 @@
+import type {
+  MissingFieldInheritance,
+  MissingInheritanceStatus,
+} from '@/components/PagePresets/missingFieldInheritance'
 import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 import type { PrerequisiteTag } from '@/utils/prerequisiteTag'
 import type { SchemaBuildInfo } from '@/utils/schemaBuildVersion'
@@ -83,6 +87,9 @@ export type DenormalizedPreset = {
   moreFields: string[]
   matchScore: number
   hasIcon: boolean
+  /** Slash-parent field lists omitted deliberately on an explicit `fields` / `moreFields` array. */
+  missingFieldInheritance: MissingFieldInheritance | null
+  missingInheritanceStatus: MissingInheritanceStatus
   searchable?: boolean
 }
 

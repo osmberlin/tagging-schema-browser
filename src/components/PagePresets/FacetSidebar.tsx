@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { stableFacetBuckets } from '@/components/PagePresets/facetOrder'
+import { missingInheritanceFacetLabels } from '@/components/PagePresets/MissingInheritancePanel'
 import type { SchemaArea } from '@/components/ui/areaIcons'
 import { SidebarSection } from '@/components/ui/Sidebar'
 import { areaAccent } from '@/theme/areaAccent'
@@ -15,12 +16,14 @@ function FacetGroup({
   buckets,
   selected,
   onToggle,
+  formatLabel,
 }: {
   title: string
   area?: SchemaArea
   buckets: Bucket[]
   selected: string[]
   onToggle: (key: string) => void
+  formatLabel?: (key: string) => string
 }) {
   const [showEmpty, setShowEmpty] = useState(false)
   if (!buckets?.length) return null
@@ -49,7 +52,9 @@ function FacetGroup({
                       : 'text-slate-600 before:hidden before:bg-slate-300 hover:text-slate-900 hover:before:block',
                 )}
               >
-                <span className="truncate">{key || '(empty)'}</span>
+                <span className="truncate">
+                  {formatLabel ? formatLabel(key) : key || '(empty)'}
+                </span>
                 <span
                   className={cn(
                     'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold',
@@ -130,6 +135,14 @@ export function FacetSidebar() {
         buckets={stableFacetBuckets('fieldIds', agg.fieldIds?.buckets ?? [])}
         selected={state.fieldIds}
         onToggle={(k) => toggle('fieldIds')(k)}
+      />
+      <FacetGroup
+        title="Field inheritance"
+        area="fields"
+        buckets={stableFacetBuckets('missingInheritance', agg.missingInheritance?.buckets ?? [])}
+        selected={state.missingInheritance}
+        onToggle={(k) => toggle('missingInheritance')(k)}
+        formatLabel={(key) => missingInheritanceFacetLabels[key] ?? key}
       />
       <FacetGroup
         title="Has icon"

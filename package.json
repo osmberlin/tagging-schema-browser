@@ -19,7 +19,8 @@
     "format-check": "oxfmt --check -c oxfmt.config.mjs .",
     "test": "vitest",
     "test-run": "vitest run",
-    "check": "bun run type-check && bun run lint-check && bun run format-check && bun run test-run",
+    "validate-inheritance-overrides": "bun scripts/validate-inheritance-overrides.ts",
+    "check": "bun run type-check && bun run lint-check && bun run format-check && bun run test-run && bun run validate-inheritance-overrides",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -44,6 +45,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.0",
+    "yaml": "^2.9.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },

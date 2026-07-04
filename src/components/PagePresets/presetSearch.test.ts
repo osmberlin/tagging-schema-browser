@@ -22,6 +22,8 @@ function preset(id: string, name: string): DenormalizedPreset {
     moreFields: [],
     matchScore: 0,
     hasIcon: false,
+    missingFieldInheritance: null,
+    missingInheritanceStatus: 'none',
   }
 }
 

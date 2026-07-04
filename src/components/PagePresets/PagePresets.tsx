@@ -4,6 +4,7 @@ import { BrokenPresetIconsBanner } from '@/components/ui/BrokenPresetIconsBanner
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { Input } from '@/components/ui/Input'
+import { MissingInheritanceBanners } from '@/components/ui/MissingInheritanceBanners'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
@@ -22,6 +23,14 @@ export function PagePresets() {
   const totalCount = searchResult?.data.total ?? 0
   const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
   const brokenPresetIconCount = useBrokenPresetIconCount(presets)
+  const unreviewedMissingInheritanceCount = useMemo(
+    () => presets.filter((preset) => preset.missingInheritanceStatus === 'unreviewed').length,
+    [presets],
+  )
+  const staleMissingInheritanceCount = useMemo(
+    () => presets.filter((preset) => preset.missingInheritanceStatus === 'stale').length,
+    [presets],
+  )
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -44,6 +53,7 @@ export function PagePresets() {
     iconName: 'icons',
     iconPrefix: 'icons',
     hasIcon: 'icons',
+    missingInheritance: 'fields',
   }
 
   const activePills = [
@@ -94,6 +104,12 @@ export function PagePresets() {
       facet: 'hasIcon',
       label: `Has icon: ${value}`,
       onRemove: () => removeValue('hasIcon', value),
+    })),
+    ...searchState.missingInheritance.map((value) => ({
+      key: `missingInheritance-${value}`,
+      facet: 'missingInheritance',
+      label: `Field inheritance: ${value}`,
+      onRemove: () => removeValue('missingInheritance', value),
     })),
     ...searchState.iconName.map((value) => ({
       key: `iconName-${value}`,
@@ -212,6 +228,12 @@ export function PagePresets() {
       <BrokenPresetIconsBanner
         count={brokenPresetIconCount}
         onShowBroken={() => setSearchState({ hasIcon: ['broken'], page: 1 })}
+      />
+      <MissingInheritanceBanners
+        unreviewedCount={unreviewedMissingInheritanceCount}
+        staleCount={staleMissingInheritanceCount}
+        onShowUnreviewed={() => setSearchState({ missingInheritance: ['unreviewed'], page: 1 })}
+        onShowStale={() => setSearchState({ missingInheritance: ['stale'], page: 1 })}
       />
       <PresetTable />
     </div>

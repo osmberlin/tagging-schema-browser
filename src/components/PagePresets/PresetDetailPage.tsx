@@ -1,5 +1,6 @@
 import { Link, useParams } from '@tanstack/react-router'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
+import { MissingInheritancePanel } from '@/components/PagePresets/MissingInheritancePanel'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
@@ -144,6 +145,8 @@ function PresetDetailContent({
           View source ↗
         </a>
       </header>
+
+      <MissingInheritancePanel preset={preset} />
 
       <div className="flex flex-wrap gap-2">
         <Link

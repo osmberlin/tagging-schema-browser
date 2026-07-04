@@ -44,6 +44,29 @@ test('broken icon presets are flagged and filterable', async ({ page }) => {
   await expect(page.getByText('temaki-this-icon-does-not-exist')).toBeVisible()
 })
 
+test('missing slash-parent field inheritance is flagged and filterable', async ({ page }) => {
+  await loadTestSchema(page)
+
+  await expect(page.getByText(/unreviewed missing slash-parent field inheritance/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'show unreviewed' })).toBeVisible()
+  await expect(
+    page.locator('aside').getByRole('button', { name: /Missing \(unreviewed\)/i }),
+  ).toBeVisible()
+
+  await page.getByRole('button', { name: 'show unreviewed' }).click()
+  await expect(page.getByRole('button', { name: 'Field inheritance: unreviewed' })).toBeVisible()
+  await expect(page.getByText('man_made/crane/gantry_crane', { exact: true })).toBeVisible()
+})
+
+test('preset detail shows missing inheritance panel', async ({ page }) => {
+  await page.goto('/preset/man_made/crane/gantry_crane?dataUrl=/test-schema')
+
+  await expect(page.getByTestId('missing-inheritance-panel')).toBeVisible()
+  await expect(page.getByText(/Missing parent fields \(unreviewed\)/i)).toBeVisible()
+  await expect(page.getByText('crane/type', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'man_made/crane' })).toBeVisible()
+})
+
 test('missing option icons are discoverable on icons page', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/icons?dataUrl=/test-schema&i_usage=options&i_hasSvg=missing')
