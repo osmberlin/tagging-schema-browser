@@ -1,5 +1,10 @@
+import {
+  detectMissingFieldInheritance,
+  resolveMissingInheritanceStatus,
+} from '@/components/PagePresets/missingFieldInheritance'
 import { resolvePresetFieldList } from '@/components/PagePresets/presetFieldInheritance'
 import { nameRefFromRaw } from '@/components/PagePresets/presetLabelInheritance'
+import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import type {
   DenormalizedPreset,
@@ -157,6 +162,12 @@ export function denormalize(
       .map(([cid]) => cid)
     const categoryNamesList = categoryIds.map((cid) => categoryNames[cid] ?? cid)
 
+    const missingFieldInheritance = detectMissingFieldInheritance(id, r, presets, fields)
+    const missingInheritanceStatus = resolveMissingInheritanceStatus(
+      missingFieldInheritance,
+      missingInheritanceOverrides.presets[id],
+    )
+
     result.push({
       id,
       name,
@@ -176,6 +187,8 @@ export function denormalize(
       moreFields: resolvedMore,
       matchScore: r.matchScore ?? 1,
       hasIcon: Boolean(icon || imageURL),
+      missingFieldInheritance,
+      missingInheritanceStatus,
       searchable: r.searchable !== false,
     })
   }

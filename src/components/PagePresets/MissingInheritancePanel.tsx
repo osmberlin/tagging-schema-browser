@@ -1,0 +1,109 @@
+import { Link } from '@tanstack/react-router'
+import type {
+  FieldListKey,
+  MissingFieldInheritance,
+  MissingInheritanceStatus,
+} from '@/components/PagePresets/missingFieldInheritance'
+import type { DenormalizedPreset } from '@/utils/types'
+
+const STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
+  none: 'Inherits from slash parent',
+  unreviewed: 'Missing parent fields (unreviewed)',
+  intentional: 'Missing parent fields (intentional)',
+  stale: 'Override snapshot stale',
+}
+
+const STATUS_CLASSES: Record<MissingInheritanceStatus, string> = {
+  none: 'border-slate-200 bg-slate-50 text-slate-700',
+  unreviewed: 'border-amber-200 bg-amber-50 text-amber-900',
+  intentional: 'border-sky-200 bg-sky-50 text-sky-900',
+  stale: 'border-rose-200 bg-rose-50 text-rose-900',
+}
+
+function FieldListSection({
+  fieldListKey,
+  section,
+}: {
+  fieldListKey: FieldListKey
+  section: NonNullable<MissingFieldInheritance[FieldListKey]>
+}) {
+  const title = fieldListKey === 'fields' ? 'Primary fields' : 'More fields'
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+      <p className="text-sm text-slate-600">
+        Expected slash-parent source:{' '}
+        <Link
+          to="/preset/$"
+          params={{ _splat: section.parentId }}
+          search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+          className="font-mono text-xs text-sky-700 underline underline-offset-2"
+        >
+          {section.parentId}
+        </Link>
+      </p>
+      <p className="text-sm text-slate-600">Field ids not inherited from the parent list:</p>
+      <ul className="list-inside list-disc font-mono text-xs text-slate-800">
+        {section.missedFieldIds.map((fieldId) => (
+          <li key={fieldId}>{fieldId}</li>
+        ))}
+      </ul>
+      {section.explicitPresetRefs.length > 0 ? (
+        <p className="text-xs text-slate-500">
+          Other preset refs on this list: {section.explicitPresetRefs.join(', ')}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset }) {
+  const { missingFieldInheritance, missingInheritanceStatus } = preset
+  if (missingInheritanceStatus === 'none' || !missingFieldInheritance) return null
+
+  return (
+    <div
+      className={`rounded-lg border px-4 py-3 ${STATUS_CLASSES[missingInheritanceStatus]}`}
+      data-testid="missing-inheritance-panel"
+    >
+      <p className="text-sm font-semibold">{STATUS_LABELS[missingInheritanceStatus]}</p>
+      <p className="mt-1 text-sm">
+        This preset defines an explicit field list without{' '}
+        <code>{`{${missingFieldInheritance.fields?.parentId ?? missingFieldInheritance.moreFields?.parentId}}`}</code>
+        , so it does not inherit every field from its slash parent.
+      </p>
+      {missingInheritanceStatus === 'stale' ? (
+        <p className="mt-2 text-sm">
+          The reviewed override in{' '}
+          <code className="font-mono text-xs">missing-inheritance-overrides.yaml</code> no longer
+          matches — re-check and update the snapshot.
+        </p>
+      ) : null}
+      {missingInheritanceStatus === 'unreviewed' ? (
+        <p className="mt-2 text-sm">
+          If this omission is deliberate, add an entry to{' '}
+          <code className="font-mono text-xs">missing-inheritance-overrides.yaml</code> with the
+          current <code className="font-mono text-xs">missedFieldIds</code> snapshot.
+        </p>
+      ) : null}
+      <div className="mt-4 space-y-4">
+        {missingFieldInheritance.fields ? (
+          <FieldListSection fieldListKey="fields" section={missingFieldInheritance.fields} />
+        ) : null}
+        {missingFieldInheritance.moreFields ? (
+          <FieldListSection
+            fieldListKey="moreFields"
+            section={missingFieldInheritance.moreFields}
+          />
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+export const missingInheritanceFacetLabels: Record<string, string> = {
+  none: 'Inherits from parent',
+  unreviewed: 'Missing (unreviewed)',
+  intentional: 'Missing (intentional)',
+  stale: 'Override stale',
+}

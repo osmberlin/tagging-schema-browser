@@ -193,4 +193,41 @@ describe('denormalize', () => {
     const grass = result.find((p) => p.id === 'landuse/grass')
     expect(grass?.fields).toEqual(['name', 'landuse'])
   })
+
+  it('flags missing slash-parent field inheritance on explicit child lists', () => {
+    const presets = {
+      'man_made/crane': {
+        tags: { man_made: 'crane' },
+        geometry: ['point'],
+        fields: ['name', 'crane/type'],
+      },
+      'man_made/crane/portal_crane': {
+        tags: { man_made: 'crane', 'crane:type': 'portal_crane' },
+        geometry: ['point'],
+        fields: ['name'],
+      },
+      'man_made/crane/gantry_crane': {
+        tags: { man_made: 'crane', 'crane:type': 'gantry_crane' },
+        geometry: ['point'],
+        fields: ['name'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      'crane/type': { key: 'crane:type', type: 'combo' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const portal = result.find((p) => p.id === 'man_made/crane/portal_crane')
+    const gantry = result.find((p) => p.id === 'man_made/crane/gantry_crane')
+    expect(portal?.missingInheritanceStatus).toBe('intentional')
+    expect(portal?.missingFieldInheritance?.fields?.missedFieldIds).toEqual(['crane/type'])
+    expect(gantry?.missingInheritanceStatus).toBe('unreviewed')
+  })
 })

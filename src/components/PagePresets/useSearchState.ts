@@ -23,6 +23,7 @@ export const presetSearchSchema = z.object({
   moreFieldIds: stringArray,
   categoryNames: stringArray,
   hasIcon: stringArray,
+  missingInheritance: stringArray,
 })
 
 export type SearchState = z.infer<typeof presetSearchSchema>
@@ -77,5 +78,6 @@ export function filtersFromState(state: SearchState): Record<string, string[]> {
   if (state.moreFieldIds.length) f.moreFieldIds = state.moreFieldIds
   if (state.categoryNames.length) f.categoryFacet = state.categoryNames
   if (state.hasIcon.length) f.hasIcon = state.hasIcon
+  if (state.missingInheritance.length) f.missingInheritanceFacet = state.missingInheritance
   return f
 }

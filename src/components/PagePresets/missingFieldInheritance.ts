@@ -1,0 +1,147 @@
+import {
+  presetIdFromRef,
+  resolvePresetFieldList,
+} from '@/components/PagePresets/presetFieldInheritance'
+import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
+
+export type FieldListKey = 'fields' | 'moreFields'
+
+export type MissingFieldListInheritance = {
+  parentId: string
+  missedFieldIds: string[]
+  /** `{preset/id}` refs present on the explicit list (excluding the slash parent). */
+  explicitPresetRefs: string[]
+}
+
+export type MissingFieldInheritance = {
+  fields?: MissingFieldListInheritance
+  moreFields?: MissingFieldListInheritance
+}
+
+export type MissingInheritanceStatus = 'none' | 'unreviewed' | 'intentional' | 'stale'
+
+export type MissingInheritanceOverrideList = {
+  parentId: string
+  missedFieldIds: string[]
+}
+
+export type MissingInheritanceOverride = {
+  fields?: MissingInheritanceOverrideList
+  moreFields?: MissingInheritanceOverrideList
+}
+
+export type MissingInheritanceOverrides = {
+  version: number
+  presets: Record<string, MissingInheritanceOverride>
+}
+
+/** Slash-parent preset id, or null for top-level presets. */
+export function parentPresetId(presetId: string): string | null {
+  const endIndex = presetId.lastIndexOf('/')
+  if (endIndex <= 0) return null
+  return presetId.substring(0, endIndex)
+}
+
+function hasParentPresetRef(explicitList: string[], parentId: string): boolean {
+  return explicitList.some((item) => item === `{${parentId}}`)
+}
+
+function explicitPresetRefs(explicitList: string[]): string[] {
+  return explicitList.map((item) => presetIdFromRef(item)).filter((id): id is string => id !== null)
+}
+
+/**
+ * When a preset defines an explicit `fields` or `moreFields` array but does not
+ * reference its slash parent (`{shop}` on `shop/pasta`), list field ids that the
+ * parent resolves but this preset does not.
+ */
+export function detectMissingFieldInheritance(
+  presetId: string,
+  preset: RawPreset,
+  rawPresets: RawPresets,
+  allFields: RawFields,
+): MissingFieldInheritance | null {
+  const parentId = parentPresetId(presetId)
+  if (!parentId) return null
+  const parent = rawPresets[parentId]
+  if (!parent) return null
+
+  const result: MissingFieldInheritance = {}
+
+  for (const fieldListKey of ['fields', 'moreFields'] as const) {
+    const explicitList = preset[fieldListKey]
+    if (!Array.isArray(explicitList)) continue
+    if (hasParentPresetRef(explicitList, parentId)) continue
+
+    const parentResolved = resolvePresetFieldList(
+      parentId,
+      parent,
+      fieldListKey,
+      rawPresets,
+      allFields,
+    )
+    const childResolved = resolvePresetFieldList(
+      presetId,
+      preset,
+      fieldListKey,
+      rawPresets,
+      allFields,
+    )
+
+    const childSet = new Set(childResolved)
+    const missedFieldIds = parentResolved.filter((fieldId) => !childSet.has(fieldId))
+    if (missedFieldIds.length === 0) continue
+
+    result[fieldListKey] = {
+      parentId,
+      missedFieldIds,
+      explicitPresetRefs: explicitPresetRefs(explicitList),
+    }
+  }
+
+  return result.fields || result.moreFields ? result : null
+}
+
+function sameFieldIdSet(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const sortedA = [...a].sort()
+  const sortedB = [...b].sort()
+  return sortedA.every((value, index) => value === sortedB[index])
+}
+
+function overrideListMatches(
+  current: MissingFieldListInheritance,
+  override: MissingInheritanceOverrideList,
+): boolean {
+  return (
+    override.parentId === current.parentId &&
+    sameFieldIdSet(override.missedFieldIds, current.missedFieldIds)
+  )
+}
+
+/** Compare live missing inheritance with a reviewed override snapshot. */
+export function resolveMissingInheritanceStatus(
+  current: MissingFieldInheritance | null,
+  override: MissingInheritanceOverride | undefined,
+): MissingInheritanceStatus {
+  if (!current) {
+    return override ? 'stale' : 'none'
+  }
+  if (!override) return 'unreviewed'
+
+  for (const fieldListKey of ['fields', 'moreFields'] as const) {
+    const currentList = current[fieldListKey]
+    const overrideList = override[fieldListKey]
+    if (currentList) {
+      if (!overrideList || !overrideListMatches(currentList, overrideList)) return 'stale'
+    } else if (overrideList) {
+      return 'stale'
+    }
+  }
+
+  return 'intentional'
+}
+
+export function hasMissingFieldInheritance(status: MissingInheritanceStatus): boolean {
+  return status === 'unreviewed' || status === 'intentional' || status === 'stale'
+}
