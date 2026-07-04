@@ -6,7 +6,10 @@ declare module '@fontsource-variable/*'
 
 declare module 'itemsjs'
 
-declare module '*.yaml?raw' {
-  const content: string
+declare module '*.yaml' {
+  const content: {
+    version: number
+    presets?: Record<string, unknown>
+  }
   export default content
 }

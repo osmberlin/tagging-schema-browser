@@ -8,7 +8,6 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parse } from 'yaml'
 import {
   detectMissingFieldInheritance,
   resolveMissingInheritanceStatus,
@@ -56,7 +55,7 @@ function loadSchemaFromDir(dir: string): SchemaFiles {
 
 function loadOverrides(): MissingInheritanceOverrides {
   const yamlPath = path.resolve(scriptDir, '../src/data/missing-inheritance-overrides.yaml')
-  const parsed = parse(readFileSync(yamlPath, 'utf8')) as MissingInheritanceOverrides
+  const parsed = Bun.YAML.parse(readFileSync(yamlPath, 'utf8')) as MissingInheritanceOverrides
   if (!parsed || parsed.version !== 1) {
     throw new Error(`${yamlPath}: expected version: 1`)
   }

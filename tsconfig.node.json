@@ -4,7 +4,8 @@
     "vitest.config.ts",
     "playwright.config.ts",
     "oxlint.config.mjs",
-    "oxfmt.config.mjs"
+    "oxfmt.config.mjs",
+    "vite/bunYamlPlugin.ts"
   ],
   "exclude": ["node_modules"],
   "compilerOptions": {
