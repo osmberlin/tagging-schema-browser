@@ -4,16 +4,23 @@
 # `{parent}` and without inheriting some parent fields. Record `missedFieldIds`
 # as a snapshot — CI fails when the live schema no longer matches (stale override).
 #
-# Example:
-#   man_made/crane/portal_crane:
+# Example from id-tagging-schema: tourism/information/terminal.json lists only
+# `operator` in fields (not `{tourism/information}`) while moreFields inherits
+# from the parent via `{tourism/information}`.
+#
+#   tourism/information/terminal:
 #     fields:
-#       parentId: man_made/crane
+#       parentId: tourism/information
 #       missedFieldIds:
-#         - crane/type
+#         - information
+#         - address
+#         - building_area_yes
 version: 1
 presets:
-  man_made/crane/portal_crane:
+  tourism/information/terminal:
     fields:
-      parentId: man_made/crane
+      parentId: tourism/information
       missedFieldIds:
-        - crane/type
+        - information
+        - address
+        - building_area_yes
