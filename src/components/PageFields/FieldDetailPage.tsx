@@ -18,11 +18,24 @@ type RelatedItem = { id: string; name: string }
 
 export function FieldDetailPage() {
   const { _splat: fieldId } = useParams({ strict: false })
-  const { fields, presets, dataUrl, data } = useSchema()
+  const { fields, presets, dataUrl, data, loading, error } = useSchema()
   const raw = fieldId ? fields[fieldId] : undefined
 
   if (!fieldId) {
     return <p className="text-sm text-slate-600">No field id in URL.</p>
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <h1 className="font-display text-xl font-semibold text-slate-900">Schema failed to load</h1>
+        <p className="text-sm text-slate-600">{error}</p>
+      </div>
+    )
+  }
+
+  if (loading || !data) {
+    return <p className="text-sm text-slate-600">Loading schema…</p>
   }
 
   if (!raw) {
