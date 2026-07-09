@@ -1,5 +1,6 @@
 import { type References, dereferenceLocaleStrings } from '@/schemaRuntimeDereference'
 import { isBundledTestSchemaUrl } from '@/utils/constants'
+import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import { fetchSchemaJson } from '@/utils/schemaFetch'
 import type { FieldTranslations } from '@/utils/types'
 
@@ -48,16 +49,12 @@ function ensureSlash(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
 }
 
-function parseTerms(s?: string): string[] {
-  return (s ?? '')
-    .toLowerCase()
-    .trim()
-    .split(/\s*,+\s*/)
-    .filter(Boolean)
+function parseTerms(s?: string | string[]): string[] {
+  return normalizeTerms(s)
 }
 
-function parseAliases(s?: string): string[] {
-  return (s ?? '').trim() ? (s as string).split(/\s*[\r\n]+\s*/).filter(Boolean) : []
+function parseAliases(s?: string | string[]): string[] {
+  return normalizeAliases(s)
 }
 
 type JsDelivrNode = { type: string; name: string; files?: JsDelivrNode[] }
@@ -130,7 +127,10 @@ async function loadLocale(
       string,
       {
         presets?: {
-          presets?: Record<string, { name?: string; terms?: string; aliases?: string }>
+          presets?: Record<
+            string,
+            { name?: string; terms?: string | string[]; aliases?: string | string[] }
+          >
           fields?: FieldTranslations
         }
       }

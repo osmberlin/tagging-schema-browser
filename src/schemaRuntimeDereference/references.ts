@@ -22,7 +22,10 @@ export type References = {
 }
 
 export type TranslatableStrings = {
-  presets?: Record<string, { name?: string; terms?: string; aliases?: string }>
+  presets?: Record<
+    string,
+    { name?: string; terms?: string | string[]; aliases?: string | string[] }
+  >
   fields?: FieldTranslations
 }
 

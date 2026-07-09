@@ -71,5 +71,5 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
 }
 
 export function getExpectedFilesHelp(): string {
-  return `Expected at dataUrl: ${REQUIRED_FILES.join(', ')}. Example: ?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6/dist`
+  return `Expected at dataUrl: ${REQUIRED_FILES.join(', ')}. Example: ?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7/dist`
 }
