@@ -1,5 +1,8 @@
 import { useLocale } from '@/hooks/useLocale'
 
+const DISABLED_TOOLTIP =
+  'Translation comparison is only available for the published release or a pinned release dist URL (?dataUrl=…@version/dist).'
+
 function ChevronDownIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
@@ -14,14 +17,26 @@ function ChevronDownIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 
 /** Global comparison-language picker shown in the header (drives `locale` state). */
 export function LanguagePicker() {
-  const { locale, setLocale, locales } = useLocale()
+  const { translationsAvailable, locale, setLocale, locales } = useLocale()
   const valueLabel = locale || 'Choose'
+  const title = translationsAvailable
+    ? locale
+      ? `Compare with ${locale}`
+      : 'Compare language (EN only)'
+    : DISABLED_TOOLTIP
 
   return (
-    <div className="group relative h-10 w-[5.25rem]">
+    <div
+      className="group relative h-10 w-[5.25rem]"
+      title={!translationsAvailable ? DISABLED_TOOLTIP : undefined}
+    >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 flex flex-col justify-center gap-0.5 rounded-lg border border-slate-300 bg-white px-1.5 py-0.5 shadow-sm transition group-focus-within:border-sky-500 group-focus-within:ring-2 group-focus-within:ring-sky-500/30"
+        className={`pointer-events-none absolute inset-0 flex flex-col justify-center gap-0.5 rounded-lg border px-1.5 py-0.5 shadow-sm transition ${
+          translationsAvailable
+            ? 'border-slate-300 bg-white group-focus-within:border-sky-500 group-focus-within:ring-2 group-focus-within:ring-sky-500/30'
+            : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-70'
+        }`}
       >
         <span className="text-[10px] leading-none whitespace-nowrap text-slate-500">
           Compare Lang
@@ -36,9 +51,12 @@ export function LanguagePicker() {
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value)}
+        disabled={!translationsAvailable}
         aria-label="Comparison language"
-        title={locale ? `Compare with ${locale}` : 'Compare language (EN only)'}
-        className="absolute inset-0 z-10 h-full w-full cursor-pointer appearance-none opacity-0"
+        title={title}
+        className={`absolute inset-0 z-10 h-full w-full appearance-none opacity-0 ${
+          translationsAvailable ? 'cursor-pointer' : 'cursor-not-allowed'
+        }`}
       >
         <option value="">Choose</option>
         {locales.map((l) => (
@@ -46,6 +64,7 @@ export function LanguagePicker() {
             {l}
           </option>
         ))}
+        {locale && !locales.includes(locale) ? <option value={locale}>{locale}</option> : null}
       </select>
     </div>
   )

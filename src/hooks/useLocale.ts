@@ -6,7 +6,7 @@ import { useSchema } from '@/hooks/useSchema'
 import { fetchLocaleTranslations, fetchLocales, localeKeys } from '@/queries/locale'
 import type { LocaleMap } from '@/queries/locale'
 import { SCHEMA_STALE_TIME } from '@/queries/queryClient'
-import { resolveActiveDataUrl, resolveSchemaReference } from '@/utils/dataUrl'
+import { isReleaseDataUrl, resolveActiveDataUrl, resolveSchemaReference } from '@/utils/dataUrl'
 import type { FieldTranslations } from '@/utils/types'
 
 export type { LocaleEntry, LocaleMap } from '@/queries/locale'
@@ -20,6 +20,7 @@ export function useLocale() {
 
   const reference = resolveSchemaReference(urlReference, persistedReference)
   const dataUrl = resolveActiveDataUrl(dataUrlParam, reference)
+  const translationsAvailable = isReleaseDataUrl(dataUrl)
 
   const { loading: schemaLoading, error: schemaError } = useSchema()
 
@@ -33,7 +34,12 @@ export function useLocale() {
   const translationsQuery = useQuery({
     queryKey: localeKeys.translations(dataUrl, locale),
     queryFn: () => fetchLocaleTranslations(dataUrl, locale),
-    enabled: dataUrl.trim().length > 0 && locale.length > 0 && !schemaLoading && !schemaError,
+    enabled:
+      translationsAvailable &&
+      dataUrl.trim().length > 0 &&
+      locale.length > 0 &&
+      !schemaLoading &&
+      !schemaError,
     staleTime: SCHEMA_STALE_TIME,
   })
 
@@ -44,10 +50,12 @@ export function useLocale() {
         ? String(translationsQuery.error)
         : null
 
-  // Drop a stale locale from the URL when it isn't available for this dataUrl.
+  // Drop a stale locale from the URL when it isn't available for this release dist.
   useEffect(
     function clearStaleLocaleFromUrl() {
-      if (!locale || localesQuery.isLoading || !localesQuery.isSuccess) return
+      if (!translationsAvailable || !locale || localesQuery.isLoading || !localesQuery.isSuccess) {
+        return
+      }
       const locales = localesQuery.data ?? []
       if (!locales.includes(locale)) {
         void navigate({
@@ -57,10 +65,18 @@ export function useLocale() {
         })
       }
     },
-    [locale, localesQuery.data, localesQuery.isLoading, localesQuery.isSuccess, navigate],
+    [
+      locale,
+      localesQuery.data,
+      localesQuery.isLoading,
+      localesQuery.isSuccess,
+      navigate,
+      translationsAvailable,
+    ],
   )
 
   return {
+    translationsAvailable,
     locale,
     setLocale: (next: string) => {
       void navigate({ to: '.', search: (prev) => ({ ...prev, locale: next || undefined }) })

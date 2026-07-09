@@ -6,6 +6,15 @@ function ensureSlash(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
 }
 
+const JSDELIVR_RELEASE_RE = /^https:\/\/cdn\.jsdelivr\.net\/npm\/@openstreetmap\/id-tagging-schema@/
+
+/** True when the active dist is a published npm release (full translation set). */
+export function isReleaseDataUrl(dataUrl: string): boolean {
+  const normalized = ensureSlash(dataUrl.trim())
+  if (normalized === ensureSlash(RELEASE_DATA_URL)) return true
+  return JSDELIVR_RELEASE_RE.test(normalized)
+}
+
 /** True when the URL is a built-in release or interem dataset (not a custom PR preview). */
 export function isCanonicalDataUrl(url: string): boolean {
   const normalized = ensureSlash(url)
