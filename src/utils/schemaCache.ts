@@ -1,26 +1,44 @@
 import { ensureIconsForPresetUsage } from '@/components/PageIcons/iconRegistry'
 import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
 import { denormalize } from '@/components/PagePresets/denormalize'
+import {
+  detectSchemaBuildInfo,
+  isSchemaBuildAllowed,
+  unsupportedSchemaBuildMessage,
+} from '@/utils/schemaBuildVersion'
 import type { SchemaData } from '@/utils/types'
 
 function normalizeDataUrl(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
 }
 
+function schemaCacheKey(dataUrl: string, allowLegacy: boolean): string {
+  const base = normalizeDataUrl(dataUrl)
+  return allowLegacy ? `${base}?legacy=1` : base
+}
+
 const cache = new Map<string, SchemaData>()
 const inflight = new Map<string, Promise<SchemaData | null>>()
 const loadErrors = new Map<string, string>()
 
-export function getSchemaLoadError(dataUrl: string): string | null {
-  return loadErrors.get(normalizeDataUrl(dataUrl)) ?? null
+export function getSchemaLoadError(dataUrl: string, allowLegacy = false): string | null {
+  return loadErrors.get(schemaCacheKey(dataUrl, allowLegacy)) ?? null
 }
 
-function clearSchemaLoadError(dataUrl: string): void {
-  loadErrors.delete(normalizeDataUrl(dataUrl))
+function clearSchemaLoadError(dataUrl: string, allowLegacy: boolean): void {
+  loadErrors.delete(schemaCacheKey(dataUrl, allowLegacy))
 }
 
-export function processRawSchemaPayload(raw: RawSchemaPayload): SchemaData | null {
+export function processRawSchemaPayload(
+  raw: RawSchemaPayload,
+  options: { dataUrl: string; allowLegacy: boolean },
+): SchemaData | null {
   if (raw.loadErrors.length > 0) return null
+
+  const schemaBuild = detectSchemaBuildInfo(options.dataUrl, raw)
+  if (!isSchemaBuildAllowed(schemaBuild, options)) {
+    return null
+  }
 
   const diagnostics: string[] = []
   const presets = denormalize(raw.presets, raw.translations, raw.categories, raw.fields)
@@ -40,22 +58,27 @@ export function processRawSchemaPayload(raw: RawSchemaPayload): SchemaData | nul
     translations: raw.translations,
     fieldTranslations: raw.translations.en?.presets?.fields ?? {},
     schemaReferences: raw.references,
+    schemaBuild,
     loadError: null,
     diagnostics,
   }
 }
 
-export function getCachedSchemaData(dataUrl: string): SchemaData | null {
-  return cache.get(normalizeDataUrl(dataUrl)) ?? null
+export function getCachedSchemaData(dataUrl: string, allowLegacy = false): SchemaData | null {
+  return cache.get(schemaCacheKey(dataUrl, allowLegacy)) ?? null
 }
 
-function storeSchemaData(dataUrl: string, data: SchemaData): void {
-  cache.set(normalizeDataUrl(dataUrl), data)
+function storeSchemaData(dataUrl: string, allowLegacy: boolean, data: SchemaData): void {
+  cache.set(schemaCacheKey(dataUrl, allowLegacy), data)
 }
 
 /** Fetch and denormalize schema JSON; dedupes concurrent requests and caches the result. */
-export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | null> {
-  const key = normalizeDataUrl(dataUrl)
+export async function preloadSchemaData(
+  dataUrl: string,
+  options: { allowLegacy?: boolean } = {},
+): Promise<SchemaData | null> {
+  const allowLegacy = options.allowLegacy ?? false
+  const key = schemaCacheKey(dataUrl, allowLegacy)
   const cached = cache.get(key)
   if (cached) return cached
 
@@ -70,10 +93,19 @@ export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | n
         inflight.delete(key)
         return null
       }
-      clearSchemaLoadError(dataUrl)
-      const data = processRawSchemaPayload(raw)
+
+      const schemaBuild = detectSchemaBuildInfo(dataUrl, raw)
+      if (!isSchemaBuildAllowed(schemaBuild, { allowLegacy, dataUrl })) {
+        const message = unsupportedSchemaBuildMessage(schemaBuild)
+        loadErrors.set(key, message)
+        inflight.delete(key)
+        return null
+      }
+
+      clearSchemaLoadError(dataUrl, allowLegacy)
+      const data = processRawSchemaPayload(raw, { dataUrl, allowLegacy })
       if (data) {
-        storeSchemaData(dataUrl, data)
+        storeSchemaData(dataUrl, allowLegacy, data)
         void ensureIconsForPresetUsage(data.rawPresets)
       }
       inflight.delete(key)

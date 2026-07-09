@@ -1,4 +1,5 @@
 import type { References } from '@/schemaRuntimeDereference'
+import type { SchemaBuildInfo } from '@/utils/schemaBuildVersion'
 
 export type RawPresets = Record<string, RawPreset>
 export type RawPreset = {
@@ -101,6 +102,8 @@ export type SchemaData = {
   fieldTranslations: FieldTranslations
   /** Reference map for runtime locale dereferencing; null when v7 dist or no refs. */
   schemaReferences: References | null
+  /** Detected schema major/version for the loaded dist. */
+  schemaBuild: SchemaBuildInfo
   loadError: string | null
   diagnostics: string[]
 }
