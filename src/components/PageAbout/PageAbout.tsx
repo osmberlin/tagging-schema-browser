@@ -121,6 +121,18 @@ export function PageAbout() {
           — tooling that builds the schema distribution consumed by editors.
         </li>
       </ul>
+      <h2>Schema version</h2>
+      <p>
+        The browser targets <strong>id-tagging-schema v7+</strong> (current npm release and
+        staging). When you load a custom <code>dataUrl</code>, the app shows the detected build
+        version in the header toggle or comparison banner. Version is read from the npm tag in
+        jsDelivr URLs when present; otherwise it is inferred from the dist JSON (v7 uses array{' '}
+        <code>terms</code>).
+      </p>
+      <p>
+        Older v6 <code>dist/</code> builds are blocked by default. Add <code>?legacy=1</code> to opt
+        in when you need to inspect a historical release or preview.
+      </p>
       <h2>Release vs staging</h2>
       <p>
         Use the toggle under the logo to switch between <strong>staging</strong> — the default,

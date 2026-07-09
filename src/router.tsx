@@ -84,6 +84,8 @@ const rootSearchSchema = z.object({
   locale: z.string().catch(''),
   /** Canonical dataset when `dataUrl` is empty: npm release or interem staging. */
   reference: z.enum(['release', 'interem']).optional().catch(undefined),
+  /** Opt in to loading schema v6 and older dist builds. */
+  legacy: z.string().optional().catch(undefined),
 })
 type RootSearch = z.infer<typeof rootSearchSchema>
 
@@ -128,7 +130,7 @@ function RootContent() {
       const other: 'release' | 'interem' = reference === 'interem' ? 'release' : 'interem'
       const otherUrl = dataUrlForReference(other)
       void queryClient.prefetchQuery({
-        queryKey: schemaKeys.data(otherUrl),
+        queryKey: schemaKeys.data(otherUrl, false),
         queryFn: () => prefetchSchemaData(otherUrl),
         staleTime: SCHEMA_STALE_TIME,
       })
@@ -182,8 +184,8 @@ const rootRoute = createRootRoute({
   // default ("") so shared links stay clean.
   search: {
     middlewares: [
-      retainSearchParams<RootSearch>(['dataUrl', 'locale', 'reference']),
-      stripSearchParams({ dataUrl: '', locale: '', reference: undefined }),
+      retainSearchParams<RootSearch>(['dataUrl', 'locale', 'reference', 'legacy']),
+      stripSearchParams({ dataUrl: '', locale: '', reference: undefined, legacy: undefined }),
     ],
   },
 })

@@ -2,6 +2,8 @@ import { useSearch } from '@tanstack/react-router'
 import { LayoutGroup, motion } from 'motion/react'
 import { useComparison } from '@/hooks/useComparison'
 import { useReferenceSwitch } from '@/hooks/useReferenceSwitch'
+import { useSchema } from '@/hooks/useSchema'
+import { formatSchemaBuildLabel } from '@/utils/schemaBuildVersion'
 import { formatStagingUpdatedAt } from '@/utils/schemaVersion'
 import { cn } from '@/utils/tw'
 
@@ -49,7 +51,11 @@ function ToggleSegment({
  */
 export function ReferenceToggle() {
   const { releaseVersion, stagingUpdatedAt } = useComparison()
+  const { schemaBuild } = useSchema()
   const unreleasedAge = formatStagingUpdatedAt(stagingUpdatedAt)
+  const buildLabel = schemaBuild
+    ? formatSchemaBuildLabel(schemaBuild, { resolvedReleaseVersion: releaseVersion })
+    : null
   const dataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? '' })
   const { displayReference, select, onPillAnimationComplete, isSwitching } = useReferenceSwitch()
 
@@ -77,7 +83,9 @@ export function ReferenceToggle() {
               : 'Unreleased — build from main, not yet published'
           }
         >
-          Unreleased{unreleasedAge ? ` · ${unreleasedAge}` : ''}
+          Unreleased
+          {unreleasedAge ? ` · ${unreleasedAge}` : ''}
+          {buildLabel ? ` · ${buildLabel}` : ''}
         </ToggleSegment>
         <ToggleSegment
           active={displayReference === 'release'}
@@ -86,7 +94,8 @@ export function ReferenceToggle() {
             isSwitching && displayReference === 'release' ? onPillAnimationComplete : undefined
           }
         >
-          Release{releaseVersion ? ` ${releaseVersion}` : ''}
+          Release
+          {releaseVersion ? ` ${releaseVersion}` : buildLabel ? ` · ${buildLabel}` : ''}
         </ToggleSegment>
       </div>
     </LayoutGroup>

@@ -1,7 +1,9 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { useComparison } from '@/hooks/useComparison'
+import { useSchema } from '@/hooks/useSchema'
 import { externalLinkClass } from '@/theme/externalAccent'
+import { formatSchemaBuildLabel } from '@/utils/schemaBuildVersion'
 import { formatStagingUpdatedAt } from '@/utils/schemaVersion'
 
 /**
@@ -22,6 +24,7 @@ export function DataSourceBanner() {
     result,
     loading,
   } = useComparison()
+  const { schemaBuild } = useSchema()
   const navigate = useNavigate()
   const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt)
 
@@ -44,7 +47,11 @@ export function DataSourceBanner() {
     : null
 
   const versionLabel =
-    compareMode === 'release' ? `Release${releaseVersion ? ` ${releaseVersion}` : ''}` : domain
+    compareMode === 'release'
+      ? `Release${releaseVersion ? ` ${releaseVersion}` : ''}`
+      : schemaBuild
+        ? formatSchemaBuildLabel(schemaBuild, { resolvedReleaseVersion: releaseVersion })
+        : domain
   const compareTarget =
     compareMode === 'release'
       ? `${compareLabel}${compareLabel === 'staging' && stagingAge ? ` · ${stagingAge}` : ''}`

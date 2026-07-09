@@ -27,7 +27,9 @@ Use the header toggle or URL params to pick the dataset:
 | A specific version                    | `…/?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7/dist` |
 | A pull-request preview                | `…/?dataUrl=<the PR's built dist/ URL>`                                           |
 
-**Staging** (default) loads the dist built from id-tagging-schema `main` on every push; the toggle shows when `main` last changed, not the npm version. **Release** loads the published npm package (`@latest`) when you add `?reference=release`. When you open a PR preview via `dataUrl`, the app compares it against staging.
+**Staging** (default) loads the dist built from id-tagging-schema `main` on every push; the toggle shows when `main` last changed and the detected schema version (v7). **Release** loads the published npm package (`@latest`) when you add `?reference=release`. When you open a PR preview via `dataUrl`, the app compares it against staging.
+
+The browser supports **schema v7+** only. Older v6 `dist/` URLs are rejected unless you add `?legacy=1`.
 
 ## Develop
 
