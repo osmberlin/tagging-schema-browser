@@ -23,14 +23,17 @@ import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 export type RawFieldTranslation = {
   label?: string
   placeholder?: string
-  terms?: string
+  terms?: string | string[]
   options?: Record<string, FieldOptionTranslation>
 }
 
 export type RawTranslations = {
   en?: {
     presets?: {
-      presets?: Record<string, { name?: string; terms?: string; aliases?: string }>
+      presets?: Record<
+        string,
+        { name?: string; terms?: string | string[]; aliases?: string | string[] }
+      >
       categories?: Record<string, { name?: string }>
       fields?: Record<string, RawFieldTranslation>
     }

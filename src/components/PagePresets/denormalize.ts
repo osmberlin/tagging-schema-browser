@@ -1,6 +1,7 @@
 import { isPresetIconBroken } from '@/components/PageIcons/iconRegistry'
 import { resolvePresetFieldList } from '@/components/PagePresets/presetFieldInheritance'
 import { nameRefFromRaw } from '@/components/PagePresets/presetLabelInheritance'
+import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import type {
   DenormalizedPreset,
   RawCategories,
@@ -49,7 +50,12 @@ function getTerms(
   }
 
   const t = translations.en?.presets?.presets?.[presetId]?.terms
-  const str = (t ?? (raw as { terms?: string }).terms ?? '').trim()
+  const rawTerms = (raw as { terms?: string | string[] }).terms
+  const value = t ?? rawTerms
+
+  if (Array.isArray(value)) return normalizeTerms(value)
+
+  const str = (value ?? '').trim()
   if (REF_REGEX.test(str)) {
     const m = str.match(REF_REGEX)
     if (m) {
@@ -57,11 +63,7 @@ function getTerms(
       if (resolved) return getTerms(m[1], resolved, translations, allPresets)
     }
   }
-  return str
-    .toLowerCase()
-    .trim()
-    .split(/\s*,+\s*/)
-    .filter(Boolean)
+  return normalizeTerms(str)
 }
 
 function getAliases(
@@ -80,7 +82,12 @@ function getAliases(
   }
 
   const t = translations.en?.presets?.presets?.[presetId]?.aliases
-  const str = (t ?? (raw as { aliases?: string }).aliases ?? '').trim()
+  const rawAliases = (raw as { aliases?: string | string[] }).aliases
+  const value = t ?? rawAliases
+
+  if (Array.isArray(value)) return normalizeAliases(value)
+
+  const str = (value ?? '').trim()
   if (REF_REGEX.test(str)) {
     const m = str.match(REF_REGEX)
     if (m) {
@@ -88,7 +95,7 @@ function getAliases(
       if (resolved) return getAliases(m[1], resolved, translations, allPresets)
     }
   }
-  return str ? str.split(/\s*[\r\n]+\s*/).filter(Boolean) : []
+  return normalizeAliases(str)
 }
 
 function iconPrefix(icon: string | undefined, imageURL?: string): string | undefined {

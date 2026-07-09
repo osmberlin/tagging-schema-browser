@@ -9,6 +9,7 @@ import {
   fieldOptionTranslateTexts,
   isFieldOptionObject,
 } from '@/utils/fieldOptionTranslation'
+import { formatTermsDisplay, termsToLines } from '@/utils/presetStrings'
 import type { RawFieldTranslation } from '@/utils/types'
 
 function TextWithTranslate({
@@ -55,7 +56,7 @@ export function FieldTranslationTable({
   const englishTexts = [
     english.label,
     english.placeholder,
-    english.terms,
+    ...termsToLines(english.terms),
     ...optionKeys.flatMap((key) => fieldOptionTranslateTexts(english.options?.[key])),
   ].filter((value): value is string => Boolean(value?.trim()))
 
@@ -100,11 +101,11 @@ export function FieldTranslationTable({
       />
       <TranslationAttrRow
         label="Terms"
-        english={english.terms ?? '—'}
+        english={formatTermsDisplay(english.terms)}
         localized={
           localized?.terms ? (
-            <TextWithTranslate locale={locale} text={english.terms ?? ''}>
-              {localized.terms}
+            <TextWithTranslate locale={locale} text={termsToLines(english.terms).join('\n')}>
+              {formatTermsDisplay(localized.terms)}
             </TextWithTranslate>
           ) : (
             '—'

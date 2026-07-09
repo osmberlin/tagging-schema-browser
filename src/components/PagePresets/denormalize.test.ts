@@ -23,6 +23,32 @@ describe('denormalize', () => {
     expect(result[0]?.id).toBe('amenity/cafe')
   })
 
+  it('parses v7 array terms from English translations', () => {
+    const presets = {
+      'amenity/cafe': { tags: { amenity: 'cafe' }, geometry: ['point'], fields: [] },
+    }
+    const translations = {
+      en: {
+        presets: {
+          presets: {
+            'amenity/cafe': {
+              name: 'Café',
+              terms: ['coffee', 'espresso'],
+              aliases: ['Coffee Shop'],
+            },
+          },
+          categories: {},
+          fields: {},
+        },
+      },
+    }
+
+    const result = denormalize(presets, translations, {}, {})
+
+    expect(result[0]?.terms).toEqual(['coffee', 'espresso'])
+    expect(result[0]?.aliases).toEqual(['Coffee Shop'])
+  })
+
   it('inherits only the matching field list from nested preset refs', () => {
     const presets = {
       'preset/base': {
