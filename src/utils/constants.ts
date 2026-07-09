@@ -1,3 +1,5 @@
+export const GITHUB_REPO_URL = 'https://github.com/osmberlin/tagging-schema-browser'
+
 export const RELEASE_DATA_URL =
   'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@latest/dist'
 
