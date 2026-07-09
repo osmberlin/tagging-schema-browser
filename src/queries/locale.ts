@@ -1,4 +1,5 @@
 import { isBundledTestSchemaUrl } from '@/utils/constants'
+import { isReleaseDataUrl } from '@/utils/dataUrl'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import { fetchSchemaJson } from '@/utils/schemaFetch'
 import type { FieldTranslations } from '@/utils/types'
@@ -89,6 +90,11 @@ async function discoverLocalesFromJsDelivr(pkg: string, version: string): Promis
 
 /** Discover locale codes from the dist's translations/ folder. */
 export async function discoverLocales(dataUrl: string): Promise<string[]> {
+  // Staging / interim / PR preview dists ship English only — full translations exist on npm releases.
+  if (!isReleaseDataUrl(dataUrl)) {
+    return []
+  }
+
   try {
     const manifestRes = await fetch(`${ensureSlash(dataUrl)}translations/locales.json`)
     if (manifestRes.ok) {

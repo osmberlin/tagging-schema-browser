@@ -4,6 +4,7 @@ import {
   dataUrlForReference,
   isCanonicalDataUrl,
   isReleaseCompareMode,
+  isReleaseDataUrl,
   referenceSearchParam,
   resolveActiveDataUrl,
   resolveCompareBaselineUrl,
@@ -78,5 +79,24 @@ describe('dataUrlForReference', () => {
   it('maps reference to dist URL', () => {
     expect(dataUrlForReference('release')).toBe(RELEASE_DATA_URL)
     expect(dataUrlForReference('interem')).toBe(INTEREM_DATA_URL)
+  })
+})
+
+describe('isReleaseDataUrl', () => {
+  it('recognizes npm release dist URLs', () => {
+    expect(isReleaseDataUrl(RELEASE_DATA_URL)).toBe(true)
+    expect(
+      isReleaseDataUrl(
+        'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6.18.0/dist/',
+      ),
+    ).toBe(true)
+  })
+
+  it('rejects staging, interim, and preview dist URLs', () => {
+    expect(isReleaseDataUrl(INTEREM_DATA_URL)).toBe(false)
+    expect(isReleaseDataUrl('https://preview.example/dist/')).toBe(false)
+    expect(isReleaseDataUrl('https://pr-42--ideditor-presets-preview.netlify.app/dist/')).toBe(
+      false,
+    )
   })
 })

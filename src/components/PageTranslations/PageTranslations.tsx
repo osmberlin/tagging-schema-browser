@@ -29,7 +29,7 @@ export function PageTranslations() {
   const { data, dataUrl } = useSchema()
   const [state, setState] = useSearchState()
   const [translationStatus] = useTranslationStatus()
-  const { locale, localeMap, loading, error } = useLocale()
+  const { translationsAvailable, locale, localeMap, loading, error } = useLocale()
 
   const filters = useMemo(() => filtersFromState(state), [state])
 
@@ -118,8 +118,14 @@ export function PageTranslations() {
               ) : null}
               .
             </>
-          ) : (
+          ) : translationsAvailable ? (
             "Pick a language in the top bar to compare it against the preset's English source."
+          ) : (
+            <>
+              Translation comparison is only available for published npm releases. Staging and PR
+              preview builds ship updated English strings only; community translations catch up on
+              the next tagged release.
+            </>
           )}
         </p>
       </div>
