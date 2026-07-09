@@ -107,18 +107,8 @@ export function PageAbout() {
           >
             id-tagging-schema
           </a>{' '}
-          — preset definitions, categories, fields, and published <code>dist/</code> JSON.
-        </li>
-        <li>
-          <a
-            href="https://github.com/openstreetmap/schema-builder"
-            target="_blank"
-            rel="noreferrer"
-            className={externalLinkClass()}
-          >
-            schema-builder
-          </a>{' '}
-          — tooling that builds the schema distribution consumed by editors.
+          — preset definitions, categories, fields, build tooling, and published <code>dist/</code>{' '}
+          JSON.
         </li>
       </ul>
       <h2>Release vs staging</h2>
