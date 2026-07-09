@@ -5,7 +5,7 @@ import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { Input } from '@/components/ui/Input'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalLinkClass } from '@/theme/externalAccent'
-import { INTEREM_DATA_URL } from '@/utils/constants'
+import { GITHUB_REPO_URL, INTEREM_DATA_URL } from '@/utils/constants'
 import { deriveDataUrl } from '@/utils/deriveDataUrl'
 
 function ColorDot({ halo, dot }: { halo: string; dot: string }) {
@@ -92,9 +92,18 @@ export function PageAbout() {
     <article className="prose prose-slate prose-headings:scroll-mt-24">
       <h1>About</h1>
       <p>
-        <strong>Tagging Schema Browser</strong> loads OpenStreetMap preset data from an
-        id-tagging-schema <code>dist/</code> URL and lets you search presets, explore facets, and
-        browse icons—useful for reviewing schema PRs and releases.
+        <strong>Tagging Schema Browser</strong> is a web app that browses, searches, and inspects
+        the OpenStreetMap iD tagging schema — presets, fields, icons, and the connections between
+        them — for any released or pre-release build. Source code and issue tracker:{' '}
+        <a href={GITHUB_REPO_URL} target="_blank" rel="noreferrer" className={externalLinkClass()}>
+          osmberlin/tagging-schema-browser
+        </a>
+        .
+      </p>
+      <p>
+        The app loads a built id-tagging-schema <code>dist/</code> and makes it explorable in the
+        browser — no build step or checkout required. Use it as an everyday reference or as a review
+        tool for schema pull requests: search presets, explore facets, and browse icons.
       </p>
       <h2>Upstream projects</h2>
       <ul>
