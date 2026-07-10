@@ -7,8 +7,8 @@ describe('discoverLocales', () => {
     vi.restoreAllMocks()
   })
 
-  it('returns no locales for staging and preview dist URLs', async () => {
-    await expect(discoverLocales(INTEREM_DATA_URL)).resolves.toEqual([])
+  it('returns no locales for unreleased and preview dist URLs', async () => {
+    await expect(discoverLocales(INTERIM_DATA_URL)).resolves.toEqual([])
     await expect(
       discoverLocales('https://pr-42--ideditor-presets-preview.netlify.app/dist/'),
     ).resolves.toEqual([])

@@ -89,7 +89,11 @@ const rootSearchSchema = z.object({
   /** Global comparison locale (used by the Translations page + preset details). */
   locale: z.string().catch(''),
   /** Canonical dataset when `dataUrl` is empty: npm release or unreleased main. */
-  reference: z.enum(['release', 'interim']).optional().catch(undefined),
+  reference: z
+    .enum(['release', 'interim', 'interem'])
+    .transform((value) => (value === 'interem' ? 'interim' : value))
+    .optional()
+    .catch(undefined),
 })
 type RootSearch = z.infer<typeof rootSearchSchema>
 
