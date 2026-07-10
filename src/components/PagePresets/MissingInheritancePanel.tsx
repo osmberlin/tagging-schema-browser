@@ -50,19 +50,19 @@ function FieldListSection({
           to="/preset/$"
           params={{ _splat: section.parentId }}
           search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-          className="font-mono text-xs text-sky-300 underline underline-offset-2"
+          className="font-mono text-sm text-sky-300 underline underline-offset-2"
         >
           {section.parentId}
         </Link>
       </p>
       <p className="text-sm text-slate-300">Field ids not inherited from the parent list:</p>
-      <ul className="list-inside list-disc font-mono text-xs text-slate-100">
+      <ul className="list-inside list-disc font-mono text-sm text-slate-100">
         {section.missedFieldIds.map((fieldId) => (
           <li key={fieldId}>{fieldId}</li>
         ))}
       </ul>
       {section.explicitPresetRefs.length > 0 ? (
-        <p className="text-xs text-slate-400">
+        <p className="text-sm text-slate-400">
           Other preset refs on this list: {section.explicitPresetRefs.join(', ')}
         </p>
       ) : null}
