@@ -1,4 +1,5 @@
-import type { References } from '@/schemaRuntimeDereference'
+import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
+import type { PrerequisiteTag } from '@/utils/prerequisiteTag'
 import type { SchemaBuildInfo } from '@/utils/schemaBuildVersion'
 
 export type RawPresets = Record<string, RawPreset>
@@ -18,8 +19,6 @@ export type RawPreset = {
   searchable?: boolean
   suggestion?: boolean
 }
-
-import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 
 export type RawFieldTranslation = {
   label?: string
@@ -58,6 +57,7 @@ export type RawField = {
   iconsCrossReference?: string
   /** v6 only — removed from v7 dist after schema-builder dereferences at build time. */
   stringsCrossReference?: string
+  prerequisiteTag?: PrerequisiteTag
 }
 
 export type RawFields = Record<string, RawField>
@@ -100,8 +100,6 @@ export type SchemaData = {
   translations: RawTranslations
   /** English field labels and option strings from translations/en.min.json. */
   fieldTranslations: FieldTranslations
-  /** Reference map for runtime locale dereferencing; null when v7 dist or no refs. */
-  schemaReferences: References | null
   /** Detected schema major/version for the loaded dist. */
   schemaBuild: SchemaBuildInfo
   loadError: string | null

@@ -1,4 +1,3 @@
-import { needsRuntimeDereference } from '@/schemaRuntimeDereference'
 import { isBundledTestSchemaUrl } from '@/utils/constants'
 import type { RawFields, RawPresets, RawTranslations } from '@/utils/types'
 
@@ -35,6 +34,28 @@ export function predictSchemaBuildFromUrl(dataUrl: string): SchemaBuildInfo | nu
   const major = majorFromVersionSpec(versionSpec)
   if (major === null) return null
   return { major, versionSpec, detection: 'url' }
+}
+
+function isReference(value: unknown): value is string {
+  return typeof value === 'string' && /^\{.+\}$/.test(value)
+}
+
+/** True when dist JSON still contains references stripped by schema-builder v7. */
+function needsRuntimeDereference(fields: RawFields, presets: RawPresets): boolean {
+  for (const field of Object.values(fields)) {
+    if (field.stringsCrossReference) return true
+    if (field.label && isReference(field.label)) return true
+    if (field.placeholder && isReference(field.placeholder)) return true
+    if (field.iconsCrossReference) return true
+  }
+
+  for (const preset of Object.values(presets)) {
+    const raw = preset as Record<string, unknown>
+    const name = raw.name ?? raw.originalName
+    if (typeof name === 'string' && isReference(name)) return true
+  }
+
+  return false
 }
 
 function detectMajorFromContent(payload: SchemaBuildPayload): number {
@@ -95,12 +116,4 @@ export function isSchemaBuildSupported(build: SchemaBuildInfo, dataUrl: string):
 export function unsupportedSchemaBuildMessage(build: SchemaBuildInfo): string {
   const label = formatSchemaBuildLabel(build)
   return `The linked schema is ${label}. This browser only supports id-tagging-schema v${SUPPORTED_SCHEMA_MAJOR} and newer, so that dataset cannot be shown here.`
-}
-
-/** @deprecated Use isSchemaBuildSupported */
-export function isSchemaBuildAllowed(
-  build: SchemaBuildInfo,
-  options: { dataUrl: string },
-): boolean {
-  return isSchemaBuildSupported(build, options.dataUrl)
 }

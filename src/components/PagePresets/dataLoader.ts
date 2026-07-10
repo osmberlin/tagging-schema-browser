@@ -1,4 +1,3 @@
-import { type References, applyRuntimeDereference } from '@/schemaRuntimeDereference'
 import { fetchSchemaJson } from '@/utils/schemaFetch'
 import type { RawCategories, RawFields, RawPresets, RawTranslations } from '@/utils/types'
 
@@ -17,7 +16,6 @@ export type RawSchemaPayload = {
   fields: RawFields
   defaults: unknown
   loadErrors: string[]
-  references: References | null
 }
 
 function ensureTrailingSlash(url: string): string {
@@ -36,7 +34,6 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
   let categories: RawCategories = {}
   let fields: RawFields = {}
   let defaults: unknown = {}
-  let references: References | null = null
 
   const results = await Promise.all(
     REQUIRED_FILES.map(async (file) => {
@@ -63,11 +60,7 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
     else if (file === 'preset_defaults.min.json') defaults = data
   }
 
-  if (loadErrors.length === 0) {
-    references = applyRuntimeDereference({ presets, translations, fields })
-  }
-
-  return { presets, translations, categories, fields, defaults, loadErrors, references }
+  return { presets, translations, categories, fields, defaults, loadErrors }
 }
 
 export function getExpectedFilesHelp(): string {
