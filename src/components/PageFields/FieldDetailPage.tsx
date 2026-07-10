@@ -8,6 +8,7 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
+import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
@@ -182,21 +183,24 @@ function FieldDetailContent({
       </header>
 
       {mismatchCount > 0 ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <strong>{mismatchCount}</strong> option
-          {mismatchCount === 1 ? '' : 's'} on this field use a different icon than the linked child
-          preset{mismatchCount === 1 ? '' : 's'}.
-        </p>
-      ) : null}
-
-      <DetailDisclosure
-        title="Option icons"
-        area="icons"
-        subtitle="Field option icons vs dedicated child preset icons"
-        defaultOpen={mismatchCount > 0}
-      >
-        <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} />
-      </DetailDisclosure>
+        <SchemaIssueDisclosure
+          disclosureId={`field-icon-mismatch:${fieldId}`}
+          variant="warning"
+          title="Icon mismatch"
+          summary={`${mismatchCount} option${mismatchCount === 1 ? '' : 's'} use a different icon than the linked child preset${mismatchCount === 1 ? '' : 's'}`}
+          defaultOpen
+        >
+          <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} />
+        </SchemaIssueDisclosure>
+      ) : (
+        <DetailDisclosure
+          title="Option icons"
+          area="icons"
+          subtitle="Field option icons vs dedicated child preset icons"
+        >
+          <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} />
+        </DetailDisclosure>
+      )}
 
       <DetailDisclosure
         title="Translation"

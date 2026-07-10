@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { AreaIcon } from '@/components/ui/areaIcons'
-import { BrokenPresetIconsBanner } from '@/components/ui/BrokenPresetIconsBanner'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { BrokenPresetIconsAlert } from '@/components/ui/SchemaIssueAlerts'
 import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
@@ -112,10 +112,12 @@ export function PageIcons() {
           />
         </div>
       </div>
-      <BrokenPresetIconsBanner
-        count={brokenPresetIconCount}
-        onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
-      />
+      {facetState.i_hasSvg !== 'missing' || facetState.i_usage !== 'presets' ? (
+        <BrokenPresetIconsAlert
+          count={brokenPresetIconCount}
+          onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
+        />
+      ) : null}
       {!suppliersReady && filtered.length === 0 ? (
         <SchemaLoadingPanel label="Loading icon libraries…" />
       ) : null}

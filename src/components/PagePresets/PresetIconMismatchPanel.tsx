@@ -3,6 +3,7 @@ import { isIconSvgConfirmedMissing, useIconSvgDataUrl } from '@/components/PageI
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
+import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { areaAccent } from '@/theme/areaAccent'
 import type { PresetFieldSection, PresetOptionRow } from '@/utils/fieldOptions'
 import {
@@ -228,14 +229,24 @@ export function PresetIconMismatchPanel({
 
   if (parentRows.length === 0 && childRefs.length === 0) return null
 
+  const mismatchCount = parentRows.length + childRefs.length
+  const summary =
+    childRefs.length > 0 && parentRows.length === 0
+      ? 'Field option icon differs from this preset icon'
+      : `${mismatchCount} field option${mismatchCount === 1 ? '' : 's'} with mismatched icons`
+
   return (
-    <section
-      className="space-y-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900"
-      aria-label="Icon mismatches"
+    <SchemaIssueDisclosure
+      disclosureId={`preset-icon-mismatch:${preset.id}`}
+      variant="warning"
+      title="Icon mismatch"
+      summary={summary}
+      defaultOpen
+      bodyClassName="space-y-3"
     >
       {childRefs.length > 0 ? (
         <div className="space-y-3">
-          <p className="font-medium text-amber-950">
+          <p className="font-medium text-slate-800">
             This preset&apos;s icon is referenced by a parent field option that uses a different
             icon.
           </p>
@@ -250,7 +261,7 @@ export function PresetIconMismatchPanel({
 
       {parentRows.length > 0 ? (
         <div className="space-y-3">
-          <p className="font-medium text-amber-950">
+          <p className="font-medium text-slate-800">
             {parentRows.length} field option{parentRows.length === 1 ? '' : 's'} on this preset use
             a different icon than the linked child preset{parentRows.length === 1 ? '' : 's'}.
           </p>
@@ -264,6 +275,6 @@ export function PresetIconMismatchPanel({
           ))}
         </div>
       ) : null}
-    </section>
+    </SchemaIssueDisclosure>
   )
 }

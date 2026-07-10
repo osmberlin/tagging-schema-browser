@@ -35,7 +35,8 @@ test('preset facets are visible and populated in left navigation', async ({ page
 test('broken icon presets are flagged and filterable', async ({ page }) => {
   await loadTestSchema(page)
 
-  await expect(page.getByText(/presets? references? a missing preset icon/i)).toBeVisible()
+  await expect(page.getByText('Broken icons', { exact: true })).toBeVisible()
+  await expect(page.getByText(/missing preset icon/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'show broken preset icons' })).toBeVisible()
   await expect(page.locator('aside').getByRole('button', { name: /^broken\b/i })).toBeVisible()
 
@@ -47,7 +48,7 @@ test('broken icon presets are flagged and filterable', async ({ page }) => {
 test('missing slash-parent field inheritance is flagged and filterable', async ({ page }) => {
   await loadTestSchema(page)
 
-  await expect(page.getByText(/unreviewed missing slash-parent field inheritance/i)).toBeVisible()
+  await expect(page.getByText('Missing inheritance', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'show unreviewed' })).toBeVisible()
   await expect(
     page.locator('aside').getByRole('button', { name: /Missing \(unreviewed\)/i }),
@@ -55,8 +56,10 @@ test('missing slash-parent field inheritance is flagged and filterable', async (
 
   await page.getByRole('button', { name: 'show unreviewed' }).click()
   await expect(page.getByRole('button', { name: 'Field inheritance: unreviewed' })).toBeVisible()
-  await expect(page.getByText('man_made/crane/gantry_crane', { exact: true })).toBeVisible()
-  await expect(page.getByText(/unreviewed missing slash-parent field inheritance/i)).toHaveCount(0)
+  await expect(
+    page.locator('tbody').getByText('man_made/crane/gantry_crane', { exact: true }),
+  ).toBeVisible()
+  await expect(page.getByText('Missing inheritance', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'show unreviewed' })).toHaveCount(0)
 })
 
@@ -122,10 +125,8 @@ test('child preset detail shows field option mismatch with links', async ({ page
   await loadTestSchema(page)
   await page.goto('/preset/leisure/playground/cushion?dataUrl=/test-schema')
 
-  const panel = page.getByLabel('Icon mismatches')
-  await expect(
-    panel.getByText(/field option icon differs from child preset icon/i),
-  ).toBeVisible()
+  const panel = page.getByLabel('Icon mismatch')
+  await expect(panel.getByText(/field option icon differs from child preset icon/i)).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Field' })).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Option icon' })).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Preset icon' })).toBeVisible()
@@ -138,7 +139,7 @@ test('field detail shows option icon mismatches', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/field/playground/type?dataUrl=/test-schema')
 
-  await expect(page.getByRole('button', { name: /Option icons/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Icon mismatch/i })).toBeVisible()
   await expect(page.getByText('Mismatch').first()).toBeVisible()
   await expect(
     page.locator('table').getByText('temaki-cushion', { exact: true }).first(),
@@ -153,7 +154,7 @@ test('fields page filters icon mismatch fields', async ({ page }) => {
   await page.goto('/fields?dataUrl=/test-schema')
 
   await expect(page.getByText(/1 field has icon mismatches/i)).toBeVisible()
-  await page.getByRole('button', { name: /Option ↔ preset mismatch/i }).click()
+  await page.getByRole('button', { name: 'show mismatched fields' }).click()
   await expect(page.locator("[data-field='playground/type']")).toBeVisible()
 })
 
