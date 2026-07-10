@@ -3,16 +3,6 @@ import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { cn } from '@/utils/tw'
 
-export function SchemaIssueCode({
-  children,
-  className,
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
-  return <code className={cn(schemaIssueStyles.code, className)}>{children}</code>
-}
-
 export function SchemaIssueIcon({
   variant,
   className,
@@ -118,6 +108,7 @@ export function SchemaIssueDisclosure({
   bodyClassName?: string
 }) {
   const [open, setOpen] = useSchemaIssueDisclosureOpen(disclosureId)
+  const proseDisabled = bodyClassName?.includes('not-prose')
 
   return (
     <section className={cn(schemaIssueStyles.disclosure, className)} aria-label={title}>
@@ -143,7 +134,7 @@ export function SchemaIssueDisclosure({
         <div
           className={cn(
             schemaIssueStyles.disclosureBody,
-            schemaIssueStyles.disclosureProse,
+            !proseDisabled && schemaIssueStyles.disclosureProse,
             bodyClassName,
           )}
         >

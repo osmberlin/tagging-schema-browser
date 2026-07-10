@@ -38,23 +38,6 @@ export function useSchemaIssueDisclosureOpen(
   return [isOpen, (open) => setOpen(disclosureId, open)]
 }
 
-/** Open a detail disclosure once when its issue filter is active and the user has not toggled it yet. */
-export function useAutoOpenFocusedIssue(
-  disclosureId: string,
-  issue: PresetIssueFilterKey,
-  applies: boolean,
-): void {
-  const focus = useActiveIssueFocus()
-  const { setOpen } = useSchemaIssueDisclosureActions()
-
-  if (focus !== issue || !applies) return
-
-  const stored = useSchemaIssueDisclosureStore.getState().openById[disclosureId]
-  if (stored !== undefined) return
-
-  setOpen(disclosureId, true)
-}
-
 // For use inside effects / event handlers only.
 export function getSchemaIssueDisclosureStore() {
   return useSchemaIssueDisclosureStore.getState()
