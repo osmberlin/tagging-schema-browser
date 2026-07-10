@@ -74,7 +74,10 @@ function OverridesYamlLink() {
 
 export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset }) {
   const { missingFieldInheritance, missingInheritanceStatus } = preset
-  if (missingInheritanceStatus === 'none' || !missingFieldInheritance) return null
+  if (missingInheritanceStatus === 'none') return null
+
+  const parentId =
+    missingFieldInheritance?.fields?.parentId ?? missingFieldInheritance?.moreFields?.parentId
 
   return (
     <div
@@ -82,15 +85,21 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
       data-testid="missing-inheritance-panel"
     >
       <p className="text-sm font-semibold">{STATUS_LABELS[missingInheritanceStatus]}</p>
-      <p className="mt-1 text-sm">
-        This preset defines an explicit field list without{' '}
-        <code>{`{${missingFieldInheritance.fields?.parentId ?? missingFieldInheritance.moreFields?.parentId}}`}</code>
-        , so it does not inherit every field from its slash parent.
-      </p>
+      {missingFieldInheritance && parentId ? (
+        <p className="mt-1 text-sm">
+          This preset defines an explicit field list without <code>{`{${parentId}}`}</code>, so it
+          does not inherit every field from its slash parent.
+        </p>
+      ) : missingInheritanceStatus === 'stale' ? (
+        <p className="mt-1 text-sm">
+          This preset no longer has missing slash-parent field inheritance, but an override entry
+          still exists in <OverridesYamlLink />.
+        </p>
+      ) : null}
       {missingInheritanceStatus === 'stale' ? (
         <p className="mt-2 text-sm">
           The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update the
-          snapshot.
+          snapshot{missingFieldInheritance ? '' : ' or remove the entry'}.
         </p>
       ) : null}
       {missingInheritanceStatus === 'unreviewed' ? (
@@ -100,10 +109,10 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
         </p>
       ) : null}
       <div className="mt-4 space-y-4">
-        {missingFieldInheritance.fields ? (
+        {missingFieldInheritance?.fields ? (
           <FieldListSection fieldListKey="fields" section={missingFieldInheritance.fields} />
         ) : null}
-        {missingFieldInheritance.moreFields ? (
+        {missingFieldInheritance?.moreFields ? (
           <FieldListSection
             fieldListKey="moreFields"
             section={missingFieldInheritance.moreFields}

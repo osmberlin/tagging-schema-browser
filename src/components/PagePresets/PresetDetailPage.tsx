@@ -145,10 +145,7 @@ function PresetDetailContent({
               locale: prev.locale ?? '',
               preset1: preset.id,
             })}
-            className={cn(
-              'inline-flex items-center gap-1.5',
-              areaAccent.presetSwitch.navActive,
-            )}
+            className={cn('inline-flex items-center gap-1.5', areaAccent.presetSwitch.navActive)}
           >
             <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
             Compare preset switch
