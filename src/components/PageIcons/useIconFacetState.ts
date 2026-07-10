@@ -84,7 +84,7 @@ export function useIconFacetMeta(icons: IconViewModel[]) {
     for (const icon of icons) {
       supplierCounts.set(icon.prefix, (supplierCounts.get(icon.prefix) ?? 0) + 1)
       if (icon.svgRaw) withSvg += 1
-      else missingSvg += 1
+      if (isIconSvgConfirmedMissing(icon.name)) missingSvg += 1
       if (icon.presetUsageCount > 0 && isIconSvgConfirmedMissing(icon.name)) {
         missingPresetRef += 1
       }

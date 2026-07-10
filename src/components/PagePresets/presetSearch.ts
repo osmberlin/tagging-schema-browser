@@ -91,10 +91,15 @@ export function activatePresetSearchIndex(dataUrl: string, presets: Denormalized
 }
 
 /** Rebuild facet buckets after async icon suppliers finish loading. */
-export function refreshPresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
+export function refreshPresetSearchIndex(
+  dataUrl: string,
+  presets: DenormalizedPreset[],
+  iconEpoch?: number,
+): void {
   const key = normalizeDataUrl(dataUrl)
   activeDataUrl = key
   engine = itemsjs(toItemsJsRecords(presets), itemsJsConfig as never)
+  if (iconEpoch !== undefined) cachedIconEpoch = iconEpoch
 }
 
 /** Idempotent — safe during render when the active schema is on screen. */

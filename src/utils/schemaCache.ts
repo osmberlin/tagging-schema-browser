@@ -1,4 +1,8 @@
-import { ensureIconsForNames, collectSchemaIconNames } from '@/components/PageIcons/iconRegistry'
+import {
+  ensureIconsForNames,
+  collectSchemaIconNames,
+  getIconRegistryEpoch,
+} from '@/components/PageIcons/iconRegistry'
 import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
 import { denormalize } from '@/components/PagePresets/denormalize'
 import { refreshPresetSearchIndex } from '@/components/PagePresets/presetSearch'
@@ -105,7 +109,7 @@ export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | n
             data.fieldTranslations,
           ),
         ).then(() => {
-          refreshPresetSearchIndex(dataUrl, data.presets)
+          refreshPresetSearchIndex(dataUrl, data.presets, getIconRegistryEpoch())
         })
       }
       inflight.delete(key)
