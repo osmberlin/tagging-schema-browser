@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
+import { modeSearchDefaults } from '@/components/PageMode/modeSearch'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
@@ -141,6 +142,16 @@ export function SidebarLayout({
       to: '/preset-switch',
       search: (prev) => ({
         ...presetSwitchSearchDefaults,
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
+      }),
+    }),
+  )
+  useHotkeySequence(['G', 'M'], () =>
+    navigate({
+      to: '/mode',
+      search: (prev) => ({
+        ...modeSearchDefaults,
         dataUrl: prev.dataUrl ?? '',
         locale: prev.locale ?? '',
       }),

@@ -62,6 +62,7 @@ export function processRawSchemaPayload(
     translations: raw.translations,
     fieldTranslations,
     schemaBuild,
+    discarded: raw.discarded,
     loadError: null,
     diagnostics,
   }
