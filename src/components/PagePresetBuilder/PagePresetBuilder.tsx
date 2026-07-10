@@ -138,12 +138,13 @@ export function PagePresetBuilder() {
   const {
     form,
     committedState,
-    committedKey,
     fromPresetId,
     isDirty,
     commitToUrl,
     commitDraft,
     commitAndSet,
+    setFieldValue,
+    markEditing,
     defaults,
   } = usePresetBuilderForm()
   const { rawPresets, fields, dataUrl } = useSchema()
@@ -218,19 +219,13 @@ export function PagePresetBuilder() {
         alwaysOpen
       >
         <div className="space-y-4">
-          <form.Field name="tags">
-            {(field) => (
-              <TagKeyValueEditor
-                key={committedKey}
-                tags={field.state.value}
-                onChange={(tags) => field.handleChange(tags)}
-                onCommit={() => {
-                  field.handleBlur()
-                  commitDraft()
-                }}
-              />
-            )}
-          </form.Field>
+          <TagKeyValueEditor
+            syncToken={JSON.stringify(committedState.tags)}
+            committedTags={committedState.tags}
+            onDraftChange={(tags) => setFieldValue('tags', tags)}
+            onCommit={commitDraft}
+            onEditStart={markEditing}
+          />
           {draftPresetId ? (
             <dl className="space-y-2 rounded-lg bg-slate-50 px-3 py-3 text-sm">
               <div className="flex flex-wrap gap-x-2">
@@ -314,6 +309,7 @@ export function PagePresetBuilder() {
                 <Input
                   value={field.state.value}
                   onChange={(event) => field.handleChange(event.target.value)}
+                  onFocus={markEditing}
                   onBlur={() => {
                     field.handleBlur()
                     commitDraft()
@@ -330,6 +326,7 @@ export function PagePresetBuilder() {
                 label="Terms (search keywords)"
                 values={field.state.value}
                 onChange={(terms) => field.handleChange(terms)}
+                onEditStart={markEditing}
                 onBlur={() => {
                   field.handleBlur()
                   commitDraft()
@@ -344,6 +341,7 @@ export function PagePresetBuilder() {
                 label="Aliases"
                 values={field.state.value}
                 onChange={(aliases) => field.handleChange(aliases)}
+                onEditStart={markEditing}
                 onBlur={() => {
                   field.handleBlur()
                   commitDraft()
@@ -364,6 +362,7 @@ export function PagePresetBuilder() {
             <IconFieldInput
               value={field.state.value}
               onChange={(icon) => field.handleChange(icon)}
+              onFocus={markEditing}
               onBlur={() => {
                 field.handleBlur()
                 commitDraft()
@@ -422,6 +421,7 @@ export function PagePresetBuilder() {
                 label="fields"
                 values={field.state.value}
                 onChange={(nextFields) => field.handleChange(nextFields)}
+                onEditStart={markEditing}
                 onBlur={() => {
                   field.handleBlur()
                   commitDraft()
@@ -444,6 +444,7 @@ export function PagePresetBuilder() {
               label="moreFields"
               values={field.state.value}
               onChange={(moreFields) => field.handleChange(moreFields)}
+              onEditStart={markEditing}
               onBlur={() => {
                 field.handleBlur()
                 commitDraft()
@@ -461,37 +462,25 @@ export function PagePresetBuilder() {
           <div>
             <h3 className="text-sm font-medium text-slate-900">addTags</h3>
             <div className="mt-2">
-              <form.Field name="addTags">
-                {(addField) => (
-                  <TagKeyValueEditor
-                    key={committedKey}
-                    tags={addField.state.value}
-                    onChange={(addTags) => addField.handleChange(addTags)}
-                    onCommit={() => {
-                      addField.handleBlur()
-                      commitDraft()
-                    }}
-                  />
-                )}
-              </form.Field>
+              <TagKeyValueEditor
+                syncToken={JSON.stringify(committedState.addTags)}
+                committedTags={committedState.addTags}
+                onDraftChange={(addTags) => setFieldValue('addTags', addTags)}
+                onCommit={commitDraft}
+                onEditStart={markEditing}
+              />
             </div>
           </div>
           <div>
             <h3 className="text-sm font-medium text-slate-900">removeTags</h3>
             <div className="mt-2">
-              <form.Field name="removeTags">
-                {(removeField) => (
-                  <TagKeyValueEditor
-                    key={committedKey}
-                    tags={removeField.state.value}
-                    onChange={(removeTags) => removeField.handleChange(removeTags)}
-                    onCommit={() => {
-                      removeField.handleBlur()
-                      commitDraft()
-                    }}
-                  />
-                )}
-              </form.Field>
+              <TagKeyValueEditor
+                syncToken={JSON.stringify(committedState.removeTags)}
+                committedTags={committedState.removeTags}
+                onDraftChange={(removeTags) => setFieldValue('removeTags', removeTags)}
+                onCommit={commitDraft}
+                onEditStart={markEditing}
+              />
             </div>
           </div>
         </div>
@@ -508,6 +497,7 @@ export function PagePresetBuilder() {
               <Input
                 value={field.state.value}
                 onChange={(event) => field.handleChange(event.target.value)}
+                onFocus={markEditing}
                 onBlur={() => {
                   field.handleBlur()
                   commitDraft()
@@ -532,6 +522,7 @@ export function PagePresetBuilder() {
                 <Input
                   value={keyField.state.value}
                   onChange={(event) => keyField.handleChange(event.target.value)}
+                  onFocus={markEditing}
                   onBlur={() => {
                     keyField.handleBlur()
                     commitDraft()
@@ -548,6 +539,7 @@ export function PagePresetBuilder() {
                 <Input
                   value={valueField.state.value}
                   onChange={(event) => valueField.handleChange(event.target.value)}
+                  onFocus={markEditing}
                   onBlur={() => {
                     valueField.handleBlur()
                     commitDraft()
@@ -598,6 +590,7 @@ export function PagePresetBuilder() {
                 <Input
                   value={crossField.state.value}
                   onChange={(event) => crossField.handleChange(event.target.value)}
+                  onFocus={markEditing}
                   onBlur={() => {
                     crossField.handleBlur()
                     commitDraft()
@@ -623,6 +616,7 @@ export function PagePresetBuilder() {
                 <Input
                   value={relationField.state.value}
                   onChange={(event) => relationField.handleChange(event.target.value)}
+                  onFocus={markEditing}
                   onBlur={() => {
                     relationField.handleBlur()
                     commitDraft()
@@ -641,6 +635,7 @@ export function PagePresetBuilder() {
                 <Input
                   value={relationCrossField.state.value}
                   onChange={(event) => relationCrossField.handleChange(event.target.value)}
+                  onFocus={markEditing}
                   onBlur={() => {
                     relationCrossField.handleBlur()
                     commitDraft()

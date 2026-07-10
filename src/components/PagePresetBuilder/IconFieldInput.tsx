@@ -16,6 +16,7 @@ type IconFieldInputProps = {
   value: string
   onChange: (value: string) => void
   onBlur?: () => void
+  onFocus?: () => void
   dataUrl: string
 }
 
@@ -49,7 +50,7 @@ export function useIconFieldValidation(iconName: string) {
   return { status, supplier, allLoaded }
 }
 
-export function IconFieldInput({ value, onChange, onBlur, dataUrl }: IconFieldInputProps) {
+export function IconFieldInput({ value, onChange, onBlur, onFocus, dataUrl }: IconFieldInputProps) {
   const { presets, fields, data } = useSchema()
   const { icons } = useIconSearch(presets, fields, data?.fieldTranslations)
   const { status } = useIconFieldValidation(value)
@@ -69,6 +70,7 @@ export function IconFieldInput({ value, onChange, onBlur, dataUrl }: IconFieldIn
           type="text"
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          onFocus={onFocus}
           onBlur={onBlur}
           placeholder="maki-cafe"
           className={`block w-full rounded-lg border bg-white px-3 py-2 font-mono text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:ring-2 focus:outline-none ${

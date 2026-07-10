@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type TagRow = {
   id: number
@@ -7,9 +7,12 @@ type TagRow = {
 }
 
 type TagKeyValueEditorProps = {
-  tags: Record<string, string>
-  onChange: (tags: Record<string, string>) => void
+  /** Changes when the committed URL snapshot for these tags changes. */
+  syncToken: string
+  committedTags: Record<string, string>
+  onDraftChange: (tags: Record<string, string>) => void
   onCommit?: () => void
+  onEditStart?: () => void
 }
 
 function rowsFromTags(tags: Record<string, string>): TagRow[] {
@@ -33,26 +36,50 @@ function rowsToTags(rows: TagRow[]): Record<string, string> {
   return next
 }
 
-export function TagKeyValueEditor({ tags, onChange, onCommit }: TagKeyValueEditorProps) {
+export function TagKeyValueEditor({
+  syncToken,
+  committedTags,
+  onDraftChange,
+  onCommit,
+  onEditStart,
+}: TagKeyValueEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [rows, setRows] = useState<TagRow[]>(() => rowsFromTags(tags))
+  const lastSyncTokenRef = useRef(syncToken)
+  const [rows, setRows] = useState<TagRow[]>(() => rowsFromTags(committedTags))
 
-  const syncToForm = (nextRows: TagRow[]) => {
-    setRows(nextRows)
-    onChange(rowsToTags(nextRows))
-  }
+  // Re-hydrate local rows when the URL commits a new tag snapshot.
+  useEffect(() => {
+    if (lastSyncTokenRef.current === syncToken) return
+    lastSyncTokenRef.current = syncToken
+    setRows(rowsFromTags(committedTags))
+  }, [syncToken, committedTags])
 
   const updateRow = (rowId: number, patch: Partial<Pick<TagRow, 'key' | 'value'>>) => {
-    syncToForm(rows.map((row) => (row.id === rowId ? { ...row, ...patch } : row)))
+    onEditStart?.()
+    setRows((prev) => {
+      const nextRows = prev.map((row) => (row.id === rowId ? { ...row, ...patch } : row))
+      onDraftChange(rowsToTags(nextRows))
+      return nextRows
+    })
   }
 
   const addRow = () => {
-    syncToForm([...rows, { id: nextRowId(rows), key: '', value: '' }])
+    onEditStart?.()
+    setRows((prev) => {
+      const nextRows = [...prev, { id: nextRowId(prev), key: '', value: '' }]
+      onDraftChange(rowsToTags(nextRows))
+      return nextRows
+    })
   }
 
   const removeRow = (rowId: number) => {
-    const nextRows = rows.filter((row) => row.id !== rowId)
-    syncToForm(nextRows.length > 0 ? nextRows : [{ id: 0, key: '', value: '' }])
+    onEditStart?.()
+    setRows((prev) => {
+      const nextRows = prev.filter((row) => row.id !== rowId)
+      const resolved = nextRows.length > 0 ? nextRows : [{ id: 0, key: '', value: '' }]
+      onDraftChange(rowsToTags(resolved))
+      return resolved
+    })
   }
 
   const handleContainerBlur = (event: React.FocusEvent<HTMLDivElement>) => {
@@ -68,6 +95,7 @@ export function TagKeyValueEditor({ tags, onChange, onCommit }: TagKeyValueEdito
           <input
             type="text"
             value={row.key}
+            onFocus={onEditStart}
             onChange={(event) => updateRow(row.id, { key: event.target.value })}
             placeholder="amenity"
             className="w-2/5 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none"
@@ -77,6 +105,7 @@ export function TagKeyValueEditor({ tags, onChange, onCommit }: TagKeyValueEdito
           <input
             type="text"
             value={row.value}
+            onFocus={onEditStart}
             onChange={(event) => updateRow(row.id, { value: event.target.value })}
             placeholder="cafe"
             className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none"
@@ -108,6 +137,7 @@ type StringListEditorProps = {
   values: string[]
   onChange: (values: string[]) => void
   onBlur?: () => void
+  onEditStart?: () => void
   placeholder?: string
   hint?: string
 }
@@ -124,6 +154,7 @@ export function StringListEditor({
   values,
   onChange,
   onBlur,
+  onEditStart,
   placeholder = 'one per line',
   hint,
 }: StringListEditorProps) {
@@ -143,8 +174,12 @@ export function StringListEditor({
       <label className="block text-sm font-medium text-slate-900">{label}</label>
       <textarea
         value={display}
-        onChange={(event) => setDraft(event.target.value)}
+        onChange={(event) => {
+          onEditStart?.()
+          setDraft(event.target.value)
+        }}
         onFocus={() => {
+          onEditStart?.()
           if (draft === null) setDraft(committedText)
         }}
         onBlur={commitDraft}
