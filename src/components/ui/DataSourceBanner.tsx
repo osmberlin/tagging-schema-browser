@@ -5,13 +5,13 @@ import { useComparison } from '@/hooks/useComparison'
 import { useSchema } from '@/hooks/useSchema'
 import { externalLinkClass } from '@/theme/externalAccent'
 import { formatSchemaBuildLabel } from '@/utils/schemaBuildVersion'
-import { formatStagingUpdatedAt } from '@/utils/schemaVersion'
+import { formatUnreleasedUpdatedAt } from '@/utils/schemaVersion'
 
 /**
  * Full-width strip under the header, shown only on a custom/PR build — the
  * app-wide violet signal that you're looking at non-release data. The release
- * / staging toggle is under the logo (see SidebarLayout). Left: which build +
- * how many changes; right: buttons back to staging or release.
+ * / unreleased toggle is under the logo (see SidebarLayout). Left: which build +
+ * how many changes; right: buttons back to unreleased or release.
  */
 export function DataSourceBanner() {
   const {
@@ -20,18 +20,18 @@ export function DataSourceBanner() {
     compareLabel,
     domain,
     presetsUrl,
-    stagingUpdatedAt,
+    unreleasedUpdatedAt,
     releaseVersion,
     result,
     loading,
   } = useComparison()
   const { schemaBuild } = useSchema()
   const navigate = useNavigate()
-  const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt)
+  const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
 
   if (!isComparing) return null
 
-  const showStaging = () => {
+  const showUnreleased = () => {
     void navigate({
       to: '.',
       search: (prev) => ({ ...prev, dataUrl: undefined, reference: undefined }),
@@ -55,12 +55,12 @@ export function DataSourceBanner() {
         : domain
   const compareTarget =
     compareMode === 'release'
-      ? `${compareLabel}${compareLabel === 'staging' && stagingAge ? ` · ${stagingAge}` : ''}`
-      : `staging${stagingAge ? ` · ${stagingAge}` : ''}`
+      ? `${compareLabel}${compareLabel === 'unreleased' && unreleasedAge ? ` · ${unreleasedAge}` : ''}`
+      : `unreleased${unreleasedAge ? ` · ${unreleasedAge}` : ''}`
   const loadingLabel =
-    compareMode === 'release' && compareLabel !== 'staging'
+    compareMode === 'release' && compareLabel !== 'unreleased'
       ? 'comparing to PR preview…'
-      : 'comparing to staging…'
+      : 'comparing to unreleased…'
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-violet-100 bg-violet-50 px-4 py-1.5 text-xs text-violet-700 sm:px-6 lg:px-8">
@@ -104,10 +104,10 @@ export function DataSourceBanner() {
       <span className="flex shrink-0 flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={showStaging}
+          onClick={showUnreleased}
           className="rounded-md bg-violet-600 px-2.5 py-1 font-medium text-white transition hover:bg-violet-700"
         >
-          Show staging{stagingAge ? ` · ${stagingAge}` : ''}
+          Show unreleased{unreleasedAge ? ` · ${unreleasedAge}` : ''}
         </button>
         <button
           type="button"

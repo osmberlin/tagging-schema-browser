@@ -11,8 +11,8 @@ describe('documentReferenceSegment', () => {
     expect(documentReferenceSegment({ reference: 'release' })).toBe('Release')
   })
 
-  it('uses Unreleased for interem or missing reference', () => {
-    expect(documentReferenceSegment({ reference: 'interem' })).toBe('Unreleased')
+  it('uses Unreleased for interim or missing reference', () => {
+    expect(documentReferenceSegment({ reference: 'interim' })).toBe('Unreleased')
     expect(documentReferenceSegment({})).toBe('Unreleased')
   })
 })

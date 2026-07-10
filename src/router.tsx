@@ -88,8 +88,12 @@ const rootSearchSchema = z.object({
   dataUrl: z.string().catch(''),
   /** Global comparison locale (used by the Translations page + preset details). */
   locale: z.string().catch(''),
-  /** Canonical dataset when `dataUrl` is empty: npm release or interem staging. */
-  reference: z.enum(['release', 'interem']).optional().catch(undefined),
+  /** Canonical dataset when `dataUrl` is empty: npm release or unreleased main. */
+  reference: z
+    .enum(['release', 'interim', 'interem'])
+    .transform((value) => (value === 'interem' ? 'interim' : value))
+    .optional()
+    .catch(undefined),
 })
 type RootSearch = z.infer<typeof rootSearchSchema>
 
@@ -116,14 +120,14 @@ function RootContent() {
   const { setReference: setPersistedReference } = useReferenceActions()
   const location = useLocation()
 
-  // URL `reference=release` wins; otherwise fall back to persisted preference (default interem).
+  // URL `reference=release` wins; otherwise fall back to persisted preference (default unreleased).
   const reference = resolveSchemaReference(urlReference, persistedReference)
 
   useEffect(
     function syncPersistedReferenceFromUrl() {
       if (pendingReference !== null) return
       if (urlReference === 'release') setPersistedReference('release')
-      if (urlReference === 'interem') setPersistedReference('interem')
+      if (urlReference === 'interim') setPersistedReference('interim')
     },
     [urlReference, setPersistedReference, pendingReference],
   )
@@ -148,7 +152,7 @@ function RootContent() {
   useEffect(
     function prefetchAlternateReferenceSchema() {
       if (dataUrl.trim()) return
-      const other: 'release' | 'interem' = reference === 'interem' ? 'release' : 'interem'
+      const other: 'release' | 'interim' = reference === 'interim' ? 'release' : 'interim'
       const otherUrl = dataUrlForReference(other)
       void queryClient.prefetchQuery({
         queryKey: schemaKeys.data(otherUrl),

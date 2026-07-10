@@ -16,8 +16,8 @@ export async function resolveReleaseVersion(): Promise<string | null> {
   }
 }
 
-/** ISO timestamp of the latest commit on id-tagging-schema `main` (staging dist source). */
-export async function resolveStagingUpdatedAt(): Promise<string | null> {
+/** ISO timestamp of the latest commit on id-tagging-schema `main` (unreleased source). */
+export async function resolveUnreleasedUpdatedAt(): Promise<string | null> {
   try {
     const res = await fetch(GITHUB_MAIN_COMMIT_URL, {
       headers: { Accept: 'application/vnd.github+json' },
@@ -30,8 +30,8 @@ export async function resolveStagingUpdatedAt(): Promise<string | null> {
   }
 }
 
-/** Compact label for the staging toggle — last `main` update, not package version. */
-export function formatStagingUpdatedAt(iso: string | null): string | null {
+/** Compact age label for the unreleased toggle — last `main` update, not npm version. */
+export function formatUnreleasedUpdatedAt(iso: string | null): string | null {
   if (!iso) return null
   const updated = new Date(iso)
   if (Number.isNaN(updated.getTime())) return null

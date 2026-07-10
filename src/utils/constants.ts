@@ -3,9 +3,8 @@ export const GITHUB_REPO_URL = 'https://github.com/osmberlin/tagging-schema-brow
 export const RELEASE_DATA_URL =
   'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@latest/dist'
 
-/** Latest pre-release dist from id-tagging-schema `interim` branch (jsDelivr gh, CORS-friendly). */
-export const INTEREM_DATA_URL =
-  'https://cdn.jsdelivr.net/gh/openstreetmap/id-tagging-schema@interim/dist/'
+/** Latest pre-release dist built from id-tagging-schema `main` (GitHub Pages). */
+export const INTERIM_DATA_URL = 'https://openstreetmap.github.io/id-tagging-schema/dist/'
 
 /** Same-origin fixture in `public/test-schema/` (Playwright e2e via `?dataUrl=/test-schema`). */
 export function bundledTestSchemaUrl(): string {

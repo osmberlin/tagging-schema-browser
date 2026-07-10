@@ -1,5 +1,5 @@
 import { getSchemaLoadError, preloadSchemaData } from '@/utils/schemaCache'
-import { resolveReleaseVersion, resolveStagingUpdatedAt } from '@/utils/schemaVersion'
+import { resolveReleaseVersion, resolveUnreleasedUpdatedAt } from '@/utils/schemaVersion'
 import type { DenormalizedPreset } from '@/utils/types'
 
 export const comparisonKeys = {
@@ -10,15 +10,15 @@ export const comparisonKeys = {
 
 export type ComparisonVersions = {
   releaseVersion: string | null
-  stagingUpdatedAt: string | null
+  unreleasedUpdatedAt: string | null
 }
 
 export async function fetchComparisonVersions(): Promise<ComparisonVersions> {
-  const [releaseVersion, stagingUpdatedAt] = await Promise.all([
+  const [releaseVersion, unreleasedUpdatedAt] = await Promise.all([
     resolveReleaseVersion(),
-    resolveStagingUpdatedAt(),
+    resolveUnreleasedUpdatedAt(),
   ])
-  return { releaseVersion, stagingUpdatedAt }
+  return { releaseVersion, unreleasedUpdatedAt }
 }
 
 export async function fetchComparisonBaseline(baselineUrl: string): Promise<DenormalizedPreset[]> {

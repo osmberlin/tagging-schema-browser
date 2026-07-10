@@ -5,7 +5,7 @@ import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { Input } from '@/components/ui/Input'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalLinkClass } from '@/theme/externalAccent'
-import { GITHUB_REPO_URL, INTEREM_DATA_URL } from '@/utils/constants'
+import { GITHUB_REPO_URL, INTERIM_DATA_URL } from '@/utils/constants'
 import { deriveDataUrl } from '@/utils/deriveDataUrl'
 
 function ColorDot({ halo, dot }: { halo: string; dot: string }) {
@@ -25,22 +25,22 @@ function ColorLegendItem({ halo, dot, text }: { halo: string; dot: string; text:
   )
 }
 
-/** Staging URL in the input → open release compared against that baseline. */
-function ReleaseStagingCompare() {
-  const [input, setInput] = useState(INTEREM_DATA_URL)
+/** Unreleased baseline URL in the input → open release compared against that build. */
+function ReleaseUnreleasedCompare() {
+  const [input, setInput] = useState(INTERIM_DATA_URL)
   const baselineUrl = useMemo(() => deriveDataUrl(input), [input])
 
   return (
     <div className="not-prose rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <label htmlFor="staging-compare-url" className="block text-sm font-medium text-slate-900">
-        Staging data URL
+      <label htmlFor="unreleased-compare-url" className="block text-sm font-medium text-slate-900">
+        Unreleased data URL
       </label>
       <p className="mt-1 text-xs text-slate-500">
         Compared against the published release when you open the browser. Edit to point at another
         build (e.g. a PR preview URL).
       </p>
       <Input
-        id="staging-compare-url"
+        id="unreleased-compare-url"
         type="url"
         value={input}
         onChange={(e) => setInput(e.target.value)}
@@ -124,22 +124,23 @@ export function PageAbout() {
       <h2>Schema version</h2>
       <p>
         The browser targets <strong>id-tagging-schema v7+</strong> (current npm release and
-        staging). When you load a custom <code>dataUrl</code>, the app shows the detected build
+        unreleased). When you load a custom <code>dataUrl</code>, the app shows the detected build
         version in the header toggle or comparison banner. Version is read from the npm tag in
         jsDelivr URLs when present; otherwise it is inferred from the dist JSON (v7 uses array{' '}
         <code>terms</code>).
       </p>
       <p>
         Older v6 <code>dist/</code> URLs are not supported. If you open one via{' '}
-        <code>?dataUrl=</code>, the app shows a notice and keeps the default staging or release
+        <code>?dataUrl=</code>, the app shows a notice and keeps the default unreleased or release
         dataset instead.
       </p>
-      <h2>Release vs staging</h2>
+      <h2>Release vs unreleased</h2>
       <p>
-        Use the toggle under the logo to switch between <strong>staging</strong> — the default,
-        latest unreleased build from id-tagging-schema <code>main</code>— and the published{' '}
-        <strong>release</strong> (npm <code>@latest</code>, with its version number). Deep-link the
-        release with <code>?reference=release</code>. Your last choice is remembered in the browser.
+        Use the toggle under the logo to switch between <strong>unreleased</strong> — the default,
+        latest build from id-tagging-schema <code>main</code> (labeled with when <code>main</code>{' '}
+        last changed) — and the published <strong>release</strong> (npm <code>@latest</code>, with
+        its version number). Deep-link the release with <code>?reference=release</code>. Your last
+        choice is remembered in the browser.
       </p>
       <h2>Pointing at a different build</h2>
       <p>
@@ -153,16 +154,16 @@ export function PageAbout() {
         <code>https://pr-{'{N}'}--ideditor-presets-preview.netlify.app/</code>. The schema JSON is
         served from <code>/dist/</code>; GitHub bot comments usually link to the bundled iD editor
         at <code>/id/dist/</code> instead. Pick a PR from the list below — when its preview is
-        ready, <strong>Open in browser</strong> loads that build compared against staging.
+        ready, <strong>Open in browser</strong> loads that build compared against unreleased.
       </p>
       <PrPreviewList />
-      <h3>Compare release vs staging</h3>
+      <h3>Compare release vs unreleased</h3>
       <p>
-        Open the published release with staging as the comparison reference — useful for seeing what
-        will ship in the next npm version. You can swap the staging URL for a PR preview if you want
-        to compare release against a specific pull request instead.
+        Open the published release with unreleased as the comparison reference — useful for seeing
+        what will ship in the next npm version. You can swap the unreleased URL for a PR preview if
+        you want to compare release against a specific pull request instead.
       </p>
-      <ReleaseStagingCompare />
+      <ReleaseUnreleasedCompare />
       <h2>Area colors</h2>
       <div className="not-prose space-y-2">
         <p className="text-sm text-slate-600">
@@ -201,9 +202,9 @@ export function PageAbout() {
         Whenever you load a custom build via <code>dataUrl</code>,{' '}
         <span className="font-medium text-violet-700">violet</span> is the app-wide signal: the
         banner under the header, a <span className="font-medium text-violet-700">Comparison</span>{' '}
-        tab in the nav, and a violet dot on each preset that was added or modified versus staging.
-        Open <span className="font-medium text-violet-700">Comparison</span> for the full list of
-        added, modified, and removed presets.
+        tab in the nav, and a violet dot on each preset that was added or modified versus
+        unreleased. Open <span className="font-medium text-violet-700">Comparison</span> for the
+        full list of added, modified, and removed presets.
       </p>
     </article>
   )

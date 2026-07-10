@@ -56,5 +56,5 @@ test('reference toggle is hidden while a custom dataUrl is active', async ({ pag
 test('custom dataUrl shows comparison nav and banner', async ({ page }) => {
   await page.goto('/?dataUrl=/test-schema')
   await expect(page.getByRole('link', { name: /Comparison/i })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Show staging/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Show unreleased/i })).toBeVisible()
 })

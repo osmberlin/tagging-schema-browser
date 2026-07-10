@@ -222,7 +222,7 @@ function PresetDetailContent({
 
       {changeStatus === 'added' || changeStatus === 'modified' ? (
         <DetailDisclosure
-          title={changeStatus === 'added' ? 'Added vs staging' : 'Changes vs staging'}
+          title={changeStatus === 'added' ? 'Added vs unreleased' : 'Changes vs unreleased'}
           defaultOpen
           className="border-violet-200 bg-violet-50/40"
         >

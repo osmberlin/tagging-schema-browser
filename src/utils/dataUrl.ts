@@ -1,6 +1,6 @@
-import { INTEREM_DATA_URL, RELEASE_DATA_URL } from '@/utils/constants'
+import { INTERIM_DATA_URL, RELEASE_DATA_URL } from '@/utils/constants'
 
-export type SchemaReference = 'release' | 'interem'
+export type SchemaReference = 'release' | 'interim'
 
 function ensureSlash(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
@@ -15,36 +15,36 @@ export function isReleaseDataUrl(dataUrl: string): boolean {
   return JSDELIVR_RELEASE_RE.test(normalized)
 }
 
-/** True when the URL is a built-in release or interem dataset (not a custom PR preview). */
+/** True when the URL is a built-in release or interim dataset (not a custom PR preview). */
 export function isCanonicalDataUrl(url: string): boolean {
   const normalized = ensureSlash(url)
   return (
-    normalized === ensureSlash(RELEASE_DATA_URL) || normalized === ensureSlash(INTEREM_DATA_URL)
+    normalized === ensureSlash(RELEASE_DATA_URL) || normalized === ensureSlash(INTERIM_DATA_URL)
   )
 }
 
 export function dataUrlForReference(reference: SchemaReference): string {
-  return reference === 'interem' ? INTEREM_DATA_URL : RELEASE_DATA_URL
+  return reference === 'interim' ? INTERIM_DATA_URL : RELEASE_DATA_URL
 }
 
-/** URL `reference=release` wins; otherwise use persisted preference (default interem). */
+/** URL `reference=release` wins; otherwise use persisted preference (default interim). */
 export function resolveSchemaReference(
   urlReference: SchemaReference | undefined,
   persistedReference: SchemaReference,
 ): SchemaReference {
   if (urlReference === 'release') return 'release'
-  if (urlReference === 'interem') return 'interem'
+  if (urlReference === 'interim') return 'interim'
   return persistedReference
 }
 
-/** Param value when switching reference via the header toggle (interem omits the param). */
+/** Param value when switching reference via the header toggle (interim omits the param). */
 export function referenceSearchParam(reference: SchemaReference): SchemaReference | undefined {
   return reference === 'release' ? 'release' : undefined
 }
 
 /**
  * `reference=release` with a non-release `dataUrl`: browse the published release and compare
- * against that baseline (staging main or a PR preview URL).
+ * against that baseline (unreleased main or a PR preview URL).
  */
 export function isReleaseCompareMode(dataUrl: string, reference: SchemaReference): boolean {
   const trimmed = dataUrl.trim()
@@ -70,13 +70,13 @@ export function resolveCompareBaselineUrl(
   const trimmed = dataUrl.trim()
   if (!trimmed) return null
   if (isReleaseCompareMode(trimmed, reference)) return ensureSlash(trimmed)
-  if (!isCanonicalDataUrl(trimmed)) return INTEREM_DATA_URL
+  if (!isCanonicalDataUrl(trimmed)) return INTERIM_DATA_URL
   return null
 }
 
 /** Short UI label for the comparison baseline. */
 export function compareBaselineLabel(baselineUrl: string): string {
-  if (ensureSlash(baselineUrl) === ensureSlash(INTEREM_DATA_URL)) return 'staging'
+  if (ensureSlash(baselineUrl) === ensureSlash(INTERIM_DATA_URL)) return 'unreleased'
   try {
     return new URL(baselineUrl).hostname
   } catch {

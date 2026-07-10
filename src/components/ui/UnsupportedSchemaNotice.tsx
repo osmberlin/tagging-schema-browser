@@ -32,7 +32,7 @@ export function UnsupportedSchemaNotice({ build, message, dataUrl }: Unsupported
       ) : null}
       <p className="mt-3 text-amber-900">
         This browser works with <strong>id-tagging-schema v{SUPPORTED_SCHEMA_MAJOR}+</strong> only.
-        Use the default staging or release dataset, or point <code>dataUrl</code> at a v
+        Use the default unreleased or release dataset, or point <code>dataUrl</code> at a v
         {SUPPORTED_SCHEMA_MAJOR} build (for example{' '}
         <code className="rounded bg-amber-100 px-1">@openstreetmap/id-tagging-schema@7/dist</code>
         ).
