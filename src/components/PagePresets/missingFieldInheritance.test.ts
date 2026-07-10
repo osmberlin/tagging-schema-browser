@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   detectMissingFieldInheritance,
+  formatMissingInheritanceOverrideYaml,
+  missingInheritanceOverrideFromCurrent,
   parentPresetId,
   resolveMissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
@@ -160,5 +162,49 @@ describe('missingFieldInheritance', () => {
         },
       }),
     ).toBe('stale')
+  })
+
+  it('builds a valid override object without debug-only fields', () => {
+    const current = {
+      fields: {
+        parentId: 'tourism/information',
+        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        explicitPresetRefs: ['other/preset'],
+      },
+    }
+
+    expect(missingInheritanceOverrideFromCurrent(current)).toEqual({
+      fields: {
+        parentId: 'tourism/information',
+        missedFieldIds: ['information', 'address', 'building_area_yes'],
+      },
+    })
+  })
+
+  it('formats a paste-ready yaml block for missing-inheritance-overrides.yaml', () => {
+    const current = {
+      fields: {
+        parentId: 'tourism/information',
+        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        explicitPresetRefs: [],
+      },
+    }
+
+    expect(formatMissingInheritanceOverrideYaml('tourism/information/terminal', current))
+      .toBe(`  tourism/information/terminal:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - information
+        - address
+        - building_area_yes`)
+
+    const parsed = Bun.YAML.parse(
+      `version: 1\npresets:\n${formatMissingInheritanceOverrideYaml('tourism/information/terminal', current)}`,
+    ) as { presets: Record<string, unknown> }
+
+    expect(
+      resolveMissingInheritanceStatus(current, parsed.presets['tourism/information/terminal']),
+    ).toBe('intentional')
   })
 })
