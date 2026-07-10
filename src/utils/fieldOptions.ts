@@ -4,6 +4,7 @@ import {
   hasFieldOptionTranslation,
   type FieldOptionTranslation,
 } from '@/utils/fieldOptionTranslation'
+import { isOptionIconMismatch } from '@/utils/iconMismatch'
 import type { DenormalizedPreset, FieldTranslations, RawField, RawFields } from '@/utils/types'
 
 const REF_REGEX = /^\{(.*)\}$/
@@ -106,8 +107,20 @@ export type PresetOptionRow = {
   optionValue: string
   icon?: string
   iconBroken: boolean
+  /** Field option icon differs from the linked child preset icon. */
+  iconMismatch: boolean
   labelEn: string
-  childPreset?: { id: string; name: string }
+  childPreset?: { id: string; name: string; icon?: string }
+  childPresetIcon?: string
+}
+
+export type FieldOptionMismatchRow = {
+  optionValue: string
+  optionIcon?: string
+  labelEn: string
+  iconMismatch: boolean
+  parentPreset: { id: string; name: string }
+  childPreset: { id: string; name: string; icon?: string }
 }
 
 export type PresetFieldSection = {
@@ -139,14 +152,17 @@ function buildOptionRowsForField(
   for (const opt of options) {
     const icon = icons[opt]
     const child = findChildPresetForOption(preset, fieldKey, opt, allPresets)
+    const childPresetIcon = child?.icon
     rows.push({
       fieldId,
       fieldKey,
       optionValue: opt,
       icon,
       iconBroken: icon ? isIconSvgConfirmedMissing(icon) : false,
+      iconMismatch: isOptionIconMismatch(icon, childPresetIcon),
       labelEn: fieldOptionTitle(strings[opt]) ?? opt,
-      childPreset: child ? { id: child.id, name: child.name } : undefined,
+      childPreset: child ? { id: child.id, name: child.name, icon: childPresetIcon } : undefined,
+      childPresetIcon,
     })
   }
   return rows
@@ -188,6 +204,38 @@ export function getPresetFieldSections(
       ),
     }
   })
+}
+
+/** Option rows with child presets for a field across every preset that uses it. */
+export function getFieldOptionMismatchRows(
+  fieldId: string,
+  fields: RawFields,
+  fieldTranslations: FieldTranslations,
+  presets: DenormalizedPreset[],
+): FieldOptionMismatchRow[] {
+  const rows: FieldOptionMismatchRow[] = []
+
+  for (const preset of presets) {
+    if (!preset.fields.includes(fieldId) && !preset.moreFields.includes(fieldId)) continue
+    const section = getPresetFieldSections(preset, fields, fieldTranslations, presets).find(
+      (entry) => entry.fieldId === fieldId,
+    )
+    if (!section) continue
+
+    for (const row of section.options) {
+      if (!row.childPreset) continue
+      rows.push({
+        optionValue: row.optionValue,
+        optionIcon: row.icon,
+        labelEn: row.labelEn,
+        iconMismatch: row.iconMismatch,
+        parentPreset: { id: preset.id, name: preset.name },
+        childPreset: row.childPreset,
+      })
+    }
+  }
+
+  return rows
 }
 
 /** Flat list of option rows (fields that define icons and/or option strings). */

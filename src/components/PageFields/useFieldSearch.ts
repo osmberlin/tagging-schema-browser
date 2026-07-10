@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { sortFieldTypes } from '@/utils/fieldTypes'
+import { computeFieldIconMismatchCounts } from '@/utils/iconMismatch'
 import type {
   DenormalizedPreset,
   FieldTranslations,
@@ -41,6 +42,8 @@ export function useFieldSearch(
       }
     }
 
+    const mismatchCounts = computeFieldIconMismatchCounts(fields, presets, fieldTranslations)
+
     const fieldEntries: FieldViewModel[] = Object.entries(fields).map(([id, raw]) => {
       const used = usage.get(id)
       const presetsForField = used?.presets ?? []
@@ -55,6 +58,7 @@ export function useFieldSearch(
         primaryCount: used?.primary ?? 0,
         moreCount: used?.more ?? 0,
         presets: presetsForField,
+        iconMismatchCount: mismatchCounts.get(id) ?? 0,
       }
     })
 

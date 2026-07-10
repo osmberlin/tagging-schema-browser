@@ -12,6 +12,7 @@ type PresetSearchRecord = DenormalizedPreset & {
   moreFieldIds: string[]
   iconName: string
   hasIconFacet: 'yes' | 'no' | 'broken'
+  iconMismatchFacet: 'mismatch' | 'no'
   missingInheritanceFacet: DenormalizedPreset['missingInheritanceStatus']
 }
 
@@ -29,6 +30,7 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     iconName: p.icon ?? '',
     iconPrefix: p.iconPrefix ?? 'none',
     hasIconFacet: p.icon && isIconSvgConfirmedMissing(p.icon) ? 'broken' : p.hasIcon ? 'yes' : 'no',
+    iconMismatchFacet: p.iconMismatch ? 'mismatch' : 'no',
     missingInheritanceFacet: p.missingInheritanceStatus,
   }))
 }
@@ -57,6 +59,7 @@ const itemsJsConfig = {
       conjunction: false,
     },
     hasIconFacet: { title: 'Has icon', size: 3 },
+    iconMismatchFacet: { title: 'Icon consistency', size: 2 },
     missingInheritanceFacet: { title: 'Field inheritance', size: 4 },
   },
   sortings: {
@@ -140,6 +143,10 @@ export function searchPresets(params: {
     mappedFilters.missingInheritanceFacet = mappedFilters.missingInheritance
     mappedFilters.missingInheritance = []
   }
+  if (mappedFilters.iconMismatch) {
+    mappedFilters.iconMismatchFacet = mappedFilters.iconMismatch
+    mappedFilters.iconMismatch = []
+  }
   const query = params.query ?? ''
   const useCustomTextFilter = query.trim().length > 0
   const result = engine.search({
@@ -174,6 +181,7 @@ export function searchPresets(params: {
           termsText,
           aliasesText,
           hasIconFacet,
+          iconMismatchFacet,
           missingInheritanceFacet,
           fieldText,
           fieldIds,
@@ -185,6 +193,7 @@ export function searchPresets(params: {
         void termsText
         void aliasesText
         void hasIconFacet
+        void iconMismatchFacet
         void missingInheritanceFacet
         void fieldText
         void fieldIds
@@ -209,6 +218,10 @@ export function searchPresets(params: {
       if ('missingInheritanceFacet' in mapped) {
         mapped.missingInheritance = mapped.missingInheritanceFacet
         delete mapped.missingInheritanceFacet
+      }
+      if ('iconMismatchFacet' in mapped) {
+        mapped.iconMismatch = mapped.iconMismatchFacet
+        delete mapped.iconMismatchFacet
       }
       return mapped
     })(),

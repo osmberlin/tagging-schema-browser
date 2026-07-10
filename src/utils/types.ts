@@ -87,6 +87,8 @@ export type DenormalizedPreset = {
   moreFields: string[]
   matchScore: number
   hasIcon: boolean
+  /** Preset icon disagrees with a linked field option icon (parent or child). */
+  iconMismatch: boolean
   /** Slash-parent field lists omitted deliberately on an explicit `fields` / `moreFields` array. */
   missingFieldInheritance: MissingFieldInheritance | null
   missingInheritanceStatus: MissingInheritanceStatus
@@ -143,4 +145,6 @@ export type FieldViewModel = {
   primaryCount: number
   moreCount: number
   presets: DenormalizedPreset[]
+  /** Option ↔ child-preset icon mismatches involving this field. */
+  iconMismatchCount: number
 }

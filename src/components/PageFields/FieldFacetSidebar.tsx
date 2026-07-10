@@ -85,6 +85,24 @@ export function FieldFacetSidebar() {
         </ul>
       </SidebarSection>
 
+      <SidebarSection title="Icon consistency" area="icons">
+        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
+          <FacetButton
+            active={state.f_iconMismatch === 'all'}
+            label="All"
+            count={fields.length}
+            onClick={() => setState({ f_iconMismatch: 'all' })}
+          />
+          <FacetButton
+            active={state.f_iconMismatch === 'mismatch'}
+            label="Option ↔ preset mismatch"
+            labelArea="presets"
+            count={meta.mismatchCount}
+            onClick={() => setState({ f_iconMismatch: 'mismatch' })}
+          />
+        </ul>
+      </SidebarSection>
+
       <SidebarSection title="Type">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton

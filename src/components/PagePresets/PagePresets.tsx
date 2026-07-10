@@ -23,6 +23,10 @@ export function PagePresets() {
   const totalCount = searchResult?.data.total ?? 0
   const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
   const brokenPresetIconCount = useBrokenPresetIconCount(presets)
+  const iconMismatchPresetCount = useMemo(
+    () => presets.filter((preset) => preset.iconMismatch).length,
+    [presets],
+  )
   const unreviewedMissingInheritanceCount = useMemo(
     () => presets.filter((preset) => preset.missingInheritanceStatus === 'unreviewed').length,
     [presets],
@@ -53,6 +57,7 @@ export function PagePresets() {
     iconName: 'icons',
     iconPrefix: 'icons',
     hasIcon: 'icons',
+    iconMismatch: 'icons',
     missingInheritance: 'fields',
   }
 
@@ -104,6 +109,12 @@ export function PagePresets() {
       facet: 'hasIcon',
       label: `Has icon: ${value}`,
       onRemove: () => removeValue('hasIcon', value),
+    })),
+    ...searchState.iconMismatch.map((value) => ({
+      key: `iconMismatch-${value}`,
+      facet: 'iconMismatch',
+      label: `Icon consistency: ${value}`,
+      onRemove: () => removeValue('iconMismatch', value),
     })),
     ...searchState.missingInheritance.map((value) => ({
       key: `missingInheritance-${value}`,
@@ -229,6 +240,21 @@ export function PagePresets() {
         count={brokenPresetIconCount}
         onShowBroken={() => setSearchState({ hasIcon: ['broken'], page: 1 })}
       />
+      {iconMismatchPresetCount > 0 ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <strong>{iconMismatchPresetCount}</strong>{' '}
+          {iconMismatchPresetCount === 1 ? 'preset has' : 'presets have'} icon mismatches between
+          field options and child presets —{' '}
+          <button
+            type="button"
+            onClick={() => setSearchState({ iconMismatch: ['mismatch'], page: 1 })}
+            className="font-medium text-amber-800 underline decoration-amber-400/60 underline-offset-2 hover:decoration-amber-800"
+          >
+            show icon mismatches
+          </button>
+          .
+        </p>
+      ) : null}
       <MissingInheritanceBanners
         unreviewedCount={unreviewedMissingInheritanceCount}
         staleCount={staleMissingInheritanceCount}

@@ -151,6 +151,13 @@ export function FacetSidebar() {
         selected={state.hasIcon}
         onToggle={(k) => toggle('hasIcon')(k)}
       />
+      <FacetGroup
+        title="Icon consistency"
+        area="icons"
+        buckets={stableFacetBuckets('iconMismatch', agg.iconMismatch?.buckets ?? [])}
+        selected={state.iconMismatch}
+        onToggle={(k) => toggle('iconMismatch')(k)}
+      />
     </div>
   )
 }

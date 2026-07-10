@@ -94,6 +94,53 @@ test('icons page tracks option icon usage', async ({ page }) => {
   await expect(page.locator("[data-icon='roentgen-bump']").getByText('Options')).toBeVisible()
 })
 
+test('icon mismatch presets are flagged and filterable', async ({ page }) => {
+  await loadTestSchema(page)
+
+  await expect(
+    page.getByText(/3 presets have icon mismatches between field options and child presets/i),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'show icon mismatches' })).toBeVisible()
+  await expect(page.locator('aside').getByRole('button', { name: /^mismatch\b/i })).toBeVisible()
+
+  await page.getByRole('button', { name: 'show icon mismatches' }).click()
+  await expect(page.getByRole('button', { name: 'Icon consistency: mismatch' })).toBeVisible()
+  await expect(page.locator('tbody').getByText('leisure/playground/slide')).toBeVisible()
+})
+
+test('preset detail highlights icon mismatches in field options', async ({ page }) => {
+  await loadTestSchema(page)
+  await page.goto('/preset/leisure/playground?dataUrl=/test-schema')
+
+  await page.getByRole('button', { name: /"playground\/type"/ }).click()
+  await expect(page.getByText('Icon mismatch between field option and child preset')).toHaveCount(2)
+  await expect(page.getByTitle('Option icon').filter({ hasText: 'temaki-slide2' })).toBeVisible()
+  await expect(page.getByText('preset: roentgen-slide')).toBeVisible()
+})
+
+test('field detail shows option icon mismatches', async ({ page }) => {
+  await loadTestSchema(page)
+  await page.goto('/field/playground/type?dataUrl=/test-schema')
+
+  await expect(page.getByRole('button', { name: /Option icons/i })).toBeVisible()
+  await expect(page.getByText('Mismatch').first()).toBeVisible()
+  await expect(
+    page.locator('table').getByText('temaki-cushion', { exact: true }).first(),
+  ).toBeVisible()
+  await expect(
+    page.locator('table').getByText('maki-playground', { exact: true }).first(),
+  ).toBeVisible()
+})
+
+test('fields page filters icon mismatch fields', async ({ page }) => {
+  await loadTestSchema(page)
+  await page.goto('/fields?dataUrl=/test-schema')
+
+  await expect(page.getByText(/1 field has icon mismatches/i)).toBeVisible()
+  await page.getByRole('button', { name: /Option ↔ preset mismatch/i }).click()
+  await expect(page.locator("[data-field='playground/type']")).toBeVisible()
+})
+
 test('icons page usages view lists one row per preset or option reference', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/icons?dataUrl=/test-schema&i_view=usages')

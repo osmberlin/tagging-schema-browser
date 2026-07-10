@@ -32,18 +32,31 @@ function OptionLabelRow({
   )
 }
 
-function OptionIcon({ icon, iconBroken }: { icon?: string; iconBroken: boolean }) {
+function OptionIcon({
+  icon,
+  iconBroken,
+  label,
+}: {
+  icon?: string
+  iconBroken: boolean
+  label: string
+}) {
   const iconSrc = useIconSvgDataUrl(icon)
   if (!icon) {
     return (
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center text-slate-300">—</span>
+      <span
+        className="flex h-5 w-5 shrink-0 items-center justify-center text-slate-300"
+        title={`${label}: no icon`}
+      >
+        —
+      </span>
     )
   }
   if (iconBroken) {
     return (
       <span
         className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
-        title={`Missing icon: ${icon}`}
+        title={`${label}: missing icon ${icon}`}
       >
         !
       </span>
@@ -54,7 +67,7 @@ function OptionIcon({ icon, iconBroken }: { icon?: string; iconBroken: boolean }
       src={iconSrc ?? undefined}
       alt=""
       className="h-5 w-5 shrink-0 object-contain"
-      title={icon}
+      title={`${label}: ${icon}`}
     />
   )
 }
@@ -89,9 +102,22 @@ export function FieldOptionsPreview({
         return (
           <div
             key={row.optionValue}
-            className="flex items-start gap-3 border-t border-slate-100 px-3 py-2 first:border-t-0"
+            className={cn(
+              'flex items-start gap-3 border-t border-slate-100 px-3 py-2 first:border-t-0',
+              row.iconMismatch && 'bg-amber-50/80',
+            )}
           >
-            <OptionIcon icon={row.icon} iconBroken={row.iconBroken} />
+            <div className="flex shrink-0 items-center gap-1.5">
+              <OptionIcon icon={row.icon} iconBroken={row.iconBroken} label="Option icon" />
+              {row.iconMismatch && childPreset?.icon ? (
+                <>
+                  <span className="text-[10px] text-amber-600" aria-hidden>
+                    ≠
+                  </span>
+                  <OptionIcon icon={childPreset.icon} iconBroken={false} label="Child preset" />
+                </>
+              ) : null}
+            </div>
             <div className="min-w-0 flex-1 font-sans">
               <p className="font-mono text-[11px] text-slate-500">
                 <span className="font-medium text-slate-700">{row.optionValue}</span>
@@ -100,7 +126,17 @@ export function FieldOptionsPreview({
                     {row.icon}
                   </span>
                 ) : null}
+                {row.iconMismatch && childPreset?.icon ? (
+                  <span className="ml-2 text-amber-700" title="Child preset icon">
+                    preset: {childPreset.icon}
+                  </span>
+                ) : null}
               </p>
+              {row.iconMismatch ? (
+                <p className="mt-0.5 text-[11px] font-medium text-amber-800">
+                  Icon mismatch between field option and child preset
+                </p>
+              ) : null}
               <OptionLabelRow
                 english={row.labelEn}
                 localized={labelLocale}

@@ -5,6 +5,7 @@ import {
 import { resolvePresetFieldList } from '@/components/PagePresets/presetFieldInheritance'
 import { nameRefFromRaw } from '@/components/PagePresets/presetLabelInheritance'
 import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
+import { annotatePresetIconMismatches } from '@/utils/iconMismatch'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import type {
   DenormalizedPreset,
@@ -187,10 +188,14 @@ export function denormalize(
       moreFields: resolvedMore,
       matchScore: r.matchScore ?? 1,
       hasIcon: Boolean(icon || imageURL),
+      iconMismatch: false,
       missingFieldInheritance,
       missingInheritanceStatus,
       searchable: r.searchable !== false,
     })
   }
+
+  const fieldTranslations = translations.en?.presets?.fields ?? {}
+  annotatePresetIconMismatches(result, fields, fieldTranslations)
   return result
 }
