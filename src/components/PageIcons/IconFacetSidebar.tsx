@@ -113,7 +113,7 @@ export function IconFacetSidebar() {
             <FacetButton
               key={prefix}
               active={state.i_supplier === prefix}
-              label={prefix === 'pinhead' ? 'pinhead (on demand)' : prefix}
+              label={prefix}
               count={meta.supplierCounts.get(prefix) ?? 0}
               onClick={() => setState({ i_supplier: prefix, i_usage: 'all' })}
             />

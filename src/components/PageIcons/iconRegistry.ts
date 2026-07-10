@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { fetchPinheadIcon } from '@/components/PageIcons/suppliers/pinheadSupplier'
+import { loadPinheadSvg } from '@/components/PageIcons/suppliers/pinheadSupplier'
 import { collectOptionIconUsages } from '@/utils/fieldOptions'
 import type {
   DenormalizedPreset,
@@ -32,7 +32,7 @@ const supplierLoaders: Record<IconSupplier, SupplierLoader> = {
   temaki: () => import('./suppliers/temakiSupplier').then((m) => m.loadTemakiEntries()),
   roentgen: () => import('./suppliers/roentgenSupplier').then((m) => m.loadRoentgenEntries()),
   iD: () => import('./suppliers/idSupplier').then((m) => m.loadIdPresetEntries()),
-  pinhead: () => Promise.resolve([]),
+  pinhead: () => import('./suppliers/pinheadSupplier').then((m) => m.loadPinheadEntries()),
   fas: () => import('./suppliers/fasSupplier').then((m) => m.loadFasEntries()),
   far: () => import('./suppliers/farSupplier').then((m) => m.loadFarEntries()),
   fab: () => import('./suppliers/fabSupplier').then((m) => m.loadFabEntries()),
@@ -44,6 +44,7 @@ const loadedSuppliers = new Set<IconSupplier>()
 const failedSuppliers = new Set<IconSupplier>()
 const pendingPinheadIcons = new Set<string>()
 const resolvedPinheadIcons = new Set<string>()
+const pinheadLoadPromises = new Map<string, Promise<void>>()
 const supplierLoadPromises = new Map<IconSupplier, Promise<void>>()
 const registryListeners = new Set<() => void>()
 let registryEpoch = 0
@@ -161,19 +162,16 @@ function pinheadIconNames(names: Iterable<string>): string[] {
   return [...names].filter((name) => name.startsWith('pinhead-'))
 }
 
-async function ensurePinheadIcons(names: Iterable<string>): Promise<void> {
-  const iconNames = pinheadIconNames(names)
-  if (iconNames.length === 0) return
+async function loadPinheadIconSvg(iconName: string): Promise<void> {
+  if (registryCache.get(iconName)?.svgRaw) return
 
-  await ensureIconSupplier('pinhead')
-  await Promise.allSettled(
-    iconNames.map(async (iconName) => {
-      if (pendingPinheadIcons.has(iconName)) return
-      if (registryCache.get(iconName)?.svgRaw) return
-      pendingPinheadIcons.add(iconName)
-      notifyRegistryChange()
+  let promise = pinheadLoadPromises.get(iconName)
+  if (!promise) {
+    pendingPinheadIcons.add(iconName)
+    notifyRegistryChange()
+    promise = (async () => {
       try {
-        const entry = await fetchPinheadIcon(iconName)
+        const entry = await loadPinheadSvg(iconName)
         if (!entry) {
           dataUrlCache.set(iconName, null)
         } else {
@@ -183,10 +181,37 @@ async function ensurePinheadIcons(names: Iterable<string>): Promise<void> {
       } finally {
         pendingPinheadIcons.delete(iconName)
         resolvedPinheadIcons.add(iconName)
+        pinheadLoadPromises.delete(iconName)
         notifyRegistryChange()
       }
-    }),
-  )
+    })()
+    pinheadLoadPromises.set(iconName, promise)
+  }
+  await promise
+}
+
+async function ensurePinheadIcons(names: Iterable<string>): Promise<void> {
+  const iconNames = pinheadIconNames(names)
+  if (iconNames.length === 0) return
+
+  await ensureIconSupplier('pinhead')
+  await Promise.allSettled(iconNames.map(loadPinheadIconSvg))
+}
+
+/** Request one icon SVG when the supplier uses per-icon lazy loading (Pinhead). */
+export function ensureIconSvg(iconName: string): void {
+  if (iconSupplierFromName(iconName) !== 'pinhead') return
+  if (registryCache.get(iconName)?.svgRaw) return
+  if (pendingPinheadIcons.has(iconName) || resolvedPinheadIcons.has(iconName)) return
+  if (!loadedSuppliers.has('pinhead')) {
+    void ensureIconSupplier('pinhead').then(() => {
+      if (!registryCache.get(iconName)?.svgRaw && !resolvedPinheadIcons.has(iconName)) {
+        void loadPinheadIconSvg(iconName)
+      }
+    })
+    return
+  }
+  void loadPinheadIconSvg(iconName)
 }
 
 /** Loads only the suppliers needed for the given icon names. Partial success is OK. */
@@ -250,7 +275,7 @@ export function isIconSvgConfirmedMissing(iconName?: string): boolean {
   const supplier = iconSupplierFromName(iconName)
   if (supplier === 'pinhead') {
     if (pendingPinheadIcons.has(iconName)) return false
-    if (!resolvedPinheadIcons.has(iconName) && !registryCache.has(iconName)) return false
+    if (!resolvedPinheadIcons.has(iconName)) return false
     return !registryCache.get(iconName)?.svgRaw
   }
   if (!supplier || !loadedSuppliers.has(supplier)) return false
@@ -263,10 +288,14 @@ export function getIconSvgDataUrl(iconName?: string): string | null {
   const cached = dataUrlCache.get(iconName)
   if (cached !== undefined) return cached
 
+  const supplier = iconSupplierFromName(iconName)
   const entry = registryCache.get(iconName)
   if (!entry?.svgRaw) {
-    // Avoid caching a miss while the supplier chunk is still loading.
     if (!isSupplierLoadedForIcon(iconName)) return null
+    if (supplier === 'pinhead' && !resolvedPinheadIcons.has(iconName)) {
+      ensureIconSvg(iconName)
+      return null
+    }
     dataUrlCache.set(iconName, null)
     return null
   }
