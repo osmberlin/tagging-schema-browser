@@ -1,36 +1,61 @@
 import { create } from 'zustand'
+import type { PresetIssueFilterKey } from '@/utils/presetIssueFilters'
 
 interface SchemaIssueDisclosureStore {
   openById: Record<string, boolean>
+  /** Set when user activates an issue filter on an overview page. */
+  activeIssueFocus: PresetIssueFilterKey | null
   actions: {
     setOpen: (id: string, open: boolean) => void
-    toggle: (id: string) => void
+    setActiveIssueFocus: (focus: PresetIssueFilterKey | null) => void
   }
 }
 
 const useSchemaIssueDisclosureStore = create<SchemaIssueDisclosureStore>()((set) => ({
   openById: {},
+  activeIssueFocus: null,
   actions: {
     setOpen: (id, open) =>
       set((state) => ({
         openById: state.openById[id] === open ? state.openById : { ...state.openById, [id]: open },
       })),
-    toggle: (id) =>
-      set((state) => ({
-        openById: { ...state.openById, [id]: !(state.openById[id] ?? false) },
-      })),
+    setActiveIssueFocus: (activeIssueFocus) => set({ activeIssueFocus }),
   },
 }))
 
 export const useSchemaIssueDisclosureActions = () =>
   useSchemaIssueDisclosureStore((state) => state.actions)
 
+export const useActiveIssueFocus = () =>
+  useSchemaIssueDisclosureStore((state) => state.activeIssueFocus)
+
 export function useSchemaIssueDisclosureOpen(
   disclosureId: string,
-  defaultOpen = false,
 ): [boolean, (open: boolean) => void] {
   const stored = useSchemaIssueDisclosureStore((state) => state.openById[disclosureId])
   const setOpen = useSchemaIssueDisclosureStore((state) => state.actions.setOpen)
-  const isOpen = stored ?? defaultOpen
+  const isOpen = stored ?? false
   return [isOpen, (open) => setOpen(disclosureId, open)]
+}
+
+/** Open a detail disclosure once when its issue filter is active and the user has not toggled it yet. */
+export function useAutoOpenFocusedIssue(
+  disclosureId: string,
+  issue: PresetIssueFilterKey,
+  applies: boolean,
+): void {
+  const focus = useActiveIssueFocus()
+  const { setOpen } = useSchemaIssueDisclosureActions()
+
+  if (focus !== issue || !applies) return
+
+  const stored = useSchemaIssueDisclosureStore.getState().openById[disclosureId]
+  if (stored !== undefined) return
+
+  setOpen(disclosureId, true)
+}
+
+// For use inside effects / event handlers only.
+export function getSchemaIssueDisclosureStore() {
+  return useSchemaIssueDisclosureStore.getState()
 }

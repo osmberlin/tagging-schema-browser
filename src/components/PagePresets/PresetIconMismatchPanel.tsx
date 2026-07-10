@@ -4,6 +4,7 @@ import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
+import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { areaAccent } from '@/theme/areaAccent'
 import type { PresetFieldSection, PresetOptionRow } from '@/utils/fieldOptions'
 import {
@@ -226,10 +227,17 @@ export function PresetIconMismatchPanel({
 }) {
   const parentRows = getParentPresetIconMismatchRows(preset, fields, fieldTranslations, presets)
   const childRefs = getChildPresetIconMismatchRefs(preset.id, fields, fieldTranslations, presets)
+  const disclosureId = `preset-icon-mismatch:${preset.id}`
+  useAutoOpenFocusedIssue(
+    disclosureId,
+    'iconMismatch',
+    parentRows.length > 0 || childRefs.length > 0,
+  )
 
   if (parentRows.length === 0 && childRefs.length === 0) return null
 
   const mismatchCount = parentRows.length + childRefs.length
+
   const summary =
     childRefs.length > 0 && parentRows.length === 0
       ? 'Field option icon differs from this preset icon'
@@ -237,11 +245,10 @@ export function PresetIconMismatchPanel({
 
   return (
     <SchemaIssueDisclosure
-      disclosureId={`preset-icon-mismatch:${preset.id}`}
+      disclosureId={disclosureId}
       variant="warning"
       title="Icon mismatch"
       summary={summary}
-      defaultOpen
       bodyClassName="space-y-3"
     >
       {childRefs.length > 0 ? (

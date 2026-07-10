@@ -1,7 +1,4 @@
-import {
-  useSchemaIssueDisclosureActions,
-  useSchemaIssueDisclosureOpen,
-} from '@/features/schema-issue/schema-issue-disclosure-store'
+import { useSchemaIssueDisclosureOpen } from '@/features/schema-issue/schema-issue-disclosure-store'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { cn } from '@/utils/tw'
@@ -94,7 +91,6 @@ export function SchemaIssueDisclosure({
   variant,
   title,
   summary,
-  defaultOpen = false,
   children,
   className,
   bodyClassName,
@@ -103,19 +99,17 @@ export function SchemaIssueDisclosure({
   variant: SchemaIssueVariant
   title: string
   summary?: React.ReactNode
-  defaultOpen?: boolean
   children: React.ReactNode
   className?: string
   bodyClassName?: string
 }) {
-  const [open] = useSchemaIssueDisclosureOpen(disclosureId, defaultOpen)
-  const { toggle } = useSchemaIssueDisclosureActions()
+  const [open, setOpen] = useSchemaIssueDisclosureOpen(disclosureId)
 
   return (
     <section className={cn(schemaIssueStyles.disclosure, className)} aria-label={title}>
       <button
         type="button"
-        onClick={() => toggle(disclosureId)}
+        onClick={() => setOpen(!open)}
         aria-expanded={open}
         className={schemaIssueStyles.disclosureHeader}
       >

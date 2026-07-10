@@ -66,6 +66,7 @@ test('missing slash-parent field inheritance is flagged and filterable', async (
 test('preset detail shows missing inheritance panel', async ({ page }) => {
   await page.goto('/preset/man_made/crane/gantry_crane?dataUrl=/test-schema')
 
+  await page.getByRole('button', { name: 'Missing inheritance' }).click()
   await expect(page.getByTestId('missing-inheritance-panel')).toBeVisible()
   await expect(page.getByText(/Missing parent fields \(unreviewed\)/i)).toBeVisible()
   await expect(page.getByText('crane/type', { exact: true })).toBeVisible()
@@ -126,7 +127,10 @@ test('child preset detail shows field option mismatch with links', async ({ page
   await page.goto('/preset/leisure/playground/cushion?dataUrl=/test-schema')
 
   const panel = page.getByLabel('Icon mismatch')
-  await expect(panel.getByText(/field option icon differs from child preset icon/i)).toBeVisible()
+  await panel.getByRole('button', { name: 'Icon mismatch' }).click()
+  await expect(
+    panel.getByText(/field option icon differs from child preset icon/i),
+  ).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Field' })).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Option icon' })).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Preset icon' })).toBeVisible()
@@ -139,13 +143,14 @@ test('field detail shows option icon mismatches', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/field/playground/type?dataUrl=/test-schema')
 
-  await expect(page.getByRole('button', { name: /Icon mismatch/i })).toBeVisible()
-  await expect(page.getByText('Mismatch').first()).toBeVisible()
+  const panel = page.getByLabel('Icon mismatch')
+  await panel.getByRole('button', { name: 'Icon mismatch' }).click()
+  await expect(panel.getByText('Mismatch').first()).toBeVisible()
   await expect(
-    page.locator('table').getByText('temaki-cushion', { exact: true }).first(),
+    panel.locator('table').getByText('temaki-cushion', { exact: true }).first(),
   ).toBeVisible()
   await expect(
-    page.locator('table').getByText('maki-playground', { exact: true }).first(),
+    panel.locator('table').getByText('maki-playground', { exact: true }).first(),
   ).toBeVisible()
 })
 

@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { FieldIconMismatchAlert } from '@/components/ui/SchemaIssueAlerts'
+import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportFields } from '@/utils/pageExports'
@@ -24,6 +25,14 @@ export function PageFields() {
     return applyFieldFacets(fields, facetState)
   }, [data, fields, facetState])
   const mismatchFieldCount = fields.filter((field) => field.iconMismatchCount > 0).length
+  const { setActiveIssueFocus } = useSchemaIssueDisclosureActions()
+
+  useEffect(() => {
+    if (facetState.f_iconMismatch === 'mismatch') {
+      setActiveIssueFocus('iconMismatch')
+    }
+  }, [facetState.f_iconMismatch, setActiveIssueFocus])
+
   const exportData = useMemo(() => exportFields(filtered), [filtered])
 
   if (!dataUrl && !data) {

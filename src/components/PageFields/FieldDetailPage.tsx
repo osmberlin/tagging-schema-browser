@@ -9,6 +9,7 @@ import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
+import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
@@ -112,6 +113,8 @@ function FieldDetailContent({
   const toItem = (p: DenormalizedPreset): RelatedItem => ({ id: p.id, name: p.name })
   const optionRows = getFieldOptionMismatchRows(fieldId, fields, fieldTranslations, presets)
   const mismatchCount = optionRows.filter((row) => row.iconMismatch).length
+  const mismatchDisclosureId = `field-icon-mismatch:${fieldId}`
+  useAutoOpenFocusedIssue(mismatchDisclosureId, 'iconMismatch', mismatchCount > 0)
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
@@ -184,11 +187,10 @@ function FieldDetailContent({
 
       {mismatchCount > 0 ? (
         <SchemaIssueDisclosure
-          disclosureId={`field-icon-mismatch:${fieldId}`}
+          disclosureId={mismatchDisclosureId}
           variant="warning"
           title="Icon mismatch"
           summary={`${mismatchCount} option${mismatchCount === 1 ? '' : 's'} use a different icon than the linked child preset${mismatchCount === 1 ? '' : 's'}`}
-          defaultOpen
         >
           <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} />
         </SchemaIssueDisclosure>
