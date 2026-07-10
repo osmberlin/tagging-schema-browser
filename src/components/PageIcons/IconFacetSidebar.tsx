@@ -6,6 +6,7 @@ import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 import { useIconFacetMeta, useIconFacetState } from './useIconFacetState'
 import { useIconSearch } from './useIconSearch'
+import { useIconSupplierLoad } from './useIconSupplierLoad'
 
 function FacetButton({
   active,
@@ -51,8 +52,13 @@ function FacetButton({
 
 export function IconFacetSidebar() {
   const { data } = useSchema()
-  const { icons } = useIconSearch(data?.presets ?? [], data?.fields ?? {})
   const [state, setState] = useIconFacetState()
+  useIconSupplierLoad(state.i_supplier)
+  const { icons } = useIconSearch(
+    data?.presets ?? [],
+    data?.fields ?? {},
+    data?.fieldTranslations ?? {},
+  )
   const meta = useIconFacetMeta(icons)
 
   return (
@@ -109,7 +115,7 @@ export function IconFacetSidebar() {
               active={state.i_supplier === prefix}
               label={prefix === 'pinhead' ? 'pinhead (on demand)' : prefix}
               count={meta.supplierCounts.get(prefix) ?? 0}
-              onClick={() => setState({ i_supplier: prefix })}
+              onClick={() => setState({ i_supplier: prefix, i_usage: 'all' })}
             />
           ))}
         </ul>
