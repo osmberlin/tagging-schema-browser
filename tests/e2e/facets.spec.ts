@@ -22,7 +22,7 @@ async function presetColumnHeaderWidths(page: import('@playwright/test').Page) {
 test('preset facets are visible and populated in left navigation', async ({ page }) => {
   await loadTestSchema(page)
 
-  await expect(page.getByText('Faceted Search')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Filter' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Primary tag' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Fields' })).toBeVisible()
 

@@ -42,7 +42,7 @@ export function HeaderSearch({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           area={area}
-          className={`h-10 rounded-full border-transparent bg-slate-100 pr-12 pl-11 text-sm shadow-none ring-1 ring-transparent transition hover:bg-slate-200/70 focus:bg-white focus:ring-2 ${areaAccent[area].searchFocus}`}
+          className={`h-10 rounded-lg pr-12 pl-11 hover:border-slate-400 ${areaAccent[area].focus}`}
         />
         <span className="pointer-events-none absolute inset-y-0 right-2.5 hidden items-center sm:flex">
           <Kbd>{`${modLabel()}K`}</Kbd>
