@@ -61,10 +61,6 @@ export function useIconSearch(
       }
     })
 
-    const prefixes = Array.from(new Set(icons.map((i) => i.prefix))).sort((a, b) =>
-      a.localeCompare(b),
-    )
-
-    return { icons, prefixes }
+    return { icons }
   }, [presets, fields, fieldTranslations, registryEpoch])
 }

@@ -1,3 +1,4 @@
+import { ICON_SUPPLIERS } from '@/components/PageIcons/iconRegistry'
 import { AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
 import { SidebarSection } from '@/components/ui/Sidebar'
 import { useSchema } from '@/hooks/useSchema'
@@ -50,7 +51,7 @@ function FacetButton({
 
 export function IconFacetSidebar() {
   const { data } = useSchema()
-  const { icons, prefixes } = useIconSearch(data?.presets ?? [], data?.fields ?? {})
+  const { icons } = useIconSearch(data?.presets ?? [], data?.fields ?? {})
   const [state, setState] = useIconFacetState()
   const meta = useIconFacetMeta(icons)
 
@@ -102,11 +103,11 @@ export function IconFacetSidebar() {
             count={icons.length}
             onClick={() => setState({ i_supplier: 'all' })}
           />
-          {prefixes.map((prefix) => (
+          {ICON_SUPPLIERS.map((prefix) => (
             <FacetButton
               key={prefix}
               active={state.i_supplier === prefix}
-              label={prefix}
+              label={prefix === 'pinhead' ? 'pinhead (on demand)' : prefix}
               count={meta.supplierCounts.get(prefix) ?? 0}
               onClick={() => setState({ i_supplier: prefix })}
             />
