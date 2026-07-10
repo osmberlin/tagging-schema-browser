@@ -1,5 +1,12 @@
 import { Link } from '@tanstack/react-router'
-import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import { useEffect } from 'react'
+import {
+  ensureIconSvg,
+  getIconRegistry,
+  getIconSvgDataUrl,
+  isIconSvgConfirmedMissing,
+  useIconRegistryEpoch,
+} from '@/components/PageIcons/iconRegistry'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
@@ -19,7 +26,7 @@ const iconCardClass =
 
 export function IconCard({
   iconName,
-  svgRaw,
+  svgRaw: svgRawProp,
   presetUsageCount,
   optionUsageCount,
   presets,
@@ -32,7 +39,15 @@ export function IconCard({
   presets: DenormalizedPreset[]
   optionUsages: OptionIconUsageRef[]
 }) {
-  const svgDataUrl = svgRaw ? `data:image/svg+xml;utf8,${encodeURIComponent(svgRaw)}` : null
+  useIconRegistryEpoch()
+  useEffect(() => {
+    ensureIconSvg(iconName)
+  }, [iconName])
+
+  const svgRaw = svgRawProp ?? getIconRegistry().get(iconName)?.svgRaw
+  const svgDataUrl =
+    getIconSvgDataUrl(iconName) ??
+    (svgRaw ? `data:image/svg+xml;utf8,${encodeURIComponent(svgRaw)}` : null)
   const missingSvg = !svgRaw && isIconSvgConfirmedMissing(iconName)
   const presetNames = presets.map((p) => p.name).join(', ')
   const optionSummary = formatOptionUsages(optionUsages)

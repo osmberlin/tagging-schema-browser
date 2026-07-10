@@ -1,47 +1,44 @@
-import { describe, expect, it, vi } from 'vitest'
-import { getIconSvgDataUrl, isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import { describe, expect, it } from 'vitest'
+import {
+  ensureIconSupplier,
+  ensureIconsForNames,
+  getIconRegistry,
+  getIconSvgDataUrl,
+  isIconSvgConfirmedMissing,
+} from '@/components/PageIcons/iconRegistry'
 
 describe('isIconSvgConfirmedMissing pinhead icons', () => {
-  it('does not mark pinhead icons broken before fetch completes', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(
-            () =>
-              resolve(
-                new Response('<svg xmlns="http://www.w3.org/2000/svg"></svg>', { status: 200 }),
-              ),
-            20,
-          )
-        }),
-    )
+  it('does not mark pinhead icons broken before SVG chunk loads', async () => {
+    await ensureIconSupplier('pinhead')
 
-    const { ensureIconsForNames } = await import('@/components/PageIcons/iconRegistry')
-    const pending = ensureIconsForNames(['pinhead-delayed_icon'])
+    expect(isIconSvgConfirmedMissing('pinhead-a_frame_tent')).toBe(false)
 
-    expect(isIconSvgConfirmedMissing('pinhead-delayed_icon')).toBe(false)
+    const pending = ensureIconsForNames(['pinhead-a_frame_tent'])
+    expect(isIconSvgConfirmedMissing('pinhead-a_frame_tent')).toBe(false)
 
     await pending
-    expect(getIconSvgDataUrl('pinhead-delayed_icon')).toMatch(/^data:image\/svg\+xml/)
-    expect(isIconSvgConfirmedMissing('pinhead-delayed_icon')).toBe(false)
-
-    fetchMock.mockRestore()
+    expect(getIconSvgDataUrl('pinhead-a_frame_tent')).toMatch(/^data:image\/svg\+xml/)
+    expect(isIconSvgConfirmedMissing('pinhead-a_frame_tent')).toBe(false)
   })
 
-  it('fetches pinhead SVG when the registry only has a name stub', async () => {
-    const fetchMock = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(
-        new Response('<svg xmlns="http://www.w3.org/2000/svg"></svg>', { status: 200 }),
-      )
+  it('loads bundled pinhead SVG when the registry only has a name stub', async () => {
+    getIconRegistry().set('pinhead-a_frame_tent', {
+      name: 'pinhead-a_frame_tent',
+      prefix: 'pinhead',
+    })
 
-    const { ensureIconsForNames, getIconRegistry } =
-      await import('@/components/PageIcons/iconRegistry')
-    getIconRegistry().set('pinhead-stub_icon', { name: 'pinhead-stub_icon', prefix: 'pinhead' })
+    await ensureIconsForNames(['pinhead-a_frame_tent'])
 
-    await ensureIconsForNames(['pinhead-stub_icon'])
+    expect(getIconRegistry().get('pinhead-a_frame_tent')?.svgRaw).toContain('<svg')
+  })
 
-    expect(getIconRegistry().get('pinhead-stub_icon')?.svgRaw).toContain('<svg')
-    fetchMock.mockRestore()
+  it('lists pinhead icons in the catalog after supplier load', async () => {
+    await ensureIconSupplier('pinhead')
+
+    const pinheadIcons = [...getIconRegistry().values()].filter(
+      (entry) => entry.prefix === 'pinhead',
+    )
+    expect(pinheadIcons.length).toBeGreaterThan(1000)
+    expect(pinheadIcons.some((entry) => entry.name === 'pinhead-a_frame_tent')).toBe(true)
   })
 })
