@@ -29,7 +29,7 @@ export const PRESET_KEY_ORDER = [
   'relationCrossReference',
 ] as const
 
-const TAG_OBJECT_KEYS = new Set(['tags', 'addTags', 'removeTags'])
+export const TAG_OBJECT_KEYS = new Set(['tags', 'addTags', 'removeTags'])
 
 const NESTED_KEY_ORDER: Record<string, readonly string[]> = {
   reference: ['key', 'value'],

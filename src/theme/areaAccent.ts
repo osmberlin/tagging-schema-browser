@@ -210,5 +210,5 @@ export function areaLinkClass(area: SchemaArea): string {
 }
 
 export function areaSourceLinkClass(area: SchemaArea): string {
-  return `${areaAccent[area].linkRing} ${areaAccent[area].linkRingHover}`
+  return `${areaAccent[area].linkRing} ${areaAccent[area].linkRingHover} transition-colors`
 }
