@@ -19,6 +19,7 @@ function IconDiffLink({ iconName, tone }: { iconName: string; tone: 'before' | '
         dataUrl: prev.dataUrl ?? '',
         locale: prev.locale ?? '',
         i_q: iconName,
+        i_usage: 'all',
       })}
       className="inline-flex items-center gap-1.5"
       title={`Open icon “${iconName}”`}
