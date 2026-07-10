@@ -4,7 +4,8 @@ import type { IconRegistryEntry, RawPresets } from '@/utils/types'
 
 export type IconSupplier = 'maki' | 'temaki' | 'roentgen' | 'iD' | 'pinhead' | 'fas' | 'far' | 'fab'
 
-const ALL_ICON_SUPPLIERS: IconSupplier[] = [
+/** All icon sets the browser knows about (shown in the Icons sidebar even when unused). */
+export const ICON_SUPPLIERS: readonly IconSupplier[] = [
   'maki',
   'temaki',
   'roentgen',
@@ -13,7 +14,9 @@ const ALL_ICON_SUPPLIERS: IconSupplier[] = [
   'fas',
   'far',
   'fab',
-]
+] as const
+
+const ALL_ICON_SUPPLIERS: IconSupplier[] = [...ICON_SUPPLIERS]
 
 type SupplierLoader = () => Promise<IconRegistryEntry[]>
 
