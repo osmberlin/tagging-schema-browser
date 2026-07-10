@@ -100,7 +100,7 @@ export function AreaIcon({ area, className }: { area: SchemaArea; className?: st
 
 export function PresetBuilderNavIcon({ className }: { className?: string }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={className}>
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={cn('shrink-0', className)}>
       <title>Preset builder</title>
       <path
         d="M3 7.5 11 3l8 4.5v9L11 21l-8-4.5v-9Z"
