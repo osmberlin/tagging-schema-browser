@@ -23,4 +23,12 @@ describe('schemaFetchNeedsCorsProxy', () => {
       ),
     ).toBe(false)
   })
+
+  it('does not require proxy for jsDelivr gh interim dist', () => {
+    expect(
+      schemaFetchNeedsCorsProxy(
+        'https://cdn.jsdelivr.net/gh/openstreetmap/id-tagging-schema@interim/dist/presets.min.json',
+      ),
+    ).toBe(false)
+  })
 })

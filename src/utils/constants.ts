@@ -1,8 +1,9 @@
 export const RELEASE_DATA_URL =
   'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@latest/dist'
 
-/** Latest pre-release dist built from id-tagging-schema `main` (iD staging deploy). */
-export const INTEREM_DATA_URL = 'https://ideditor.netlify.app/id-tagging-schema/dist/'
+/** Latest pre-release dist from id-tagging-schema `interim` branch (jsDelivr gh, CORS-friendly). */
+export const INTEREM_DATA_URL =
+  'https://cdn.jsdelivr.net/gh/openstreetmap/id-tagging-schema@interim/dist/'
 
 /** Same-origin fixture in `public/test-schema/` (Playwright e2e via `?dataUrl=/test-schema`). */
 export function bundledTestSchemaUrl(): string {

@@ -21,6 +21,7 @@ import {
   presetMatchesTextQuery,
 } from '@/utils/presetTextMatch'
 import type { DenormalizedPreset } from '@/utils/types'
+import { TranslationsReleaseCallout } from './TranslationsReleaseCallout'
 import { useTranslationStatus } from './translationsSearch'
 
 const PER_PAGE = 50
@@ -105,6 +106,7 @@ export function PageTranslations() {
             disabled={!canExportTranslations}
           />
         </div>
+        {!translationsAvailable ? <TranslationsReleaseCallout /> : null}
         <p className="text-sm text-slate-500">
           {showLocale ? (
             <>
@@ -122,9 +124,8 @@ export function PageTranslations() {
             "Pick a language in the top bar to compare it against the preset's English source."
           ) : (
             <>
-              Translation comparison is only available for published npm releases. Staging and PR
-              preview builds ship updated English strings only; community translations catch up on
-              the next tagged release.
+              Staging builds ship updated English strings only. Use the callout above to open the
+              published release for community translation comparison.
             </>
           )}
         </p>
