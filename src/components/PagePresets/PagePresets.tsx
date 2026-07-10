@@ -7,6 +7,7 @@ import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { SchemaIssueAction, SchemaIssueAlert } from '@/components/ui/SchemaIssue'
 import { BrokenPresetIconsAlert, MissingInheritanceAlerts } from '@/components/ui/SchemaIssueAlerts'
 import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
+import { useBrokenPresetIconBannerCount } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { RELEASE_DATA_URL } from '@/utils/constants'
@@ -23,10 +24,7 @@ export function PagePresets() {
   const searchResult = usePresetSearch()
   const totalCount = searchResult?.data.total ?? 0
   const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
-  const brokenPresetIconCount = useMemo(() => {
-    const buckets = searchResult?.aggregations?.hasIcon?.buckets ?? []
-    return buckets.find((bucket) => bucket.key === 'broken')?.doc_count ?? 0
-  }, [searchResult])
+  const brokenPresetIconCount = useBrokenPresetIconBannerCount(dataUrl, presets)
   const iconMismatchPresetCount = useMemo(
     () => presets.filter((preset) => preset.iconMismatch).length,
     [presets],
