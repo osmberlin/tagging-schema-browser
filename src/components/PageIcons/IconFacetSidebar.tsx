@@ -129,10 +129,17 @@ export function IconFacetSidebar() {
             onClick={() => setState({ i_hasSvg: 'with' })}
           />
           <FacetButton
-            active={state.i_hasSvg === 'missing'}
-            label="Missing SVG"
+            active={state.i_hasSvg === 'missing' && state.i_usage === 'presets'}
+            label="Missing preset icons"
+            labelArea="presets"
+            count={meta.missingPresetRef}
+            onClick={() => setState({ i_hasSvg: 'missing', i_usage: 'presets' })}
+          />
+          <FacetButton
+            active={state.i_hasSvg === 'missing' && state.i_usage === 'all'}
+            label="Missing SVG (all)"
             count={meta.missingSvg}
-            onClick={() => setState({ i_hasSvg: 'missing' })}
+            onClick={() => setState({ i_hasSvg: 'missing', i_usage: 'all' })}
           />
         </ul>
       </SidebarSection>

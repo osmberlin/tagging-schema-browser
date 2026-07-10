@@ -1,30 +1,33 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { collectOptionIconUsages } from '@/utils/fieldOptions'
 import type { DenormalizedPreset, FieldTranslations, IconViewModel, RawFields } from '@/utils/types'
-import { areAllIconSuppliersLoaded, ensureAllIconSuppliers, getIconRegistry } from './iconRegistry'
+import {
+  ensureAllIconSuppliers,
+  ensureIconsForNames,
+  getIconRegistry,
+  useIconRegistryEpoch,
+} from './iconRegistry'
 
 export function useIconSearch(
   presets: DenormalizedPreset[],
   fields: RawFields,
   fieldTranslations: FieldTranslations = {},
 ) {
-  const [suppliersReady, setSuppliersReady] = useState(areAllIconSuppliersLoaded())
+  const registryEpoch = useIconRegistryEpoch()
 
   useEffect(() => {
-    if (suppliersReady) return
-    let cancelled = false
-    void ensureAllIconSuppliers().finally(() => {
-      if (!cancelled) setSuppliersReady(true)
-    })
-    return () => {
-      cancelled = true
+    void ensureAllIconSuppliers()
+    const presetIconNames = presets
+      .map((preset) => preset.icon)
+      .filter((icon): icon is string => Boolean(icon))
+    if (presetIconNames.length > 0) {
+      void ensureIconsForNames(presetIconNames)
     }
-  }, [suppliersReady])
+  }, [presets])
 
   return useMemo(() => {
     const registry = getIconRegistry()
-    // Recompute when icon suppliers finish loading into the shared registry map.
-    void suppliersReady
+    void registryEpoch
     const presetUsage = new Map<string, DenormalizedPreset[]>()
     const optionUsage = collectOptionIconUsages(fields, presets, fieldTranslations)
 
@@ -63,5 +66,5 @@ export function useIconSearch(
     )
 
     return { icons, prefixes }
-  }, [presets, fields, fieldTranslations, suppliersReady])
+  }, [presets, fields, fieldTranslations, registryEpoch])
 }

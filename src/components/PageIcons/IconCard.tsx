@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
@@ -31,6 +32,7 @@ export function IconCard({
   optionUsages: OptionIconUsageRef[]
 }) {
   const svgDataUrl = svgRaw ? `data:image/svg+xml;utf8,${encodeURIComponent(svgRaw)}` : null
+  const missingSvg = !svgRaw && isIconSvgConfirmedMissing(iconName)
   const presetNames = presets.map((p) => p.name).join(', ')
   const optionSummary = formatOptionUsages(optionUsages)
   const isUsed = presetUsageCount > 0 || optionUsageCount > 0
@@ -39,11 +41,15 @@ export function IconCard({
     <>
       <div className="flex items-center gap-2.5">
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:fill-current"
-          title="60px reference"
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-slate-500 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:fill-current ${
+            missingSvg ? 'border border-red-300 bg-red-50 text-red-700' : 'bg-slate-100'
+          }`}
+          title={missingSvg ? 'Missing icon asset' : '60px reference'}
         >
           {svgDataUrl ? (
             <img src={svgDataUrl} alt="" className="h-8 w-8" />
+          ) : missingSvg ? (
+            <span className="text-sm font-bold">!</span>
           ) : (
             <span className="font-mono text-[10px]">60</span>
           )}
@@ -59,7 +65,10 @@ export function IconCard({
           )}
         </div>
       </div>
-      <p className="mt-2 truncate font-mono text-xs font-medium text-slate-900" title={iconName}>
+      <p
+        className={`mt-2 truncate font-mono text-xs font-medium ${missingSvg ? 'text-red-700' : 'text-slate-900'}`}
+        title={iconName}
+      >
         {iconName}
       </p>
       {presetUsageCount > 0 ? (

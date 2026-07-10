@@ -1,12 +1,13 @@
 import { Fragment, useMemo } from 'react'
 import { AreaIcon, AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
+import { BrokenPresetIconsBanner } from '@/components/ui/BrokenPresetIconsBanner'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { Input } from '@/components/ui/Input'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { useBrokenPresetIconCountFromSearch } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
-import { brandAccent } from '@/theme/brandAccent'
 import { RELEASE_DATA_URL } from '@/utils/constants'
 import { exportPresets } from '@/utils/pageExports'
 import { getExpectedFilesHelp } from './dataLoader'
@@ -20,10 +21,7 @@ export function PagePresets() {
   const searchResult = usePresetSearch()
   const totalCount = searchResult?.data.total ?? 0
   const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
-  const brokenPresetIconCount = useMemo(() => {
-    const bucket = searchResult?.aggregations?.hasIcon?.buckets?.find((b) => b.key === 'broken')
-    return bucket?.doc_count ?? 0
-  }, [searchResult])
+  const brokenPresetIconCount = useBrokenPresetIconCountFromSearch()
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -211,21 +209,10 @@ export function PagePresets() {
           </div>
         ) : null}
       </div>
-      {brokenPresetIconCount > 0 ? (
-        <p className={brandAccent.errorBanner}>
-          <strong>{brokenPresetIconCount}</strong>{' '}
-          {brokenPresetIconCount === 1 ? 'preset references' : 'presets reference'} a missing preset
-          icon —{' '}
-          <button
-            type="button"
-            onClick={() => setSearchState({ hasIcon: ['broken'], page: 1 })}
-            className={brandAccent.errorBannerLink}
-          >
-            show broken preset icons
-          </button>
-          .
-        </p>
-      ) : null}
+      <BrokenPresetIconsBanner
+        count={brokenPresetIconCount}
+        onShowBroken={() => setSearchState({ hasIcon: ['broken'], page: 1 })}
+      />
       <PresetTable />
     </div>
   )
