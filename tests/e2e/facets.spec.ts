@@ -65,6 +65,13 @@ test('preset detail shows missing inheritance panel', async ({ page }) => {
   await expect(page.getByText(/Missing parent fields \(unreviewed\)/i)).toBeVisible()
   await expect(page.getByText('crane/type', { exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'man_made/crane' })).toBeVisible()
+  await expect(page.getByTestId('missing-inheritance-override-snippet')).toContainText(
+    'man_made/crane/gantry_crane:',
+  )
+  await expect(page.getByTestId('missing-inheritance-override-snippet')).toContainText(
+    'parentId: man_made/crane',
+  )
+  await expect(page.getByRole('button', { name: 'Copy snippet' })).toBeVisible()
 })
 
 test('missing option icons are discoverable on icons page', async ({ page }) => {

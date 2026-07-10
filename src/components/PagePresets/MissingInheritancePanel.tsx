@@ -1,9 +1,11 @@
 import { Link } from '@tanstack/react-router'
+import { useCallback, useState } from 'react'
 import type {
   FieldListKey,
   MissingFieldInheritance,
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
+import { formatMissingInheritanceOverrideYaml } from '@/components/PagePresets/missingFieldInheritance'
 import { externalLinkClass } from '@/theme/externalAccent'
 import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
 import type { DenormalizedPreset } from '@/utils/types'
@@ -72,12 +74,60 @@ function OverridesYamlLink() {
   )
 }
 
+function OverrideSnippet({
+  presetId,
+  missingFieldInheritance,
+}: {
+  presetId: string
+  missingFieldInheritance: MissingFieldInheritance
+}) {
+  const snippet = formatMissingInheritanceOverrideYaml(presetId, missingFieldInheritance)
+  const [copied, setCopied] = useState(false)
+
+  const onCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(snippet)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }, [snippet])
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm">
+          Paste under <code className="font-mono text-xs">presets:</code> in <OverridesYamlLink />:
+        </p>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="shrink-0 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 shadow-sm transition hover:bg-amber-100"
+        >
+          {copied ? 'Copied' : 'Copy snippet'}
+        </button>
+      </div>
+      <pre
+        className="overflow-x-auto rounded-md border border-amber-200 bg-white/80 p-3 font-mono text-xs leading-relaxed text-slate-800"
+        data-testid="missing-inheritance-override-snippet"
+      >
+        {snippet}
+      </pre>
+    </div>
+  )
+}
+
 export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset }) {
   const { missingFieldInheritance, missingInheritanceStatus } = preset
   if (missingInheritanceStatus === 'none') return null
 
   const parentId =
     missingFieldInheritance?.fields?.parentId ?? missingFieldInheritance?.moreFields?.parentId
+
+  const showOverrideSnippet =
+    missingFieldInheritance &&
+    (missingInheritanceStatus === 'unreviewed' || missingInheritanceStatus === 'stale')
 
   return (
     <div
@@ -96,10 +146,15 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
           still exists in <OverridesYamlLink />.
         </p>
       ) : null}
-      {missingInheritanceStatus === 'stale' ? (
+      {missingInheritanceStatus === 'stale' && missingFieldInheritance ? (
         <p className="mt-2 text-sm">
           The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update the
-          snapshot{missingFieldInheritance ? '' : ' or remove the entry'}.
+          snapshot or remove the entry.
+        </p>
+      ) : null}
+      {missingInheritanceStatus === 'stale' && !missingFieldInheritance ? (
+        <p className="mt-2 text-sm">
+          Remove the stale entry from <OverridesYamlLink />.
         </p>
       ) : null}
       {missingInheritanceStatus === 'unreviewed' ? (
@@ -107,6 +162,9 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
           If this omission is deliberate, add an entry to <OverridesYamlLink /> with the current{' '}
           <code className="font-mono text-xs">missedFieldIds</code> snapshot.
         </p>
+      ) : null}
+      {showOverrideSnippet ? (
+        <OverrideSnippet presetId={preset.id} missingFieldInheritance={missingFieldInheritance} />
       ) : null}
       <div className="mt-4 space-y-4">
         {missingFieldInheritance?.fields ? (

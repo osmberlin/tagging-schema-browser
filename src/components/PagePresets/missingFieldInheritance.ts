@@ -145,3 +145,44 @@ export function resolveMissingInheritanceStatus(
 export function hasMissingFieldInheritance(status: MissingInheritanceStatus): boolean {
   return status === 'unreviewed' || status === 'intentional' || status === 'stale'
 }
+
+/** Strip debug-only fields so the result matches `MissingInheritanceOverride`. */
+export function missingInheritanceOverrideFromCurrent(
+  current: MissingFieldInheritance,
+): MissingInheritanceOverride {
+  const override: MissingInheritanceOverride = {}
+  for (const fieldListKey of ['fields', 'moreFields'] as const) {
+    const section = current[fieldListKey]
+    if (!section) continue
+    override[fieldListKey] = {
+      parentId: section.parentId,
+      missedFieldIds: [...section.missedFieldIds],
+    }
+  }
+  return override
+}
+
+/**
+ * YAML block to paste under `presets:` in `missing-inheritance-overrides.yaml`.
+ * Omits `explicitPresetRefs` and other debug-only fields.
+ */
+export function formatMissingInheritanceOverrideYaml(
+  presetId: string,
+  current: MissingFieldInheritance,
+): string {
+  const override = missingInheritanceOverrideFromCurrent(current)
+  const lines: string[] = [`  ${presetId}:`]
+
+  for (const fieldListKey of ['fields', 'moreFields'] as const) {
+    const section = override[fieldListKey]
+    if (!section) continue
+    lines.push(`    ${fieldListKey}:`)
+    lines.push(`      parentId: ${section.parentId}`)
+    lines.push('      missedFieldIds:')
+    for (const fieldId of section.missedFieldIds) {
+      lines.push(`        - ${fieldId}`)
+    }
+  }
+
+  return lines.join('\n')
+}
