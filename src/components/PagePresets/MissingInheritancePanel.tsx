@@ -8,7 +8,6 @@ import type {
 import { formatMissingInheritanceOverrideYaml } from '@/components/PagePresets/missingFieldInheritance'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
-import { externalLinkClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
@@ -43,7 +42,7 @@ function FieldListSection({
 }) {
   const title = fieldListKey === 'fields' ? 'Primary fields' : 'More fields'
   return (
-    <div className={cn('space-y-2 px-3 py-3', schemaIssueStyles.disclosureBodyInset)}>
+    <div className={cn('not-prose space-y-2 px-3 py-3', schemaIssueStyles.disclosureBodyInset)}>
       <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
       <p className="text-sm text-slate-300">
         Expected slash-parent source:{' '}
@@ -77,7 +76,7 @@ function OverridesYamlLink() {
       href={MISSING_INHERITANCE_OVERRIDES_EDIT_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`font-mono text-xs ${externalLinkClass()}`}
+      className={schemaIssueStyles.externalLink}
     >
       missing-inheritance-overrides.yaml
     </a>
@@ -107,17 +106,18 @@ function OverrideSnippet({
   return (
     <div className="mt-3 space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-100">
-          Paste under <code className="font-mono text-xs text-slate-200">presets:</code> in{' '}
-          <OverridesYamlLink />:
+        <p className="mb-0 min-w-0 flex-1">
+          Paste under <code>presets:</code> in <OverridesYamlLink />:
         </p>
-        <button
-          type="button"
-          onClick={onCopy}
-          className="shrink-0 rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-100 shadow-sm transition hover:bg-slate-700"
-        >
-          {copied ? 'Copied' : 'Copy snippet'}
-        </button>
+        <div className="not-prose shrink-0">
+          <button
+            type="button"
+            onClick={onCopy}
+            className="rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-100 shadow-sm transition hover:bg-slate-700"
+          >
+            {copied ? 'Copied' : 'Copy snippet'}
+          </button>
+        </div>
       </div>
       <pre
         className="overflow-x-auto rounded-md border border-slate-600 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-100"
@@ -152,32 +152,31 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
     >
       <div data-testid="missing-inheritance-panel">
         {missingFieldInheritance && parentId ? (
-          <p className="text-sm text-slate-100">
-            This preset defines an explicit field list without{' '}
-            <code className="font-mono text-xs text-slate-200">{`{${parentId}}`}</code>, so it does
-            not inherit every field from its slash parent.
+          <p>
+            This preset defines an explicit field list without <code>{`{${parentId}}`}</code>, so it
+            does not inherit every field from its slash parent.
           </p>
         ) : missingInheritanceStatus === 'stale' ? (
-          <p className="text-sm text-slate-100">
+          <p>
             This preset no longer has missing slash-parent field inheritance, but an override entry
             still exists in <OverridesYamlLink />.
           </p>
         ) : null}
         {missingInheritanceStatus === 'stale' && missingFieldInheritance ? (
-          <p className="mt-2 text-sm text-slate-100">
+          <p className="mt-2">
             The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update
             the snapshot or remove the entry.
           </p>
         ) : null}
         {missingInheritanceStatus === 'stale' && !missingFieldInheritance ? (
-          <p className="mt-2 text-sm text-slate-100">
+          <p className="mt-2">
             Remove the stale entry from <OverridesYamlLink />.
           </p>
         ) : null}
         {missingInheritanceStatus === 'unreviewed' ? (
-          <p className="mt-2 text-sm text-slate-100">
+          <p className="mt-2">
             If this omission is deliberate, add an entry to <OverridesYamlLink /> with the current{' '}
-            <code className="font-mono text-xs text-slate-200">missedFieldIds</code> snapshot.
+            <code>missedFieldIds</code> snapshot.
           </p>
         ) : null}
         {showOverrideSnippet ? (

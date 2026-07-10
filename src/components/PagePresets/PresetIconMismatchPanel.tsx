@@ -250,7 +250,7 @@ export function PresetIconMismatchPanel({
       variant="warning"
       title="Icon mismatch"
       summary={summary}
-      bodyClassName="space-y-3"
+      bodyClassName="not-prose space-y-3"
     >
       {childRefs.length > 0 ? (
         <div className="space-y-3">

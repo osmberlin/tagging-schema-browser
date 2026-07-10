@@ -191,6 +191,7 @@ function FieldDetailContent({
           variant="warning"
           title="Icon mismatch"
           summary={`${mismatchCount} option${mismatchCount === 1 ? '' : 's'} use a different icon than the linked child preset${mismatchCount === 1 ? '' : 's'}`}
+          bodyClassName="not-prose"
         >
           <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} variant="inset" />
         </SchemaIssueDisclosure>

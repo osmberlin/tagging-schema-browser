@@ -3,6 +3,16 @@ import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { cn } from '@/utils/tw'
 
+export function SchemaIssueCode({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return <code className={cn(schemaIssueStyles.code, className)}>{children}</code>
+}
+
 export function SchemaIssueIcon({
   variant,
   className,
@@ -130,7 +140,15 @@ export function SchemaIssueDisclosure({
         ) : null}
       </button>
       {open ? (
-        <div className={cn(schemaIssueStyles.disclosureBody, bodyClassName)}>{children}</div>
+        <div
+          className={cn(
+            schemaIssueStyles.disclosureBody,
+            schemaIssueStyles.disclosureProse,
+            bodyClassName,
+          )}
+        >
+          {children}
+        </div>
       ) : null}
     </section>
   )

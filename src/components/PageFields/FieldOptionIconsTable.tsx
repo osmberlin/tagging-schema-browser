@@ -54,7 +54,7 @@ export function FieldOptionIconsTable({
     : `inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`
 
   return (
-    <div className={cn('overflow-x-auto', dark && schemaIssueStyles.disclosureBodyInset)}>
+    <div className={cn('not-prose overflow-x-auto', dark && schemaIssueStyles.disclosureBodyInset)}>
       <table className="min-w-full text-sm">
         <thead>
           <tr
