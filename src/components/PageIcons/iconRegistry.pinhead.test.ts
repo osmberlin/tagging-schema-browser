@@ -27,4 +27,21 @@ describe('isIconSvgConfirmedMissing pinhead icons', () => {
 
     fetchMock.mockRestore()
   })
+
+  it('fetches pinhead SVG when the registry only has a name stub', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response('<svg xmlns="http://www.w3.org/2000/svg"></svg>', { status: 200 }),
+      )
+
+    const { ensureIconsForNames, getIconRegistry } =
+      await import('@/components/PageIcons/iconRegistry')
+    getIconRegistry().set('pinhead-stub_icon', { name: 'pinhead-stub_icon', prefix: 'pinhead' })
+
+    await ensureIconsForNames(['pinhead-stub_icon'])
+
+    expect(getIconRegistry().get('pinhead-stub_icon')?.svgRaw).toContain('<svg')
+    fetchMock.mockRestore()
+  })
 })
