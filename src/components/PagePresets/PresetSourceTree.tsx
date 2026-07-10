@@ -6,7 +6,11 @@ import {
   getInheritedFieldItems,
   presetIdFromRef,
 } from '@/components/PagePresets/presetFieldInheritance'
-import { type KeySortMode, sortObjectEntries } from '@/components/PagePresets/presetKeyOrder'
+import {
+  type KeySortMode,
+  sortObjectEntries,
+  TAG_OBJECT_KEYS,
+} from '@/components/PagePresets/presetKeyOrder'
 import {
   getInheritedLabels,
   resolveLabelSourcePresetId,
@@ -14,9 +18,10 @@ import {
 import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent, areaSourceLinkClass } from '@/theme/areaAccent'
-import { externalPillClass } from '@/theme/externalAccent'
+import { externalAccent } from '@/theme/externalAccent'
 import { isFieldCrossRefKey, resolveFieldRefDisplay } from '@/utils/fieldRefDisplay'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import { osmWikiKeyUrl, osmWikiTagUrl } from '@/utils/osmWikiUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset, RawPreset, RawPresets } from '@/utils/types'
@@ -62,7 +67,7 @@ function GithubLink({ href, label = 'GitHub' }: { href: string; label?: string }
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className={externalPillClass('shrink-0')}
+      className={cn(sourceActionPillClass, externalAccent.pill)}
       title="Open in id-tagging-schema repository"
     >
       {label} ↗
@@ -70,8 +75,37 @@ function GithubLink({ href, label = 'GitHub' }: { href: string; label?: string }
   )
 }
 
-const sourceRefButtonClass =
-  'inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset'
+function WikiLink({
+  href,
+  label = 'Wiki',
+  title = 'Open on OpenStreetMap Wiki',
+}: {
+  href: string
+  label?: string
+  title?: string
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        sourceActionPillClass,
+        'text-sky-700 ring-sky-100 hover:bg-sky-50 hover:text-sky-800 hover:ring-sky-200',
+      )}
+      title={title}
+    >
+      {label} ↗
+    </a>
+  )
+}
+
+function SourceActionGroup({ children }: { children: ReactNode }) {
+  return <span className="inline-flex shrink-0 items-center gap-1 self-center">{children}</span>
+}
+
+const sourceActionPillClass =
+  'inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset transition-colors'
 
 function SourceAreaLink({
   area,
@@ -96,7 +130,7 @@ function SourceAreaLink({
       params={params}
       search={search}
       title={title}
-      className={cn(sourceRefButtonClass, toneClass)}
+      className={cn(sourceActionPillClass, toneClass)}
     >
       <AreaIcon area={area} className="h-3 w-3" />
       {label}
@@ -115,7 +149,7 @@ function JsonLine({
 }) {
   return (
     <div
-      className="flex min-w-0 flex-wrap items-baseline gap-x-1.5"
+      className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-1"
       style={{ paddingLeft: level > 0 ? `${level * 1.25}rem` : undefined }}
     >
       {children}
@@ -242,15 +276,17 @@ function NameRefDisclosure({
         {repoPath ? (
           <>
             <code className="truncate text-[10px] text-slate-400">{repoPath}</code>
-            <GithubLink href={githubFileUrl(dataUrl, repoPath)} />
-            <SourceAreaLink
-              area="presets"
-              to="/preset/$"
-              params={{ _splat: sourceId ?? '' }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-              label="Preset"
-              title={`Open preset "${sourceId}"`}
-            />
+            <SourceActionGroup>
+              <GithubLink href={githubFileUrl(dataUrl, repoPath)} />
+              <SourceAreaLink
+                area="presets"
+                to="/preset/$"
+                params={{ _splat: sourceId ?? '' }}
+                search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+                label="Preset"
+                title={`Open preset "${sourceId}"`}
+              />
+            </SourceActionGroup>
           </>
         ) : null}
       </JsonLine>
@@ -314,45 +350,47 @@ function RefDisclosure({
           <span className="text-emerald-800">"{label}"</span>
         </button>
         <code className="truncate text-[10px] text-slate-400">{refInfo.repoPath}</code>
-        <GithubLink href={githubFileUrl(dataUrl, refInfo.repoPath)} />
-        {refInfo.kind === 'preset' ? (
-          <SourceAreaLink
-            area="presets"
-            to="/preset/$"
-            params={{ _splat: refInfo.id }}
-            search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-            label="Preset"
-            title={`Open preset "${refInfo.id}"`}
-          />
-        ) : (
-          <>
-            <SourceAreaLink
-              area="fields"
-              to="/field/$"
-              params={{ _splat: refInfo.id }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-              label="Field"
-              title={`Open field "${refInfo.id}"`}
-            />
+        <SourceActionGroup>
+          <GithubLink href={githubFileUrl(dataUrl, refInfo.repoPath)} />
+          {refInfo.kind === 'preset' ? (
             <SourceAreaLink
               area="presets"
-              to="/"
-              search={(prev) => ({
-                ...presetSearchDefaults,
-                dataUrl: prev.dataUrl ?? '',
-                locale: prev.locale ?? '',
-                ...(fieldListKey === 'moreFields'
-                  ? { moreFieldIds: [refInfo.id] }
-                  : fieldListKey === 'fields'
-                    ? { primaryFieldIds: [refInfo.id] }
-                    : { fieldIds: [refInfo.id] }),
-                page: 1,
-              })}
-              label="Presets"
-              title="Show presets using this field"
+              to="/preset/$"
+              params={{ _splat: refInfo.id }}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+              label="Preset"
+              title={`Open preset "${refInfo.id}"`}
             />
-          </>
-        )}
+          ) : (
+            <>
+              <SourceAreaLink
+                area="fields"
+                to="/field/$"
+                params={{ _splat: refInfo.id }}
+                search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+                label="Field"
+                title={`Open field "${refInfo.id}"`}
+              />
+              <SourceAreaLink
+                area="presets"
+                to="/"
+                search={(prev) => ({
+                  ...presetSearchDefaults,
+                  dataUrl: prev.dataUrl ?? '',
+                  locale: prev.locale ?? '',
+                  ...(fieldListKey === 'moreFields'
+                    ? { moreFieldIds: [refInfo.id] }
+                    : fieldListKey === 'fields'
+                      ? { primaryFieldIds: [refInfo.id] }
+                      : { fieldIds: [refInfo.id] }),
+                  page: 1,
+                })}
+                label="Presets"
+                title="Show presets using this field"
+              />
+            </>
+          )}
+        </SourceActionGroup>
       </JsonLine>
       {open ? (
         inheritPresetFields ? (
@@ -545,6 +583,7 @@ function JsonNode({
             keyName={key}
             value={child}
             level={level + 1}
+            parentKey={parentKey}
             dataUrl={dataUrl}
             trailingComma={i < entries.length - 1}
             host={host}
@@ -590,15 +629,17 @@ function FieldCrossRefLine({
         ref {refDisplay.ref}
       </span>
       <code className="truncate text-[10px] text-slate-400">{repoPath}</code>
-      <GithubLink href={githubFileUrl(dataUrl, repoPath)} />
-      <SourceAreaLink
-        area="fields"
-        to="/field/$"
-        params={{ _splat: refDisplay.refFieldId }}
-        search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-        label="Field"
-        title={`Open field "${refDisplay.refFieldId}"`}
-      />
+      <SourceActionGroup>
+        <GithubLink href={githubFileUrl(dataUrl, repoPath)} />
+        <SourceAreaLink
+          area="fields"
+          to="/field/$"
+          params={{ _splat: refDisplay.refFieldId }}
+          search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+          label="Field"
+          title={`Open field "${refDisplay.refFieldId}"`}
+        />
+      </SourceActionGroup>
     </JsonLine>
   )
 }
@@ -607,6 +648,7 @@ function JsonObjectEntry({
   keyName,
   value,
   level,
+  parentKey,
   dataUrl,
   trailingComma,
   host,
@@ -616,6 +658,7 @@ function JsonObjectEntry({
   keyName: string
   value: unknown
   level: number
+  parentKey?: string
   dataUrl: string
   trailingComma?: boolean
   host: HostPresetContext
@@ -666,18 +709,47 @@ function JsonObjectEntry({
           <JsonKey name={keyName} />
           <span className="text-slate-500">: </span>
           <JsonScalar value={value} />
-          <SourceAreaLink
-            area="fields"
-            to="/fields"
-            search={(prev) => ({
-              ...fieldFacetDefaults,
-              dataUrl: prev.dataUrl ?? '',
-              locale: prev.locale ?? '',
-              f_type: value,
-            })}
-            label="Fields"
-            title={`Browse all ${value} fields`}
-          />
+          <SourceActionGroup>
+            <SourceAreaLink
+              area="fields"
+              to="/fields"
+              search={(prev) => ({
+                ...fieldFacetDefaults,
+                dataUrl: prev.dataUrl ?? '',
+                locale: prev.locale ?? '',
+                f_type: value,
+              })}
+              label="Fields"
+              title={`Browse all ${value} fields`}
+            />
+          </SourceActionGroup>
+        </JsonLine>
+      )
+    }
+    if (parentKey && TAG_OBJECT_KEYS.has(parentKey) && typeof value === 'string') {
+      return (
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <JsonKey name={keyName} />
+          <span className="text-slate-500">: </span>
+          <JsonScalar value={value} />
+          <SourceActionGroup>
+            <WikiLink
+              href={osmWikiTagUrl(keyName, value)}
+              title={`OSM Wiki: ${keyName}=${value}`}
+            />
+          </SourceActionGroup>
+        </JsonLine>
+      )
+    }
+    if (keyName === 'key' && typeof value === 'string' && jsonRootKind === 'field') {
+      return (
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <JsonKey name={keyName} />
+          <span className="text-slate-500">: </span>
+          <JsonScalar value={value} />
+          <SourceActionGroup>
+            <WikiLink href={osmWikiKeyUrl(value)} title={`OSM Wiki key: ${value}`} />
+          </SourceActionGroup>
         </JsonLine>
       )
     }
@@ -749,6 +821,7 @@ function JsonObjectEntry({
               keyName={key}
               value={child}
               level={level + 1}
+              parentKey={keyName}
               dataUrl={dataUrl}
               trailingComma={i < entries.length - 1}
               host={host}
@@ -787,6 +860,7 @@ function JsonObjectEntry({
             keyName={key}
             value={child}
             level={level + 1}
+            parentKey={keyName}
             dataUrl={dataUrl}
             trailingComma={i < entries.length - 1}
             host={host}
