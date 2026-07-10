@@ -28,9 +28,7 @@ export function PageFields() {
   const { setActiveIssueFocus } = useSchemaIssueDisclosureActions()
 
   useEffect(() => {
-    if (facetState.f_iconMismatch === 'mismatch') {
-      setActiveIssueFocus('iconMismatch')
-    }
+    setActiveIssueFocus(facetState.f_iconMismatch === 'mismatch' ? 'iconMismatch' : null)
   }, [facetState.f_iconMismatch, setActiveIssueFocus])
 
   const exportData = useMemo(() => exportFields(filtered), [filtered])
