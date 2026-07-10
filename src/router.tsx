@@ -35,7 +35,9 @@ import {
 } from '@/components/PageTranslations/translationsSearch'
 import { TranslationsSidebar } from '@/components/PageTranslations/TranslationsSidebar'
 import { SidebarLayout } from '@/components/ui/SidebarLayout'
+import { UnsupportedSchemaNotice } from '@/components/ui/UnsupportedSchemaNotice'
 import { useReference, useReferenceActions } from '@/features/data-source/reference-store'
+import { useSchema } from '@/hooks/useSchema'
 import { queryClient, SCHEMA_STALE_TIME } from '@/queries/queryClient'
 import { prefetchSchemaData, schemaKeys } from '@/queries/schema'
 import { dataUrlForReference, resolveSchemaReference } from '@/utils/dataUrl'
@@ -84,10 +86,22 @@ const rootSearchSchema = z.object({
   locale: z.string().catch(''),
   /** Canonical dataset when `dataUrl` is empty: npm release or interem staging. */
   reference: z.enum(['release', 'interem']).optional().catch(undefined),
-  /** Opt in to loading schema v6 and older dist builds. */
-  legacy: z.string().optional().catch(undefined),
 })
 type RootSearch = z.infer<typeof rootSearchSchema>
+
+function SchemaContent({ children }: { children: React.ReactNode }) {
+  const { unsupportedBuild, customDataUrl, dataUrl, error } = useSchema()
+
+  if (unsupportedBuild && customDataUrl) {
+    return <UnsupportedSchemaNotice build={unsupportedBuild} dataUrl={dataUrl} />
+  }
+
+  if (error && customDataUrl && error.includes('only supports id-tagging-schema v')) {
+    return <UnsupportedSchemaNotice message={error} dataUrl={dataUrl} />
+  }
+
+  return children
+}
 
 function RootContent() {
   const navigate = useNavigate()
@@ -130,7 +144,7 @@ function RootContent() {
       const other: 'release' | 'interem' = reference === 'interem' ? 'release' : 'interem'
       const otherUrl = dataUrlForReference(other)
       void queryClient.prefetchQuery({
-        queryKey: schemaKeys.data(otherUrl, false),
+        queryKey: schemaKeys.data(otherUrl),
         queryFn: () => prefetchSchemaData(otherUrl),
         staleTime: SCHEMA_STALE_TIME,
       })
@@ -168,7 +182,9 @@ function RootContent() {
     <>
       <HeadContent />
       <SidebarLayout sidebar={sidebar} topSearch={topSearch}>
-        <Outlet />
+        <SchemaContent>
+          <Outlet />
+        </SchemaContent>
       </SidebarLayout>
     </>
   )
@@ -184,8 +200,8 @@ const rootRoute = createRootRoute({
   // default ("") so shared links stay clean.
   search: {
     middlewares: [
-      retainSearchParams<RootSearch>(['dataUrl', 'locale', 'reference', 'legacy']),
-      stripSearchParams({ dataUrl: '', locale: '', reference: undefined, legacy: undefined }),
+      retainSearchParams<RootSearch>(['dataUrl', 'locale', 'reference']),
+      stripSearchParams({ dataUrl: '', locale: '', reference: undefined }),
     ],
   },
 })

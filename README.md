@@ -29,7 +29,7 @@ Use the header toggle or URL params to pick the dataset:
 
 **Staging** (default) loads the dist built from id-tagging-schema `main` on every push; the toggle shows when `main` last changed and the detected schema version (v7). **Release** loads the published npm package (`@latest`) when you add `?reference=release`. When you open a PR preview via `dataUrl`, the app compares it against staging.
 
-The browser supports **schema v7+** only. Older v6 `dist/` URLs are rejected unless you add `?legacy=1`.
+The browser supports **schema v7+** only. If you link an older v6 `dist/` URL with `?dataUrl=`, you will see a notice that it cannot be displayed.
 
 ## Develop
 

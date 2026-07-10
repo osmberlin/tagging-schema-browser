@@ -29,6 +29,14 @@ export function majorFromVersionSpec(spec: string): number | null {
   return match ? Number.parseInt(match[1], 10) : null
 }
 
+export function predictSchemaBuildFromUrl(dataUrl: string): SchemaBuildInfo | null {
+  const versionSpec = versionSpecFromDataUrl(dataUrl)
+  if (!versionSpec) return null
+  const major = majorFromVersionSpec(versionSpec)
+  if (major === null) return null
+  return { major, versionSpec, detection: 'url' }
+}
+
 function detectMajorFromContent(payload: SchemaBuildPayload): number {
   if (needsRuntimeDereference(payload.fields, payload.presets)) return 6
 
@@ -78,20 +86,21 @@ export function formatSchemaBuildLabel(
   return `v${major}`
 }
 
-export function isLegacySearchParam(value: string | undefined): boolean {
-  return value === '1' || value === 'true'
+export function isSchemaBuildSupported(build: SchemaBuildInfo, dataUrl: string): boolean {
+  if (isBundledTestSchemaUrl(dataUrl)) return true
+  if (build.major === null || build.major >= SUPPORTED_SCHEMA_MAJOR) return true
+  return false
 }
 
 export function unsupportedSchemaBuildMessage(build: SchemaBuildInfo): string {
   const label = formatSchemaBuildLabel(build)
-  return `This schema build is ${label}. Tagging Schema Browser supports v${SUPPORTED_SCHEMA_MAJOR}+ only. Add ?legacy=1 to load older builds.`
+  return `The linked schema is ${label}. This browser only supports id-tagging-schema v${SUPPORTED_SCHEMA_MAJOR} and newer, so that dataset cannot be shown here.`
 }
 
+/** @deprecated Use isSchemaBuildSupported */
 export function isSchemaBuildAllowed(
   build: SchemaBuildInfo,
-  options: { allowLegacy: boolean; dataUrl: string },
+  options: { dataUrl: string },
 ): boolean {
-  if (isBundledTestSchemaUrl(options.dataUrl)) return true
-  if (build.major === null || build.major >= SUPPORTED_SCHEMA_MAJOR) return true
-  return options.allowLegacy
+  return isSchemaBuildSupported(build, options.dataUrl)
 }

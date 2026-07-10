@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   detectSchemaBuildInfo,
   formatSchemaBuildLabel,
-  isSchemaBuildAllowed,
+  isSchemaBuildSupported,
   majorFromVersionSpec,
+  predictSchemaBuildFromUrl,
   unsupportedSchemaBuildMessage,
   versionSpecFromDataUrl,
 } from '@/utils/schemaBuildVersion'
@@ -28,6 +29,20 @@ describe('majorFromVersionSpec', () => {
     expect(majorFromVersionSpec('7.0.1')).toBe(7)
     expect(majorFromVersionSpec('6.18.0')).toBe(6)
     expect(majorFromVersionSpec('latest')).toBeNull()
+  })
+})
+
+describe('predictSchemaBuildFromUrl', () => {
+  it('detects pre-v7 npm URLs immediately', () => {
+    expect(
+      predictSchemaBuildFromUrl(
+        'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6.18.0/dist/',
+      ),
+    ).toEqual({
+      major: 6,
+      versionSpec: '6.18.0',
+      detection: 'url',
+    })
   })
 })
 
@@ -75,20 +90,24 @@ describe('detectSchemaBuildInfo', () => {
   })
 })
 
-describe('isSchemaBuildAllowed', () => {
-  it('blocks v6 unless legacy is enabled', () => {
+describe('isSchemaBuildSupported', () => {
+  it('blocks v6 builds', () => {
     const build = { major: 6, versionSpec: '6.18.0', detection: 'url' as const }
     expect(
-      isSchemaBuildAllowed(build, {
-        allowLegacy: false,
-        dataUrl: 'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6.18.0/dist/',
-      }),
+      isSchemaBuildSupported(
+        build,
+        'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6.18.0/dist/',
+      ),
     ).toBe(false)
+  })
+
+  it('allows v7 builds', () => {
+    const build = { major: 7, versionSpec: '7.0.1', detection: 'url' as const }
     expect(
-      isSchemaBuildAllowed(build, {
-        allowLegacy: true,
-        dataUrl: 'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@6.18.0/dist/',
-      }),
+      isSchemaBuildSupported(
+        build,
+        'https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7.0.1/dist/',
+      ),
     ).toBe(true)
   })
 })
@@ -105,13 +124,13 @@ describe('formatSchemaBuildLabel', () => {
 })
 
 describe('unsupportedSchemaBuildMessage', () => {
-  it('mentions legacy opt-in', () => {
+  it('explains that older builds cannot be shown', () => {
     expect(
       unsupportedSchemaBuildMessage({
         major: 6,
         versionSpec: '6.18.0',
         detection: 'url',
       }),
-    ).toContain('?legacy=1')
+    ).toContain('cannot be shown')
   })
 })
