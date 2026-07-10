@@ -3,6 +3,7 @@ import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { MissingInheritancePanel } from '@/components/PagePresets/MissingInheritancePanel'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
+import { PresetIconMismatchPanel } from '@/components/PagePresets/PresetIconMismatchPanel'
 import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
@@ -14,7 +15,6 @@ import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalAccent, externalLinkClass, externalPillClass } from '@/theme/externalAccent'
-import { getPresetFieldSections } from '@/utils/fieldOptions'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
@@ -112,20 +112,6 @@ function PresetDetailContent({
     ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toItem)
     : []
 
-  const parentMismatches = preset.iconMismatch
-    ? getPresetFieldSections(preset, fields, fieldTranslations, presets).flatMap((section) =>
-        section.options.filter((row) => row.iconMismatch),
-      )
-    : []
-
-  const childMismatches = presets.flatMap((parent) =>
-    getPresetFieldSections(parent, fields, fieldTranslations, presets).flatMap((section) =>
-      section.options
-        .filter((row) => row.childPreset?.id === preset.id && row.iconMismatch)
-        .map((row) => ({ parent, row, section })),
-    ),
-  )
-
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
@@ -178,44 +164,12 @@ function PresetDetailContent({
         </div>
       </header>
 
-      {parentMismatches.length > 0 ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <strong>{parentMismatches.length}</strong> field option
-          {parentMismatches.length === 1 ? '' : 's'} on this preset use a different icon than the
-          linked child preset{parentMismatches.length === 1 ? '' : 's'}. Expand field references in
-          the source tree to review.
-        </p>
-      ) : null}
-
-      {childMismatches.length > 0 ? (
-        <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <p>
-            This preset&apos;s icon <code className="font-mono text-xs">{preset.icon}</code> differs
-            from the field option icon on:
-          </p>
-          <ul className="list-disc space-y-1 pl-5 text-xs">
-            {childMismatches.map(({ parent, row, section }) => (
-              <li key={`${parent.id}-${row.optionValue}`}>
-                <Link
-                  to="/preset/$"
-                  params={{ _splat: parent.id }}
-                  search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-                  className="font-medium text-amber-900 underline decoration-amber-400/60 underline-offset-2 hover:decoration-amber-900"
-                >
-                  {parent.name}
-                </Link>
-                {' → '}
-                <span className="font-mono">{section.fieldKey}</span>
-                {' = '}
-                <span className="font-mono">{row.optionValue}</span>
-                {' ('}
-                <span className="font-mono">{row.icon}</span>
-                {')'}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <PresetIconMismatchPanel
+        preset={preset}
+        presets={presets}
+        fields={fields}
+        fieldTranslations={fieldTranslations}
+      />
 
       <MissingInheritancePanel preset={preset} />
 

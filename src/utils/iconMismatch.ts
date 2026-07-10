@@ -1,5 +1,15 @@
-import { getPresetFieldSections } from '@/utils/fieldOptions'
+import {
+  getPresetFieldSections,
+  type PresetFieldSection,
+  type PresetOptionRow,
+} from '@/utils/fieldOptions'
 import type { DenormalizedPreset, FieldTranslations, RawFields } from '@/utils/types'
+
+export type PresetIconMismatchRef = {
+  parent: DenormalizedPreset
+  section: PresetFieldSection
+  row: PresetOptionRow
+}
 
 /** True when a field option and its child preset both define icons that differ. */
 export function isOptionIconMismatch(
@@ -53,4 +63,32 @@ export function computeFieldIconMismatchCounts(
   }
 
   return counts
+}
+
+/** Mismatched option rows on this preset's own fields. */
+export function getParentPresetIconMismatchRows(
+  preset: DenormalizedPreset,
+  fields: RawFields,
+  fieldTranslations: FieldTranslations,
+  allPresets: DenormalizedPreset[],
+): Array<{ section: PresetFieldSection; row: PresetOptionRow }> {
+  return getPresetFieldSections(preset, fields, fieldTranslations, allPresets).flatMap((section) =>
+    section.options.filter((row) => row.iconMismatch).map((row) => ({ section, row })),
+  )
+}
+
+/** Parent field options whose child preset icon mismatches this preset. */
+export function getChildPresetIconMismatchRefs(
+  presetId: string,
+  fields: RawFields,
+  fieldTranslations: FieldTranslations,
+  presets: DenormalizedPreset[],
+): PresetIconMismatchRef[] {
+  return presets.flatMap((parent) =>
+    getPresetFieldSections(parent, fields, fieldTranslations, presets).flatMap((section) =>
+      section.options
+        .filter((row) => row.childPreset?.id === presetId && row.iconMismatch)
+        .map((row) => ({ parent, section, row })),
+    ),
+  )
 }
