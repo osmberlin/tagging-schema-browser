@@ -1,16 +1,21 @@
 import { getIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { areaAccent } from '@/theme/areaAccent'
+import { schemaIssueStyles } from '@/theme/schemaIssue'
 import type { FieldOptionMismatchRow } from '@/utils/fieldOptions'
 import { cn } from '@/utils/tw'
 
-function SmallIcon({ icon, title }: { icon?: string; title: string }) {
+function SmallIcon({ icon, title, dark }: { icon?: string; title: string; dark?: boolean }) {
   if (!icon) {
-    return <span className="text-slate-300">—</span>
+    return <span className={dark ? 'text-slate-500' : 'text-slate-300'}>—</span>
   }
   const src = getIconSvgDataUrl(icon)
   if (!src) {
-    return <span className="font-mono text-[10px] text-slate-500">{icon}</span>
+    return (
+      <span className={cn('font-mono text-[10px]', dark ? 'text-slate-400' : 'text-slate-500')}>
+        {icon}
+      </span>
+    )
   }
   return <img src={src} alt="" className="h-5 w-5 shrink-0" title={`${title}: ${icon}`} />
 }
@@ -18,23 +23,38 @@ function SmallIcon({ icon, title }: { icon?: string; title: string }) {
 export function FieldOptionIconsTable({
   rows,
   onOpenPreset,
+  variant = 'default',
 }: {
   rows: FieldOptionMismatchRow[]
   onOpenPreset: (id: string) => void
+  variant?: 'default' | 'inset'
 }) {
+  const dark = variant === 'inset'
+
   if (rows.length === 0) {
     return (
-      <p className="px-4 py-3 text-sm text-slate-500">
+      <p className={cn('px-4 py-3 text-sm', dark ? 'text-slate-400' : 'text-slate-500')}>
         No field options with dedicated child presets.
       </p>
     )
   }
 
+  const presetLinkClass = dark
+    ? 'inline-flex items-center gap-1 text-xs font-medium text-rose-300 hover:underline'
+    : `inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`
+
   return (
-    <div className="overflow-x-auto">
+    <div className={cn('overflow-x-auto', dark && schemaIssueStyles.disclosureBodyInset)}>
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 bg-slate-50 text-left text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+          <tr
+            className={cn(
+              'text-left text-[11px] font-semibold tracking-wide uppercase',
+              dark
+                ? 'border-b border-slate-600 bg-slate-950 text-slate-300'
+                : 'border-b border-slate-200 bg-slate-50 text-slate-500',
+            )}
+          >
             <th className="px-4 py-2">Option</th>
             <th className="px-4 py-2">Field icon</th>
             <th className="px-4 py-2">Parent preset</th>
@@ -47,17 +67,36 @@ export function FieldOptionIconsTable({
           {rows.map((row) => (
             <tr
               key={`${row.parentPreset.id}-${row.optionValue}`}
-              className={cn('border-b border-slate-100', row.iconMismatch && 'bg-amber-50/80')}
+              className={cn(
+                dark ? 'border-b border-slate-700' : 'border-b border-slate-100',
+                row.iconMismatch && (dark ? 'bg-amber-950/40' : 'bg-amber-50/80'),
+              )}
             >
               <td className="px-4 py-2">
-                <p className="font-medium text-slate-900">{row.labelEn}</p>
-                <p className="font-mono text-[11px] text-slate-500">{row.optionValue}</p>
+                <p className={cn('font-medium', dark ? 'text-slate-100' : 'text-slate-900')}>
+                  {row.labelEn}
+                </p>
+                <p
+                  className={cn(
+                    'font-mono text-[11px]',
+                    dark ? 'text-slate-400' : 'text-slate-500',
+                  )}
+                >
+                  {row.optionValue}
+                </p>
               </td>
               <td className="px-4 py-2">
                 <div className="flex items-center gap-2">
-                  <SmallIcon icon={row.optionIcon} title="Field option" />
+                  <SmallIcon icon={row.optionIcon} title="Field option" dark={dark} />
                   {row.optionIcon ? (
-                    <span className="font-mono text-[11px] text-slate-500">{row.optionIcon}</span>
+                    <span
+                      className={cn(
+                        'font-mono text-[11px]',
+                        dark ? 'text-slate-400' : 'text-slate-500',
+                      )}
+                    >
+                      {row.optionIcon}
+                    </span>
                   ) : null}
                 </div>
               </td>
@@ -65,7 +104,7 @@ export function FieldOptionIconsTable({
                 <button
                   type="button"
                   onClick={() => onOpenPreset(row.parentPreset.id)}
-                  className={`inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
+                  className={presetLinkClass}
                 >
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {row.parentPreset.name}
@@ -75,7 +114,7 @@ export function FieldOptionIconsTable({
                 <button
                   type="button"
                   onClick={() => onOpenPreset(row.childPreset.id)}
-                  className={`inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
+                  className={presetLinkClass}
                 >
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {row.childPreset.name}
@@ -83,9 +122,14 @@ export function FieldOptionIconsTable({
               </td>
               <td className="px-4 py-2">
                 <div className="flex items-center gap-2">
-                  <SmallIcon icon={row.childPreset.icon} title="Child preset" />
+                  <SmallIcon icon={row.childPreset.icon} title="Child preset" dark={dark} />
                   {row.childPreset.icon ? (
-                    <span className="font-mono text-[11px] text-slate-500">
+                    <span
+                      className={cn(
+                        'font-mono text-[11px]',
+                        dark ? 'text-slate-400' : 'text-slate-500',
+                      )}
+                    >
                       {row.childPreset.icon}
                     </span>
                   ) : null}
@@ -93,11 +137,25 @@ export function FieldOptionIconsTable({
               </td>
               <td className="px-4 py-2">
                 {row.iconMismatch ? (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200 ring-inset">
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+                      dark
+                        ? 'bg-amber-900/60 text-amber-200 ring-amber-700/60'
+                        : 'bg-amber-100 text-amber-800 ring-amber-200',
+                    )}
+                  >
                     Mismatch
                   </span>
                 ) : (
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-100 ring-inset">
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+                      dark
+                        ? 'bg-emerald-900/50 text-emerald-200 ring-emerald-700/50'
+                        : 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                    )}
+                  >
                     Match
                   </span>
                 )}

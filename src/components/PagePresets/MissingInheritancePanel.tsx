@@ -10,7 +10,9 @@ import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { externalLinkClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
+import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
+import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
@@ -41,27 +43,27 @@ function FieldListSection({
 }) {
   const title = fieldListKey === 'fields' ? 'Primary fields' : 'More fields'
   return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-      <p className="text-sm text-slate-600">
+    <div className={cn('space-y-2 px-3 py-3', schemaIssueStyles.disclosureBodyInset)}>
+      <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
+      <p className="text-sm text-slate-300">
         Expected slash-parent source:{' '}
         <Link
           to="/preset/$"
           params={{ _splat: section.parentId }}
           search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-          className="font-mono text-xs text-sky-700 underline underline-offset-2"
+          className="font-mono text-xs text-sky-300 underline underline-offset-2"
         >
           {section.parentId}
         </Link>
       </p>
-      <p className="text-sm text-slate-600">Field ids not inherited from the parent list:</p>
-      <ul className="list-inside list-disc font-mono text-xs text-slate-800">
+      <p className="text-sm text-slate-300">Field ids not inherited from the parent list:</p>
+      <ul className="list-inside list-disc font-mono text-xs text-slate-100">
         {section.missedFieldIds.map((fieldId) => (
           <li key={fieldId}>{fieldId}</li>
         ))}
       </ul>
       {section.explicitPresetRefs.length > 0 ? (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-400">
           Other preset refs on this list: {section.explicitPresetRefs.join(', ')}
         </p>
       ) : null}
@@ -105,19 +107,20 @@ function OverrideSnippet({
   return (
     <div className="mt-3 space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm">
-          Paste under <code className="font-mono text-xs">presets:</code> in <OverridesYamlLink />:
+        <p className="text-sm text-slate-100">
+          Paste under <code className="font-mono text-xs text-slate-200">presets:</code> in{' '}
+          <OverridesYamlLink />:
         </p>
         <button
           type="button"
           onClick={onCopy}
-          className="shrink-0 rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 shadow-sm transition hover:bg-amber-100"
+          className="shrink-0 rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-100 shadow-sm transition hover:bg-slate-700"
         >
           {copied ? 'Copied' : 'Copy snippet'}
         </button>
       </div>
       <pre
-        className="overflow-x-auto rounded-md border border-amber-200 bg-white/80 p-3 font-mono text-xs leading-relaxed text-slate-800"
+        className="overflow-x-auto rounded-md border border-slate-600 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-100"
         data-testid="missing-inheritance-override-snippet"
       >
         {snippet}
@@ -149,31 +152,32 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
     >
       <div data-testid="missing-inheritance-panel">
         {missingFieldInheritance && parentId ? (
-          <p className="text-sm">
-            This preset defines an explicit field list without <code>{`{${parentId}}`}</code>, so it
-            does not inherit every field from its slash parent.
+          <p className="text-sm text-slate-100">
+            This preset defines an explicit field list without{' '}
+            <code className="font-mono text-xs text-slate-200">{`{${parentId}}`}</code>, so it does
+            not inherit every field from its slash parent.
           </p>
         ) : missingInheritanceStatus === 'stale' ? (
-          <p className="text-sm">
+          <p className="text-sm text-slate-100">
             This preset no longer has missing slash-parent field inheritance, but an override entry
             still exists in <OverridesYamlLink />.
           </p>
         ) : null}
         {missingInheritanceStatus === 'stale' && missingFieldInheritance ? (
-          <p className="mt-2 text-sm">
+          <p className="mt-2 text-sm text-slate-100">
             The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update
             the snapshot or remove the entry.
           </p>
         ) : null}
         {missingInheritanceStatus === 'stale' && !missingFieldInheritance ? (
-          <p className="mt-2 text-sm">
+          <p className="mt-2 text-sm text-slate-100">
             Remove the stale entry from <OverridesYamlLink />.
           </p>
         ) : null}
         {missingInheritanceStatus === 'unreviewed' ? (
-          <p className="mt-2 text-sm">
+          <p className="mt-2 text-sm text-slate-100">
             If this omission is deliberate, add an entry to <OverridesYamlLink /> with the current{' '}
-            <code className="font-mono text-xs">missedFieldIds</code> snapshot.
+            <code className="font-mono text-xs text-slate-200">missedFieldIds</code> snapshot.
           </p>
         ) : null}
         {showOverrideSnippet ? (
