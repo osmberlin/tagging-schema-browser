@@ -5,7 +5,6 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
-import { areaAccent } from '@/theme/areaAccent'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import type { PresetFieldSection, PresetOptionRow } from '@/utils/fieldOptions'
 import {
@@ -96,6 +95,7 @@ function IconPageLink({ iconName, children }: { iconName: string; children: Reac
         i_usage: 'all',
       })}
       title={`Open icon “${iconName}” on Icons page`}
+      className="text-sky-300 hover:text-sky-200"
     >
       {children}
     </AreaLink>
@@ -126,9 +126,9 @@ function MismatchRowPanel({
           </span>
           <MismatchIcon icon={childIcon} title="Child preset icon" />
         </div>
-        <div className="min-w-0 text-sm text-slate-100">
-          <p className="font-medium">Field option icon differs from child preset icon</p>
-          <p className="mt-0.5 text-xs text-slate-300">
+        <div className="min-w-0 text-slate-100">
+          <p className="text-sm font-medium">Field option icon differs from child preset icon</p>
+          <p className="mt-0.5 text-sm text-slate-300">
             Option <span className="font-mono">{row.optionValue}</span>
             {row.icon ? (
               <>
@@ -146,7 +146,7 @@ function MismatchRowPanel({
         </div>
       </div>
 
-      <dl className="grid gap-1 text-xs text-slate-200 sm:grid-cols-[5rem_1fr]">
+      <dl className="grid gap-1 text-sm text-slate-200 sm:grid-cols-[5rem_1fr]">
         <dt className="font-medium text-slate-400">Field</dt>
         <dd className="font-mono">
           {section.fieldId}
@@ -165,13 +165,14 @@ function MismatchRowPanel({
         ) : null}
       </dl>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 text-sm">
         <AreaLink
           area="fields"
           to="/field/$"
           params={{ _splat: section.fieldId }}
           search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
           title={`Open field “${section.fieldId}”`}
+          className="text-emerald-300 hover:text-emerald-200"
         >
           Field
         </AreaLink>
@@ -182,7 +183,10 @@ function MismatchRowPanel({
             to="/preset/$"
             params={{ _splat: childPresetId }}
             search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-            className={`inline-flex items-center gap-1.5 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
+            className={cn(
+              schemaIssueStyles.disclosureActionLink,
+              schemaIssueStyles.disclosurePresetLink,
+            )}
           >
             <AreaIcon area="presets" className="h-3.5 w-3.5" />
             Child preset
@@ -193,7 +197,10 @@ function MismatchRowPanel({
             to="/preset/$"
             params={{ _splat: parent.id }}
             search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-            className={`inline-flex items-center gap-1.5 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
+            className={cn(
+              schemaIssueStyles.disclosureActionLink,
+              schemaIssueStyles.disclosurePresetLink,
+            )}
           >
             <AreaIcon area="presets" className="h-3.5 w-3.5" />
             Parent preset
@@ -254,7 +261,7 @@ export function PresetIconMismatchPanel({
     >
       {childRefs.length > 0 ? (
         <div className="space-y-3">
-          <p className="font-medium text-slate-100">
+          <p className="text-sm font-medium text-slate-100">
             This preset&apos;s icon is referenced by a parent field option that uses a different
             icon.
           </p>
@@ -269,7 +276,7 @@ export function PresetIconMismatchPanel({
 
       {parentRows.length > 0 ? (
         <div className="space-y-3">
-          <p className="font-medium text-slate-100">
+          <p className="text-sm font-medium text-slate-100">
             {parentRows.length} field option{parentRows.length === 1 ? '' : 's'} on this preset use
             a different icon than the linked child preset{parentRows.length === 1 ? '' : 's'}.
           </p>

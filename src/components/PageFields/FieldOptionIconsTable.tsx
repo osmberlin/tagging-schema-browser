@@ -50,8 +50,8 @@ export function FieldOptionIconsTable({
   }
 
   const presetLinkClass = dark
-    ? 'inline-flex items-center gap-1 text-xs font-medium text-rose-300 hover:underline'
-    : `inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`
+    ? cn(schemaIssueStyles.disclosureActionLink, schemaIssueStyles.disclosurePresetLink)
+    : `inline-flex items-center gap-1 text-sm font-medium hover:underline ${areaAccent.presets.link}`
 
   return (
     <div className={cn('not-prose overflow-x-auto', dark && schemaIssueStyles.disclosureBodyInset)}>
@@ -59,7 +59,7 @@ export function FieldOptionIconsTable({
         <thead>
           <tr
             className={cn(
-              'text-left text-[11px] font-semibold tracking-wide uppercase',
+              'text-left text-xs font-semibold tracking-wide uppercase',
               dark
                 ? 'border-b border-slate-600 bg-slate-950 text-slate-300'
                 : 'border-b border-slate-200 bg-slate-50 text-slate-500',
@@ -86,12 +86,7 @@ export function FieldOptionIconsTable({
                 <p className={cn('font-medium', dark ? 'text-slate-100' : 'text-slate-900')}>
                   {row.labelEn}
                 </p>
-                <p
-                  className={cn(
-                    'font-mono text-[11px]',
-                    dark ? 'text-slate-400' : 'text-slate-500',
-                  )}
-                >
+                <p className={cn('font-mono text-xs', dark ? 'text-slate-400' : 'text-slate-500')}>
                   {row.optionValue}
                 </p>
               </td>
@@ -101,7 +96,7 @@ export function FieldOptionIconsTable({
                   {row.optionIcon ? (
                     <span
                       className={cn(
-                        'font-mono text-[11px]',
+                        'font-mono text-xs',
                         dark ? 'text-slate-400' : 'text-slate-500',
                       )}
                     >
@@ -136,7 +131,7 @@ export function FieldOptionIconsTable({
                   {row.childPreset.icon ? (
                     <span
                       className={cn(
-                        'font-mono text-[11px]',
+                        'font-mono text-xs',
                         dark ? 'text-slate-400' : 'text-slate-500',
                       )}
                     >
@@ -149,7 +144,7 @@ export function FieldOptionIconsTable({
                 {row.iconMismatch ? (
                   <span
                     className={cn(
-                      'rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+                      'rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
                       dark
                         ? 'bg-amber-900/60 text-amber-200 ring-amber-700/60'
                         : 'bg-amber-100 text-amber-800 ring-amber-200',
@@ -160,7 +155,7 @@ export function FieldOptionIconsTable({
                 ) : (
                   <span
                     className={cn(
-                      'rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+                      'rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
                       dark
                         ? 'bg-emerald-900/50 text-emerald-200 ring-emerald-700/50'
                         : 'bg-emerald-50 text-emerald-700 ring-emerald-100',

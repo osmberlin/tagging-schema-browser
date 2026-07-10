@@ -19,6 +19,8 @@ export const schemaIssueStyles = {
   code: 'rounded bg-slate-950/70 px-1 py-0.5 font-mono text-[0.85em] font-normal text-slate-100 ring-1 ring-inset ring-slate-600/70',
   externalLink:
     'font-mono text-[0.85em] font-medium text-mauve-300 underline decoration-mauve-400/50 underline-offset-2 hover:text-mauve-200 hover:decoration-mauve-200',
+  disclosureActionLink: 'inline-flex items-center gap-1.5 text-sm font-medium hover:underline',
+  disclosurePresetLink: 'text-rose-300',
   icon: {
     error: 'text-rose-400',
     warning: 'text-amber-400',
