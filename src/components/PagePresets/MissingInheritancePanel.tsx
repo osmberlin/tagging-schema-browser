@@ -4,6 +4,8 @@ import type {
   MissingFieldInheritance,
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
+import { externalLinkClass } from '@/theme/externalAccent'
+import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
@@ -57,6 +59,19 @@ function FieldListSection({
   )
 }
 
+function OverridesYamlLink() {
+  return (
+    <a
+      href={MISSING_INHERITANCE_OVERRIDES_EDIT_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`font-mono text-xs ${externalLinkClass()}`}
+    >
+      missing-inheritance-overrides.yaml
+    </a>
+  )
+}
+
 export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset }) {
   const { missingFieldInheritance, missingInheritanceStatus } = preset
   if (missingInheritanceStatus === 'none' || !missingFieldInheritance) return null
@@ -74,16 +89,14 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
       </p>
       {missingInheritanceStatus === 'stale' ? (
         <p className="mt-2 text-sm">
-          The reviewed override in{' '}
-          <code className="font-mono text-xs">missing-inheritance-overrides.yaml</code> no longer
-          matches — re-check and update the snapshot.
+          The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update the
+          snapshot.
         </p>
       ) : null}
       {missingInheritanceStatus === 'unreviewed' ? (
         <p className="mt-2 text-sm">
-          If this omission is deliberate, add an entry to{' '}
-          <code className="font-mono text-xs">missing-inheritance-overrides.yaml</code> with the
-          current <code className="font-mono text-xs">missedFieldIds</code> snapshot.
+          If this omission is deliberate, add an entry to <OverridesYamlLink /> with the current{' '}
+          <code className="font-mono text-xs">missedFieldIds</code> snapshot.
         </p>
       ) : null}
       <div className="mt-4 space-y-4">
