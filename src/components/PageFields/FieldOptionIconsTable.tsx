@@ -17,7 +17,17 @@ function SmallIcon({ icon, title, dark }: { icon?: string; title: string; dark?:
       </span>
     )
   }
-  return <img src={src} alt="" className="h-5 w-5 shrink-0" title={`${title}: ${icon}`} />
+  return (
+    <img
+      src={src}
+      alt=""
+      className={cn(
+        'h-5 w-5 shrink-0 object-contain',
+        dark && 'rounded border border-slate-200 bg-white p-0.5',
+      )}
+      title={`${title}: ${icon}`}
+    />
+  )
 }
 
 export function FieldOptionIconsTable({
