@@ -2,6 +2,7 @@ import { AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
 import { SidebarSection } from '@/components/ui/Sidebar'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
+import { fieldTypeHint } from '@/utils/fieldTypes'
 import { cn } from '@/utils/tw'
 import { useFieldFacetMeta, useFieldFacetState } from './useFieldFacetState'
 import { useFieldSearch } from './useFieldSearch'
@@ -96,7 +97,7 @@ export function FieldFacetSidebar() {
             <FacetButton
               key={type}
               active={state.f_type === type}
-              label={type}
+              label={fieldTypeHint(type) ? `${type} — ${fieldTypeHint(type)}` : type}
               count={meta.typeCounts.get(type) ?? 0}
               onClick={() => setState({ f_type: type })}
             />

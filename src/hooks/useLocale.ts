@@ -21,7 +21,7 @@ export function useLocale() {
   const reference = resolveSchemaReference(urlReference, persistedReference)
   const dataUrl = resolveActiveDataUrl(dataUrlParam, reference)
 
-  const { schemaReferences, loading: schemaLoading, error: schemaError } = useSchema()
+  const { loading: schemaLoading, error: schemaError } = useSchema()
 
   const localesQuery = useQuery({
     queryKey: localeKeys.list(dataUrl),
@@ -32,7 +32,7 @@ export function useLocale() {
 
   const translationsQuery = useQuery({
     queryKey: localeKeys.translations(dataUrl, locale),
-    queryFn: () => fetchLocaleTranslations(dataUrl, locale, schemaReferences),
+    queryFn: () => fetchLocaleTranslations(dataUrl, locale),
     enabled: dataUrl.trim().length > 0 && locale.length > 0 && !schemaLoading && !schemaError,
     staleTime: SCHEMA_STALE_TIME,
   })

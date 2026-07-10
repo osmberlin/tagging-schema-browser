@@ -1,4 +1,3 @@
-import { isReference } from '@/schemaRuntimeDereference/references'
 import type { FieldTranslations, RawFields } from '@/utils/types'
 
 export type FieldRefDisplay = {
@@ -14,6 +13,10 @@ const FIELD_CROSS_REF_KEYS = new Set([
   'stringsCrossReference',
   'iconsCrossReference',
 ])
+
+function isReference(value: unknown): value is string {
+  return typeof value === 'string' && /^\{.+\}$/.test(value)
+}
 
 export function isFieldCrossRefKey(keyName: string): boolean {
   return FIELD_CROSS_REF_KEYS.has(keyName)

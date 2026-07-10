@@ -4,6 +4,7 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { ExpandIcon } from '@/components/ui/ExpandIcon'
 import { areaAccent } from '@/theme/areaAccent'
+import { fieldTypeHint } from '@/utils/fieldTypes'
 import type { FieldViewModel } from '@/utils/types'
 
 const fieldCardClass =
@@ -30,7 +31,10 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-slate-500">
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-600">
+        <span
+          className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[11px] text-slate-600"
+          title={fieldTypeHint(field.type)}
+        >
           {field.type}
         </span>
         {field.key !== field.id ? (

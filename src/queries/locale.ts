@@ -1,4 +1,3 @@
-import { type References, dereferenceLocaleStrings } from '@/schemaRuntimeDereference'
 import { isBundledTestSchemaUrl } from '@/utils/constants'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import { fetchSchemaJson } from '@/utils/schemaFetch'
@@ -120,7 +119,6 @@ export async function discoverLocales(dataUrl: string): Promise<string[]> {
 async function loadLocale(
   dataUrl: string,
   locale: string,
-  schemaReferences: References | null,
 ): Promise<{ presets: LocaleMap; fields: FieldTranslations }> {
   const res = await fetchSchemaJson<
     Record<
@@ -140,9 +138,6 @@ async function loadLocale(
   const tstrings = {
     presets: json[locale]?.presets?.presets ?? {},
     fields: json[locale]?.presets?.fields ?? {},
-  }
-  if (schemaReferences) {
-    dereferenceLocaleStrings(tstrings, schemaReferences)
   }
 
   const map: LocaleMap = new Map()
@@ -170,8 +165,7 @@ export async function fetchLocales(dataUrl: string): Promise<string[]> {
 export async function fetchLocaleTranslations(
   dataUrl: string,
   locale: string,
-  schemaReferences: References | null,
 ): Promise<{ map: LocaleMap; fieldMap: FieldTranslations }> {
-  const { presets, fields } = await loadLocale(dataUrl, locale, schemaReferences)
+  const { presets, fields } = await loadLocale(dataUrl, locale)
   return { map: presets, fieldMap: fields }
 }

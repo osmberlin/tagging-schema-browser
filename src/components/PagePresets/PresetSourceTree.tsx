@@ -13,10 +13,11 @@ import {
 } from '@/components/PagePresets/presetLabelInheritance'
 import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
 import { useSchema } from '@/hooks/useSchema'
-import { isFieldCrossRefKey, resolveFieldRefDisplay } from '@/schemaRuntimeDereference/displayRefs'
 import { areaAccent, areaSourceLinkClass } from '@/theme/areaAccent'
 import { externalPillClass } from '@/theme/externalAccent'
+import { isFieldCrossRefKey, resolveFieldRefDisplay } from '@/utils/fieldRefDisplay'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset, RawPreset, RawPresets } from '@/utils/types'
 import { presetSearchDefaults } from './useSearchState'
@@ -725,6 +726,43 @@ function JsonObjectEntry({
   }
 
   if (typeof value === 'object' && value !== null) {
+    if (keyName === 'prerequisiteTag') {
+      const tag = parsePrerequisiteTag(value)
+      const entries = sortObjectEntries(Object.entries(value as Record<string, unknown>), {
+        parentKey: keyName,
+        sortMode,
+      })
+      return (
+        <Fragment>
+          {tag ? (
+            <JsonLine level={level}>
+              <span className="text-[11px] text-sky-700">/* {formatPrerequisiteTag(tag)} */</span>
+            </JsonLine>
+          ) : null}
+          <JsonLine level={level}>
+            <JsonKey name={keyName} />
+            <span className="text-slate-500">: {'{'}</span>
+          </JsonLine>
+          {entries.map(([key, child], i) => (
+            <JsonObjectEntry
+              key={key}
+              keyName={key}
+              value={child}
+              level={level + 1}
+              dataUrl={dataUrl}
+              trailingComma={i < entries.length - 1}
+              host={host}
+              sortMode={sortMode}
+              jsonRootKind={jsonRootKind}
+            />
+          ))}
+          <JsonLine level={level} trailingComma={trailingComma}>
+            <span className="text-slate-500">{'}'}</span>
+          </JsonLine>
+        </Fragment>
+      )
+    }
+
     const entries = sortObjectEntries(Object.entries(value as Record<string, unknown>), {
       parentKey: keyName,
       sortMode,

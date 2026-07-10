@@ -52,7 +52,6 @@ export function processRawSchemaPayload(
     fields: raw.fields,
     translations: raw.translations,
     fieldTranslations: raw.translations.en?.presets?.fields ?? {},
-    schemaReferences: raw.references,
     schemaBuild,
     loadError: null,
     diagnostics,

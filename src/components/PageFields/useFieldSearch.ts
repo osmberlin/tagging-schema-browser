@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { sortFieldTypes } from '@/utils/fieldTypes'
 import type {
   DenormalizedPreset,
   FieldTranslations,
@@ -57,9 +58,7 @@ export function useFieldSearch(
       }
     })
 
-    const types = Array.from(new Set(fieldEntries.map((f) => f.type))).sort((a, b) =>
-      a.localeCompare(b),
-    )
+    const types = sortFieldTypes(fieldEntries.map((f) => f.type))
 
     return { fields: fieldEntries, types }
   }, [fields, presets, fieldTranslations])

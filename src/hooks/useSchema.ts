@@ -56,7 +56,6 @@ export function useSchema() {
     rawPresets: data?.rawPresets ?? {},
     fields: data?.fields ?? {},
     fieldTranslations: data?.fieldTranslations ?? {},
-    schemaReferences: data?.schemaReferences ?? null,
     supportedSchemaMajor: SUPPORTED_SCHEMA_MAJOR,
   }
 }
