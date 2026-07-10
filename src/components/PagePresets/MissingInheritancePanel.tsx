@@ -7,6 +7,7 @@ import type {
 } from '@/components/PagePresets/missingFieldInheritance'
 import { formatMissingInheritanceOverrideYaml } from '@/components/PagePresets/missingFieldInheritance'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
+import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { externalLinkClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
@@ -127,6 +128,9 @@ function OverrideSnippet({
 
 export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset }) {
   const { missingFieldInheritance, missingInheritanceStatus } = preset
+  const disclosureId = `preset-missing-inheritance:${preset.id}`
+  useAutoOpenFocusedIssue(disclosureId, 'missingInheritance', missingInheritanceStatus !== 'none')
+
   if (missingInheritanceStatus === 'none') return null
 
   const parentId =
@@ -138,11 +142,10 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
 
   return (
     <SchemaIssueDisclosure
-      disclosureId={`preset-missing-inheritance:${preset.id}`}
+      disclosureId={disclosureId}
       variant={ISSUE_VARIANTS[missingInheritanceStatus]}
       title={ISSUE_TITLES[missingInheritanceStatus]}
       summary={STATUS_LABELS[missingInheritanceStatus]}
-      defaultOpen={missingInheritanceStatus === 'unreviewed'}
     >
       <div data-testid="missing-inheritance-panel">
         {missingFieldInheritance && parentId ? (

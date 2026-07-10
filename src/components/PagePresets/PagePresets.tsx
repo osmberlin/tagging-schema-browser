@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react'
+import { Fragment, useEffect, useMemo } from 'react'
 import { AreaIcon, AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { SchemaIssueAction, SchemaIssueAlert } from '@/components/ui/SchemaIssue'
 import { BrokenPresetIconsAlert, MissingInheritanceAlerts } from '@/components/ui/SchemaIssueAlerts'
+import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { RELEASE_DATA_URL } from '@/utils/constants'
@@ -39,6 +40,11 @@ export function PagePresets() {
     [presets],
   )
   const activeIssueFilter = activePresetIssueFilter(searchState)
+  const { setActiveIssueFocus } = useSchemaIssueDisclosureActions()
+
+  useEffect(() => {
+    setActiveIssueFocus(activeIssueFilter)
+  }, [activeIssueFilter, setActiveIssueFocus])
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
