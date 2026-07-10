@@ -1,8 +1,10 @@
 import { z } from 'zod'
 import type { PresetBuilderState } from '@/components/PagePresetBuilder/presetBuilderTypes'
 import {
+  parseDraftFields,
   parseStringList,
   parseTagObject,
+  stringifyDraftFields,
   stringifyStringList,
   stringifyTagObject,
 } from '@/components/PagePresetBuilder/presetBuilderUrlCodec'
@@ -42,6 +44,7 @@ export const presetBuilderSearchSchema = z.object({
   pb_locationSetCrossReference: z.string().catch(''),
   pb_relation: z.string().catch(''),
   pb_relationCrossReference: z.string().catch(''),
+  pb_draftFields: jsonStringParam(),
   pb_from: z.string().catch(''),
 })
 
@@ -70,6 +73,7 @@ export function searchToBuilderState(search: PresetBuilderSearch): PresetBuilder
     locationSetCrossReference: search.pb_locationSetCrossReference,
     relation: search.pb_relation,
     relationCrossReference: search.pb_relationCrossReference,
+    draftFields: parseDraftFields(search.pb_draftFields),
   }
 }
 
@@ -97,6 +101,7 @@ export function builderStateToSearch(
     pb_locationSetCrossReference: state.locationSetCrossReference,
     pb_relation: state.relation,
     pb_relationCrossReference: state.relationCrossReference,
+    pb_draftFields: stringifyDraftFields(state.draftFields),
     pb_from: fromPresetId,
   }
 }

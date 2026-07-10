@@ -1,3 +1,5 @@
+import type { RawField } from '@/utils/types'
+
 export type PresetBuilderTranslations = {
   name: string
   terms: string[]
@@ -24,6 +26,8 @@ export type PresetBuilderState = {
   locationSetCrossReference: string
   relation: string
   relationCrossReference: string
+  /** New field definitions drafted in the builder (exported as separate JSON files). */
+  draftFields: Record<string, RawField>
 }
 
 export const PRESET_BUILDER_DEFAULTS: PresetBuilderState = {
@@ -46,4 +50,5 @@ export const PRESET_BUILDER_DEFAULTS: PresetBuilderState = {
   locationSetCrossReference: '',
   relation: '',
   relationCrossReference: '',
+  draftFields: {},
 }
