@@ -14,6 +14,7 @@ import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalAccent, externalLinkClass, externalPillClass } from '@/theme/externalAccent'
+import { getPresetFieldSections } from '@/utils/fieldOptions'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
@@ -77,6 +78,7 @@ function PresetDetailContent({
   dataUrl: string
 }) {
   const { locale, localeMap, loading: localeLoading, error: localeError } = useLocale()
+  const { fields, fieldTranslations } = useSchema()
   const loc = locale ? localeMap?.get(preset.id) : undefined
 
   const { result: comparison } = useComparison()
@@ -109,6 +111,20 @@ function PresetDetailContent({
   const iconRelated = iconId
     ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toItem)
     : []
+
+  const parentMismatches = preset.iconMismatch
+    ? getPresetFieldSections(preset, fields, fieldTranslations, presets).flatMap((section) =>
+        section.options.filter((row) => row.iconMismatch),
+      )
+    : []
+
+  const childMismatches = presets.flatMap((parent) =>
+    getPresetFieldSections(parent, fields, fieldTranslations, presets).flatMap((section) =>
+      section.options
+        .filter((row) => row.childPreset?.id === preset.id && row.iconMismatch)
+        .map((row) => ({ parent, row, section })),
+    ),
+  )
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
@@ -161,6 +177,45 @@ function PresetDetailContent({
           </a>
         </div>
       </header>
+
+      {parentMismatches.length > 0 ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <strong>{parentMismatches.length}</strong> field option
+          {parentMismatches.length === 1 ? '' : 's'} on this preset use a different icon than the
+          linked child preset{parentMismatches.length === 1 ? '' : 's'}. Expand field references in
+          the source tree to review.
+        </p>
+      ) : null}
+
+      {childMismatches.length > 0 ? (
+        <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p>
+            This preset&apos;s icon <code className="font-mono text-xs">{preset.icon}</code> differs
+            from the field option icon on:
+          </p>
+          <ul className="list-disc space-y-1 pl-5 text-xs">
+            {childMismatches.map(({ parent, row, section }) => (
+              <li key={`${parent.id}-${row.optionValue}`}>
+                <Link
+                  to="/preset/$"
+                  params={{ _splat: parent.id }}
+                  search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+                  className="font-medium text-amber-900 underline decoration-amber-400/60 underline-offset-2 hover:decoration-amber-900"
+                >
+                  {parent.name}
+                </Link>
+                {' → '}
+                <span className="font-mono">{section.fieldKey}</span>
+                {' = '}
+                <span className="font-mono">{row.optionValue}</span>
+                {' ('}
+                <span className="font-mono">{row.icon}</span>
+                {')'}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <MissingInheritancePanel preset={preset} />
 

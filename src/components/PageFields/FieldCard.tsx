@@ -47,6 +47,11 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
             universal
           </span>
         ) : null}
+        {field.iconMismatchCount > 0 ? (
+          <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-200 ring-inset">
+            {field.iconMismatchCount} icon mismatch{field.iconMismatchCount === 1 ? '' : 'es'}
+          </span>
+        ) : null}
       </div>
       {field.usageCount > 0 ? (
         <p className="mt-2 line-clamp-2 text-xs text-slate-500">

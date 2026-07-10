@@ -1,8 +1,9 @@
 import { useParams } from '@tanstack/react-router'
+import { FieldOptionIconsTable } from '@/components/PageFields/FieldOptionIconsTable'
 import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
-import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { presetSearchDefaults, useSetPreset } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
@@ -11,6 +12,7 @@ import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalAccent, externalPillClass } from '@/theme/externalAccent'
+import { getFieldOptionMismatchRows } from '@/utils/fieldOptions'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
@@ -89,6 +91,8 @@ function FieldDetailContent({
   morePresets: DenormalizedPreset[]
   dataUrl: string
 }) {
+  const setPreset = useSetPreset()
+  const { fields, presets, fieldTranslations } = useSchema()
   const { locale, fieldLocaleMap, loading: localeLoading, error: localeError } = useLocale()
   const fieldLocale = locale ? fieldLocaleMap?.[fieldId] : undefined
 
@@ -105,6 +109,8 @@ function FieldDetailContent({
   const onFilterMorePresets = { moreFieldIds: [fieldId] }
 
   const toItem = (p: DenormalizedPreset): RelatedItem => ({ id: p.id, name: p.name })
+  const optionRows = getFieldOptionMismatchRows(fieldId, fields, fieldTranslations, presets)
+  const mismatchCount = optionRows.filter((row) => row.iconMismatch).length
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
@@ -174,6 +180,23 @@ function FieldDetailContent({
           </AreaLink>
         </div>
       </header>
+
+      {mismatchCount > 0 ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <strong>{mismatchCount}</strong> option
+          {mismatchCount === 1 ? '' : 's'} on this field use a different icon than the linked child
+          preset{mismatchCount === 1 ? '' : 's'}.
+        </p>
+      ) : null}
+
+      <DetailDisclosure
+        title="Option icons"
+        area="icons"
+        subtitle="Field option icons vs dedicated child preset icons"
+        defaultOpen={mismatchCount > 0}
+      >
+        <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} />
+      </DetailDisclosure>
 
       <DetailDisclosure
         title="Translation"

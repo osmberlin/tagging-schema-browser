@@ -12,5 +12,6 @@ export type PresetFilterUpdate = Partial<
     | 'geometry'
     | 'iconPrefix'
     | 'hasIcon'
+    | 'iconMismatch'
   >
 >
