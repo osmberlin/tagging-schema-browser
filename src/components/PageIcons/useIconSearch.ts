@@ -1,12 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { collectOptionIconUsages } from '@/utils/fieldOptions'
 import type { DenormalizedPreset, FieldTranslations, IconViewModel, RawFields } from '@/utils/types'
-import {
-  ensureAllIconSuppliers,
-  ensureIconsForNames,
-  getIconRegistry,
-  useIconRegistryEpoch,
-} from './iconRegistry'
+import { ensureIconsForNames, getIconRegistry, useIconRegistryEpoch } from './iconRegistry'
 
 export function useIconSearch(
   presets: DenormalizedPreset[],
@@ -16,7 +11,6 @@ export function useIconSearch(
   const registryEpoch = useIconRegistryEpoch()
 
   useEffect(() => {
-    void ensureAllIconSuppliers()
     const presetIconNames = presets
       .map((preset) => preset.icon)
       .filter((icon): icon is string => Boolean(icon))

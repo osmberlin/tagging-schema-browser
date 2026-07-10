@@ -11,10 +11,12 @@ import { exportIcons } from '@/utils/pageExports'
 import { IconCard } from './IconCard'
 import { applyIconFacets, useIconFacetState } from './useIconFacetState'
 import { useIconSearch } from './useIconSearch'
+import { useIconSupplierLoad } from './useIconSupplierLoad'
 
 export function PageIcons() {
   const { data, loading, dataUrl } = useSchema()
   const [facetState, setFacetState] = useIconFacetState()
+  const { suppliersReady } = useIconSupplierLoad(facetState.i_supplier)
   const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
   const { icons } = useIconSearch(
     data?.presets ?? [],
@@ -74,6 +76,9 @@ export function PageIcons() {
         count={brokenPresetIconCount}
         onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
       />
+      {!suppliersReady && filtered.length === 0 ? (
+        <SchemaLoadingPanel label="Loading icon libraries…" />
+      ) : null}
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         {filtered.map((icon) => (
           <li key={icon.name} className="h-full">
