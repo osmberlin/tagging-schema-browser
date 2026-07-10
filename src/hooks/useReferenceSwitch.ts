@@ -56,10 +56,12 @@ export function useReferenceSwitch() {
     if (!target || !animationDoneRef.current) return
 
     clearFallbackTimer()
-    setPendingReference(null)
-    setReferencePreloading(false)
     targetRef.current = null
     animationDoneRef.current = false
+
+    // Persist before navigation; keep pendingReference until the URL updates so
+    // router sync effects do not overwrite interem or restore release mid-flight.
+    setPersistedReference(target)
 
     void navigate({
       to: '.',
@@ -70,13 +72,12 @@ export function useReferenceSwitch() {
       }),
     })
       .then(() => {
-        setPersistedReference(target)
+        setPendingReference(null)
+        setReferencePreloading(false)
       })
       .catch(() => {
         setPendingReference(null)
         setReferencePreloading(false)
-        targetRef.current = null
-        animationDoneRef.current = false
       })
   }, [
     clearFallbackTimer,

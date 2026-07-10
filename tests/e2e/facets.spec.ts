@@ -258,6 +258,12 @@ test('marker field detail renders structured option translations', async ({ page
   expect(errors).toEqual([])
 })
 
+test('field detail does not flash "Field not found" while schema loads', async ({ page }) => {
+  await page.goto('/field/name?dataUrl=/test-schema')
+  await expect(page.getByText('Field not found')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: /^Name$/i })).toBeVisible({ timeout: 10_000 })
+})
+
 test('preset table icon row truncates long icon names', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 })
   await loadTestSchema(page)
