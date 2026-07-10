@@ -9,6 +9,8 @@ import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportIcons } from '@/utils/pageExports'
 import { IconCard } from './IconCard'
+import { flattenIconUsages } from './iconUsageRows'
+import { IconUsageTable } from './IconUsageTable'
 import { applyIconFacets, useIconFacetState } from './useIconFacetState'
 import { useIconSearch } from './useIconSearch'
 import { useIconSupplierLoad } from './useIconSupplierLoad'
@@ -27,6 +29,10 @@ export function PageIcons() {
     if (!data) return []
     return applyIconFacets(icons, facetState)
   }, [data, icons, facetState])
+  const usageRows = useMemo(() => {
+    if (!data || facetState.i_view !== 'usages') return []
+    return flattenIconUsages(filtered, data.fields, data.fieldTranslations)
+  }, [data, facetState.i_view, filtered])
   const exportData = useMemo(() => exportIcons(filtered), [filtered])
 
   if (!dataUrl && !data) {
@@ -48,9 +54,25 @@ export function PageIcons() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
           <AreaIcon area="icons" className={`h-7 w-7 ${areaAccent.icons.icon}`} />
-          Icons <CountPill className="text-sm">{filtered.length}</CountPill>
+          Icons{' '}
+          <CountPill className="text-sm">
+            {facetState.i_view === 'usages'
+              ? `${filtered.length} icons · ${usageRows.length} usages`
+              : filtered.length}
+          </CountPill>
         </h1>
         <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-slate-500">
+            View
+            <select
+              value={facetState.i_view}
+              onChange={(e) => setFacetState({ i_view: e.target.value as 'cards' | 'usages' })}
+              className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.icons.focus}`}
+            >
+              <option value="cards">Cards</option>
+              <option value="usages">Usages</option>
+            </select>
+          </label>
           <label className="flex items-center gap-2 text-sm text-slate-500">
             Sort
             <select
@@ -79,20 +101,24 @@ export function PageIcons() {
       {!suppliersReady && filtered.length === 0 ? (
         <SchemaLoadingPanel label="Loading icon libraries…" />
       ) : null}
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-        {filtered.map((icon) => (
-          <li key={icon.name} className="h-full">
-            <IconCard
-              iconName={icon.name}
-              svgRaw={icon.svgRaw}
-              presetUsageCount={icon.presetUsageCount}
-              optionUsageCount={icon.optionUsageCount}
-              presets={icon.presets}
-              optionUsages={icon.optionUsages}
-            />
-          </li>
-        ))}
-      </ul>
+      {facetState.i_view === 'usages' ? (
+        <IconUsageTable rows={usageRows} />
+      ) : (
+        <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
+          {filtered.map((icon) => (
+            <li key={icon.name} className="h-full">
+              <IconCard
+                iconName={icon.name}
+                svgRaw={icon.svgRaw}
+                presetUsageCount={icon.presetUsageCount}
+                optionUsageCount={icon.optionUsageCount}
+                presets={icon.presets}
+                optionUsages={icon.optionUsages}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
       {filtered.length === 0 && (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
           No icons match the current filters.

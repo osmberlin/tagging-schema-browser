@@ -11,6 +11,7 @@ export const iconFacetSchema = z.object({
   i_usage: z.enum(['all', 'unused', 'presets', 'options', 'any']).catch('all'),
   i_hasSvg: z.enum(['all', 'with', 'missing']).catch('all'),
   i_sort: z.enum(['name', 'usage_desc', 'usage_asc']).catch('usage_desc'),
+  i_view: z.enum(['cards', 'usages']).catch('cards'),
 })
 
 export type IconFacetState = z.infer<typeof iconFacetSchema>
