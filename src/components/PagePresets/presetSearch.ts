@@ -1,4 +1,5 @@
 import itemsjs from 'itemsjs'
+import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import { presetMatchesTextQuery } from '@/utils/presetTextMatch'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -26,7 +27,7 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     primaryTagKey: p.primaryTagKey ?? '',
     iconName: p.icon ?? '',
     iconPrefix: p.iconPrefix ?? 'none',
-    hasIconFacet: p.iconBroken ? 'broken' : p.hasIcon ? 'yes' : 'no',
+    hasIconFacet: p.icon && isIconSvgConfirmedMissing(p.icon) ? 'broken' : p.hasIcon ? 'yes' : 'no',
   }))
 }
 
@@ -84,6 +85,12 @@ let engine: PresetSearchEngine | null = null
 export function activatePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
   const key = normalizeDataUrl(dataUrl)
   if (activeDataUrl === key && engine) return
+  refreshPresetSearchIndex(dataUrl, presets)
+}
+
+/** Rebuild facet buckets after async icon suppliers finish loading. */
+export function refreshPresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
+  const key = normalizeDataUrl(dataUrl)
   activeDataUrl = key
   engine = itemsjs(toItemsJsRecords(presets), itemsJsConfig as never)
 }
