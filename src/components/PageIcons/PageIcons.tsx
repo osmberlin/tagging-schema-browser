@@ -1,8 +1,10 @@
 import { useMemo } from 'react'
 import { AreaIcon } from '@/components/ui/areaIcons'
+import { BrokenPresetIconsBanner } from '@/components/ui/BrokenPresetIconsBanner'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportIcons } from '@/utils/pageExports'
@@ -13,6 +15,7 @@ import { useIconSearch } from './useIconSearch'
 export function PageIcons() {
   const { data, loading, dataUrl } = useSchema()
   const [facetState, setFacetState] = useIconFacetState()
+  const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
   const { icons } = useIconSearch(
     data?.presets ?? [],
     data?.fields ?? {},
@@ -67,6 +70,10 @@ export function PageIcons() {
           />
         </div>
       </div>
+      <BrokenPresetIconsBanner
+        count={brokenPresetIconCount}
+        onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
+      />
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         {filtered.map((icon) => (
           <li key={icon.name} className="h-full">

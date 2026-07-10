@@ -1,6 +1,7 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useCallback, useMemo } from 'react'
 import { z } from 'zod'
+import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import type { IconViewModel } from '@/utils/types'
 
 /** Search params for the icons page (route "/icons"), validated with Zod 4. */
@@ -77,10 +78,15 @@ export function useIconFacetMeta(icons: IconViewModel[]) {
     let anyCount = 0
     let unusedCount = 0
 
+    let missingPresetRef = 0
+
     for (const icon of icons) {
       supplierCounts.set(icon.prefix, (supplierCounts.get(icon.prefix) ?? 0) + 1)
       if (icon.svgRaw) withSvg += 1
       else missingSvg += 1
+      if (icon.presetUsageCount > 0 && isIconSvgConfirmedMissing(icon.name)) {
+        missingPresetRef += 1
+      }
       if (icon.presetUsageCount > 0) presetsCount += 1
       if (icon.optionUsageCount > 0) optionsCount += 1
       if (icon.presetUsageCount > 0 || icon.optionUsageCount > 0) anyCount += 1
@@ -91,6 +97,7 @@ export function useIconFacetMeta(icons: IconViewModel[]) {
       supplierCounts,
       withSvg,
       missingSvg,
+      missingPresetRef,
       presetsCount,
       optionsCount,
       anyCount,
