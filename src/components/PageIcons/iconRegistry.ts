@@ -32,6 +32,8 @@ const registryCache = new Map<string, IconRegistryEntry>()
 const dataUrlCache = new Map<string, string | null>()
 const loadedSuppliers = new Set<IconSupplier>()
 const failedSuppliers = new Set<IconSupplier>()
+const pendingPinheadIcons = new Set<string>()
+const resolvedPinheadIcons = new Set<string>()
 const supplierLoadPromises = new Map<IconSupplier, Promise<void>>()
 const registryListeners = new Set<() => void>()
 let registryEpoch = 0
@@ -138,14 +140,22 @@ async function ensurePinheadIcons(names: Iterable<string>): Promise<void> {
   await ensureIconSupplier('pinhead')
   await Promise.allSettled(
     iconNames.map(async (iconName) => {
-      if (registryCache.has(iconName)) return
-      const entry = await fetchPinheadIcon(iconName)
-      if (!entry) {
-        dataUrlCache.set(iconName, null)
-        return
+      if (registryCache.has(iconName) || pendingPinheadIcons.has(iconName)) return
+      pendingPinheadIcons.add(iconName)
+      notifyRegistryChange()
+      try {
+        const entry = await fetchPinheadIcon(iconName)
+        if (!entry) {
+          dataUrlCache.set(iconName, null)
+        } else {
+          mergeRegistryEntries([entry])
+          clearMissCacheForSupplier('pinhead')
+        }
+      } finally {
+        pendingPinheadIcons.delete(iconName)
+        resolvedPinheadIcons.add(iconName)
+        notifyRegistryChange()
       }
-      mergeRegistryEntries([entry])
-      clearMissCacheForSupplier('pinhead')
     }),
   )
 }
@@ -200,19 +210,20 @@ export function getIconRegistry(): Map<string, IconRegistryEntry> {
   return registryCache
 }
 
-/** True when an icon name is not in the bundled icon library. */
+/** @deprecated Use isIconSvgConfirmedMissing after icons have loaded. */
 export function isPresetIconBroken(iconName?: string): boolean {
-  if (!iconName) return false
-  return getIconSvgDataUrl(iconName) === null
+  return isIconSvgConfirmedMissing(iconName)
 }
 
-/**
- * True only after the icon's supplier has loaded and the name has no SVG asset.
- * Avoids false positives while supplier chunks are still loading (option icons on Presets).
- */
+/** True only after the icon's supplier has loaded and the name has no SVG asset. */
 export function isIconSvgConfirmedMissing(iconName?: string): boolean {
   if (!iconName) return false
   const supplier = iconSupplierFromName(iconName)
+  if (supplier === 'pinhead') {
+    if (pendingPinheadIcons.has(iconName)) return false
+    if (!resolvedPinheadIcons.has(iconName) && !registryCache.has(iconName)) return false
+    return !registryCache.get(iconName)?.svgRaw
+  }
   if (!supplier || !loadedSuppliers.has(supplier)) return false
   const entry = registryCache.get(iconName)
   return !entry?.svgRaw

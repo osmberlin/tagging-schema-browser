@@ -1,4 +1,3 @@
-import { isPresetIconBroken } from '@/components/PageIcons/iconRegistry'
 import { resolvePresetFieldList } from '@/components/PagePresets/presetFieldInheritance'
 import { nameRefFromRaw } from '@/components/PagePresets/presetLabelInheritance'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
@@ -158,8 +157,6 @@ export function denormalize(
       .map(([cid]) => cid)
     const categoryNamesList = categoryIds.map((cid) => categoryNames[cid] ?? cid)
 
-    const iconBroken = isPresetIconBroken(icon)
-
     result.push({
       id,
       name,
@@ -179,7 +176,6 @@ export function denormalize(
       moreFields: resolvedMore,
       matchScore: r.matchScore ?? 1,
       hasIcon: Boolean(icon || imageURL),
-      iconBroken,
       searchable: r.searchable !== false,
     })
   }

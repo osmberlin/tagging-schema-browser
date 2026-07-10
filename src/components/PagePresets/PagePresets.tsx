@@ -20,10 +20,10 @@ export function PagePresets() {
   const searchResult = usePresetSearch()
   const totalCount = searchResult?.data.total ?? 0
   const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
-  const brokenPresetIconCount = useMemo(
-    () => data?.presets.filter((preset) => preset.iconBroken).length ?? 0,
-    [data],
-  )
+  const brokenPresetIconCount = useMemo(() => {
+    const bucket = searchResult?.aggregations?.hasIcon?.buckets?.find((b) => b.key === 'broken')
+    return bucket?.doc_count ?? 0
+  }, [searchResult])
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
