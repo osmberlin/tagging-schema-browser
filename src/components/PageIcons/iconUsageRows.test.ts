@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DenormalizedPreset, IconViewModel } from '@/utils/types'
-import { flattenIconUsages } from './iconUsageRows'
+import { flattenIconUsages, sortIconUsageRows } from './iconUsageRows'
 
 function preset(id: string, name: string, icon?: string): DenormalizedPreset {
   return {
@@ -77,5 +77,36 @@ describe('flattenIconUsages', () => {
 
     const rows = flattenIconUsages(icons, {}, {})
     expect(rows.map((row) => row.iconName)).toEqual(['maki-cafe', 'maki-bar'])
+  })
+
+  it('sorts usage rows by icon usage count', () => {
+    const icons = [
+      iconView('maki-cafe', {
+        usageCount: 3,
+        presets: [
+          preset('amenity/cafe', 'Cafe', 'maki-cafe'),
+          preset('amenity/coffee_shop', 'Coffee shop', 'maki-cafe'),
+        ],
+        optionUsages: [{ fieldId: 'cuisine', fieldKey: 'cuisine', optionValue: 'coffee_shop' }],
+      }),
+      iconView('maki-bar', {
+        usageCount: 1,
+        presets: [preset('amenity/bar', 'Bar', 'maki-bar')],
+      }),
+    ]
+    const rows = flattenIconUsages(icons, {}, {})
+
+    expect(sortIconUsageRows(rows, icons, 'usage_desc').map((row) => row.iconName)).toEqual([
+      'maki-cafe',
+      'maki-cafe',
+      'maki-cafe',
+      'maki-bar',
+    ])
+    expect(sortIconUsageRows(rows, icons, 'name').map((row) => row.iconName)).toEqual([
+      'maki-bar',
+      'maki-cafe',
+      'maki-cafe',
+      'maki-cafe',
+    ])
   })
 })
