@@ -1,23 +1,35 @@
 {
   "version": 1,
   "skills": {
+    "agent-orchestration": {
+      "source": "FixMyBerlin/fixmyskills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-orchestration/SKILL.md",
+      "computedHash": "10d9526ef9ca2f5d1e4ca4dc37fa350686a23156978441529fa70f783de2d7fe"
+    },
     "finish-work": {
       "source": "FixMyBerlin/fixmyskills",
       "sourceType": "github",
       "skillPath": "skills/finish-work/SKILL.md",
-      "computedHash": "abc9725151a80e8c2e854f1f30f7a90a5ee2c264ed2d165cc3f05ede3be9eca3"
+      "computedHash": "ae21dcd7725c0f2631e34ab29265d8abb17c10dad432286030c4f5a52a4c17db"
     },
     "playwright-skill": {
       "source": "FixMyBerlin/fixmyskills",
       "sourceType": "github",
       "skillPath": "skills/playwright-skill/SKILL.md",
-      "computedHash": "cbbf917caf7f9a4dfae428850cd1a11d4079eea7e998b3f481059cdf6488f52b"
+      "computedHash": "82dca8d03cc94bbd594838dbfecbf5ea69710a8923cde8fd326a9836077618f9"
     },
     "react-dev": {
       "source": "FixMyBerlin/fixmyskills",
       "sourceType": "github",
       "skillPath": "skills/react-dev/SKILL.md",
-      "computedHash": "e87957bc8783afe17e6ed19df5c3a22bb50de8c6fed681b4907cd4b21b98f109"
+      "computedHash": "ed6a83384a44b6c430b696b58841cecc492c8463001ceab490cc4b9878d10c8f"
+    },
+    "react-map-gl": {
+      "source": "FixMyBerlin/fixmyskills",
+      "sourceType": "github",
+      "skillPath": "skills/react-map-gl/SKILL.md",
+      "computedHash": "5b7b0e880a78aab0fbab36494e6601d4c9fef67cecf1c0109753fe9bb367504b"
     },
     "review-dependabot": {
       "source": "FixMyBerlin/fixmyskills",
@@ -29,7 +41,7 @@
       "source": "FixMyBerlin/fixmyskills",
       "sourceType": "github",
       "skillPath": "skills/tech-stack/SKILL.md",
-      "computedHash": "1d5ed0f8e89c58b40a7255342e1d5a186ff4cc1138a4ea1427196c2c4ab2a9a1"
+      "computedHash": "c30dbc872281df3e9342b7288ee88382a1d66f700ae8b05ee80da4d21ca7c06c"
     },
     "zustand-state-management": {
       "source": "FixMyBerlin/fixmyskills",
