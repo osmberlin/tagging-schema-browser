@@ -95,7 +95,7 @@ export function detectSchemaBuildInfo(
 
 export function formatSchemaBuildLabel(
   build: SchemaBuildInfo,
-  options?: { resolvedReleaseVersion?: string | null },
+  options?: { resolvedReleaseVersion?: string | null; stagingAge?: string | null },
 ): string {
   const major = build.major ?? SUPPORTED_SCHEMA_MAJOR
   const spec = build.versionSpec
@@ -103,7 +103,10 @@ export function formatSchemaBuildLabel(
   if (spec === 'latest' && options?.resolvedReleaseVersion) {
     return `v${options.resolvedReleaseVersion}`
   }
-  if (build.detection === 'content' && !spec) return `v${major}`
+  if (build.detection === 'content' && !spec) {
+    const age = options?.stagingAge?.trim()
+    return age ? `${major}-latest (${age})` : `${major}-latest`
+  }
   return `v${major}`
 }
 
