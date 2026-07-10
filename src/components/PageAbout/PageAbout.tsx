@@ -101,9 +101,10 @@ export function PageAbout() {
         .
       </p>
       <p>
-        The app loads a built id-tagging-schema <code>dist/</code> and makes it explorable in the
-        browser — no build step or checkout required. Use it as an everyday reference or as a review
-        tool for schema pull requests: search presets, explore fields, and browse icons.
+        The app loads pre-built id-tagging-schema <code>dist/</code> output from the upstream
+        repository and makes it explorable in the browser — no local build or checkout of the schema
+        is required. Use it as an everyday reference or as a review tool for schema pull requests:
+        search presets, explore fields, and browse icons.
       </p>
       <h2>Upstream projects</h2>
       <ul>
@@ -136,10 +137,9 @@ export function PageAbout() {
       <h2>Release vs staging</h2>
       <p>
         Use the toggle under the logo to switch between <strong>staging</strong> — the default,
-        latest unreleased build from id-tagging-schema <code>main</code> 
-        — and the published <strong>release</strong> (npm{' '}
-        <code>@latest</code>, with its version number). Deep-link the release with{' '}
-        <code>?reference=release</code>. Your last choice is remembered in the browser.
+        latest unreleased build from id-tagging-schema <code>main</code>— and the published{' '}
+        <strong>release</strong> (npm <code>@latest</code>, with its version number). Deep-link the
+        release with <code>?reference=release</code>. Your last choice is remembered in the browser.
       </p>
       <h2>Pointing at a different build</h2>
       <p>
