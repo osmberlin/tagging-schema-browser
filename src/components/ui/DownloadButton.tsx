@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { downloadJson } from '@/utils/download'
 import { cn } from '@/utils/tw'
 
@@ -38,15 +39,16 @@ export function DownloadButton({
   }, [data, filename])
 
   return (
-    <button
-      type="button"
-      onClick={onDownload}
-      disabled={disabled}
-      className={cn(secondaryButtonClass, className)}
-      aria-label={TOOLTIP}
-      title={TOOLTIP}
-    >
-      <DownloadIcon className="h-4 w-4" />
-    </button>
+    <Tooltip content={TOOLTIP} placement="bottom" disabled={disabled}>
+      <button
+        type="button"
+        onClick={onDownload}
+        disabled={disabled}
+        className={cn(secondaryButtonClass, className)}
+        aria-label={TOOLTIP}
+      >
+        <DownloadIcon className="h-4 w-4" />
+      </button>
+    </Tooltip>
   )
 }

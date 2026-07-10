@@ -1,5 +1,6 @@
 import { useSearch } from '@tanstack/react-router'
 import { LayoutGroup, motion } from 'motion/react'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useComparison } from '@/hooks/useComparison'
 import { useReferenceSwitch } from '@/hooks/useReferenceSwitch'
 import { useSchema } from '@/hooks/useSchema'
@@ -11,21 +12,20 @@ function ToggleSegment({
   active,
   onClick,
   onPillAnimationComplete,
-  title,
+  tooltip,
   children,
 }: {
   active: boolean
   onClick: () => void
   onPillAnimationComplete?: () => void
-  title?: string
+  tooltip?: string
   children: React.ReactNode
 }) {
-  return (
+  const button = (
     <button
       type="button"
       role="tab"
       aria-selected={active}
-      title={title}
       onClick={onClick}
       className={cn(
         'relative rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors',
@@ -42,6 +42,14 @@ function ToggleSegment({
       ) : null}
       <span className="relative z-10 whitespace-nowrap">{children}</span>
     </button>
+  )
+
+  if (!tooltip) return button
+
+  return (
+    <Tooltip content={tooltip} placement="bottom" openDelay={300}>
+      {button}
+    </Tooltip>
   )
 }
 
@@ -77,7 +85,7 @@ export function ReferenceToggle() {
           onPillAnimationComplete={
             isSwitching && displayReference === 'interem' ? onPillAnimationComplete : undefined
           }
-          title={
+          tooltip={
             stagingUpdatedAt
               ? `Unreleased — last change on main: ${new Date(stagingUpdatedAt).toLocaleString()}`
               : 'Unreleased — build from main, not yet published'
@@ -92,6 +100,11 @@ export function ReferenceToggle() {
           onClick={() => select('release')}
           onPillAnimationComplete={
             isSwitching && displayReference === 'release' ? onPillAnimationComplete : undefined
+          }
+          tooltip={
+            releaseVersion
+              ? `Published npm release ${releaseVersion} — includes community translations`
+              : 'Published npm release — includes community translations'
           }
         >
           Release

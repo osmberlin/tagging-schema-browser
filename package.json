@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@enzet/roentgen": "^0.16.0",
+    "@floating-ui/react": "^0.27.19",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/lexend": "^5.2.11",
     "@fortawesome/fontawesome-svg-core": "^7.3.0",

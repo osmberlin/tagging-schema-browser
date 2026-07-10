@@ -14,6 +14,7 @@ import { PrimaryNav } from '@/components/ui/PrimaryNav'
 import { ReferenceToggle } from '@/components/ui/ReferenceToggle'
 import { SchemaLoadIndicator } from '@/components/ui/SchemaLoadIndicator'
 import { ShortcutsDialog } from '@/components/ui/ShortcutsDialog'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { utilityNavClass } from '@/theme/areaAccent'
 import { brandAccent } from '@/theme/brandAccent'
 import { PAGE_SEARCH_INPUT_ID } from './HeaderSearch'
@@ -51,15 +52,16 @@ function FiltersIcon(props: React.ComponentPropsWithoutRef<'svg'>) {
 
 function HelpButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-8 items-center rounded-lg px-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-      aria-label="Keyboard shortcuts"
-      title="Keyboard shortcuts"
-    >
-      <Kbd>?</Kbd>
-    </button>
+    <Tooltip content="Keyboard shortcuts" placement="bottom">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex h-8 items-center rounded-lg px-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+        aria-label="Keyboard shortcuts"
+      >
+        <Kbd>?</Kbd>
+      </button>
+    </Tooltip>
   )
 }
 
