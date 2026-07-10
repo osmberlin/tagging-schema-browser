@@ -136,8 +136,8 @@ export function PageAbout() {
       <h2>Release vs staging</h2>
       <p>
         Use the toggle under the logo to switch between <strong>staging</strong> — the default,
-        latest unreleased build from id-tagging-schema <code>main</code> (labeled with when{' '}
-        <code>main</code> last changed) — and the published <strong>release</strong> (npm{' '}
+        latest unreleased build from id-tagging-schema <code>main</code> 
+        — and the published <strong>release</strong> (npm{' '}
         <code>@latest</code>, with its version number). Deep-link the release with{' '}
         <code>?reference=release</code>. Your last choice is remembered in the browser.
       </p>
