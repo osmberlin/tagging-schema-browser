@@ -7,9 +7,9 @@ import { filtersFromState, useSearchState } from './useSearchState'
 export function usePresetSearch() {
   const { data, dataUrl } = useSchema()
   const [state] = useSearchState()
-  useIconRegistryEpoch()
+  const iconEpoch = useIconRegistryEpoch()
   if (!data) return null
-  ensurePresetSearchIndex(dataUrl, data.presets)
+  ensurePresetSearchIndex(dataUrl, data.presets, iconEpoch)
   return searchPresets({
     query: state.q,
     filters: filtersFromState(state),

@@ -1,4 +1,4 @@
-import { preloadSchemaData } from '@/utils/schemaCache'
+import { getSchemaLoadError, preloadSchemaData } from '@/utils/schemaCache'
 import { resolveReleaseVersion, resolveStagingUpdatedAt } from '@/utils/schemaVersion'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -24,7 +24,9 @@ export async function fetchComparisonVersions(): Promise<ComparisonVersions> {
 export async function fetchComparisonBaseline(baselineUrl: string): Promise<DenormalizedPreset[]> {
   const data = await preloadSchemaData(baselineUrl)
   if (!data) {
-    throw new Error(`Failed to load comparison baseline from ${baselineUrl}`)
+    throw new Error(
+      getSchemaLoadError(baselineUrl) ?? `Failed to load comparison baseline from ${baselineUrl}`,
+    )
   }
   return data.presets
 }

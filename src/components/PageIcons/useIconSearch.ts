@@ -14,10 +14,12 @@ export function useIconSearch(
     const presetIconNames = presets
       .map((preset) => preset.icon)
       .filter((icon): icon is string => Boolean(icon))
-    if (presetIconNames.length > 0) {
-      void ensureIconsForNames(presetIconNames)
+    const optionIconNames = [...collectOptionIconUsages(fields, presets, fieldTranslations).keys()]
+    const iconNames = [...new Set([...presetIconNames, ...optionIconNames])]
+    if (iconNames.length > 0) {
+      void ensureIconsForNames(iconNames)
     }
-  }, [presets])
+  }, [presets, fields, fieldTranslations])
 
   return useMemo(() => {
     const registry = getIconRegistry()
