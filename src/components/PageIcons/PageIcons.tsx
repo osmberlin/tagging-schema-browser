@@ -9,7 +9,7 @@ import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportIcons } from '@/utils/pageExports'
 import { IconCard } from './IconCard'
-import { flattenIconUsages } from './iconUsageRows'
+import { flattenIconUsages, sortIconUsageRows } from './iconUsageRows'
 import { IconUsageTable } from './IconUsageTable'
 import { applyIconFacets, useIconFacetState } from './useIconFacetState'
 import { useIconSearch } from './useIconSearch'
@@ -25,14 +25,16 @@ export function PageIcons() {
     data?.fields ?? {},
     data?.fieldTranslations ?? {},
   )
+  const { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view } = facetState
   const filtered = useMemo(() => {
     if (!data) return []
-    return applyIconFacets(icons, facetState)
-  }, [data, icons, facetState])
+    return applyIconFacets(icons, { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view })
+  }, [data, icons, i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view])
   const usageRows = useMemo(() => {
-    if (!data || facetState.i_view !== 'usages') return []
-    return flattenIconUsages(filtered, data.fields, data.fieldTranslations)
-  }, [data, facetState.i_view, filtered])
+    if (!data || i_view !== 'usages') return []
+    const rows = flattenIconUsages(filtered, data.fields, data.fieldTranslations)
+    return sortIconUsageRows(rows, filtered, i_sort)
+  }, [data, filtered, i_sort, i_view])
   const exportData = useMemo(() => exportIcons(filtered), [filtered])
 
   if (!dataUrl && !data) {
@@ -56,37 +58,53 @@ export function PageIcons() {
           <AreaIcon area="icons" className={`h-7 w-7 ${areaAccent.icons.icon}`} />
           Icons{' '}
           <CountPill className="text-sm">
-            {facetState.i_view === 'usages'
+            {i_view === 'usages'
               ? `${filtered.length} icons · ${usageRows.length} usages`
               : filtered.length}
           </CountPill>
         </h1>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-500">
-            View
-            <select
-              value={facetState.i_view}
-              onChange={(e) => setFacetState({ i_view: e.target.value as 'cards' | 'usages' })}
-              className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.icons.focus}`}
-            >
-              <option value="cards">Cards</option>
-              <option value="usages">Usages</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-500">
-            Sort
-            <select
-              value={facetState.i_sort}
-              onChange={(e) =>
-                setFacetState({ i_sort: e.target.value as 'name' | 'usage_desc' | 'usage_asc' })
-              }
-              className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.icons.focus}`}
-            >
-              <option value="name">Name</option>
-              <option value="usage_desc">Usage (high to low)</option>
-              <option value="usage_asc">Usage (low to high)</option>
-            </select>
-          </label>
+          <div
+            className="inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm"
+            role="group"
+            aria-label="View"
+          >
+            {(
+              [
+                ['cards', 'Cards'],
+                ['usages', 'Usages'],
+              ] as const
+            ).map(([value, label]) => {
+              const active = i_view === value
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFacetState({ i_view: value })}
+                  className={`px-3 py-1.5 text-sm font-medium transition not-last:border-r not-last:border-slate-300 ${
+                    active
+                      ? 'bg-sky-50 text-sky-700'
+                      : 'text-slate-600 hover:bg-sky-50 hover:text-sky-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+          <select
+            value={i_sort}
+            onChange={(e) =>
+              setFacetState({ i_sort: e.target.value as 'name' | 'usage_desc' | 'usage_asc' })
+            }
+            aria-label="Sort icons"
+            className={`min-w-[12.5rem] rounded-lg border border-slate-300 bg-white py-1.5 pr-9 pl-3 text-sm text-slate-900 shadow-sm transition ${areaAccent.icons.focus}`}
+          >
+            <option value="name">Name</option>
+            <option value="usage_desc">Usage (high to low)</option>
+            <option value="usage_asc">Usage (low to high)</option>
+          </select>
           <DownloadButton
             filename="icons.json"
             data={exportData}
@@ -101,7 +119,7 @@ export function PageIcons() {
       {!suppliersReady && filtered.length === 0 ? (
         <SchemaLoadingPanel label="Loading icon libraries…" />
       ) : null}
-      {facetState.i_view === 'usages' ? (
+      {i_view === 'usages' ? (
         <IconUsageTable rows={usageRows} />
       ) : (
         <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">

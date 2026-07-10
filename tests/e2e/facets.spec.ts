@@ -66,6 +66,8 @@ test('icons page usages view lists one row per preset or option reference', asyn
   await loadTestSchema(page)
   await page.goto('/icons?dataUrl=/test-schema&i_view=usages')
 
+  await expect(page.getByRole('group', { name: 'View' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Usages', pressed: true })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Icon' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Label' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Code' })).toBeVisible()

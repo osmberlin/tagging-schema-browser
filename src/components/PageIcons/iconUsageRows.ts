@@ -32,7 +32,7 @@ function optionUsageLabel(
   return optionTitle ? `${label} — ${optionTitle}` : label
 }
 
-/** One row per preset or field-option reference, preserving icon sort order from the caller. */
+/** One row per preset or field-option reference. */
 export function flattenIconUsages(
   icons: IconViewModel[],
   fields: RawFields,
@@ -69,4 +69,40 @@ export function flattenIconUsages(
   }
 
   return rows
+}
+
+export function sortIconUsageRows(
+  rows: IconUsageRow[],
+  icons: IconViewModel[],
+  sort: 'name' | 'usage_desc' | 'usage_asc',
+): IconUsageRow[] {
+  const usageByIcon = new Map(icons.map((icon) => [icon.name, icon.usageCount]))
+  const sorted = [...rows]
+
+  if (sort === 'usage_desc') {
+    sorted.sort(
+      (a, b) =>
+        (usageByIcon.get(b.iconName) ?? 0) - (usageByIcon.get(a.iconName) ?? 0) ||
+        a.iconName.localeCompare(b.iconName) ||
+        a.label.localeCompare(b.label) ||
+        a.code.localeCompare(b.code),
+    )
+  } else if (sort === 'usage_asc') {
+    sorted.sort(
+      (a, b) =>
+        (usageByIcon.get(a.iconName) ?? 0) - (usageByIcon.get(b.iconName) ?? 0) ||
+        a.iconName.localeCompare(b.iconName) ||
+        a.label.localeCompare(b.label) ||
+        a.code.localeCompare(b.code),
+    )
+  } else {
+    sorted.sort(
+      (a, b) =>
+        a.iconName.localeCompare(b.iconName) ||
+        a.label.localeCompare(b.label) ||
+        a.code.localeCompare(b.code),
+    )
+  }
+
+  return sorted
 }

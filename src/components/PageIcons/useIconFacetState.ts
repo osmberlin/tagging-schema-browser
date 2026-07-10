@@ -20,7 +20,11 @@ export type IconFacetState = z.infer<typeof iconFacetSchema>
 export const iconFacetDefaults: IconFacetState = iconFacetSchema.parse({})
 
 export function useIconFacetState() {
-  const state = useSearch({ strict: false, select: (raw) => iconFacetSchema.parse(raw) })
+  const state = useSearch({
+    strict: false,
+    structuralSharing: false,
+    select: (raw) => iconFacetSchema.parse(raw),
+  })
   const navigate = useNavigate()
   const setState = useCallback(
     (patch: Partial<IconFacetState>) => {
