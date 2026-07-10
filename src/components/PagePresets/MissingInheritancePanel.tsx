@@ -6,7 +6,9 @@ import type {
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
 import { formatMissingInheritanceOverrideYaml } from '@/components/PagePresets/missingFieldInheritance'
+import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { externalLinkClass } from '@/theme/externalAccent'
+import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -17,11 +19,16 @@ const STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
   stale: 'Override snapshot stale',
 }
 
-const STATUS_CLASSES: Record<MissingInheritanceStatus, string> = {
-  none: 'border-slate-200 bg-slate-50 text-slate-700',
-  unreviewed: 'border-amber-200 bg-amber-50 text-amber-900',
-  intentional: 'border-sky-200 bg-sky-50 text-sky-900',
-  stale: 'border-rose-200 bg-rose-50 text-rose-900',
+const ISSUE_TITLES: Record<Exclude<MissingInheritanceStatus, 'none'>, string> = {
+  unreviewed: 'Missing inheritance',
+  intentional: 'Intentional omission',
+  stale: 'Stale override',
+}
+
+const ISSUE_VARIANTS: Record<Exclude<MissingInheritanceStatus, 'none'>, SchemaIssueVariant> = {
+  unreviewed: 'warning',
+  intentional: 'warning',
+  stale: 'error',
 }
 
 function FieldListSection({
@@ -130,54 +137,58 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
     (missingInheritanceStatus === 'unreviewed' || missingInheritanceStatus === 'stale')
 
   return (
-    <div
-      className={`rounded-lg border px-4 py-3 ${STATUS_CLASSES[missingInheritanceStatus]}`}
-      data-testid="missing-inheritance-panel"
+    <SchemaIssueDisclosure
+      disclosureId={`preset-missing-inheritance:${preset.id}`}
+      variant={ISSUE_VARIANTS[missingInheritanceStatus]}
+      title={ISSUE_TITLES[missingInheritanceStatus]}
+      summary={STATUS_LABELS[missingInheritanceStatus]}
+      defaultOpen={missingInheritanceStatus === 'unreviewed'}
     >
-      <p className="text-sm font-semibold">{STATUS_LABELS[missingInheritanceStatus]}</p>
-      {missingFieldInheritance && parentId ? (
-        <p className="mt-1 text-sm">
-          This preset defines an explicit field list without <code>{`{${parentId}}`}</code>, so it
-          does not inherit every field from its slash parent.
-        </p>
-      ) : missingInheritanceStatus === 'stale' ? (
-        <p className="mt-1 text-sm">
-          This preset no longer has missing slash-parent field inheritance, but an override entry
-          still exists in <OverridesYamlLink />.
-        </p>
-      ) : null}
-      {missingInheritanceStatus === 'stale' && missingFieldInheritance ? (
-        <p className="mt-2 text-sm">
-          The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update the
-          snapshot or remove the entry.
-        </p>
-      ) : null}
-      {missingInheritanceStatus === 'stale' && !missingFieldInheritance ? (
-        <p className="mt-2 text-sm">
-          Remove the stale entry from <OverridesYamlLink />.
-        </p>
-      ) : null}
-      {missingInheritanceStatus === 'unreviewed' ? (
-        <p className="mt-2 text-sm">
-          If this omission is deliberate, add an entry to <OverridesYamlLink /> with the current{' '}
-          <code className="font-mono text-xs">missedFieldIds</code> snapshot.
-        </p>
-      ) : null}
-      {showOverrideSnippet ? (
-        <OverrideSnippet presetId={preset.id} missingFieldInheritance={missingFieldInheritance} />
-      ) : null}
-      <div className="mt-4 space-y-4">
-        {missingFieldInheritance?.fields ? (
-          <FieldListSection fieldListKey="fields" section={missingFieldInheritance.fields} />
+      <div data-testid="missing-inheritance-panel">
+        {missingFieldInheritance && parentId ? (
+          <p className="text-sm">
+            This preset defines an explicit field list without <code>{`{${parentId}}`}</code>, so it
+            does not inherit every field from its slash parent.
+          </p>
+        ) : missingInheritanceStatus === 'stale' ? (
+          <p className="text-sm">
+            This preset no longer has missing slash-parent field inheritance, but an override entry
+            still exists in <OverridesYamlLink />.
+          </p>
         ) : null}
-        {missingFieldInheritance?.moreFields ? (
-          <FieldListSection
-            fieldListKey="moreFields"
-            section={missingFieldInheritance.moreFields}
-          />
+        {missingInheritanceStatus === 'stale' && missingFieldInheritance ? (
+          <p className="mt-2 text-sm">
+            The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update
+            the snapshot or remove the entry.
+          </p>
         ) : null}
+        {missingInheritanceStatus === 'stale' && !missingFieldInheritance ? (
+          <p className="mt-2 text-sm">
+            Remove the stale entry from <OverridesYamlLink />.
+          </p>
+        ) : null}
+        {missingInheritanceStatus === 'unreviewed' ? (
+          <p className="mt-2 text-sm">
+            If this omission is deliberate, add an entry to <OverridesYamlLink /> with the current{' '}
+            <code className="font-mono text-xs">missedFieldIds</code> snapshot.
+          </p>
+        ) : null}
+        {showOverrideSnippet ? (
+          <OverrideSnippet presetId={preset.id} missingFieldInheritance={missingFieldInheritance} />
+        ) : null}
+        <div className="mt-4 space-y-4">
+          {missingFieldInheritance?.fields ? (
+            <FieldListSection fieldListKey="fields" section={missingFieldInheritance.fields} />
+          ) : null}
+          {missingFieldInheritance?.moreFields ? (
+            <FieldListSection
+              fieldListKey="moreFields"
+              section={missingFieldInheritance.moreFields}
+            />
+          ) : null}
+        </div>
       </div>
-    </div>
+    </SchemaIssueDisclosure>
   )
 }
 

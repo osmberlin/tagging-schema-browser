@@ -3,6 +3,7 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { FieldIconMismatchAlert } from '@/components/ui/SchemaIssueAlerts'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportFields } from '@/utils/pageExports'
@@ -71,12 +72,11 @@ export function PageFields() {
           />
         </div>
       </div>
-      {mismatchFieldCount > 0 ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <strong>{mismatchFieldCount}</strong>{' '}
-          {mismatchFieldCount === 1 ? 'field has' : 'fields have'} icon mismatches between field
-          options and child presets — use the <strong>Icon consistency</strong> facet to filter.
-        </p>
+      {facetState.f_iconMismatch !== 'mismatch' ? (
+        <FieldIconMismatchAlert
+          count={mismatchFieldCount}
+          onShowMismatch={() => setFacetState({ f_iconMismatch: 'mismatch' })}
+        />
       ) : null}
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
         {filtered.map((field) => (

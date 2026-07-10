@@ -1,16 +1,16 @@
 import { Fragment, useMemo } from 'react'
 import { AreaIcon, AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
-import { BrokenPresetIconsBanner } from '@/components/ui/BrokenPresetIconsBanner'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { Input } from '@/components/ui/Input'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
-import { MissingInheritanceBanners } from '@/components/ui/MissingInheritanceBanners'
-import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
+import { SchemaIssueAction, SchemaIssueAlert } from '@/components/ui/SchemaIssue'
+import { BrokenPresetIconsAlert, MissingInheritanceAlerts } from '@/components/ui/SchemaIssueAlerts'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { RELEASE_DATA_URL } from '@/utils/constants'
 import { exportPresets } from '@/utils/pageExports'
+import { activePresetIssueFilter, showPresetIssueAlert } from '@/utils/presetIssueFilters'
 import { getExpectedFilesHelp } from './dataLoader'
 import { PresetTable } from './PresetTable'
 import { usePresetSearch } from './usePresetSearch'
@@ -22,7 +22,10 @@ export function PagePresets() {
   const searchResult = usePresetSearch()
   const totalCount = searchResult?.data.total ?? 0
   const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
-  const brokenPresetIconCount = useBrokenPresetIconCount(presets)
+  const brokenPresetIconCount = useMemo(() => {
+    const buckets = searchResult?.aggregations?.hasIcon?.buckets ?? []
+    return buckets.find((bucket) => bucket.key === 'broken')?.doc_count ?? 0
+  }, [searchResult])
   const iconMismatchPresetCount = useMemo(
     () => presets.filter((preset) => preset.iconMismatch).length,
     [presets],
@@ -35,6 +38,7 @@ export function PagePresets() {
     () => presets.filter((preset) => preset.missingInheritanceStatus === 'stale').length,
     [presets],
   )
+  const activeIssueFilter = activePresetIssueFilter(searchState)
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -236,33 +240,35 @@ export function PagePresets() {
           </div>
         ) : null}
       </div>
-      <BrokenPresetIconsBanner
-        count={brokenPresetIconCount}
-        onShowBroken={() => setSearchState({ hasIcon: ['broken'], page: 1 })}
-      />
-      {iconMismatchPresetCount > 0 ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+      {showPresetIssueAlert(activeIssueFilter, 'brokenIcon') ? (
+        <BrokenPresetIconsAlert
+          count={brokenPresetIconCount}
+          onShowBroken={() => setSearchState({ hasIcon: ['broken'], page: 1 })}
+        />
+      ) : null}
+      {showPresetIssueAlert(activeIssueFilter, 'iconMismatch') && iconMismatchPresetCount > 0 ? (
+        <SchemaIssueAlert variant="warning" title="Icon mismatch">
           <strong>{iconMismatchPresetCount}</strong>{' '}
           {iconMismatchPresetCount === 1 ? 'preset has' : 'presets have'} icon mismatches between
           field options and child presets —{' '}
-          <button
-            type="button"
+          <SchemaIssueAction
             onClick={() => setSearchState({ iconMismatch: ['mismatch'], page: 1 })}
-            className="font-medium text-amber-800 underline decoration-amber-400/60 underline-offset-2 hover:decoration-amber-800"
           >
             show icon mismatches
-          </button>
+          </SchemaIssueAction>
           .
-        </p>
+        </SchemaIssueAlert>
       ) : null}
-      <MissingInheritanceBanners
-        unreviewedCount={unreviewedMissingInheritanceCount}
-        staleCount={staleMissingInheritanceCount}
-        onShowUnreviewed={() => setSearchState({ missingInheritance: ['unreviewed'], page: 1 })}
-        onShowStale={() => setSearchState({ missingInheritance: ['stale'], page: 1 })}
-        showUnreviewed={!searchState.missingInheritance.includes('unreviewed')}
-        showStale={!searchState.missingInheritance.includes('stale')}
-      />
+      {showPresetIssueAlert(activeIssueFilter, 'missingInheritance') ? (
+        <MissingInheritanceAlerts
+          unreviewedCount={unreviewedMissingInheritanceCount}
+          staleCount={staleMissingInheritanceCount}
+          onShowUnreviewed={() => setSearchState({ missingInheritance: ['unreviewed'], page: 1 })}
+          onShowStale={() => setSearchState({ missingInheritance: ['stale'], page: 1 })}
+          showUnreviewed={!searchState.missingInheritance.includes('unreviewed')}
+          showStale={!searchState.missingInheritance.includes('stale')}
+        />
+      ) : null}
       <PresetTable />
     </div>
   )
