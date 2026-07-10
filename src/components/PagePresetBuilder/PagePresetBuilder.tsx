@@ -1,10 +1,7 @@
+import { useStore } from '@tanstack/react-form'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-import {
-  ShareLinkButton,
-  StringListEditor,
-  TagKeyValueEditor,
-} from '@/components/PagePresetBuilder/BuilderEditors'
+import { StringListEditor, TagKeyValueEditor } from '@/components/PagePresetBuilder/BuilderEditors'
 import { IconFieldInput } from '@/components/PagePresetBuilder/IconFieldInput'
 import {
   GEOMETRY_OPTIONS,
@@ -17,7 +14,7 @@ import {
   type PresetBuilderState,
 } from '@/components/PagePresetBuilder/presetBuilderUtils'
 import { RegionMultiSelect } from '@/components/PagePresetBuilder/RegionMultiSelect'
-import { usePresetBuilderState } from '@/components/PagePresetBuilder/usePresetBuilderState'
+import { usePresetBuilderForm } from '@/components/PagePresetBuilder/usePresetBuilderForm'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import {
   detectMissingFieldInheritance,
@@ -104,9 +101,13 @@ function builderPreviewPreset(
   }
 }
 
-function usePrefillFromPreset(fromPresetId: string) {
+function usePrefillFromPreset(
+  fromPresetId: string,
+  committedTags: Record<string, string>,
+  commitToUrl: (values: PresetBuilderState) => void,
+  defaults: PresetBuilderState,
+) {
   const { rawPresets, data } = useSchema()
-  const { state, setState, search } = usePresetBuilderState()
 
   useEffect(() => {
     if (!fromPresetId.trim()) return
@@ -114,10 +115,11 @@ function usePrefillFromPreset(fromPresetId: string) {
     if (!preset) return
 
     const translations = data?.translations?.en?.presets?.presets?.[fromPresetId]
-    const alreadyFilled = Object.keys(state.tags).length > 0
-    if (alreadyFilled && search.pb_from !== fromPresetId) return
+    const alreadyFilled = Object.keys(committedTags).length > 0
+    if (alreadyFilled) return
 
-    setState({
+    commitToUrl({
+      ...defaults,
       name: translations?.name ?? (typeof preset.name === 'string' ? preset.name : ''),
       icon: preset.icon ?? '',
       searchable: preset.searchable !== false,
@@ -146,53 +148,82 @@ function usePrefillFromPreset(fromPresetId: string) {
       relation: preset.relation ?? '',
       relationCrossReference: preset.relationCrossReference ?? '',
     })
-  }, [fromPresetId, rawPresets, data, setState, state.tags, search.pb_from])
+  }, [fromPresetId, rawPresets, data, commitToUrl, committedTags, defaults])
 }
 
 export function PagePresetBuilder() {
-  const { state, setState, fromPresetId } = usePresetBuilderState()
+  const {
+    form,
+    committedState,
+    fromPresetId,
+    isDirty,
+    commitToUrl,
+    commitFieldBlur,
+    commitAndSet,
+    defaults,
+  } = usePresetBuilderForm()
   const { rawPresets, fields, dataUrl } = useSchema()
-  usePrefillFromPreset(fromPresetId)
 
-  const presetId = presetIdFromTags(state.tags)
-  const parentId = presetId ? parentPresetId(presetId) : null
-  const rawPreset = useMemo(() => buildRawPreset(state), [state])
-  const presetJson = useMemo(() => formatPresetJson(rawPreset), [rawPreset])
+  usePrefillFromPreset(fromPresetId, committedState.tags, commitToUrl, defaults)
+
+  const draftPresetId = useStore(form.store, (state) => presetIdFromTags(state.values.tags))
+  const committedPresetId = presetIdFromTags(committedState.tags)
+  const parentId = draftPresetId ? parentPresetId(draftPresetId) : null
+
+  const committedRawPreset = useMemo(() => buildRawPreset(committedState), [committedState])
+  const presetJson = useMemo(() => formatPresetJson(committedRawPreset), [committedRawPreset])
   const translationSnippet = useMemo(
     () =>
-      presetId
-        ? buildTranslationSnippet(presetId, {
-            name: isPresetRef(state.name) ? '' : state.name,
-            terms: state.terms,
-            aliases: state.aliases,
+      committedPresetId
+        ? buildTranslationSnippet(committedPresetId, {
+            name: isPresetRef(committedState.name) ? '' : committedState.name,
+            terms: committedState.terms,
+            aliases: committedState.aliases,
           })
         : '',
-    [presetId, state.name, state.terms, state.aliases],
+    [committedPresetId, committedState.name, committedState.terms, committedState.aliases],
   )
 
   const missingInheritance = useMemo(() => {
-    if (!presetId) return null
-    return detectMissingFieldInheritance(presetId, rawPreset, rawPresets, fields)
-  }, [presetId, rawPreset, rawPresets, fields])
+    if (!committedPresetId) return null
+    return detectMissingFieldInheritance(committedPresetId, committedRawPreset, rawPresets, fields)
+  }, [committedPresetId, committedRawPreset, rawPresets, fields])
 
   const previewPreset = useMemo(() => {
-    if (!presetId) return null
-    return builderPreviewPreset(presetId, rawPreset, state, rawPresets, fields, missingInheritance)
-  }, [presetId, rawPreset, state, rawPresets, fields, missingInheritance])
+    if (!committedPresetId) return null
+    return builderPreviewPreset(
+      committedPresetId,
+      committedRawPreset,
+      committedState,
+      rawPresets,
+      fields,
+      missingInheritance,
+    )
+  }, [
+    committedPresetId,
+    committedRawPreset,
+    committedState,
+    rawPresets,
+    fields,
+    missingInheritance,
+  ])
 
-  const duplicateId = presetId && rawPresets[presetId] && !fromPresetId
+  const duplicateId = draftPresetId && rawPresets[draftPresetId] && !fromPresetId
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:px-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-rose-700">Preset builder</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            Draft a preset JSON file with live preview and export. Form state is stored in the URL —
-            copy the link to share or continue later.
+      <header>
+        <h1 className="font-display text-2xl font-semibold text-rose-700">Preset builder</h1>
+        <p className="mt-2 max-w-2xl text-sm text-slate-600">
+          Draft a preset JSON file with live preview and export. Edits are saved to the URL when you
+          leave a field — share or bookmark the page to continue later.
+        </p>
+        {isDirty ? (
+          <p className="mt-2 text-sm font-medium text-amber-800">
+            Unsaved edits — preview and export reflect the last saved URL state until you blur a
+            field.
           </p>
-        </div>
-        <ShareLinkButton />
+        ) : null}
       </header>
 
       <FormSection
@@ -200,25 +231,44 @@ export function PagePresetBuilder() {
         description="Tags define the preset id and repository file path. Main presets have one tag key; sub-presets add more."
       >
         <div className="space-y-4">
-          <TagKeyValueEditor tags={state.tags} onChange={(tags) => setState({ tags })} />
-          {presetId ? (
+          <form.Field name="tags">
+            {(field) => (
+              <TagKeyValueEditor
+                tags={field.state.value}
+                onChange={(tags) => field.handleChange(tags)}
+                onBlur={() => {
+                  field.handleBlur()
+                  commitFieldBlur()
+                }}
+              />
+            )}
+          </form.Field>
+          {draftPresetId ? (
             <dl className="space-y-2 rounded-lg bg-slate-50 px-3 py-3 text-sm">
               <div className="flex flex-wrap gap-x-2">
                 <dt className="font-medium text-slate-700">Preset id</dt>
-                <dd className="font-mono text-slate-900">{presetId}</dd>
+                <dd className="font-mono text-slate-900">{draftPresetId}</dd>
               </div>
-              <div className="flex flex-wrap gap-x-2">
-                <dt className="font-medium text-slate-700">File</dt>
-                <dd className="font-mono text-slate-900">
-                  {presetRepoPath(presetId, state.searchable)}
-                </dd>
-              </div>
-              {!state.searchable ? (
-                <p className="text-slate-600">
-                  Refs use <code className="font-mono text-xs">{`{${presetId}}`}</code> (no
-                  underscore in refs).
-                </p>
-              ) : null}
+              <form.Field name="searchable">
+                {(field) => (
+                  <div className="flex flex-wrap gap-x-2">
+                    <dt className="font-medium text-slate-700">File</dt>
+                    <dd className="font-mono text-slate-900">
+                      {presetRepoPath(draftPresetId, field.state.value)}
+                    </dd>
+                  </div>
+                )}
+              </form.Field>
+              <form.Field name="searchable">
+                {(field) =>
+                  !field.state.value ? (
+                    <p className="text-slate-600">
+                      Refs use <code className="font-mono text-xs">{`{${draftPresetId}}`}</code> (no
+                      underscore in refs).
+                    </p>
+                  ) : null
+                }
+              </form.Field>
               <div>
                 <span
                   className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
@@ -235,7 +285,7 @@ export function PagePresetBuilder() {
                   A preset with this id already exists in the loaded schema.{' '}
                   <Link
                     to="/preset/$"
-                    params={{ _splat: presetId }}
+                    params={{ _splat: draftPresetId }}
                     search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
                     className="font-medium text-rose-600 hover:underline"
                   >
@@ -247,15 +297,23 @@ export function PagePresetBuilder() {
           ) : (
             <p className="text-sm text-slate-500">Add at least one tag to derive the preset id.</p>
           )}
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={state.searchable}
-              onChange={(event) => setState({ searchable: event.target.checked })}
-              className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-            />
-            Searchable (uncheck for <code className="font-mono text-xs">_filename</code> convention)
-          </label>
+          <form.Field name="searchable">
+            {(field) => (
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={field.state.value}
+                  onChange={(event) => {
+                    field.handleChange(event.target.checked)
+                    commitAndSet('searchable', event.target.checked)
+                  }}
+                  className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                />
+                Searchable (uncheck for <code className="font-mono text-xs">_filename</code>{' '}
+                convention)
+              </label>
+            )}
+          </form.Field>
         </div>
       </FormSection>
 
@@ -264,27 +322,51 @@ export function PagePresetBuilder() {
         description="Display name goes in translation files. Use {parent} to inherit from a slash-parent preset."
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-900">Name</label>
-            <Input
-              value={state.name}
-              onChange={(event) => setState({ name: event.target.value })}
-              placeholder="Café or {shop}"
-              className="mt-1.5"
-            />
-          </div>
-          <StringListEditor
-            label="Terms (search keywords)"
-            values={state.terms}
-            onChange={(terms) => setState({ terms })}
-            placeholder="coffee&#10;espresso"
-          />
-          <StringListEditor
-            label="Aliases"
-            values={state.aliases}
-            onChange={(aliases) => setState({ aliases })}
-            placeholder="One synonym per line"
-          />
+          <form.Field name="name">
+            {(field) => (
+              <div>
+                <label className="block text-sm font-medium text-slate-900">Name</label>
+                <Input
+                  value={field.state.value}
+                  onChange={(event) => field.handleChange(event.target.value)}
+                  onBlur={() => {
+                    field.handleBlur()
+                    commitFieldBlur()
+                  }}
+                  placeholder="Café or {shop}"
+                  className="mt-1.5"
+                />
+              </div>
+            )}
+          </form.Field>
+          <form.Field name="terms">
+            {(field) => (
+              <StringListEditor
+                label="Terms (search keywords)"
+                values={field.state.value}
+                onChange={(terms) => field.handleChange(terms)}
+                onBlur={() => {
+                  field.handleBlur()
+                  commitFieldBlur()
+                }}
+                placeholder="coffee&#10;espresso"
+              />
+            )}
+          </form.Field>
+          <form.Field name="aliases">
+            {(field) => (
+              <StringListEditor
+                label="Aliases"
+                values={field.state.value}
+                onChange={(aliases) => field.handleChange(aliases)}
+                onBlur={() => {
+                  field.handleBlur()
+                  commitFieldBlur()
+                }}
+                placeholder="One synonym per line"
+              />
+            )}
+          </form.Field>
         </div>
       </FormSection>
 
@@ -292,43 +374,56 @@ export function PagePresetBuilder() {
         title="Appearance"
         description="Pick an icon name from the Icons page. imageURL is not offered here."
       >
-        <IconFieldInput
-          value={state.icon}
-          onChange={(icon) => setState({ icon })}
-          dataUrl={dataUrl ?? ''}
-        />
+        <form.Field name="icon">
+          {(field) => (
+            <IconFieldInput
+              value={field.state.value}
+              onChange={(icon) => field.handleChange(icon)}
+              onBlur={() => {
+                field.handleBlur()
+                commitFieldBlur()
+              }}
+              dataUrl={dataUrl ?? ''}
+            />
+          )}
+        </form.Field>
       </FormSection>
 
       <FormSection title="Geometry" description="Where this preset can be used in the editor.">
-        <div className="flex flex-wrap gap-3">
-          {GEOMETRY_OPTIONS.map((geometry) => {
-            const checked = state.geometry.includes(geometry)
-            return (
-              <label
-                key={geometry}
-                className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                  checked
-                    ? 'border-rose-300 bg-rose-50 text-rose-800'
-                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => {
-                    const next = checked
-                      ? state.geometry.filter((g) => g !== geometry)
-                      : [...state.geometry, geometry]
-                    setState({ geometry: next })
-                  }}
-                  className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-                />
-                <GeometryIcons geometry={[geometry]} className="h-4 w-4" />
-                <span className="font-mono text-xs">{geometry}</span>
-              </label>
-            )
-          })}
-        </div>
+        <form.Field name="geometry">
+          {(field) => (
+            <div className="flex flex-wrap gap-3">
+              {GEOMETRY_OPTIONS.map((geometry) => {
+                const checked = field.state.value.includes(geometry)
+                return (
+                  <label
+                    key={geometry}
+                    className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                      checked
+                        ? 'border-rose-300 bg-rose-50 text-rose-800'
+                        : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const next = checked
+                          ? field.state.value.filter((g) => g !== geometry)
+                          : [...field.state.value, geometry]
+                        field.handleChange(next)
+                        commitAndSet('geometry', next)
+                      }}
+                      className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                    />
+                    <GeometryIcons geometry={[geometry]} className="h-4 w-4" />
+                    <span className="font-mono text-xs">{geometry}</span>
+                  </label>
+                )
+              })}
+            </div>
+          )}
+        </form.Field>
       </FormSection>
 
       <FormSection
@@ -336,117 +431,227 @@ export function PagePresetBuilder() {
         description="One entry per line. Use field ids or preset refs like {shop} to include a parent list."
       >
         <div className="space-y-4">
-          <StringListEditor
-            label="fields"
-            values={state.fields}
-            onChange={(fields) => setState({ fields })}
-            hint="Add {parent} when overriding a sub-preset list."
-          />
+          <form.Field name="fields">
+            {(field) => (
+              <StringListEditor
+                label="fields"
+                values={field.state.value}
+                onChange={(nextFields) => field.handleChange(nextFields)}
+                onBlur={() => {
+                  field.handleBlur()
+                  commitFieldBlur()
+                }}
+                hint="Add {parent} when overriding a sub-preset list."
+              />
+            )}
+          </form.Field>
           {previewPreset ? <MissingInheritancePanel preset={previewPreset} /> : null}
         </div>
       </FormSection>
 
       <section className="space-y-4">
-        <button
-          type="button"
-          onClick={() => setState({ advancedOpen: !state.advancedOpen })}
-          className="text-sm font-medium text-rose-600 hover:text-rose-700"
-        >
-          {state.advancedOpen ? 'Hide advanced options' : 'Show advanced options'}
-        </button>
-        {state.advancedOpen ? (
-          <div className="space-y-8 rounded-xl bg-white p-5 shadow-xs outline outline-slate-900/5">
-            <StringListEditor
-              label="moreFields"
-              values={state.moreFields}
-              onChange={(moreFields) => setState({ moreFields })}
-            />
-            <div>
-              <h3 className="text-sm font-medium text-slate-900">addTags</h3>
-              <div className="mt-2">
-                <TagKeyValueEditor
-                  tags={state.addTags}
-                  onChange={(addTags) => setState({ addTags })}
-                />
+        <form.Field name="advancedOpen">
+          {(field) => (
+            <button
+              type="button"
+              onClick={() => {
+                const next = !field.state.value
+                field.handleChange(next)
+                commitAndSet('advancedOpen', next)
+              }}
+              className="text-sm font-medium text-rose-600 hover:text-rose-700"
+            >
+              {field.state.value ? 'Hide advanced options' : 'Show advanced options'}
+            </button>
+          )}
+        </form.Field>
+        <form.Field name="advancedOpen">
+          {(field) =>
+            field.state.value ? (
+              <div className="space-y-8 rounded-xl bg-white p-5 shadow-xs outline outline-slate-900/5">
+                <form.Field name="moreFields">
+                  {(moreField) => (
+                    <StringListEditor
+                      label="moreFields"
+                      values={moreField.state.value}
+                      onChange={(moreFields) => moreField.handleChange(moreFields)}
+                      onBlur={() => {
+                        moreField.handleBlur()
+                        commitFieldBlur()
+                      }}
+                    />
+                  )}
+                </form.Field>
+                <div>
+                  <h3 className="text-sm font-medium text-slate-900">addTags</h3>
+                  <div className="mt-2">
+                    <form.Field name="addTags">
+                      {(addField) => (
+                        <TagKeyValueEditor
+                          tags={addField.state.value}
+                          onChange={(addTags) => addField.handleChange(addTags)}
+                          onBlur={() => {
+                            addField.handleBlur()
+                            commitFieldBlur()
+                          }}
+                        />
+                      )}
+                    </form.Field>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-slate-900">removeTags</h3>
+                  <div className="mt-2">
+                    <form.Field name="removeTags">
+                      {(removeField) => (
+                        <TagKeyValueEditor
+                          tags={removeField.state.value}
+                          onChange={(removeTags) => removeField.handleChange(removeTags)}
+                          onBlur={() => {
+                            removeField.handleBlur()
+                            commitFieldBlur()
+                          }}
+                        />
+                      )}
+                    </form.Field>
+                  </div>
+                </div>
+                <form.Field name="matchScore">
+                  {(matchField) => (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-900">matchScore</label>
+                      <Input
+                        value={matchField.state.value}
+                        onChange={(event) => matchField.handleChange(event.target.value)}
+                        onBlur={() => {
+                          matchField.handleBlur()
+                          commitFieldBlur()
+                        }}
+                        placeholder="1.0"
+                        className="mt-1.5 max-w-xs"
+                      />
+                    </div>
+                  )}
+                </form.Field>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <form.Field name="referenceKey">
+                    {(keyField) => (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-900">
+                          reference key
+                        </label>
+                        <Input
+                          value={keyField.state.value}
+                          onChange={(event) => keyField.handleChange(event.target.value)}
+                          onBlur={() => {
+                            keyField.handleBlur()
+                            commitFieldBlur()
+                          }}
+                          className="mt-1.5"
+                        />
+                      </div>
+                    )}
+                  </form.Field>
+                  <form.Field name="referenceValue">
+                    {(valueField) => (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-900">
+                          reference value
+                        </label>
+                        <Input
+                          value={valueField.state.value}
+                          onChange={(event) => valueField.handleChange(event.target.value)}
+                          onBlur={() => {
+                            valueField.handleBlur()
+                            commitFieldBlur()
+                          }}
+                          className="mt-1.5"
+                        />
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
+                <form.Field name="locationSetInclude">
+                  {(includeField) => (
+                    <RegionMultiSelect
+                      label="locationSet — include"
+                      selected={includeField.state.value}
+                      onChange={(locationSetInclude) => {
+                        includeField.handleChange(locationSetInclude)
+                        commitAndSet('locationSetInclude', locationSetInclude)
+                      }}
+                    />
+                  )}
+                </form.Field>
+                <form.Field name="locationSetExclude">
+                  {(excludeField) => (
+                    <RegionMultiSelect
+                      label="locationSet — exclude"
+                      selected={excludeField.state.value}
+                      onChange={(locationSetExclude) => {
+                        excludeField.handleChange(locationSetExclude)
+                        commitAndSet('locationSetExclude', locationSetExclude)
+                      }}
+                    />
+                  )}
+                </form.Field>
+                <form.Field name="locationSetCrossReference">
+                  {(crossField) => (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-900">
+                        locationSetCrossReference
+                      </label>
+                      <Input
+                        value={crossField.state.value}
+                        onChange={(event) => crossField.handleChange(event.target.value)}
+                        onBlur={() => {
+                          crossField.handleBlur()
+                          commitFieldBlur()
+                        }}
+                        placeholder="{presets/man_made/crane}"
+                        className="mt-1.5 font-mono text-sm"
+                      />
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="relation">
+                  {(relationField) => (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-900">relation</label>
+                      <Input
+                        value={relationField.state.value}
+                        onChange={(event) => relationField.handleChange(event.target.value)}
+                        onBlur={() => {
+                          relationField.handleBlur()
+                          commitFieldBlur()
+                        }}
+                        className="mt-1.5 font-mono text-sm"
+                      />
+                    </div>
+                  )}
+                </form.Field>
+                <form.Field name="relationCrossReference">
+                  {(relationCrossField) => (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-900">
+                        relationCrossReference
+                      </label>
+                      <Input
+                        value={relationCrossField.state.value}
+                        onChange={(event) => relationCrossField.handleChange(event.target.value)}
+                        onBlur={() => {
+                          relationCrossField.handleBlur()
+                          commitFieldBlur()
+                        }}
+                        className="mt-1.5 font-mono text-sm"
+                      />
+                    </div>
+                  )}
+                </form.Field>
               </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-slate-900">removeTags</h3>
-              <div className="mt-2">
-                <TagKeyValueEditor
-                  tags={state.removeTags}
-                  onChange={(removeTags) => setState({ removeTags })}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-900">matchScore</label>
-              <Input
-                value={state.matchScore}
-                onChange={(event) => setState({ matchScore: event.target.value })}
-                placeholder="1.0"
-                className="mt-1.5 max-w-xs"
-              />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-slate-900">reference key</label>
-                <Input
-                  value={state.referenceKey}
-                  onChange={(event) => setState({ referenceKey: event.target.value })}
-                  className="mt-1.5"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-900">reference value</label>
-                <Input
-                  value={state.referenceValue}
-                  onChange={(event) => setState({ referenceValue: event.target.value })}
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
-            <RegionMultiSelect
-              label="locationSet — include"
-              selected={state.locationSetInclude}
-              onChange={(locationSetInclude) => setState({ locationSetInclude })}
-            />
-            <RegionMultiSelect
-              label="locationSet — exclude"
-              selected={state.locationSetExclude}
-              onChange={(locationSetExclude) => setState({ locationSetExclude })}
-            />
-            <div>
-              <label className="block text-sm font-medium text-slate-900">
-                locationSetCrossReference
-              </label>
-              <Input
-                value={state.locationSetCrossReference}
-                onChange={(event) => setState({ locationSetCrossReference: event.target.value })}
-                placeholder="{presets/man_made/crane}"
-                className="mt-1.5 font-mono text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-900">relation</label>
-              <Input
-                value={state.relation}
-                onChange={(event) => setState({ relation: event.target.value })}
-                className="mt-1.5 font-mono text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-900">
-                relationCrossReference
-              </label>
-              <Input
-                value={state.relationCrossReference}
-                onChange={(event) => setState({ relationCrossReference: event.target.value })}
-                className="mt-1.5 font-mono text-sm"
-              />
-            </div>
-          </div>
-        ) : null}
+            ) : null
+          }
+        </form.Field>
       </section>
 
       {previewPreset ? (
@@ -485,9 +690,9 @@ export function PagePresetBuilder() {
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-slate-900">Preset file</h3>
-            {presetId ? (
+            {committedPresetId ? (
               <p className="mt-1 font-mono text-xs text-slate-500">
-                {presetRepoPath(presetId, state.searchable)}
+                {presetRepoPath(committedPresetId, committedState.searchable)}
               </p>
             ) : null}
             <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-800">
