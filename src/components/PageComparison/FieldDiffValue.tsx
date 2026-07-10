@@ -1,12 +1,15 @@
 import { Link } from '@tanstack/react-router'
+import { isIconSvgConfirmedMissing, useIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import type { FieldDiff } from '@/utils/presetDiff'
 
 function IconDiffLink({ iconName, tone }: { iconName: string; tone: 'before' | 'after' }) {
-  const toneClass =
+  const src = useIconSvgDataUrl(iconName)
+  const broken = !src && isIconSvgConfirmedMissing(iconName)
+  const textClass =
     tone === 'before'
-      ? 'font-mono text-rose-600 line-through hover:underline'
-      : 'font-mono text-emerald-700 hover:text-emerald-800 hover:underline'
+      ? 'font-mono text-xs text-rose-600 line-through hover:underline'
+      : 'font-mono text-xs text-emerald-700 hover:text-emerald-800 hover:underline'
 
   return (
     <Link
@@ -17,10 +20,20 @@ function IconDiffLink({ iconName, tone }: { iconName: string; tone: 'before' | '
         locale: prev.locale ?? '',
         i_q: iconName,
       })}
-      className={toneClass}
+      className="inline-flex items-center gap-1.5"
       title={`Open icon “${iconName}”`}
     >
-      {iconName}
+      {src ? (
+        <img src={src} alt="" className="h-5 w-5 shrink-0 object-contain" />
+      ) : broken ? (
+        <span
+          className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-red-300 bg-red-50 text-[10px] font-semibold text-red-700"
+          title="Missing icon asset"
+        >
+          !
+        </span>
+      ) : null}
+      <span className={textClass}>{iconName}</span>
     </Link>
   )
 }
