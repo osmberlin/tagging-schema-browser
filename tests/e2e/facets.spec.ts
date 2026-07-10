@@ -62,6 +62,18 @@ test('icons page tracks option icon usage', async ({ page }) => {
   await expect(page.locator("[data-icon='roentgen-bump']").getByText('Options')).toBeVisible()
 })
 
+test('icons page usages view lists one row per preset or option reference', async ({ page }) => {
+  await loadTestSchema(page)
+  await page.goto('/icons?dataUrl=/test-schema&i_view=usages')
+
+  await expect(page.getByRole('columnheader', { name: 'Icon' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Label' })).toBeVisible()
+  await expect(page.getByRole('columnheader', { name: 'Code' })).toBeVisible()
+  await expect(page.locator("[data-icon-usage='roentgen-bump']")).toHaveCount(2)
+  await expect(page.getByRole('link', { name: /Traffic Calming/i })).toBeVisible()
+  await expect(page.getByText('traffic_calming=bump')).toBeVisible()
+})
+
 test('preset detail shows field options with child preset links', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/preset/man_made/crane?dataUrl=/test-schema')
