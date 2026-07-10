@@ -23,7 +23,7 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * Optimistic interem/release switch: animate the toggle immediately, preload schema
+ * Optimistic interim/release switch: animate the toggle immediately, preload schema
  * in the background, then commit URL + persisted reference once the pill animation ends.
  */
 export function useReferenceSwitch() {

@@ -20,14 +20,14 @@ This app loads pre-built schema `dist/` output from the upstream id-tagging-sche
 
 Use the header toggle or URL params to pick the dataset:
 
-| Goal                                  | URL                                                                               |
-| ------------------------------------- | --------------------------------------------------------------------------------- |
-| Latest staging / unreleased (default) | open the app                                                                      |
-| Published release                     | `…/?reference=release`                                                            |
-| A specific version                    | `…/?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7/dist` |
-| A pull-request preview                | `…/?dataUrl=<the PR's built dist/ URL>`                                           |
+| Goal                        | URL                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| Latest unreleased (default) | open the app                                                                      |
+| Published release           | `…/?reference=release`                                                            |
+| A specific version          | `…/?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7/dist` |
+| A pull-request preview      | `…/?dataUrl=<the PR's built dist/ URL>`                                           |
 
-**Staging** (default) loads the dist built from id-tagging-schema `main` on every push; the toggle shows when `main` last changed and the detected schema version (v7). **Release** loads the published npm package (`@latest`) when you add `?reference=release`. When you open a PR preview via `dataUrl`, the app compares it against staging.
+**Unreleased** (default) loads the dist built from id-tagging-schema `main` on every push; the toggle shows when `main` last changed and the detected schema version (v7). **Release** loads the published npm package (`@latest`) when you add `?reference=release`. When you open a PR preview via `dataUrl`, the app compares it against unreleased.
 
 The browser supports **schema v7+** only. If you link an older v6 `dist/` URL with `?dataUrl=`, you will see a notice that it cannot be displayed.
 

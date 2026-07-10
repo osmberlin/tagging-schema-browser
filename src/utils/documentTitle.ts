@@ -5,7 +5,7 @@ export type DocumentReferenceSegment = 'Release' | 'Unreleased'
 /** Third segment of the browser tab title from URL search params. */
 export function documentReferenceSegment(search: {
   dataUrl?: string
-  reference?: 'release' | 'interem'
+  reference?: 'release' | 'interim'
 }): DocumentReferenceSegment {
   if (search.reference === 'release') return 'Release'
   return 'Unreleased'
@@ -25,7 +25,7 @@ type RouteHeadContext = {
 function referenceSegmentFromMatches(matches: RouteHeadContext['matches']) {
   const rootSearch = (matches[0]?.search ?? {}) as {
     dataUrl?: string
-    reference?: 'release' | 'interem'
+    reference?: 'release' | 'interim'
   }
   return documentReferenceSegment(rootSearch)
 }

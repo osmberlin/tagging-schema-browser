@@ -5,7 +5,7 @@ import { useComparison } from '@/hooks/useComparison'
 import { useReferenceSwitch } from '@/hooks/useReferenceSwitch'
 import { useSchema } from '@/hooks/useSchema'
 import { formatSchemaBuildLabel } from '@/utils/schemaBuildVersion'
-import { formatStagingUpdatedAt } from '@/utils/schemaVersion'
+import { formatUnreleasedUpdatedAt } from '@/utils/schemaVersion'
 import { cn } from '@/utils/tw'
 
 function ToggleSegment({
@@ -58,9 +58,9 @@ function ToggleSegment({
  * Hidden while a custom `dataUrl` (PR preview) is active.
  */
 export function ReferenceToggle() {
-  const { releaseVersion, stagingUpdatedAt } = useComparison()
+  const { releaseVersion, unreleasedUpdatedAt } = useComparison()
   const { schemaBuild } = useSchema()
-  const unreleasedAge = formatStagingUpdatedAt(stagingUpdatedAt)
+  const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
   const buildLabel = schemaBuild
     ? formatSchemaBuildLabel(schemaBuild, { resolvedReleaseVersion: releaseVersion })
     : null
@@ -80,15 +80,15 @@ export function ReferenceToggle() {
         onKeyDown={(e) => e.stopPropagation()}
       >
         <ToggleSegment
-          active={displayReference === 'interem'}
-          onClick={() => select('interem')}
+          active={displayReference === 'interim'}
+          onClick={() => select('interim')}
           onPillAnimationComplete={
-            isSwitching && displayReference === 'interem' ? onPillAnimationComplete : undefined
+            isSwitching && displayReference === 'interim' ? onPillAnimationComplete : undefined
           }
           tooltip={
-            stagingUpdatedAt
-              ? `Unreleased — last change on main: ${new Date(stagingUpdatedAt).toLocaleString()}`
-              : 'Unreleased — build from main, not yet published'
+            unreleasedUpdatedAt
+              ? `Unreleased — last change on main: ${new Date(unreleasedUpdatedAt).toLocaleString()}`
+              : 'Unreleased — latest id-tagging-schema main, not yet published'
           }
         >
           Unreleased

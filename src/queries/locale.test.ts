@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { INTEREM_DATA_URL, RELEASE_DATA_URL } from '@/utils/constants'
+import { INTERIM_DATA_URL, RELEASE_DATA_URL } from '@/utils/constants'
 import { discoverLocales } from './locale'
 
 describe('discoverLocales', () => {

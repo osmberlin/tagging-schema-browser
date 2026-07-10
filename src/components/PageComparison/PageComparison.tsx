@@ -8,7 +8,7 @@ import { useSchema } from '@/hooks/useSchema'
 import { comparisonAccent } from '@/theme/comparisonAccent'
 import { exportComparison } from '@/utils/pageExports'
 import type { FieldDiff } from '@/utils/presetDiff'
-import { formatStagingUpdatedAt } from '@/utils/schemaVersion'
+import { formatUnreleasedUpdatedAt } from '@/utils/schemaVersion'
 import type { DenormalizedPreset } from '@/utils/types'
 
 function PresetRow({
@@ -42,7 +42,7 @@ function PresetRow({
           {head}
         </Link>
       ) : (
-        <div className="flex items-start gap-2 px-3 py-2" title="Only in staging">
+        <div className="flex items-start gap-2 px-3 py-2" title="Only in unreleased">
           {head}
         </div>
       )}
@@ -100,9 +100,9 @@ export function PageComparison() {
     result,
     loading,
     error,
-    stagingUpdatedAt,
+    unreleasedUpdatedAt,
   } = useComparison()
-  const stagingAge = formatStagingUpdatedAt(stagingUpdatedAt)
+  const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
   const { dataUrl, data } = useSchema()
   const exportData = useMemo(() => (result ? exportComparison(result) : null), [result])
 
@@ -115,9 +115,9 @@ export function PageComparison() {
       <div className="space-y-3">
         <h1 className="font-display text-2xl font-semibold text-slate-900">Comparison</h1>
         <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          You're viewing a release or staging build, so there's nothing to compare. Load a custom
+          You're viewing a release or unreleased build, so there's nothing to compare. Load a custom
           build (a PR preview <code className="font-mono">dataUrl</code>) to see what changed
-          against staging or release.
+          against unreleased or release.
         </p>
       </div>
     )
@@ -127,16 +127,16 @@ export function PageComparison() {
     compareMode === 'release' ? `Release${releaseVersion ? ` ${releaseVersion}` : ''}` : domain
   const baselineLabel =
     compareMode === 'release'
-      ? `${compareLabel}${compareLabel === 'staging' && stagingAge ? ` · ${stagingAge}` : ''}`
-      : `staging${stagingAge ? ` · ${stagingAge}` : ''}`
+      ? `${compareLabel}${compareLabel === 'unreleased' && unreleasedAge ? ` · ${unreleasedAge}` : ''}`
+      : `unreleased${unreleasedAge ? ` · ${unreleasedAge}` : ''}`
   const loadingLabel =
-    compareMode === 'release' && compareLabel !== 'staging'
+    compareMode === 'release' && compareLabel !== 'unreleased'
       ? 'Loading PR preview to compare…'
-      : 'Loading staging to compare…'
+      : 'Loading unreleased to compare…'
   const errorLabel =
-    compareMode === 'release' && compareLabel !== 'staging'
+    compareMode === 'release' && compareLabel !== 'unreleased'
       ? 'Could not load PR preview for comparison'
-      : 'Could not load staging for comparison'
+      : 'Could not load unreleased for comparison'
 
   return (
     <div className="space-y-6">

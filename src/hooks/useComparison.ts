@@ -75,7 +75,7 @@ export function useComparison() {
   const compareLabel = baselineUrl
     ? compareBaselineLabel(baselineUrl)
     : previewCompareMode
-      ? 'staging'
+      ? 'unreleased'
       : null
 
   const baselineError =
@@ -94,7 +94,7 @@ export function useComparison() {
     compareLabel,
     presetsUrl: `${ensureSlash(activeDataUrl)}presets.min.json`,
     releaseVersion: versionsQuery.data?.releaseVersion ?? null,
-    stagingUpdatedAt: versionsQuery.data?.stagingUpdatedAt ?? null,
+    unreleasedUpdatedAt: versionsQuery.data?.unreleasedUpdatedAt ?? null,
     result,
     loading:
       schemaLoading ||
