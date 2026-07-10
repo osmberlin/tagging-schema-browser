@@ -36,12 +36,16 @@ The browser supports **schema v7+** only. If you link an older v6 `dist/` URL wi
 This project is **bun-only** ([bun](https://bun.com) ≥ 1.3):
 
 ```bash
-bun install
-bun run dev      # dev server
-bun run build    # typecheck (tsc) + production build (vite)
-bun run lint     # biome
-bun run test:e2e # playwright
+bun install --frozen-lockfile
+bun run dev           # dev server
+bun run build         # typecheck (tsc) + production build (vite)
+bun run check         # type-check + lint + format + unit tests (pre-commit gate)
+bun run test:e2e      # playwright (install browsers first — see below)
 ```
+
+**Playwright browsers** are not installed by `bun install`. Run `bun run test:e2e:install` once per machine (or rely on Cursor Cloud's `.cursor/environment.json` setup).
+
+**Cloud agents:** use `bun install --frozen-lockfile` only — plain `bun install` can break Vite 8's pinned `rolldown` dependency. See [`.cursor/CLOUD.md`](.cursor/CLOUD.md).
 
 Tech stack: React 19, Vite 8 (Rolldown), TanStack Router (Zod-validated search params), Tailwind CSS v4, itemsjs (faceted search), Fontsource (self-hosted Inter + Lexend).
 
