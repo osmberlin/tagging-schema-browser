@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { regionInLocationSet, describeLocationSet } from '@/utils/locationSet'
 import { parseOsmTags, serializeOsmTags } from '@/utils/parseOsmTags'
 import { matchesPrerequisiteTag } from '@/utils/prerequisiteTag'
-import { matchPresetMode } from '@/utils/presetModeMatch'
+import { matchPresetsFromTags } from '@/utils/presetMatch'
 import type { RawFields, RawPresets } from '@/utils/types'
 
 describe('parseOsmTags', () => {
@@ -90,9 +90,9 @@ const testFields: RawFields = {
   },
 }
 
-describe('matchPresetMode', () => {
+describe('matchPresetsFromTags', () => {
   it('picks the most specific matching preset', () => {
-    const result = matchPresetMode({
+    const result = matchPresetsFromTags({
       tags: { amenity: 'cafe', name: 'X' },
       geometry: 'point',
       rawPresets: testPresets,
@@ -103,7 +103,7 @@ describe('matchPresetMode', () => {
   })
 
   it('reports addTags gaps', () => {
-    const result = matchPresetMode({
+    const result = matchPresetsFromTags({
       tags: { amenity: 'clinic' },
       geometry: 'point',
       rawPresets: testPresets,
@@ -116,7 +116,7 @@ describe('matchPresetMode', () => {
   })
 
   it('picks regional variant when region matches', () => {
-    const result = matchPresetMode({
+    const result = matchPresetsFromTags({
       tags: { amenity: 'test_regional' },
       geometry: 'point',
       region: 'gb',
@@ -127,7 +127,7 @@ describe('matchPresetMode', () => {
   })
 
   it('falls back to worldwide variant outside regional include', () => {
-    const result = matchPresetMode({
+    const result = matchPresetsFromTags({
       tags: { amenity: 'test_regional' },
       geometry: 'point',
       region: 'de',

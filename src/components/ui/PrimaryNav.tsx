@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
-import { modeSearchDefaults } from '@/components/PageMode/modeSearch'
+import { presetMatchSearchDefaults } from '@/components/PagePresetMatch/presetMatchSearch'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
@@ -48,10 +48,10 @@ const areaIndicators: Record<SchemaArea, NavIndicator> = {
     ring: areaAccent.presetSwitch.navIndicatorRing,
     text: areaAccent.presetSwitch.navIndicatorText,
   },
-  mode: {
-    bg: areaAccent.mode.navIndicatorBg,
-    ring: areaAccent.mode.navIndicatorRing,
-    text: areaAccent.mode.navIndicatorText,
+  presetMatch: {
+    bg: areaAccent.presetMatch.navIndicatorBg,
+    ring: areaAccent.presetMatch.navIndicatorRing,
+    text: areaAccent.presetMatch.navIndicatorText,
   },
 }
 
@@ -70,7 +70,7 @@ function getActiveKey(pathname: string): NavKey {
   if (pathname === '/fields' || pathname.startsWith('/field/')) return 'fields'
   if (pathname === '/translations') return 'translations'
   if (pathname === '/preset-switch') return 'presetSwitch'
-  if (pathname === '/mode') return 'mode'
+  if (pathname === '/preset-match') return 'presetMatch'
   if (pathname === '/comparison') return 'comparison'
   return 'presets'
 }
@@ -169,16 +169,16 @@ export function PrimaryNav({
       title: 'Compare tag changes when switching presets',
     },
     {
-      key: 'mode',
-      to: '/mode',
-      label: 'Mode',
-      area: 'mode',
+      key: 'presetMatch',
+      to: '/preset-match',
+      label: 'Preset match',
+      area: 'presetMatch',
       search: (prev) => ({
-        ...modeSearchDefaults,
+        ...presetMatchSearchDefaults,
         dataUrl: prev.dataUrl ?? '',
         locale: prev.locale ?? '',
       }),
-      title: 'Experiment with tags and see which preset iD would pick',
+      title: 'See which preset iD would pick for a set of tags',
     },
     ...(isComparing
       ? [

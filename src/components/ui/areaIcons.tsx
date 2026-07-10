@@ -1,7 +1,13 @@
 import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 
-export type SchemaArea = 'presets' | 'icons' | 'fields' | 'translations' | 'presetSwitch' | 'mode'
+export type SchemaArea =
+  | 'presets'
+  | 'icons'
+  | 'fields'
+  | 'translations'
+  | 'presetSwitch'
+  | 'presetMatch'
 
 const areaTitles: Record<SchemaArea, string> = {
   presets: 'Presets',
@@ -9,7 +15,7 @@ const areaTitles: Record<SchemaArea, string> = {
   fields: 'Fields',
   translations: 'Translations',
   presetSwitch: 'Preset switch',
-  mode: 'Mode',
+  presetMatch: 'Preset match',
 }
 
 /** Distinct icons for each schema browsing area — reused in nav and cross-links. */
@@ -96,18 +102,13 @@ export function AreaIcon({ area, className }: { area: SchemaArea; className?: st
           />
         </svg>
       )
-    case 'mode':
+    case 'presetMatch':
       return (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={iconClassName}>
-          <title>{areaTitles.mode}</title>
-          <path
-            d="M7 6h10M7 12h6M7 18h8"
-            stroke="currentColor"
-            strokeWidth={1.6}
-            strokeLinecap="round"
-          />
-          <circle cx="17" cy="12" r="2" stroke="currentColor" strokeWidth={1.6} />
-          <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth={1.6} />
+          <title>{areaTitles.presetMatch}</title>
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth={1.6} />
+          <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth={1.6} />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
         </svg>
       )
   }

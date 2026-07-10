@@ -45,7 +45,7 @@ export type RegionWinner = {
   locationSummary: string
 }
 
-export type PresetModeMatchResult = {
+export type PresetMatchResult = {
   winner: PresetMatchCandidate | null
   matches: PresetMatchCandidate[]
   fallbackUsed: boolean
@@ -330,7 +330,7 @@ function computeRegionWinners(
   return winners
 }
 
-export type MatchPresetModeInput = {
+export type PresetMatchInput = {
   tags: Record<string, string>
   geometry: OsmGeometry
   region?: string
@@ -339,7 +339,7 @@ export type MatchPresetModeInput = {
   discarded?: Record<string, boolean>
 }
 
-export function matchPresetMode(input: MatchPresetModeInput): PresetModeMatchResult {
+export function matchPresetsFromTags(input: PresetMatchInput): PresetMatchResult {
   const { tags, geometry, region, rawPresets, fields, discarded } = input
   const geometryIndex = buildGeometryIndex(rawPresets)
   const matches = findMatchCandidates(tags, geometry, rawPresets, geometryIndex)

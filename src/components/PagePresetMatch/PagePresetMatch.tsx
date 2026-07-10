@@ -1,15 +1,17 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
-import { GEOMETRY_OPTIONS } from '@/components/PageMode/modeSearch'
-import { useModeSearch } from '@/components/PageMode/useModeSearch'
+import { GEOMETRY_OPTIONS } from '@/components/PagePresetMatch/presetMatchSearch'
+import { usePresetMatchSearch } from '@/components/PagePresetMatch/usePresetMatchSearch'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalLinkClass } from '@/theme/externalAccent'
 import { parseOsmTags } from '@/utils/parseOsmTags'
-import { matchPresetMode } from '@/utils/presetModeMatch'
+import { matchPresetsFromTags } from '@/utils/presetMatch'
 import { cn } from '@/utils/tw'
+
+const accent = areaAccent.presetMatch
 
 function PresetLink({ presetId }: { presetId: string }) {
   if (presetId.startsWith('fallback/')) {
@@ -20,7 +22,7 @@ function PresetLink({ presetId }: { presetId: string }) {
       to="/preset/$"
       params={{ _splat: presetId }}
       search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-      className="font-mono text-xs text-indigo-700 hover:underline"
+      className={cn('font-mono text-xs hover:underline', accent.link)}
     >
       {presetId}
     </Link>
@@ -34,17 +36,17 @@ function MatchCard({
   addTagsGaps,
   hiddenFields,
 }: {
-  candidate: ReturnType<typeof matchPresetMode>['matches'][number]
+  candidate: ReturnType<typeof matchPresetsFromTags>['matches'][number]
   rank: number
   isWinner: boolean
-  addTagsGaps?: ReturnType<typeof matchPresetMode>['addTagsGaps']
-  hiddenFields?: ReturnType<typeof matchPresetMode>['fieldVisibility']
+  addTagsGaps?: ReturnType<typeof matchPresetsFromTags>['addTagsGaps']
+  hiddenFields?: ReturnType<typeof matchPresetsFromTags>['fieldVisibility']
 }) {
   return (
     <article
       className={cn(
         'rounded-xl border p-4',
-        isWinner ? 'border-indigo-300 bg-indigo-50/50 ring-1 ring-indigo-200' : 'border-slate-200',
+        isWinner ? 'border-amber-300 bg-amber-50/50 ring-1 ring-amber-200' : 'border-slate-200',
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -98,7 +100,7 @@ function MatchCard({
       ) : null}
 
       {isWinner && hiddenFields && hiddenFields.some((f) => !f.visible) ? (
-        <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50/80 p-3 text-sm text-sky-950">
+        <div className="mt-3 rounded-lg border border-amber-200/80 bg-white/60 p-3 text-sm text-slate-800">
           <p className="font-medium">Conditional fields</p>
           <ul className="mt-2 space-y-1 text-xs">
             {hiddenFields
@@ -109,11 +111,11 @@ function MatchCard({
                     to="/field/$"
                     params={{ _splat: f.fieldId }}
                     search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-                    className="font-mono text-sky-800 hover:underline"
+                    className={cn('font-mono hover:underline', accent.link)}
                   >
                     {f.fieldId}
                   </Link>
-                  {f.reason ? <span className="text-sky-700"> — {f.reason}</span> : null}
+                  {f.reason ? <span className="text-slate-600"> — {f.reason}</span> : null}
                 </li>
               ))}
           </ul>
@@ -123,14 +125,14 @@ function MatchCard({
   )
 }
 
-export function PageMode() {
+export function PagePresetMatch() {
   const { presetsById, rawPresets, fields, discarded, loading, error } = useSchema()
-  const [search, setSearch] = useModeSearch()
+  const [search, setSearch] = usePresetMatchSearch()
 
   const tags = useMemo(() => parseOsmTags(search.tags), [search.tags])
   const result = useMemo(
     () =>
-      matchPresetMode({
+      matchPresetsFromTags({
         tags,
         geometry: search.geometry,
         region: search.region.trim() || undefined,
@@ -161,10 +163,10 @@ export function PageMode() {
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
       <header className="space-y-2 border-b border-slate-200 pb-6">
         <div className="flex items-center gap-2">
-          <span className={`rounded-lg p-2 ${areaAccent.mode.iconBg}`}>
-            <AreaIcon area="mode" className="h-5 w-5" />
+          <span className={`rounded-lg p-2 ${accent.iconBg}`}>
+            <AreaIcon area="presetMatch" className="h-5 w-5" />
           </span>
-          <h1 className="font-display text-2xl font-semibold text-slate-950">Mode</h1>
+          <h1 className="font-display text-2xl font-semibold text-slate-950">Preset match</h1>
         </div>
         <p className="max-w-3xl text-sm text-slate-600">
           Experiment with OSM tags and see which preset iD would pick, including regional{' '}
@@ -188,7 +190,7 @@ export function PageMode() {
               placeholder={'amenity=cafe\nname=Example'}
               className={cn(
                 'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-sm text-slate-900 shadow-sm',
-                areaAccent.mode.focus,
+                accent.focus,
               )}
             />
             <span className="text-xs text-slate-500">
@@ -206,7 +208,7 @@ export function PageMode() {
                 }
                 className={cn(
                   'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm',
-                  areaAccent.mode.focus,
+                  accent.focus,
                 )}
               >
                 {GEOMETRY_OPTIONS.map((g) => (
@@ -226,7 +228,7 @@ export function PageMode() {
                 placeholder="gb, us, de…"
                 className={cn(
                   'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm',
-                  areaAccent.mode.focus,
+                  accent.focus,
                 )}
               />
               <span className="text-xs text-slate-500">
