@@ -23,7 +23,10 @@ import { IconFacetSidebar } from '@/components/PageIcons/IconFacetSidebar'
 import { IconSearchBar } from '@/components/PageIcons/IconSearchBar'
 import { IconsPageProvider } from '@/components/PageIcons/IconsPageContext'
 import { iconFacetDefaults, iconFacetSchema } from '@/components/PageIcons/useIconFacetState'
-import { modeSearchDefaults, modeSearchSchema } from '@/components/PageMode/modeSearch'
+import {
+  presetMatchSearchDefaults,
+  presetMatchSearchSchema,
+} from '@/components/PagePresetMatch/presetMatchSearch'
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
 import { PagePresets } from '@/components/PagePresets/PagePresets'
 import { PresetDetailPage } from '@/components/PagePresets/PresetDetailPage'
@@ -83,9 +86,9 @@ const LazyPagePresetSwitch = lazy(() =>
   })),
 )
 
-const LazyPageMode = lazy(() =>
-  import('@/components/PageMode/PageMode').then((m) => ({
-    default: m.PageMode,
+const LazyPagePresetMatch = lazy(() =>
+  import('@/components/PagePresetMatch/PagePresetMatch').then((m) => ({
+    default: m.PagePresetMatch,
   })),
 )
 
@@ -346,15 +349,15 @@ const presetSwitchRoute = createRoute({
   ),
 })
 
-const modeRoute = createRoute({
+const presetMatchRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/mode',
-  head: documentTitleHead('Mode'),
-  validateSearch: modeSearchSchema,
-  search: { middlewares: [stripSearchParams(modeSearchDefaults)] },
+  path: '/preset-match',
+  head: documentTitleHead('Preset match'),
+  validateSearch: presetMatchSearchSchema,
+  search: { middlewares: [stripSearchParams(presetMatchSearchDefaults)] },
   component: () => (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading mode...</p>}>
-      <LazyPageMode />
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading preset match...</p>}>
+      <LazyPagePresetMatch />
     </Suspense>
   ),
 })
@@ -437,7 +440,7 @@ const routeTree = rootRoute.addChildren([
   fieldsRoute,
   translationsRoute,
   presetSwitchRoute,
-  modeRoute,
+  presetMatchRoute,
   comparisonRoute,
   presetRoute,
   fieldRoute,
