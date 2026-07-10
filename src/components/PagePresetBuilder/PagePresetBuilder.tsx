@@ -2,16 +2,21 @@ import { useStore } from '@tanstack/react-form'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { StringListEditor, TagKeyValueEditor } from '@/components/PagePresetBuilder/BuilderEditors'
+import { BuilderSectionDisclosure } from '@/components/PagePresetBuilder/BuilderSectionDisclosure'
 import { IconFieldInput } from '@/components/PagePresetBuilder/IconFieldInput'
 import {
-  GEOMETRY_OPTIONS,
+  BUILDER_SECTION_META,
+  sectionOpenWhen,
+} from '@/components/PagePresetBuilder/presetBuilderSections'
+import type { PresetBuilderState } from '@/components/PagePresetBuilder/presetBuilderTypes'
+import { GEOMETRY_OPTIONS } from '@/components/PagePresetBuilder/presetBuilderUtils'
+import {
   buildRawPreset,
   buildTranslationSnippet,
   formatPresetJson,
   isPresetRef,
   presetIdFromTags,
   presetRepoPath,
-  type PresetBuilderState,
 } from '@/components/PagePresetBuilder/presetBuilderUtils'
 import { RegionMultiSelect } from '@/components/PagePresetBuilder/RegionMultiSelect'
 import { usePresetBuilderForm } from '@/components/PagePresetBuilder/usePresetBuilderForm'
@@ -27,28 +32,6 @@ import { Input } from '@/components/ui/Input'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import type { DenormalizedPreset, RawFields, RawPreset } from '@/utils/types'
-
-function FormSection({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:gap-8">
-      <div>
-        <h2 className="font-display text-base font-semibold text-slate-900">{title}</h2>
-        <p className="mt-1 text-sm text-slate-600">{description}</p>
-      </div>
-      <div className="rounded-xl bg-white p-5 shadow-xs outline outline-slate-900/5">
-        {children}
-      </div>
-    </section>
-  )
-}
 
 function builderPreviewPreset(
   presetId: string,
@@ -209,10 +192,12 @@ export function PagePresetBuilder() {
   ])
 
   const duplicateId = draftPresetId && rawPresets[draftPresetId] && !fromPresetId
+  const sectionOpen = (section: Parameters<typeof sectionOpenWhen>[0]) =>
+    sectionOpenWhen(section, committedState)
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:px-6">
-      <header>
+    <div className="mx-auto max-w-5xl space-y-4 px-4 py-8 sm:px-6">
+      <header className="mb-6">
         <h1 className="font-display text-2xl font-semibold text-rose-700">Preset builder</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-600">
           Draft a preset JSON file with live preview and export. Edits are saved to the URL when you
@@ -226,9 +211,10 @@ export function PagePresetBuilder() {
         ) : null}
       </header>
 
-      <FormSection
+      <BuilderSectionDisclosure
         title="Identity"
         description="Tags define the preset id and repository file path. Main presets have one tag key; sub-presets add more."
+        alwaysOpen
       >
         <div className="space-y-4">
           <form.Field name="tags">
@@ -315,12 +301,9 @@ export function PagePresetBuilder() {
             )}
           </form.Field>
         </div>
-      </FormSection>
+      </BuilderSectionDisclosure>
 
-      <FormSection
-        title="Labels"
-        description="Display name goes in translation files. Use {parent} to inherit from a slash-parent preset."
-      >
+      <BuilderSectionDisclosure {...BUILDER_SECTION_META.labels} openWhen={sectionOpen('labels')}>
         <div className="space-y-4">
           <form.Field name="name">
             {(field) => (
@@ -368,11 +351,11 @@ export function PagePresetBuilder() {
             )}
           </form.Field>
         </div>
-      </FormSection>
+      </BuilderSectionDisclosure>
 
-      <FormSection
-        title="Appearance"
-        description="Pick an icon name from the Icons page. imageURL is not offered here."
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.appearance}
+        openWhen={sectionOpen('appearance')}
       >
         <form.Field name="icon">
           {(field) => (
@@ -387,9 +370,12 @@ export function PagePresetBuilder() {
             />
           )}
         </form.Field>
-      </FormSection>
+      </BuilderSectionDisclosure>
 
-      <FormSection title="Geometry" description="Where this preset can be used in the editor.">
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.geometry}
+        openWhen={sectionOpen('geometry')}
+      >
         <form.Field name="geometry">
           {(field) => (
             <div className="flex flex-wrap gap-3">
@@ -424,12 +410,9 @@ export function PagePresetBuilder() {
             </div>
           )}
         </form.Field>
-      </FormSection>
+      </BuilderSectionDisclosure>
 
-      <FormSection
-        title="Fields"
-        description="One entry per line. Use field ids or preset refs like {shop} to include a parent list."
-      >
+      <BuilderSectionDisclosure {...BUILDER_SECTION_META.fields} openWhen={sectionOpen('fields')}>
         <div className="space-y-4">
           <form.Field name="fields">
             {(field) => (
@@ -447,215 +430,230 @@ export function PagePresetBuilder() {
           </form.Field>
           {previewPreset ? <MissingInheritancePanel preset={previewPreset} /> : null}
         </div>
-      </FormSection>
+      </BuilderSectionDisclosure>
 
-      <section className="space-y-4">
-        <form.Field name="advancedOpen">
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.moreFields}
+        openWhen={sectionOpen('moreFields')}
+      >
+        <form.Field name="moreFields">
           {(field) => (
-            <button
-              type="button"
-              onClick={() => {
-                const next = !field.state.value
-                field.handleChange(next)
-                commitAndSet('advancedOpen', next)
+            <StringListEditor
+              label="moreFields"
+              values={field.state.value}
+              onChange={(moreFields) => field.handleChange(moreFields)}
+              onBlur={() => {
+                field.handleBlur()
+                commitFieldBlur()
               }}
-              className="text-sm font-medium text-rose-600 hover:text-rose-700"
-            >
-              {field.state.value ? 'Hide advanced options' : 'Show advanced options'}
-            </button>
+            />
           )}
         </form.Field>
-        <form.Field name="advancedOpen">
-          {(field) =>
-            field.state.value ? (
-              <div className="space-y-8 rounded-xl bg-white p-5 shadow-xs outline outline-slate-900/5">
-                <form.Field name="moreFields">
-                  {(moreField) => (
-                    <StringListEditor
-                      label="moreFields"
-                      values={moreField.state.value}
-                      onChange={(moreFields) => moreField.handleChange(moreFields)}
-                      onBlur={() => {
-                        moreField.handleBlur()
-                        commitFieldBlur()
-                      }}
-                    />
-                  )}
-                </form.Field>
-                <div>
-                  <h3 className="text-sm font-medium text-slate-900">addTags</h3>
-                  <div className="mt-2">
-                    <form.Field name="addTags">
-                      {(addField) => (
-                        <TagKeyValueEditor
-                          tags={addField.state.value}
-                          onChange={(addTags) => addField.handleChange(addTags)}
-                          onBlur={() => {
-                            addField.handleBlur()
-                            commitFieldBlur()
-                          }}
-                        />
-                      )}
-                    </form.Field>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-slate-900">removeTags</h3>
-                  <div className="mt-2">
-                    <form.Field name="removeTags">
-                      {(removeField) => (
-                        <TagKeyValueEditor
-                          tags={removeField.state.value}
-                          onChange={(removeTags) => removeField.handleChange(removeTags)}
-                          onBlur={() => {
-                            removeField.handleBlur()
-                            commitFieldBlur()
-                          }}
-                        />
-                      )}
-                    </form.Field>
-                  </div>
-                </div>
-                <form.Field name="matchScore">
-                  {(matchField) => (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-900">matchScore</label>
-                      <Input
-                        value={matchField.state.value}
-                        onChange={(event) => matchField.handleChange(event.target.value)}
-                        onBlur={() => {
-                          matchField.handleBlur()
-                          commitFieldBlur()
-                        }}
-                        placeholder="1.0"
-                        className="mt-1.5 max-w-xs"
-                      />
-                    </div>
-                  )}
-                </form.Field>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <form.Field name="referenceKey">
-                    {(keyField) => (
-                      <div>
-                        <label className="block text-sm font-medium text-slate-900">
-                          reference key
-                        </label>
-                        <Input
-                          value={keyField.state.value}
-                          onChange={(event) => keyField.handleChange(event.target.value)}
-                          onBlur={() => {
-                            keyField.handleBlur()
-                            commitFieldBlur()
-                          }}
-                          className="mt-1.5"
-                        />
-                      </div>
-                    )}
-                  </form.Field>
-                  <form.Field name="referenceValue">
-                    {(valueField) => (
-                      <div>
-                        <label className="block text-sm font-medium text-slate-900">
-                          reference value
-                        </label>
-                        <Input
-                          value={valueField.state.value}
-                          onChange={(event) => valueField.handleChange(event.target.value)}
-                          onBlur={() => {
-                            valueField.handleBlur()
-                            commitFieldBlur()
-                          }}
-                          className="mt-1.5"
-                        />
-                      </div>
-                    )}
-                  </form.Field>
-                </div>
-                <form.Field name="locationSetInclude">
-                  {(includeField) => (
-                    <RegionMultiSelect
-                      label="locationSet — include"
-                      selected={includeField.state.value}
-                      onChange={(locationSetInclude) => {
-                        includeField.handleChange(locationSetInclude)
-                        commitAndSet('locationSetInclude', locationSetInclude)
-                      }}
-                    />
-                  )}
-                </form.Field>
-                <form.Field name="locationSetExclude">
-                  {(excludeField) => (
-                    <RegionMultiSelect
-                      label="locationSet — exclude"
-                      selected={excludeField.state.value}
-                      onChange={(locationSetExclude) => {
-                        excludeField.handleChange(locationSetExclude)
-                        commitAndSet('locationSetExclude', locationSetExclude)
-                      }}
-                    />
-                  )}
-                </form.Field>
-                <form.Field name="locationSetCrossReference">
-                  {(crossField) => (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-900">
-                        locationSetCrossReference
-                      </label>
-                      <Input
-                        value={crossField.state.value}
-                        onChange={(event) => crossField.handleChange(event.target.value)}
-                        onBlur={() => {
-                          crossField.handleBlur()
-                          commitFieldBlur()
-                        }}
-                        placeholder="{presets/man_made/crane}"
-                        className="mt-1.5 font-mono text-sm"
-                      />
-                    </div>
-                  )}
-                </form.Field>
-                <form.Field name="relation">
-                  {(relationField) => (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-900">relation</label>
-                      <Input
-                        value={relationField.state.value}
-                        onChange={(event) => relationField.handleChange(event.target.value)}
-                        onBlur={() => {
-                          relationField.handleBlur()
-                          commitFieldBlur()
-                        }}
-                        className="mt-1.5 font-mono text-sm"
-                      />
-                    </div>
-                  )}
-                </form.Field>
-                <form.Field name="relationCrossReference">
-                  {(relationCrossField) => (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-900">
-                        relationCrossReference
-                      </label>
-                      <Input
-                        value={relationCrossField.state.value}
-                        onChange={(event) => relationCrossField.handleChange(event.target.value)}
-                        onBlur={() => {
-                          relationCrossField.handleBlur()
-                          commitFieldBlur()
-                        }}
-                        className="mt-1.5 font-mono text-sm"
-                      />
-                    </div>
-                  )}
-                </form.Field>
-              </div>
-            ) : null
-          }
+      </BuilderSectionDisclosure>
+
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.tagOverrides}
+        openWhen={sectionOpen('tagOverrides')}
+      >
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-sm font-medium text-slate-900">addTags</h3>
+            <div className="mt-2">
+              <form.Field name="addTags">
+                {(addField) => (
+                  <TagKeyValueEditor
+                    tags={addField.state.value}
+                    onChange={(addTags) => addField.handleChange(addTags)}
+                    onBlur={() => {
+                      addField.handleBlur()
+                      commitFieldBlur()
+                    }}
+                  />
+                )}
+              </form.Field>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-slate-900">removeTags</h3>
+            <div className="mt-2">
+              <form.Field name="removeTags">
+                {(removeField) => (
+                  <TagKeyValueEditor
+                    tags={removeField.state.value}
+                    onChange={(removeTags) => removeField.handleChange(removeTags)}
+                    onBlur={() => {
+                      removeField.handleBlur()
+                      commitFieldBlur()
+                    }}
+                  />
+                )}
+              </form.Field>
+            </div>
+          </div>
+        </div>
+      </BuilderSectionDisclosure>
+
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.matchScore}
+        openWhen={sectionOpen('matchScore')}
+      >
+        <form.Field name="matchScore">
+          {(field) => (
+            <div>
+              <label className="block text-sm font-medium text-slate-900">matchScore</label>
+              <Input
+                value={field.state.value}
+                onChange={(event) => field.handleChange(event.target.value)}
+                onBlur={() => {
+                  field.handleBlur()
+                  commitFieldBlur()
+                }}
+                placeholder="1.0"
+                className="mt-1.5 max-w-xs"
+              />
+            </div>
+          )}
         </form.Field>
-      </section>
+      </BuilderSectionDisclosure>
+
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.reference}
+        openWhen={sectionOpen('reference')}
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <form.Field name="referenceKey">
+            {(keyField) => (
+              <div>
+                <label className="block text-sm font-medium text-slate-900">reference key</label>
+                <Input
+                  value={keyField.state.value}
+                  onChange={(event) => keyField.handleChange(event.target.value)}
+                  onBlur={() => {
+                    keyField.handleBlur()
+                    commitFieldBlur()
+                  }}
+                  className="mt-1.5"
+                />
+              </div>
+            )}
+          </form.Field>
+          <form.Field name="referenceValue">
+            {(valueField) => (
+              <div>
+                <label className="block text-sm font-medium text-slate-900">reference value</label>
+                <Input
+                  value={valueField.state.value}
+                  onChange={(event) => valueField.handleChange(event.target.value)}
+                  onBlur={() => {
+                    valueField.handleBlur()
+                    commitFieldBlur()
+                  }}
+                  className="mt-1.5"
+                />
+              </div>
+            )}
+          </form.Field>
+        </div>
+      </BuilderSectionDisclosure>
+
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.locationSet}
+        openWhen={sectionOpen('locationSet')}
+      >
+        <div className="space-y-6">
+          <form.Field name="locationSetInclude">
+            {(includeField) => (
+              <RegionMultiSelect
+                label="locationSet — include"
+                selected={includeField.state.value}
+                onChange={(locationSetInclude) => {
+                  includeField.handleChange(locationSetInclude)
+                  commitAndSet('locationSetInclude', locationSetInclude)
+                }}
+              />
+            )}
+          </form.Field>
+          <form.Field name="locationSetExclude">
+            {(excludeField) => (
+              <RegionMultiSelect
+                label="locationSet — exclude"
+                selected={excludeField.state.value}
+                onChange={(locationSetExclude) => {
+                  excludeField.handleChange(locationSetExclude)
+                  commitAndSet('locationSetExclude', locationSetExclude)
+                }}
+              />
+            )}
+          </form.Field>
+          <form.Field name="locationSetCrossReference">
+            {(crossField) => (
+              <div>
+                <label className="block text-sm font-medium text-slate-900">
+                  locationSetCrossReference
+                </label>
+                <Input
+                  value={crossField.state.value}
+                  onChange={(event) => crossField.handleChange(event.target.value)}
+                  onBlur={() => {
+                    crossField.handleBlur()
+                    commitFieldBlur()
+                  }}
+                  placeholder="{presets/man_made/crane}"
+                  className="mt-1.5 font-mono text-sm"
+                />
+              </div>
+            )}
+          </form.Field>
+        </div>
+      </BuilderSectionDisclosure>
+
+      <BuilderSectionDisclosure
+        {...BUILDER_SECTION_META.relation}
+        openWhen={sectionOpen('relation')}
+      >
+        <div className="space-y-4">
+          <form.Field name="relation">
+            {(relationField) => (
+              <div>
+                <label className="block text-sm font-medium text-slate-900">relation</label>
+                <Input
+                  value={relationField.state.value}
+                  onChange={(event) => relationField.handleChange(event.target.value)}
+                  onBlur={() => {
+                    relationField.handleBlur()
+                    commitFieldBlur()
+                  }}
+                  className="mt-1.5 font-mono text-sm"
+                />
+              </div>
+            )}
+          </form.Field>
+          <form.Field name="relationCrossReference">
+            {(relationCrossField) => (
+              <div>
+                <label className="block text-sm font-medium text-slate-900">
+                  relationCrossReference
+                </label>
+                <Input
+                  value={relationCrossField.state.value}
+                  onChange={(event) => relationCrossField.handleChange(event.target.value)}
+                  onBlur={() => {
+                    relationCrossField.handleBlur()
+                    commitFieldBlur()
+                  }}
+                  className="mt-1.5 font-mono text-sm"
+                />
+              </div>
+            )}
+          </form.Field>
+        </div>
+      </BuilderSectionDisclosure>
 
       {previewPreset ? (
-        <FormSection title="Preview" description="How the preset will look in the browser.">
+        <BuilderSectionDisclosure
+          {...BUILDER_SECTION_META.preview}
+          openWhen={Boolean(committedPresetId)}
+        >
           <div className="flex items-start gap-4">
             <PresetIconBox preset={previewPreset} size="md" />
             <div className="min-w-0 space-y-2">
@@ -680,13 +678,10 @@ export function PagePresetBuilder() {
               )}
             </div>
           </div>
-        </FormSection>
+        </BuilderSectionDisclosure>
       ) : null}
 
-      <FormSection
-        title="Export"
-        description="Copy JSON into your id-tagging-schema pull request. English labels go in translations."
-      >
+      <BuilderSectionDisclosure {...BUILDER_SECTION_META.export} alwaysOpen>
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-slate-900">Preset file</h3>
@@ -710,7 +705,7 @@ export function PagePresetBuilder() {
             </div>
           ) : null}
         </div>
-      </FormSection>
+      </BuilderSectionDisclosure>
     </div>
   )
 }

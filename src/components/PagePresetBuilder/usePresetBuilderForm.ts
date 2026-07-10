@@ -7,10 +7,10 @@ import {
   searchToBuilderState,
 } from '@/components/PagePresetBuilder/presetBuilderSearch'
 import {
-  type PresetBuilderState,
   PRESET_BUILDER_DEFAULTS,
-  builderStatesEqual,
-} from '@/components/PagePresetBuilder/presetBuilderUtils'
+  type PresetBuilderState,
+} from '@/components/PagePresetBuilder/presetBuilderTypes'
+import { builderStatesEqual } from '@/components/PagePresetBuilder/presetBuilderUtils'
 
 /**
  * TanStack Form holds draft values while typing. The URL (TanStack Router search
