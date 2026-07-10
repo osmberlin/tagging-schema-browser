@@ -13,9 +13,10 @@ import {
 import { builderStatesEqual } from '@/components/PagePresetBuilder/presetBuilderUtils'
 
 /**
- * TanStack Form holds draft values while typing. The URL (TanStack Router search
- * params) is the committed, shareable state — updated on blur or discrete
- * control changes, not on every keystroke (avoids navigate-induced resets).
+ * Draft state lives in TanStack Form. The URL is a committed snapshot updated on
+ * blur (or discrete toggles) via navigate with `resetScroll: false`. The form is
+ * only reset when the URL changes externally (initial load, back/forward, prefill)
+ * — never after our own commits.
  */
 export function usePresetBuilderForm() {
   const search = useSearch({
@@ -30,7 +31,9 @@ export function usePresetBuilderForm() {
   const committedKey = useMemo(() => JSON.stringify(committedState), [committedState])
   const committedStateRef = useRef(committedState)
   committedStateRef.current = committedState
-  const skipResetRef = useRef(false)
+
+  const lastHydratedKeyRef = useRef<string | null>(null)
+  const editingRef = useRef(false)
 
   const form = useForm({
     defaultValues: committedState,
@@ -38,10 +41,18 @@ export function usePresetBuilderForm() {
   const formRef = useRef(form)
   formRef.current = form
 
+  const markEditing = useCallback(() => {
+    editingRef.current = true
+  }, [])
+
   const commitToUrl = useCallback(
     (values: PresetBuilderState) => {
+      editingRef.current = false
       if (builderStatesEqual(values, committedStateRef.current)) return
-      skipResetRef.current = true
+
+      const nextKey = JSON.stringify(values)
+      lastHydratedKeyRef.current = nextKey
+
       void navigate({
         to: '.',
         search: (prev) => ({
@@ -49,20 +60,25 @@ export function usePresetBuilderForm() {
           ...builderStateToSearch(values, fromPresetId),
         }),
         replace: true,
+        resetScroll: false,
       })
     },
     [navigate, fromPresetId],
   )
 
-  // Hydrate the form when the URL changes externally (initial load, back/forward, prefill).
+  // Hydrate from URL only on external changes (not while the user is editing).
   useEffect(() => {
-    if (skipResetRef.current) {
-      skipResetRef.current = false
+    if (lastHydratedKeyRef.current === committedKey) return
+    if (editingRef.current) return
+
+    const committed = committedStateRef.current
+    if (builderStatesEqual(formRef.current.state.values, committed)) {
+      lastHydratedKeyRef.current = committedKey
       return
     }
-    const committed = committedStateRef.current
-    if (builderStatesEqual(formRef.current.state.values, committed)) return
+
     formRef.current.reset(committed)
+    lastHydratedKeyRef.current = committedKey
   }, [committedKey])
 
   const formValues = useStore(form.store, (state) => state.values)
@@ -81,6 +97,14 @@ export function usePresetBuilderForm() {
     [commitToUrl],
   )
 
+  const setFieldValue = useCallback(
+    <K extends keyof PresetBuilderState>(key: K, value: PresetBuilderState[K]) => {
+      editingRef.current = true
+      formRef.current.setFieldValue(key, value as never)
+    },
+    [],
+  )
+
   return {
     form,
     committedState,
@@ -90,6 +114,8 @@ export function usePresetBuilderForm() {
     commitToUrl,
     commitDraft,
     commitAndSet,
+    setFieldValue,
+    markEditing,
     defaults: PRESET_BUILDER_DEFAULTS,
   }
 }
