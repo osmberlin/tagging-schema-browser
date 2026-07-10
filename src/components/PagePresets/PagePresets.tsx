@@ -234,6 +234,8 @@ export function PagePresets() {
         staleCount={staleMissingInheritanceCount}
         onShowUnreviewed={() => setSearchState({ missingInheritance: ['unreviewed'], page: 1 })}
         onShowStale={() => setSearchState({ missingInheritance: ['stale'], page: 1 })}
+        showUnreviewed={!searchState.missingInheritance.includes('unreviewed')}
+        showStale={!searchState.missingInheritance.includes('stale')}
       />
       <PresetTable />
     </div>
