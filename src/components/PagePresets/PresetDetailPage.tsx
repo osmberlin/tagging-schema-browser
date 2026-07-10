@@ -1,4 +1,5 @@
 import { Link, useParams } from '@tanstack/react-router'
+import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { MissingInheritancePanel } from '@/components/PagePresets/MissingInheritancePanel'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
@@ -235,9 +236,7 @@ function PresetDetailContent({
                       {d.label}
                     </span>
                     <span className="min-w-0">
-                      <span className="text-rose-600 line-through">{d.before || '—'}</span>
-                      <span className="mx-1 text-slate-400">→</span>
-                      <span className="text-emerald-700">{d.after || '—'}</span>
+                      <FieldDiffValue diff={d} arrowClass="text-slate-400" />
                     </span>
                   </li>
                 ))}
