@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { getIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
+import { useIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { areaAccent } from '@/theme/areaAccent'
 import type { PresetOptionRow } from '@/utils/fieldOptions'
@@ -33,6 +33,7 @@ function OptionLabelRow({
 }
 
 function OptionIcon({ icon, iconBroken }: { icon?: string; iconBroken: boolean }) {
+  const iconSrc = useIconSvgDataUrl(icon)
   if (!icon) {
     return (
       <span className="flex h-5 w-5 shrink-0 items-center justify-center text-slate-300">—</span>
@@ -50,9 +51,9 @@ function OptionIcon({ icon, iconBroken }: { icon?: string; iconBroken: boolean }
   }
   return (
     <img
-      src={getIconSvgDataUrl(icon) ?? undefined}
+      src={iconSrc ?? undefined}
       alt=""
-      className="h-5 w-5 shrink-0"
+      className="h-5 w-5 shrink-0 object-contain"
       title={icon}
     />
   )
