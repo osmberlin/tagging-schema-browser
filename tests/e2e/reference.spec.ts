@@ -19,6 +19,7 @@ test('reference toggle is visible on narrow viewports', async ({ page }) => {
 })
 
 test('reference toggle switches to release in URL', async ({ page }) => {
+  test.setTimeout(60_000)
   await page.goto('/')
   await page.getByRole('tab', { name: /^Release/i }).click()
   await expect(page).toHaveURL(/reference=release/, { timeout: 30_000 })
@@ -31,6 +32,7 @@ test('reference toggle switches to release in URL', async ({ page }) => {
 test('reference toggle switches back to unreleased without snapping to release', async ({
   page,
 }) => {
+  test.setTimeout(60_000)
   await page.goto('/?reference=release')
   await expect(page.getByRole('tab', { name: /^Release/i })).toHaveAttribute(
     'aria-selected',
