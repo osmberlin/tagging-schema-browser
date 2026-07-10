@@ -13,6 +13,7 @@ test('preset builder stores tag edits in URL', async ({ page }) => {
   const identity = page.locator('section').filter({ hasText: 'Identity' })
   await identity.getByPlaceholder('amenity').fill('amenity')
   await identity.getByPlaceholder('cafe', { exact: true }).fill('cafe')
+  await identity.getByPlaceholder('cafe', { exact: true }).blur()
   await expect(page.locator('dl').getByText('amenity/cafe', { exact: true })).toBeVisible({
     timeout: 10_000,
   })

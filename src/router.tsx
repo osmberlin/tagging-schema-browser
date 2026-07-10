@@ -231,7 +231,7 @@ function RootContent() {
       <FacetSidebar />
     ) : isBuilderPage ? (
       <p className="mt-4 px-2 text-sm text-slate-500">
-        Form state is saved in the URL. Use <strong>Copy share link</strong> to resume editing
+        Edits are saved to the URL when you leave a field. Share or bookmark the page to continue
         later.
       </p>
     ) : isDetailPage ? null : (

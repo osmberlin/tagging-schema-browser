@@ -201,3 +201,7 @@ export function buildTranslationSnippet(
 export function isPresetRef(value: string): boolean {
   return /^\{[^}]+\}$/.test(value.trim())
 }
+
+export function builderStatesEqual(a: PresetBuilderState, b: PresetBuilderState): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}

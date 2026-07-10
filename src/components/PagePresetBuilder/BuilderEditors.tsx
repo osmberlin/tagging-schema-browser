@@ -1,11 +1,12 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 
 type TagKeyValueEditorProps = {
   tags: Record<string, string>
   onChange: (tags: Record<string, string>) => void
+  onBlur?: () => void
 }
 
-export function TagKeyValueEditor({ tags, onChange }: TagKeyValueEditorProps) {
+export function TagKeyValueEditor({ tags, onChange, onBlur }: TagKeyValueEditorProps) {
   const entries = Object.entries(tags).sort(([a], [b]) => a.localeCompare(b))
   const rows = entries.length > 0 ? entries : [['', ''] as const]
 
@@ -15,7 +16,7 @@ export function TagKeyValueEditor({ tags, onChange }: TagKeyValueEditorProps) {
     )
     const next: Record<string, string> = {}
     for (const [k, v] of nextEntries) {
-      if (k.trim()) next[k.trim()] = v.trim()
+      if (k.trim()) next[k.trim()] = v
     }
     onChange(next)
   }
@@ -26,6 +27,7 @@ export function TagKeyValueEditor({ tags, onChange }: TagKeyValueEditorProps) {
     while (`new_key_${index}` in next) index += 1
     next[`new_key_${index}`] = ''
     onChange(next)
+    onBlur?.()
   }
 
   const removeRow = (index: number) => {
@@ -35,6 +37,7 @@ export function TagKeyValueEditor({ tags, onChange }: TagKeyValueEditorProps) {
       if (k.trim()) next[k.trim()] = v.trim()
     }
     onChange(next)
+    onBlur?.()
   }
 
   return (
@@ -45,6 +48,7 @@ export function TagKeyValueEditor({ tags, onChange }: TagKeyValueEditorProps) {
             type="text"
             value={key}
             onChange={(event) => updateRow(index, event.target.value, value)}
+            onBlur={onBlur}
             placeholder="amenity"
             className="w-2/5 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none"
             spellCheck={false}
@@ -54,6 +58,7 @@ export function TagKeyValueEditor({ tags, onChange }: TagKeyValueEditorProps) {
             type="text"
             value={value}
             onChange={(event) => updateRow(index, key, event.target.value)}
+            onBlur={onBlur}
             placeholder="cafe"
             className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none"
             spellCheck={false}
@@ -83,33 +88,47 @@ type StringListEditorProps = {
   label: string
   values: string[]
   onChange: (values: string[]) => void
+  onBlur?: () => void
   placeholder?: string
   hint?: string
+}
+
+function parseStringListText(nextText: string): string[] {
+  return nextText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
 }
 
 export function StringListEditor({
   label,
   values,
   onChange,
+  onBlur,
   placeholder = 'one per line',
   hint,
 }: StringListEditorProps) {
-  const text = values.join('\n')
+  const committedText = values.join('\n')
+  const [draft, setDraft] = useState<string | null>(null)
+  const display = draft ?? committedText
 
-  const commit = (nextText: string) => {
-    const next = nextText
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
+  const commitDraft = () => {
+    const next = parseStringListText(display)
     onChange(next)
+    setDraft(null)
+    onBlur?.()
   }
 
   return (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-slate-900">{label}</label>
       <textarea
-        value={text}
-        onChange={(event) => commit(event.target.value)}
+        value={display}
+        onChange={(event) => setDraft(event.target.value)}
+        onFocus={() => {
+          if (draft === null) setDraft(committedText)
+        }}
+        onBlur={commitDraft}
         rows={4}
         placeholder={placeholder}
         className="block w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm text-slate-900 shadow-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none"
@@ -117,29 +136,5 @@ export function StringListEditor({
       />
       {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
     </div>
-  )
-}
-
-export function ShareLinkButton() {
-  const [copied, setCopied] = useState(false)
-
-  const onCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // ignore
-    }
-  }, [])
-
-  return (
-    <button
-      type="button"
-      onClick={onCopy}
-      className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700"
-    >
-      {copied ? 'Link copied' : 'Copy share link'}
-    </button>
   )
 }
