@@ -121,6 +121,21 @@ describe('formatSchemaBuildLabel', () => {
       ),
     ).toBe('v7.0.1')
   })
+
+  it('labels unreleased main builds as major-latest', () => {
+    expect(formatSchemaBuildLabel({ major: 7, versionSpec: null, detection: 'content' })).toBe(
+      '7-latest',
+    )
+  })
+
+  it('can append staging age for unreleased builds', () => {
+    expect(
+      formatSchemaBuildLabel(
+        { major: 7, versionSpec: null, detection: 'content' },
+        { stagingAge: 'today' },
+      ),
+    ).toBe('7-latest (today)')
+  })
 })
 
 describe('unsupportedSchemaBuildMessage', () => {
