@@ -103,7 +103,7 @@ export function PageAbout() {
       <p>
         The app loads a built id-tagging-schema <code>dist/</code> and makes it explorable in the
         browser — no build step or checkout required. Use it as an everyday reference or as a review
-        tool for schema pull requests: search presets, explore facets, and browse icons.
+        tool for schema pull requests: search presets, explore fields, and browse icons.
       </p>
       <h2>Upstream projects</h2>
       <ul>
