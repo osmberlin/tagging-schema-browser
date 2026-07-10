@@ -1,9 +1,12 @@
 import { useStore } from '@tanstack/react-form'
 import { Link } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
+import { useFieldSearch } from '@/components/PageFields/useFieldSearch'
 import { StringListEditor, TagKeyValueEditor } from '@/components/PagePresetBuilder/BuilderEditors'
 import { BuilderSectionDisclosure } from '@/components/PagePresetBuilder/BuilderSectionDisclosure'
+import { FieldListEditor } from '@/components/PagePresetBuilder/FieldListEditor'
 import { IconFieldInput } from '@/components/PagePresetBuilder/IconFieldInput'
+import { formatFieldJson, NewFieldModal } from '@/components/PagePresetBuilder/NewFieldModal'
 import {
   BUILDER_SECTION_META,
   sectionOpenWhen,
@@ -31,7 +34,14 @@ import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { Input } from '@/components/ui/Input'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
-import type { DenormalizedPreset, RawFields, RawPreset } from '@/utils/types'
+import { schemaRepoPath } from '@/utils/githubFileUrl'
+import type {
+  DenormalizedPreset,
+  FieldViewModel,
+  RawField,
+  RawFields,
+  RawPreset,
+} from '@/utils/types'
 
 function builderPreviewPreset(
   presetId: string,
@@ -147,13 +157,55 @@ export function PagePresetBuilder() {
     markEditing,
     defaults,
   } = usePresetBuilderForm()
-  const { rawPresets, fields, dataUrl } = useSchema()
+  const { rawPresets, fields, presets, data, dataUrl } = useSchema()
+  const [newFieldOpen, setNewFieldOpen] = useState(false)
+  const [newFieldTarget, setNewFieldTarget] = useState<'fields' | 'moreFields'>('fields')
+
+  const { fields: schemaFields, types: fieldTypes } = useFieldSearch(
+    fields,
+    presets,
+    data?.fieldTranslations ?? {},
+  )
+
+  const draftFieldIds = useMemo(
+    () => new Set(Object.keys(committedState.draftFields)),
+    [committedState.draftFields],
+  )
+
+  const fieldCatalog = useMemo((): FieldViewModel[] => {
+    const existing = new Set(schemaFields.map((field) => field.id))
+    const draftEntries: FieldViewModel[] = Object.entries(committedState.draftFields)
+      .filter(([id]) => !existing.has(id))
+      .map(([id, raw]) => ({
+        id,
+        key: raw.key ?? id,
+        type: raw.type ?? 'text',
+        label: raw.label ?? id,
+        geometry: raw.geometry ?? [],
+        universal: Boolean(raw.universal),
+        usageCount: 0,
+        primaryCount: 0,
+        moreCount: 0,
+        presets: [],
+        iconMismatchCount: 0,
+      }))
+    return [...schemaFields, ...draftEntries]
+  }, [schemaFields, committedState.draftFields])
+
+  const existingFieldIds = useMemo(() => {
+    const ids = new Set(fieldCatalog.map((field) => field.id))
+    for (const id of Object.keys(committedState.draftFields)) ids.add(id)
+    return ids
+  }, [fieldCatalog, committedState.draftFields])
+
+  const formValues = useStore(form.store, (state) => state.values)
 
   usePrefillFromPreset(fromPresetId, committedState.tags, commitToUrl, defaults)
 
   const draftPresetId = useStore(form.store, (state) => presetIdFromTags(state.values.tags))
   const committedPresetId = presetIdFromTags(committedState.tags)
   const parentId = draftPresetId ? parentPresetId(draftPresetId) : null
+  const parentPresetRef = parentId ? `{${parentId}}` : null
 
   const committedRawPreset = useMemo(() => buildRawPreset(committedState), [committedState])
   const presetJson = useMemo(() => formatPresetJson(committedRawPreset), [committedRawPreset])
@@ -196,6 +248,41 @@ export function PagePresetBuilder() {
   const duplicateId = draftPresetId && rawPresets[draftPresetId] && !fromPresetId
   const sectionOpen = (section: Parameters<typeof sectionOpenWhen>[0]) =>
     sectionOpenWhen(section, committedState)
+
+  const openNewFieldModal = (target: 'fields' | 'moreFields') => {
+    setNewFieldTarget(target)
+    setNewFieldOpen(true)
+  }
+
+  const handleSaveNewField = (id: string, field: RawField, addToFields: boolean) => {
+    const nextDraftFields = { ...formValues.draftFields, [id]: field }
+    const targetList = newFieldTarget === 'moreFields' ? 'moreFields' : 'fields'
+    const nextTargetList =
+      addToFields && !formValues[targetList].includes(id)
+        ? [...formValues[targetList], id]
+        : formValues[targetList]
+
+    setFieldValue('draftFields', nextDraftFields)
+    if (addToFields && nextTargetList !== formValues[targetList]) {
+      setFieldValue(targetList, nextTargetList)
+    }
+
+    commitToUrl({
+      ...formValues,
+      draftFields: nextDraftFields,
+      [targetList]: nextTargetList,
+    })
+  }
+
+  const draftFieldExports = useMemo(
+    () =>
+      Object.entries(committedState.draftFields).map(([id, field]) => ({
+        id,
+        path: schemaRepoPath('field', id),
+        json: formatFieldJson(field),
+      })),
+    [committedState.draftFields],
+  )
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 px-4 py-8 sm:px-6">
@@ -417,16 +504,18 @@ export function PagePresetBuilder() {
         <div className="space-y-4">
           <form.Field name="fields">
             {(field) => (
-              <StringListEditor
+              <FieldListEditor
                 label="fields"
                 values={field.state.value}
-                onChange={(nextFields) => field.handleChange(nextFields)}
+                onChange={(nextFields) => commitAndSet('fields', nextFields)}
                 onEditStart={markEditing}
-                onBlur={() => {
-                  field.handleBlur()
-                  commitDraft()
-                }}
-                hint="Add {parent} when overriding a sub-preset list."
+                listKind="primary"
+                fieldCatalog={fieldCatalog}
+                draftFieldIds={draftFieldIds}
+                dataUrl={dataUrl ?? ''}
+                parentPresetRef={parentPresetRef}
+                onCreateField={() => openNewFieldModal('fields')}
+                hint="Drag to reorder. Add field ids from the schema, inherit a parent list with {parent}, or create a new field."
               />
             )}
           </form.Field>
@@ -440,19 +529,29 @@ export function PagePresetBuilder() {
       >
         <form.Field name="moreFields">
           {(field) => (
-            <StringListEditor
+            <FieldListEditor
               label="moreFields"
               values={field.state.value}
-              onChange={(moreFields) => field.handleChange(moreFields)}
+              onChange={(moreFields) => commitAndSet('moreFields', moreFields)}
               onEditStart={markEditing}
-              onBlur={() => {
-                field.handleBlur()
-                commitDraft()
-              }}
+              listKind="more"
+              fieldCatalog={fieldCatalog}
+              draftFieldIds={draftFieldIds}
+              dataUrl={dataUrl ?? ''}
+              parentPresetRef={parentPresetRef}
+              onCreateField={() => openNewFieldModal('moreFields')}
             />
           )}
         </form.Field>
       </BuilderSectionDisclosure>
+
+      <NewFieldModal
+        open={newFieldOpen}
+        onClose={() => setNewFieldOpen(false)}
+        onSave={handleSaveNewField}
+        existingFieldIds={existingFieldIds}
+        fieldTypes={fieldTypes}
+      />
 
       <BuilderSectionDisclosure
         {...BUILDER_SECTION_META.tagOverrides}
@@ -701,6 +800,20 @@ export function PagePresetBuilder() {
                 {translationSnippet}
               </pre>
               <CopyButton text={translationSnippet} label="Copy translation snippet" />
+            </div>
+          ) : null}
+          {draftFieldExports.length > 0 ? (
+            <div className="space-y-4 border-t border-slate-100 pt-4">
+              <h3 className="text-sm font-medium text-slate-900">New field files</h3>
+              {draftFieldExports.map((entry) => (
+                <div key={entry.id}>
+                  <p className="font-mono text-xs text-slate-500">{entry.path}</p>
+                  <pre className="mt-2 max-h-48 overflow-auto rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-800">
+                    {entry.json}
+                  </pre>
+                  <CopyButton text={entry.json} label={`Copy ${entry.id} JSON`} />
+                </div>
+              ))}
             </div>
           ) : null}
         </div>

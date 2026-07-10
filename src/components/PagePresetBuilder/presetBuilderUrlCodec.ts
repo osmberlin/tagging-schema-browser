@@ -1,5 +1,7 @@
 /** Encode/decode preset builder list and tag objects for URL search params. */
 
+import type { RawField } from '@/utils/types'
+
 export function parseTagObject(raw: string): Record<string, string> {
   if (!raw.trim()) return {}
   try {
@@ -38,4 +40,26 @@ export function stringifyStringList(values: string[]): string {
   const filtered = values.map((value) => value.trim()).filter(Boolean)
   if (filtered.length === 0) return ''
   return JSON.stringify(filtered)
+}
+
+export function parseDraftFields(raw: string): Record<string, RawField> {
+  if (!raw.trim()) return {}
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    const result: Record<string, RawField> = {}
+    for (const [id, value] of Object.entries(parsed)) {
+      if (!id.trim() || !value || typeof value !== 'object' || Array.isArray(value)) continue
+      result[id] = value as RawField
+    }
+    return result
+  } catch {
+    return {}
+  }
+}
+
+export function stringifyDraftFields(fields: Record<string, RawField>): string {
+  const entries = Object.entries(fields).filter(([id]) => id.trim())
+  if (entries.length === 0) return ''
+  return JSON.stringify(Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b))))
 }
