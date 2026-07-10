@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
+import {
+  presetBuilderSearchSchema,
+  searchToBuilderState,
+} from '@/components/PagePresetBuilder/presetBuilderSearch'
 import { sectionOpenWhen } from '@/components/PagePresetBuilder/presetBuilderSections'
 import { PRESET_BUILDER_DEFAULTS } from '@/components/PagePresetBuilder/presetBuilderUtils'
+
+describe('presetBuilderSearch', () => {
+  it('parses router JSON object tags', () => {
+    const search = presetBuilderSearchSchema.parse({ pb_tags: { amenity: 'cafe' } })
+    expect(searchToBuilderState(search).tags).toEqual({ amenity: 'cafe' })
+  })
+})
 
 describe('sectionOpenWhen', () => {
   it('is false for empty defaults', () => {

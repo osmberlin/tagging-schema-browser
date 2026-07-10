@@ -138,10 +138,11 @@ export function PagePresetBuilder() {
   const {
     form,
     committedState,
+    committedKey,
     fromPresetId,
     isDirty,
     commitToUrl,
-    commitFieldBlur,
+    commitDraft,
     commitAndSet,
     defaults,
   } = usePresetBuilderForm()
@@ -220,11 +221,12 @@ export function PagePresetBuilder() {
           <form.Field name="tags">
             {(field) => (
               <TagKeyValueEditor
+                key={committedKey}
                 tags={field.state.value}
                 onChange={(tags) => field.handleChange(tags)}
-                onBlur={() => {
+                onCommit={() => {
                   field.handleBlur()
-                  commitFieldBlur()
+                  commitDraft()
                 }}
               />
             )}
@@ -314,7 +316,7 @@ export function PagePresetBuilder() {
                   onChange={(event) => field.handleChange(event.target.value)}
                   onBlur={() => {
                     field.handleBlur()
-                    commitFieldBlur()
+                    commitDraft()
                   }}
                   placeholder="Café or {shop}"
                   className="mt-1.5"
@@ -330,7 +332,7 @@ export function PagePresetBuilder() {
                 onChange={(terms) => field.handleChange(terms)}
                 onBlur={() => {
                   field.handleBlur()
-                  commitFieldBlur()
+                  commitDraft()
                 }}
                 placeholder="coffee&#10;espresso"
               />
@@ -344,7 +346,7 @@ export function PagePresetBuilder() {
                 onChange={(aliases) => field.handleChange(aliases)}
                 onBlur={() => {
                   field.handleBlur()
-                  commitFieldBlur()
+                  commitDraft()
                 }}
                 placeholder="One synonym per line"
               />
@@ -364,7 +366,7 @@ export function PagePresetBuilder() {
               onChange={(icon) => field.handleChange(icon)}
               onBlur={() => {
                 field.handleBlur()
-                commitFieldBlur()
+                commitDraft()
               }}
               dataUrl={dataUrl ?? ''}
             />
@@ -422,7 +424,7 @@ export function PagePresetBuilder() {
                 onChange={(nextFields) => field.handleChange(nextFields)}
                 onBlur={() => {
                   field.handleBlur()
-                  commitFieldBlur()
+                  commitDraft()
                 }}
                 hint="Add {parent} when overriding a sub-preset list."
               />
@@ -444,7 +446,7 @@ export function PagePresetBuilder() {
               onChange={(moreFields) => field.handleChange(moreFields)}
               onBlur={() => {
                 field.handleBlur()
-                commitFieldBlur()
+                commitDraft()
               }}
             />
           )}
@@ -462,11 +464,12 @@ export function PagePresetBuilder() {
               <form.Field name="addTags">
                 {(addField) => (
                   <TagKeyValueEditor
+                    key={committedKey}
                     tags={addField.state.value}
                     onChange={(addTags) => addField.handleChange(addTags)}
-                    onBlur={() => {
+                    onCommit={() => {
                       addField.handleBlur()
-                      commitFieldBlur()
+                      commitDraft()
                     }}
                   />
                 )}
@@ -479,11 +482,12 @@ export function PagePresetBuilder() {
               <form.Field name="removeTags">
                 {(removeField) => (
                   <TagKeyValueEditor
+                    key={committedKey}
                     tags={removeField.state.value}
                     onChange={(removeTags) => removeField.handleChange(removeTags)}
-                    onBlur={() => {
+                    onCommit={() => {
                       removeField.handleBlur()
-                      commitFieldBlur()
+                      commitDraft()
                     }}
                   />
                 )}
@@ -506,7 +510,7 @@ export function PagePresetBuilder() {
                 onChange={(event) => field.handleChange(event.target.value)}
                 onBlur={() => {
                   field.handleBlur()
-                  commitFieldBlur()
+                  commitDraft()
                 }}
                 placeholder="1.0"
                 className="mt-1.5 max-w-xs"
@@ -530,7 +534,7 @@ export function PagePresetBuilder() {
                   onChange={(event) => keyField.handleChange(event.target.value)}
                   onBlur={() => {
                     keyField.handleBlur()
-                    commitFieldBlur()
+                    commitDraft()
                   }}
                   className="mt-1.5"
                 />
@@ -546,7 +550,7 @@ export function PagePresetBuilder() {
                   onChange={(event) => valueField.handleChange(event.target.value)}
                   onBlur={() => {
                     valueField.handleBlur()
-                    commitFieldBlur()
+                    commitDraft()
                   }}
                   className="mt-1.5"
                 />
@@ -596,7 +600,7 @@ export function PagePresetBuilder() {
                   onChange={(event) => crossField.handleChange(event.target.value)}
                   onBlur={() => {
                     crossField.handleBlur()
-                    commitFieldBlur()
+                    commitDraft()
                   }}
                   placeholder="{presets/man_made/crane}"
                   className="mt-1.5 font-mono text-sm"
@@ -621,7 +625,7 @@ export function PagePresetBuilder() {
                   onChange={(event) => relationField.handleChange(event.target.value)}
                   onBlur={() => {
                     relationField.handleBlur()
-                    commitFieldBlur()
+                    commitDraft()
                   }}
                   className="mt-1.5 font-mono text-sm"
                 />
@@ -639,7 +643,7 @@ export function PagePresetBuilder() {
                   onChange={(event) => relationCrossField.handleChange(event.target.value)}
                   onBlur={() => {
                     relationCrossField.handleBlur()
-                    commitFieldBlur()
+                    commitDraft()
                   }}
                   className="mt-1.5 font-mono text-sm"
                 />
