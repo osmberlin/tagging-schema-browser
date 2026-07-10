@@ -84,7 +84,6 @@ type NavItem = {
   }) => Record<string, unknown>
   title?: string
   children?: React.ReactNode
-  customIcon?: React.ReactNode
 }
 
 const springTransition = { type: 'spring' as const, stiffness: 500, damping: 35, bounce: 0 }
@@ -262,15 +261,13 @@ export function PrimaryNav({
               highlighted ? itemIndicator.text : 'text-slate-600',
             )}
           >
-            {item.customIcon ? (
-              <span
+            {item.key === 'presetBuilder' ? (
+              <PresetBuilderNavIcon
                 className={cn(
                   'mr-1.5 inline h-3.5 w-3.5 align-[-2px]',
                   highlighted ? itemIndicator.text : areaAccent.presets.icon,
                 )}
-              >
-                {item.customIcon}
-              </span>
+              />
             ) : item.area ? (
               <AreaIcon
                 area={item.area}
