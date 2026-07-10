@@ -232,9 +232,7 @@ export function SidebarLayout({
           <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-slate-50 md:block">
             <div className="sticky top-16 max-h-[calc(100svh-4rem)] overflow-y-auto px-5 py-6">
               {sidebarSearch ? <div className="mb-5">{sidebarSearch}</div> : null}
-              <h2 className="mb-4 font-display text-sm font-semibold text-slate-900">
-                Faceted search
-              </h2>
+              <h2 className="mb-4 font-display text-sm font-semibold text-slate-900">Filter</h2>
               {sidebar}
             </div>
           </aside>
@@ -251,7 +249,7 @@ export function SidebarLayout({
             <DialogPanel className="flex w-full max-w-xs flex-col bg-white shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                 <DialogTitle className="font-display text-sm font-semibold text-slate-900">
-                  Faceted search
+                  Filter
                 </DialogTitle>
                 <button
                   type="button"
