@@ -1,9 +1,19 @@
 import { useSyncExternalStore } from 'react'
+import { fetchPinheadIcon } from '@/components/PageIcons/suppliers/pinheadSupplier'
 import type { IconRegistryEntry, RawPresets } from '@/utils/types'
 
-export type IconSupplier = 'maki' | 'temaki' | 'roentgen' | 'iD' | 'fas' | 'far' | 'fab'
+export type IconSupplier = 'maki' | 'temaki' | 'roentgen' | 'iD' | 'pinhead' | 'fas' | 'far' | 'fab'
 
-const ALL_ICON_SUPPLIERS: IconSupplier[] = ['maki', 'temaki', 'roentgen', 'iD', 'fas', 'far', 'fab']
+const ALL_ICON_SUPPLIERS: IconSupplier[] = [
+  'maki',
+  'temaki',
+  'roentgen',
+  'iD',
+  'pinhead',
+  'fas',
+  'far',
+  'fab',
+]
 
 type SupplierLoader = () => Promise<IconRegistryEntry[]>
 
@@ -12,6 +22,7 @@ const supplierLoaders: Record<IconSupplier, SupplierLoader> = {
   temaki: () => import('./suppliers/temakiSupplier').then((m) => m.loadTemakiEntries()),
   roentgen: () => import('./suppliers/roentgenSupplier').then((m) => m.loadRoentgenEntries()),
   iD: () => import('./suppliers/idSupplier').then((m) => m.loadIdPresetEntries()),
+  pinhead: () => Promise.resolve([]),
   fas: () => import('./suppliers/fasSupplier').then((m) => m.loadFasEntries()),
   far: () => import('./suppliers/farSupplier').then((m) => m.loadFarEntries()),
   fab: () => import('./suppliers/fabSupplier').then((m) => m.loadFabEntries()),
@@ -116,11 +127,39 @@ export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
   return promise
 }
 
+function pinheadIconNames(names: Iterable<string>): string[] {
+  return [...names].filter((name) => name.startsWith('pinhead-'))
+}
+
+async function ensurePinheadIcons(names: Iterable<string>): Promise<void> {
+  const iconNames = pinheadIconNames(names)
+  if (iconNames.length === 0) return
+
+  await ensureIconSupplier('pinhead')
+  await Promise.allSettled(
+    iconNames.map(async (iconName) => {
+      if (registryCache.has(iconName)) return
+      const entry = await fetchPinheadIcon(iconName)
+      if (!entry) {
+        dataUrlCache.set(iconName, null)
+        return
+      }
+      mergeRegistryEntries([entry])
+      clearMissCacheForSupplier('pinhead')
+    }),
+  )
+}
+
 /** Loads only the suppliers needed for the given icon names. Partial success is OK. */
 export function ensureIconsForNames(names: Iterable<string>): Promise<void> {
-  const suppliers = suppliersFromIconNames(names)
-  if (suppliers.size === 0) return Promise.resolve()
-  return Promise.allSettled([...suppliers].map(ensureIconSupplier)).then(() => {})
+  const iconNames = [...names]
+  const suppliers = suppliersFromIconNames(iconNames)
+  const tasks: Promise<unknown>[] = [...suppliers].map(ensureIconSupplier)
+  if (pinheadIconNames(iconNames).length > 0) {
+    tasks.push(ensurePinheadIcons(iconNames))
+  }
+  if (tasks.length === 0) return Promise.resolve()
+  return Promise.allSettled(tasks).then(() => {})
 }
 
 /** Loads suppliers referenced by preset icons (minimal footprint for Presets pages). */

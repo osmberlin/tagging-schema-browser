@@ -147,8 +147,6 @@ export function PagePresets() {
     return <SchemaLoadingPanel label="Loading schema…" />
   }
 
-  if (!data) return null
-
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4">

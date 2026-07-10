@@ -3,7 +3,7 @@ import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/
 import { denormalize } from '@/components/PagePresets/denormalize'
 import {
   detectSchemaBuildInfo,
-  isSchemaBuildAllowed,
+  isSchemaBuildSupported,
   unsupportedSchemaBuildMessage,
 } from '@/utils/schemaBuildVersion'
 import type { SchemaData } from '@/utils/types'
@@ -12,31 +12,26 @@ function normalizeDataUrl(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
 }
 
-function schemaCacheKey(dataUrl: string, allowLegacy: boolean): string {
-  const base = normalizeDataUrl(dataUrl)
-  return allowLegacy ? `${base}?legacy=1` : base
-}
-
 const cache = new Map<string, SchemaData>()
 const inflight = new Map<string, Promise<SchemaData | null>>()
 const loadErrors = new Map<string, string>()
 
-export function getSchemaLoadError(dataUrl: string, allowLegacy = false): string | null {
-  return loadErrors.get(schemaCacheKey(dataUrl, allowLegacy)) ?? null
+export function getSchemaLoadError(dataUrl: string): string | null {
+  return loadErrors.get(normalizeDataUrl(dataUrl)) ?? null
 }
 
-function clearSchemaLoadError(dataUrl: string, allowLegacy: boolean): void {
-  loadErrors.delete(schemaCacheKey(dataUrl, allowLegacy))
+function clearSchemaLoadError(dataUrl: string): void {
+  loadErrors.delete(normalizeDataUrl(dataUrl))
 }
 
 export function processRawSchemaPayload(
   raw: RawSchemaPayload,
-  options: { dataUrl: string; allowLegacy: boolean },
+  options: { dataUrl: string },
 ): SchemaData | null {
   if (raw.loadErrors.length > 0) return null
 
   const schemaBuild = detectSchemaBuildInfo(options.dataUrl, raw)
-  if (!isSchemaBuildAllowed(schemaBuild, options)) {
+  if (!isSchemaBuildSupported(schemaBuild, options.dataUrl)) {
     return null
   }
 
@@ -64,21 +59,17 @@ export function processRawSchemaPayload(
   }
 }
 
-export function getCachedSchemaData(dataUrl: string, allowLegacy = false): SchemaData | null {
-  return cache.get(schemaCacheKey(dataUrl, allowLegacy)) ?? null
+export function getCachedSchemaData(dataUrl: string): SchemaData | null {
+  return cache.get(normalizeDataUrl(dataUrl)) ?? null
 }
 
-function storeSchemaData(dataUrl: string, allowLegacy: boolean, data: SchemaData): void {
-  cache.set(schemaCacheKey(dataUrl, allowLegacy), data)
+function storeSchemaData(dataUrl: string, data: SchemaData): void {
+  cache.set(normalizeDataUrl(dataUrl), data)
 }
 
 /** Fetch and denormalize schema JSON; dedupes concurrent requests and caches the result. */
-export async function preloadSchemaData(
-  dataUrl: string,
-  options: { allowLegacy?: boolean } = {},
-): Promise<SchemaData | null> {
-  const allowLegacy = options.allowLegacy ?? false
-  const key = schemaCacheKey(dataUrl, allowLegacy)
+export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | null> {
+  const key = normalizeDataUrl(dataUrl)
   const cached = cache.get(key)
   if (cached) return cached
 
@@ -95,17 +86,17 @@ export async function preloadSchemaData(
       }
 
       const schemaBuild = detectSchemaBuildInfo(dataUrl, raw)
-      if (!isSchemaBuildAllowed(schemaBuild, { allowLegacy, dataUrl })) {
+      if (!isSchemaBuildSupported(schemaBuild, dataUrl)) {
         const message = unsupportedSchemaBuildMessage(schemaBuild)
         loadErrors.set(key, message)
         inflight.delete(key)
         return null
       }
 
-      clearSchemaLoadError(dataUrl, allowLegacy)
-      const data = processRawSchemaPayload(raw, { dataUrl, allowLegacy })
+      clearSchemaLoadError(dataUrl)
+      const data = processRawSchemaPayload(raw, { dataUrl })
       if (data) {
-        storeSchemaData(dataUrl, allowLegacy, data)
+        storeSchemaData(dataUrl, data)
         void ensureIconsForPresetUsage(data.rawPresets)
       }
       inflight.delete(key)

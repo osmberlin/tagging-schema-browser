@@ -18,7 +18,6 @@ import {
   resolveSchemaReference,
 } from '@/utils/dataUrl'
 import { type ComparisonResult, comparePresets } from '@/utils/presetDiff'
-import { isLegacySearchParam } from '@/utils/schemaBuildVersion'
 
 function ensureSlash(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
@@ -37,11 +36,9 @@ export type CompareMode = 'preview' | 'release'
 export function useComparison() {
   const rawDataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? '' })
   const urlReference = useSearch({ strict: false, select: (s) => s.reference })
-  const legacyParam = useSearch({ strict: false, select: (s) => s.legacy })
   const persistedReference = useReference()
   const reference = resolveSchemaReference(urlReference, persistedReference)
   const activeDataUrl = resolveActiveDataUrl(rawDataUrl, reference)
-  const allowLegacy = isLegacySearchParam(legacyParam)
 
   const { presets, loading: schemaLoading, error: schemaError } = useSchema()
 
@@ -64,8 +61,8 @@ export function useComparison() {
   })
 
   const baselineQuery = useQuery({
-    queryKey: comparisonKeys.baseline(baselineUrl ?? '', allowLegacy),
-    queryFn: () => fetchComparisonBaseline(baselineUrl!, allowLegacy),
+    queryKey: comparisonKeys.baseline(baselineUrl ?? ''),
+    queryFn: () => fetchComparisonBaseline(baselineUrl!),
     enabled: baselineUrl !== null,
     staleTime: SCHEMA_STALE_TIME,
   })

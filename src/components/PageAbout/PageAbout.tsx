@@ -130,8 +130,9 @@ export function PageAbout() {
         <code>terms</code>).
       </p>
       <p>
-        Older v6 <code>dist/</code> builds are blocked by default. Add <code>?legacy=1</code> to opt
-        in when you need to inspect a historical release or preview.
+        Older v6 <code>dist/</code> URLs are not supported. If you open one via{' '}
+        <code>?dataUrl=</code>, the app shows a notice and keeps the default staging or release
+        dataset instead.
       </p>
       <h2>Release vs staging</h2>
       <p>
