@@ -24,15 +24,15 @@ function UtilityNavLinks({ onNavigate, onHelp }: { onNavigate?: () => void; onHe
   return (
     <>
       <LanguagePicker />
-      <HelpButton onClick={onHelp} />
       <Link
         to="/about"
         search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
         onClick={onNavigate}
-        className={utilityNavClass(pathname === '/about')}
+        className={`inline-flex h-10 items-center ${utilityNavClass(pathname === '/about')}`}
       >
         About
       </Link>
+      <HelpButton onClick={onHelp} />
     </>
   )
 }
@@ -56,7 +56,7 @@ function HelpButton({ onClick }: { onClick: () => void }) {
       <button
         type="button"
         onClick={onClick}
-        className="flex h-8 items-center rounded-lg px-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+        className="flex h-10 items-center rounded-lg px-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
         aria-label="Keyboard shortcuts"
       >
         <Kbd>?</Kbd>
@@ -68,11 +68,11 @@ function HelpButton({ onClick }: { onClick: () => void }) {
 export function SidebarLayout({
   children,
   sidebar,
-  topSearch,
+  sidebarSearch,
 }: {
   children: React.ReactNode
   sidebar: React.ReactNode
-  topSearch?: React.ReactNode
+  sidebarSearch?: React.ReactNode
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
@@ -156,7 +156,6 @@ export function SidebarLayout({
   return (
     <div className="flex min-h-svh w-full flex-col bg-white text-slate-900">
       <header className="sticky top-0 z-40 bg-white/95 shadow-sm shadow-slate-900/5 backdrop-blur-sm">
-        {/* Wraps to two rows when the search would shrink below 45px: logo + nav on row 1, search on row 2. */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 sm:px-6 lg:px-8">
           <div className="flex shrink-0 items-center gap-2">
             {showSidebar ? (
@@ -219,21 +218,9 @@ export function SidebarLayout({
 
           <PrimaryNav className="shrink-0" />
 
-          {/* Inline when header is wide enough; full-width row 2 when search would drop below 45px. */}
-          <div
-            className={
-              topSearch
-                ? 'order-last flex w-full min-w-[min(100%,calc(45px+33rem))] shrink-0 grow basis-[min(100%,calc(45px+33rem))] items-center gap-3 lg:min-w-[calc(45px+33rem)] lg:grow lg:basis-[calc(45px+33rem)]'
-                : 'order-last flex w-full min-w-[min(100%,33rem)] shrink-0 grow basis-[min(100%,33rem)] items-center gap-3 lg:min-w-132 lg:grow lg:basis-132'
-            }
-          >
-            {topSearch ? (
-              <div className="max-w-[450px] min-w-[45px] flex-1">{topSearch}</div>
-            ) : null}
-            <nav aria-label="Settings" className="ml-auto flex shrink-0 items-center gap-1">
-              <UtilityNavLinks onHelp={() => setHelpOpen(true)} />
-            </nav>
-          </div>
+          <nav aria-label="Settings" className="ml-auto flex shrink-0 items-center gap-2">
+            <UtilityNavLinks onHelp={() => setHelpOpen(true)} />
+          </nav>
         </div>
 
         <DataSourceBanner />
@@ -244,6 +231,7 @@ export function SidebarLayout({
         {showSidebar ? (
           <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-slate-50 md:block">
             <div className="sticky top-16 max-h-[calc(100svh-4rem)] overflow-y-auto px-5 py-6">
+              {sidebarSearch ? <div className="mb-5">{sidebarSearch}</div> : null}
               <h2 className="mb-4 font-display text-sm font-semibold text-slate-900">
                 Faceted search
               </h2>
@@ -287,7 +275,10 @@ export function SidebarLayout({
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 py-4">{sidebar}</div>
+              <div className="flex-1 overflow-y-auto px-4 py-4">
+                {sidebarSearch ? <div className="mb-5">{sidebarSearch}</div> : null}
+                {sidebar}
+              </div>
             </DialogPanel>
           </div>
         </Dialog>

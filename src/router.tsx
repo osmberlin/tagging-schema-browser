@@ -159,7 +159,7 @@ function RootContent() {
     [dataUrl, reference],
   )
 
-  const topSearch =
+  const sidebarSearch =
     location.pathname === '/icons' ? (
       <IconSearchBar />
     ) : location.pathname === '/fields' ? (
@@ -188,7 +188,7 @@ function RootContent() {
   return (
     <>
       <HeadContent />
-      <SidebarLayout sidebar={sidebar} topSearch={topSearch}>
+      <SidebarLayout sidebar={sidebar} sidebarSearch={sidebarSearch}>
         <SchemaContent>
           <Outlet />
         </SchemaContent>
