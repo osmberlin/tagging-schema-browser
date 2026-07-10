@@ -1,4 +1,4 @@
-import { ensureIconsForPresetUsage } from '@/components/PageIcons/iconRegistry'
+import { ensureIconsForNames, collectSchemaIconNames } from '@/components/PageIcons/iconRegistry'
 import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
 import { denormalize } from '@/components/PagePresets/denormalize'
 import { refreshPresetSearchIndex } from '@/components/PagePresets/presetSearch'
@@ -97,7 +97,14 @@ export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | n
       const data = processRawSchemaPayload(raw, { dataUrl })
       if (data) {
         storeSchemaData(dataUrl, data)
-        void ensureIconsForPresetUsage(data.rawPresets).then(() => {
+        void ensureIconsForNames(
+          collectSchemaIconNames(
+            data.rawPresets,
+            data.fields,
+            data.presets,
+            data.fieldTranslations,
+          ),
+        ).then(() => {
           refreshPresetSearchIndex(dataUrl, data.presets)
         })
       }

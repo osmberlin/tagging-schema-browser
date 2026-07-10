@@ -5,7 +5,7 @@ import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { Input } from '@/components/ui/Input'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
-import { useBrokenPresetIconCountFromSearch } from '@/hooks/useBrokenPresetIconCount'
+import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { RELEASE_DATA_URL } from '@/utils/constants'
@@ -16,12 +16,12 @@ import { usePresetSearch } from './usePresetSearch'
 import { useSearchState } from './useSearchState'
 
 export function PagePresets() {
-  const { dataUrl, setDataUrl, load, loading, error, data } = useSchema()
+  const { dataUrl, setDataUrl, load, loading, error, data, presets } = useSchema()
   const [searchState, setSearchState] = useSearchState()
   const searchResult = usePresetSearch()
   const totalCount = searchResult?.data.total ?? 0
   const exportData = useMemo(() => exportPresets(searchResult?.data.items ?? []), [searchResult])
-  const brokenPresetIconCount = useBrokenPresetIconCountFromSearch()
+  const brokenPresetIconCount = useBrokenPresetIconCount(presets)
 
   const handleLoad = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

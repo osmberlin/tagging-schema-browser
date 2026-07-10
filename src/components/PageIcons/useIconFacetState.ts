@@ -47,7 +47,8 @@ export function applyIconFacets(icons: IconViewModel[], state: IconFacetState): 
   }
 
   if (state.i_hasSvg === 'with') filtered = filtered.filter((icon) => Boolean(icon.svgRaw))
-  if (state.i_hasSvg === 'missing') filtered = filtered.filter((icon) => !icon.svgRaw)
+  if (state.i_hasSvg === 'missing')
+    filtered = filtered.filter((icon) => isIconSvgConfirmedMissing(icon.name))
 
   if (state.i_supplier !== 'all') {
     filtered = filtered.filter((icon) => icon.prefix === state.i_supplier)

@@ -1,6 +1,13 @@
 import { useSyncExternalStore } from 'react'
 import { fetchPinheadIcon } from '@/components/PageIcons/suppliers/pinheadSupplier'
-import type { IconRegistryEntry, RawPresets } from '@/utils/types'
+import { collectOptionIconUsages } from '@/utils/fieldOptions'
+import type {
+  DenormalizedPreset,
+  FieldTranslations,
+  IconRegistryEntry,
+  RawFields,
+  RawPresets,
+} from '@/utils/types'
 
 export type IconSupplier = 'maki' | 'temaki' | 'roentgen' | 'iD' | 'pinhead' | 'fas' | 'far' | 'fab'
 
@@ -87,6 +94,24 @@ export function collectPresetIconNames(presets: RawPresets): string[] {
   return Array.from(names)
 }
 
+/** Preset icons plus field-option icons referenced in the schema. */
+export function collectSchemaIconNames(
+  presets: RawPresets,
+  fields: RawFields,
+  denormalizedPresets: DenormalizedPreset[],
+  fieldTranslations: FieldTranslations = {},
+): string[] {
+  const names = new Set(collectPresetIconNames(presets))
+  for (const iconName of collectOptionIconUsages(
+    fields,
+    denormalizedPresets,
+    fieldTranslations,
+  ).keys()) {
+    names.add(iconName)
+  }
+  return [...names]
+}
+
 function mergeRegistryEntries(entries: IconRegistryEntry[]): void {
   for (const entry of entries) registryCache.set(entry.name, entry)
   notifyRegistryChange()
@@ -143,7 +168,8 @@ async function ensurePinheadIcons(names: Iterable<string>): Promise<void> {
   await ensureIconSupplier('pinhead')
   await Promise.allSettled(
     iconNames.map(async (iconName) => {
-      if (registryCache.has(iconName) || pendingPinheadIcons.has(iconName)) return
+      if (pendingPinheadIcons.has(iconName)) return
+      if (registryCache.get(iconName)?.svgRaw) return
       pendingPinheadIcons.add(iconName)
       notifyRegistryChange()
       try {

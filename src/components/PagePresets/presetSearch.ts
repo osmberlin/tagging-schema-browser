@@ -80,12 +80,14 @@ function normalizeDataUrl(url: string): string {
 
 let activeDataUrl: string | null = null
 let engine: PresetSearchEngine | null = null
+let cachedIconEpoch = -1
 
 /** Bind the itemsjs engine to the active schema URL. Preload must not call this. */
 export function activatePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
   const key = normalizeDataUrl(dataUrl)
   if (activeDataUrl === key && engine) return
   refreshPresetSearchIndex(dataUrl, presets)
+  cachedIconEpoch = 0
 }
 
 /** Rebuild facet buckets after async icon suppliers finish loading. */
@@ -96,10 +98,21 @@ export function refreshPresetSearchIndex(dataUrl: string, presets: DenormalizedP
 }
 
 /** Idempotent — safe during render when the active schema is on screen. */
-export function ensurePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
+export function ensurePresetSearchIndex(
+  dataUrl: string,
+  presets: DenormalizedPreset[],
+  iconEpoch = 0,
+): void {
   const key = normalizeDataUrl(dataUrl)
-  if (activeDataUrl === key && engine) return
+  const needsIconRefresh = iconEpoch !== cachedIconEpoch
+  if (activeDataUrl === key && engine && !needsIconRefresh) return
+  if (activeDataUrl === key && engine && needsIconRefresh) {
+    refreshPresetSearchIndex(dataUrl, presets)
+    cachedIconEpoch = iconEpoch
+    return
+  }
   activatePresetSearchIndex(dataUrl, presets)
+  cachedIconEpoch = iconEpoch
 }
 
 export function searchPresets(params: {

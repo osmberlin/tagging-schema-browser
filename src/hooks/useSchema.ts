@@ -3,7 +3,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useReference, useReferenceHydrated } from '@/features/data-source/reference-store'
 import { SCHEMA_STALE_TIME } from '@/queries/queryClient'
 import { cachedSchemaData, fetchSchemaData, schemaKeys } from '@/queries/schema'
-import { resolveActiveDataUrl, resolveSchemaReference } from '@/utils/dataUrl'
+import { isReleaseCompareMode, resolveActiveDataUrl, resolveSchemaReference } from '@/utils/dataUrl'
 import {
   SUPPORTED_SCHEMA_MAJOR,
   isSchemaBuildSupported,
@@ -22,9 +22,15 @@ export function useSchema() {
     hasHydrated ? persistedReference : 'interem',
   )
   const resolvedDataUrl = resolveActiveDataUrl(dataUrlParam, reference)
-  const predictedBuild = dataUrlParam.trim() ? predictSchemaBuildFromUrl(resolvedDataUrl) : null
+  const customDataUrl = dataUrlParam.trim()
+  const urlForBuildCheck =
+    customDataUrl && !isReleaseCompareMode(customDataUrl, reference)
+      ? customDataUrl
+      : resolvedDataUrl
+  const predictedBuild =
+    customDataUrl || resolvedDataUrl ? predictSchemaBuildFromUrl(urlForBuildCheck) : null
   const isUnsupportedUrl =
-    predictedBuild !== null && !isSchemaBuildSupported(predictedBuild, resolvedDataUrl)
+    predictedBuild !== null && !isSchemaBuildSupported(predictedBuild, urlForBuildCheck)
 
   const query = useQuery({
     queryKey: schemaKeys.data(resolvedDataUrl),
@@ -38,7 +44,7 @@ export function useSchema() {
 
   return {
     dataUrl: resolvedDataUrl,
-    customDataUrl: dataUrlParam.trim() || null,
+    customDataUrl: customDataUrl || null,
     unsupportedBuild: isUnsupportedUrl ? predictedBuild : null,
     setDataUrl: (url: string | null) => {
       void navigate({ to: '.', search: (prev) => ({ ...prev, dataUrl: url ?? '' }) })
