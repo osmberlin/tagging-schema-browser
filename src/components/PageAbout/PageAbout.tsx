@@ -106,7 +106,7 @@ export function PageAbout() {
         is required. Use it as an everyday reference or as a review tool for schema pull requests:
         search presets, explore fields, and browse icons.
       </p>
-      <h2>Upstream projects</h2>
+      <h2>Upstream project</h2>
       <ul>
         <li>
           <a
