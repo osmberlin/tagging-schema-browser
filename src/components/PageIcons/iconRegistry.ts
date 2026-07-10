@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from 'react'
-import { loadPinheadSvg } from '@/components/PageIcons/suppliers/pinheadSupplier'
 import { collectOptionIconUsages } from '@/utils/fieldOptions'
 import type {
   DenormalizedPreset,
@@ -32,7 +31,7 @@ const supplierLoaders: Record<IconSupplier, SupplierLoader> = {
   temaki: () => import('./suppliers/temakiSupplier').then((m) => m.loadTemakiEntries()),
   roentgen: () => import('./suppliers/roentgenSupplier').then((m) => m.loadRoentgenEntries()),
   iD: () => import('./suppliers/idSupplier').then((m) => m.loadIdPresetEntries()),
-  pinhead: () => import('./suppliers/pinheadSupplier').then((m) => m.loadPinheadEntries()),
+  pinhead: () => import('./suppliers/pinheadCatalogSupplier').then((m) => m.loadPinheadEntries()),
   fas: () => import('./suppliers/fasSupplier').then((m) => m.loadFasEntries()),
   far: () => import('./suppliers/farSupplier').then((m) => m.loadFarEntries()),
   fab: () => import('./suppliers/fabSupplier').then((m) => m.loadFabEntries()),
@@ -171,6 +170,7 @@ async function loadPinheadIconSvg(iconName: string): Promise<void> {
     notifyRegistryChange()
     promise = (async () => {
       try {
+        const { loadPinheadSvg } = await import('./suppliers/pinheadSvgLoader')
         const entry = await loadPinheadSvg(iconName)
         if (!entry) {
           dataUrlCache.set(iconName, null)
