@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
+import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
@@ -52,9 +53,7 @@ function PresetRow({
             <div key={d.label} className="grid grid-cols-[5rem_1fr] gap-x-3 py-0.5">
               <dt className="font-semibold tracking-wide text-slate-500 uppercase">{d.label}</dt>
               <dd className="min-w-0">
-                <span className="text-rose-600 line-through">{d.before || '—'}</span>
-                <span className="mx-1 text-slate-300">→</span>
-                <span className="text-emerald-700">{d.after || '—'}</span>
+                <FieldDiffValue diff={d} />
               </dd>
             </div>
           ))}
