@@ -1,11 +1,11 @@
 import { z } from 'zod'
+import type { PresetBuilderState } from '@/components/PagePresetBuilder/presetBuilderTypes'
 import {
   parseStringList,
   parseTagObject,
   stringifyStringList,
   stringifyTagObject,
 } from '@/components/PagePresetBuilder/presetBuilderUrlCodec'
-import type { PresetBuilderState } from '@/components/PagePresetBuilder/presetBuilderUtils'
 
 /** TanStack Router JSON-parses search values that look like objects/arrays. */
 function jsonStringParam() {
@@ -21,7 +21,6 @@ function jsonStringParam() {
 
 /** Keep URL params as `"0"|"1"` so TanStack Router search patches type-check globally. */
 const trueParam = z.enum(['0', '1']).catch('1')
-const falseParam = z.enum(['0', '1']).catch('0')
 
 export const presetBuilderSearchSchema = z.object({
   pb_name: z.string().catch(''),
@@ -43,7 +42,6 @@ export const presetBuilderSearchSchema = z.object({
   pb_locationSetCrossReference: z.string().catch(''),
   pb_relation: z.string().catch(''),
   pb_relationCrossReference: z.string().catch(''),
-  pb_advanced: falseParam,
   pb_from: z.string().catch(''),
 })
 
@@ -72,7 +70,6 @@ export function searchToBuilderState(search: PresetBuilderSearch): PresetBuilder
     locationSetCrossReference: search.pb_locationSetCrossReference,
     relation: search.pb_relation,
     relationCrossReference: search.pb_relationCrossReference,
-    advancedOpen: search.pb_advanced === '1',
   }
 }
 
@@ -100,7 +97,6 @@ export function builderStateToSearch(
     pb_locationSetCrossReference: state.locationSetCrossReference,
     pb_relation: state.relation,
     pb_relationCrossReference: state.relationCrossReference,
-    pb_advanced: state.advancedOpen ? '1' : '0',
     pb_from: fromPresetId,
   }
 }

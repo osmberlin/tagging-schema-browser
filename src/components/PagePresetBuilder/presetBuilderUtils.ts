@@ -1,3 +1,7 @@
+import type {
+  PresetBuilderState,
+  PresetBuilderTranslations,
+} from '@/components/PagePresetBuilder/presetBuilderTypes'
 import {
   parseStringList,
   parseTagObject,
@@ -9,60 +13,13 @@ import { schemaRepoPath } from '@/utils/githubFileUrl'
 import type { RawPreset } from '@/utils/types'
 
 export { parseStringList, parseTagObject, stringifyStringList, stringifyTagObject }
+export type {
+  PresetBuilderState,
+  PresetBuilderTranslations,
+} from '@/components/PagePresetBuilder/presetBuilderTypes'
+export { PRESET_BUILDER_DEFAULTS } from '@/components/PagePresetBuilder/presetBuilderTypes'
 
 export const GEOMETRY_OPTIONS = ['point', 'vertex', 'line', 'area', 'relation'] as const
-
-export type PresetBuilderTranslations = {
-  name: string
-  terms: string[]
-  aliases: string[]
-}
-
-export type PresetBuilderState = {
-  name: string
-  icon: string
-  searchable: boolean
-  tags: Record<string, string>
-  geometry: string[]
-  fields: string[]
-  moreFields: string[]
-  terms: string[]
-  aliases: string[]
-  addTags: Record<string, string>
-  removeTags: Record<string, string>
-  matchScore: string
-  referenceKey: string
-  referenceValue: string
-  locationSetInclude: string[]
-  locationSetExclude: string[]
-  locationSetCrossReference: string
-  relation: string
-  relationCrossReference: string
-  advancedOpen: boolean
-}
-
-export const PRESET_BUILDER_DEFAULTS: PresetBuilderState = {
-  name: '',
-  icon: '',
-  searchable: true,
-  tags: {},
-  geometry: [],
-  fields: [],
-  moreFields: [],
-  terms: [],
-  aliases: [],
-  addTags: {},
-  removeTags: {},
-  matchScore: '',
-  referenceKey: '',
-  referenceValue: '',
-  locationSetInclude: [],
-  locationSetExclude: [],
-  locationSetCrossReference: '',
-  relation: '',
-  relationCrossReference: '',
-  advancedOpen: false,
-}
 
 /** Derive preset id from tags using id-tagging-schema path conventions. */
 export function presetIdFromTags(tags: Record<string, string>): string | null {
