@@ -67,6 +67,15 @@ export function useIconRegistryEpoch(): number {
   return useSyncExternalStore(subscribeIconRegistry, getIconRegistryEpoch, getIconRegistryEpoch)
 }
 
+/** SVG data URL for a preset/option icon; re-resolves when async suppliers finish loading. */
+export function useIconSvgDataUrl(iconName?: string): string | null {
+  return useSyncExternalStore(
+    subscribeIconRegistry,
+    () => getIconSvgDataUrl(iconName),
+    () => getIconSvgDataUrl(iconName),
+  )
+}
+
 export function iconSupplierFromName(iconName: string): IconSupplier | null {
   const prefix = iconName.split('-')[0]
   if (prefix && ALL_ICON_SUPPLIERS.includes(prefix as IconSupplier)) {

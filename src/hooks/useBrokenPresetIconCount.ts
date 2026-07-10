@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import {
   isIconSvgConfirmedMissing,
   useIconRegistryEpoch,
@@ -13,5 +12,5 @@ export function countBrokenPresetIcons(presets: DenormalizedPreset[]): number {
 /** Broken preset icon count; updates when async icon loads finish. */
 export function useBrokenPresetIconCount(presets: DenormalizedPreset[] = []): number {
   useIconRegistryEpoch()
-  return useMemo(() => countBrokenPresetIcons(presets), [presets])
+  return countBrokenPresetIcons(presets)
 }

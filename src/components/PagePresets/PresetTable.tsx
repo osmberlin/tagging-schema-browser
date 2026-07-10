@@ -2,9 +2,9 @@ import { Link } from '@tanstack/react-router'
 import { type VirtualItem, useVirtualizer } from '@tanstack/react-virtual'
 import { Fragment, type ReactNode, useMemo, useRef } from 'react'
 import {
-  getIconSvgDataUrl,
   isIconSvgConfirmedMissing,
   useIconRegistryEpoch,
+  useIconSvgDataUrl,
 } from '@/components/PageIcons/iconRegistry'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { AreaIcon, AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
@@ -63,10 +63,10 @@ function renderCellContent(row: Row, preset: DenormalizedPreset) {
 }
 
 function IconNameCell({ iconName }: { iconName: string }) {
-  const src = getIconSvgDataUrl(iconName)
+  const src = useIconSvgDataUrl(iconName)
   const broken = !src && isIconSvgConfirmedMissing(iconName)
   return (
-    <span className="flex w-full min-w-0 items-center gap-1.5 overflow-hidden">
+    <span className="flex w-full min-w-0 items-center gap-1.5">
       {src ? (
         <img src={src} alt="" className="h-5 w-5 shrink-0 object-contain" />
       ) : broken ? (
@@ -220,7 +220,7 @@ function PresetValueCell({ preset, row }: { preset: DenormalizedPreset; row: Row
       className={cn(
         'overflow-hidden border-r border-b border-slate-100 align-top text-slate-700',
         row.mono && 'font-mono text-xs',
-        row.link ? 'h-0 p-0' : 'px-3 py-1.5',
+        row.link ? 'p-0' : 'px-3 py-1.5',
         errorHighlighted
           ? 'bg-red-50/70'
           : infoHighlighted
@@ -236,13 +236,11 @@ function PresetValueCell({ preset, row }: { preset: DenormalizedPreset; row: Row
             search={cellLink.search as never}
             title={cellLink.title}
             className={cn(
-              `group/ac relative flex h-full w-full items-start overflow-hidden px-3 py-1.5 pr-8 transition ${areaAccent.presets.rowHover}`,
+              `group/ac relative flex h-full w-full items-center px-3 py-1.5 pr-8 transition ${areaAccent.presets.rowHover}`,
               errorHighlighted && 'bg-red-50/70',
             )}
           >
-            <span className="block min-w-0 flex-1 overflow-hidden">
-              {renderCellContent(row, preset)}
-            </span>
+            <span className="block min-w-0 flex-1">{renderCellContent(row, preset)}</span>
             <span
               aria-hidden
               className={`absolute top-1/2 right-1 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-sm font-semibold group-hover/ac:flex ${areaAccent.presets.cardChevron}`}

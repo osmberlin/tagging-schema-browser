@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
+import { useIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import type { DenormalizedPreset } from '@/utils/types'
 
 type PresetIconBoxProps = {
@@ -9,7 +9,7 @@ type PresetIconBoxProps = {
 
 export function PresetIconBox({ preset, size = 'sm' }: PresetIconBoxProps) {
   const [rasterFailed, setRasterFailed] = useState(false)
-  const iconSrc = getIconSvgDataUrl(preset.icon)
+  const iconSrc = useIconSvgDataUrl(preset.icon)
   const raster = preset.imageURL?.trim()
   const showRaster = Boolean(raster && !rasterFailed)
   const frame =

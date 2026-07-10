@@ -298,6 +298,50 @@ test('preset table icon row truncates long icon names', async ({ page }) => {
   expect(truncation.isOverflowing).toBe(true)
 })
 
+test('preset table icon row shows full SVG after async supplier load', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/?dataUrl=/test-schema&iconName=["maki-doctor"]')
+  await expect(page.getByRole('heading', { name: /^Presets\b/i })).toBeVisible()
+
+  const iconRow = page.locator('tbody tr', { has: page.locator('th', { hasText: /^Icon$/ }) })
+  const iconImg = iconRow.locator('img').first()
+  await expect(iconImg).toBeVisible({ timeout: 15_000 })
+  await expect(iconImg).toHaveClass(/object-contain/)
+
+  const clipInfo = await iconImg.evaluate((el) => {
+    const imgRect = el.getBoundingClientRect()
+    let node = el.parentElement
+    while (node) {
+      const style = getComputedStyle(node)
+      if (style.overflow !== 'visible' || style.overflowX !== 'visible') {
+        const rect = node.getBoundingClientRect()
+        if (imgRect.right > rect.right + 1 || imgRect.left < rect.left - 1) {
+          return { clipped: true, parent: node.className }
+        }
+      }
+      node = node.parentElement
+    }
+    return { clipped: false }
+  })
+  expect(clipInfo.clipped).toBe(false)
+
+  const layout = await iconRow
+    .locator('td')
+    .first()
+    .evaluate((td) => {
+      const img = td.querySelector('img')
+      const tdRect = td.getBoundingClientRect()
+      const imgRect = img?.getBoundingClientRect()
+      return {
+        tdHeight: tdRect.height,
+        imgHeight: imgRect?.height ?? 0,
+        imgFullyVisible: imgRect ? imgRect.height >= 18 && imgRect.top >= tdRect.top : false,
+      }
+    })
+  expect(layout.tdHeight).toBeGreaterThanOrEqual(28)
+  expect(layout.imgFullyVisible).toBe(true)
+})
+
 test('preset table linked icon cells truncate icon names cleanly', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 })
   await page.goto('/?dataUrl=/test-schema&iconName=temaki-food')
@@ -318,5 +362,5 @@ test('preset table linked icon cells truncate icon names cleanly', async ({ page
   expect(layout.textOverflow).toBe('ellipsis')
   expect(layout.flex).toContain('1')
   expect(layout.overflow).toBe('hidden')
-  expect(layout.parentOverflow).toBe('hidden')
+  expect(layout.parentOverflow).toBe('visible')
 })

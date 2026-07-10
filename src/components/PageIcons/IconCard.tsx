@@ -66,7 +66,7 @@ export function IconCard({
             }`}
           >
             {svgDataUrl ? (
-              <img src={svgDataUrl} alt="" className="h-8 w-8" />
+              <img src={svgDataUrl} alt="" className="h-8 w-8 object-contain" />
             ) : missingSvg ? (
               <span className="text-sm font-bold">!</span>
             ) : (
@@ -77,7 +77,7 @@ export function IconCard({
         <Tooltip content="12px reference size in the editor" placement="top">
           <div className="flex h-3 w-3 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-500 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:fill-current">
             {svgDataUrl ? (
-              <img src={svgDataUrl} alt="" className="h-3 w-3" />
+              <img src={svgDataUrl} alt="" className="h-3 w-3 object-contain" />
             ) : (
               <span className="font-mono text-[6px]">12</span>
             )}
