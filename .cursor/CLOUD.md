@@ -1,5 +1,53 @@
 # Cursor Cloud specific instructions
 
+## Dependency install
+
+Always install dependencies with the lockfile:
+
+```bash
+bun install --frozen-lockfile
+```
+
+Do **not** run plain `bun install` in cloud agents. Without the lockfile, Bun can hoist a newer nested `rolldown` under `vite` than the one Vite 8 expects, which breaks dev/build with:
+
+```text
+Export named 'viteWasmFallbackPlugin' not found in module 'rolldown/experimental'
+```
+
+If Vite fails to start, reinstall cleanly:
+
+```bash
+rm -rf node_modules && bun install --frozen-lockfile
+```
+
+The cloud environment (`.cursor/environment.json`) runs this install automatically on agent startup.
+
+## Verification before finishing work
+
+```bash
+bun run check     # type-check + lint + format + unit tests + override validation
+bun run test:e2e  # Playwright (browsers installed by environment setup)
+```
+
+`check` is the default pre-commit gate. Run `test:e2e` for UI/routing changes.
+
+## E2E / Playwright
+
+`bun install` does **not** download browser binaries. The cloud environment installs Chromium via:
+
+```bash
+bunx playwright install --with-deps chromium
+```
+
+If e2e fails immediately with `Executable doesn't exist` under `~/.cache/ms-playwright/`, run:
+
+```bash
+bun run test:e2e:install
+bun run test:e2e
+```
+
+Do **not** start a separate dev server for e2e — `playwright.config.ts` starts Vite on port 4173 via `webServer`.
+
 ## GitHub — PRs, issues, comments
 
 When creating or posting on GitHub (`gh pr create`, `gh issue comment`, etc.):
