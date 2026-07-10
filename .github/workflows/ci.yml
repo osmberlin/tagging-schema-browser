@@ -32,3 +32,5 @@ jobs:
           fail-on-severity: high
           comment-summary-in-pr: true
           allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, 0BSD, Unlicense, CC0-1.0
+          # Pinhead icons are CC0-1.0, but GitHub's license metadata is often missing for this package.
+          allow-dependencies-licenses: pkg:npm/@waysidemapping/pinhead
