@@ -1,54 +1,74 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+
+type TagRow = {
+  id: number
+  key: string
+  value: string
+}
 
 type TagKeyValueEditorProps = {
   tags: Record<string, string>
   onChange: (tags: Record<string, string>) => void
-  onBlur?: () => void
+  onCommit?: () => void
 }
 
-export function TagKeyValueEditor({ tags, onChange, onBlur }: TagKeyValueEditorProps) {
+function rowsFromTags(tags: Record<string, string>): TagRow[] {
   const entries = Object.entries(tags).sort(([a], [b]) => a.localeCompare(b))
-  const rows = entries.length > 0 ? entries : [['', ''] as const]
+  if (entries.length === 0) {
+    return [{ id: 0, key: '', value: '' }]
+  }
+  return entries.map(([key, value], index) => ({ id: index, key, value }))
+}
 
-  const updateRow = (index: number, key: string, value: string) => {
-    const nextEntries = rows.map((row, rowIndex) =>
-      rowIndex === index ? ([key, value] as const) : row,
-    )
-    const next: Record<string, string> = {}
-    for (const [k, v] of nextEntries) {
-      if (k.trim()) next[k.trim()] = v
-    }
-    onChange(next)
+function nextRowId(rows: TagRow[]): number {
+  return rows.reduce((max, row) => Math.max(max, row.id), -1) + 1
+}
+
+function rowsToTags(rows: TagRow[]): Record<string, string> {
+  const next: Record<string, string> = {}
+  for (const row of rows) {
+    const trimmedKey = row.key.trim()
+    if (trimmedKey) next[trimmedKey] = row.value
+  }
+  return next
+}
+
+export function TagKeyValueEditor({ tags, onChange, onCommit }: TagKeyValueEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [rows, setRows] = useState<TagRow[]>(() => rowsFromTags(tags))
+
+  const syncToForm = (nextRows: TagRow[]) => {
+    setRows(nextRows)
+    onChange(rowsToTags(nextRows))
+  }
+
+  const updateRow = (rowId: number, patch: Partial<Pick<TagRow, 'key' | 'value'>>) => {
+    syncToForm(rows.map((row) => (row.id === rowId ? { ...row, ...patch } : row)))
   }
 
   const addRow = () => {
-    const next = { ...tags }
-    let index = 1
-    while (`new_key_${index}` in next) index += 1
-    next[`new_key_${index}`] = ''
-    onChange(next)
-    onBlur?.()
+    syncToForm([...rows, { id: nextRowId(rows), key: '', value: '' }])
   }
 
-  const removeRow = (index: number) => {
-    const nextEntries = rows.filter((_, rowIndex) => rowIndex !== index)
-    const next: Record<string, string> = {}
-    for (const [k, v] of nextEntries) {
-      if (k.trim()) next[k.trim()] = v.trim()
-    }
-    onChange(next)
-    onBlur?.()
+  const removeRow = (rowId: number) => {
+    const nextRows = rows.filter((row) => row.id !== rowId)
+    syncToForm(nextRows.length > 0 ? nextRows : [{ id: 0, key: '', value: '' }])
+  }
+
+  const handleContainerBlur = (event: React.FocusEvent<HTMLDivElement>) => {
+    const next = event.relatedTarget
+    if (next instanceof Node && containerRef.current?.contains(next)) return
+    onCommit?.()
   }
 
   return (
-    <div className="space-y-2">
-      {rows.map(([key, value], index) => (
-        <div key={`${index}-${key}`} className="flex items-center gap-2">
+    <div ref={containerRef} className="space-y-2" onBlur={handleContainerBlur}>
+      {rows.map((row) => (
+        <div key={row.id} className="flex items-center gap-2">
           <input
             type="text"
-            value={key}
-            onChange={(event) => updateRow(index, event.target.value, value)}
-            onBlur={onBlur}
+            value={row.key}
+            onChange={(event) => updateRow(row.id, { key: event.target.value })}
             placeholder="amenity"
             className="w-2/5 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none"
             spellCheck={false}
@@ -56,16 +76,15 @@ export function TagKeyValueEditor({ tags, onChange, onBlur }: TagKeyValueEditorP
           <span className="text-slate-400">=</span>
           <input
             type="text"
-            value={value}
-            onChange={(event) => updateRow(index, key, event.target.value)}
-            onBlur={onBlur}
+            value={row.value}
+            onChange={(event) => updateRow(row.id, { value: event.target.value })}
             placeholder="cafe"
             className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/30 focus:outline-none"
             spellCheck={false}
           />
           <button
             type="button"
-            onClick={() => removeRow(index)}
+            onClick={() => removeRow(row.id)}
             className="rounded-lg px-2 py-2 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-700"
             aria-label="Remove tag"
           >

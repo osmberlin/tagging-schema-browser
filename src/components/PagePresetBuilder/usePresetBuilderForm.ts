@@ -35,10 +35,12 @@ export function usePresetBuilderForm() {
   const form = useForm({
     defaultValues: committedState,
   })
+  const formRef = useRef(form)
+  formRef.current = form
 
   const commitToUrl = useCallback(
     (values: PresetBuilderState) => {
-      if (builderStatesEqual(values, committedState)) return
+      if (builderStatesEqual(values, committedStateRef.current)) return
       skipResetRef.current = true
       void navigate({
         to: '.',
@@ -49,42 +51,44 @@ export function usePresetBuilderForm() {
         replace: true,
       })
     },
-    [navigate, fromPresetId, committedState],
+    [navigate, fromPresetId],
   )
 
-  // Hydrate the form when the URL changes (initial load, back/forward, prefill).
+  // Hydrate the form when the URL changes externally (initial load, back/forward, prefill).
   useEffect(() => {
     if (skipResetRef.current) {
       skipResetRef.current = false
       return
     }
-    form.reset(committedStateRef.current)
-    // committedKey tracks serialized URL state; avoid depending on committedState
-    // object identity, which changes when the router re-parses search each render.
-  }, [committedKey, form])
+    const committed = committedStateRef.current
+    if (builderStatesEqual(formRef.current.state.values, committed)) return
+    formRef.current.reset(committed)
+  }, [committedKey])
 
-  const isDirty = useStore(form.store, (state) => !builderStatesEqual(state.values, committedState))
+  const formValues = useStore(form.store, (state) => state.values)
+  const hasUnsavedEdits = !builderStatesEqual(formValues, committedState)
 
-  const commitFieldBlur = useCallback(() => {
-    commitToUrl(form.state.values)
-  }, [commitToUrl, form])
+  const commitDraft = useCallback(() => {
+    commitToUrl(formRef.current.state.values)
+  }, [commitToUrl])
 
   const commitAndSet = useCallback(
     (key: keyof PresetBuilderState, value: PresetBuilderState[keyof PresetBuilderState]) => {
-      const next = { ...form.state.values, [key]: value } as PresetBuilderState
-      form.setFieldValue(key, value as never)
+      const next = { ...formRef.current.state.values, [key]: value } as PresetBuilderState
+      formRef.current.setFieldValue(key, value as never)
       commitToUrl(next)
     },
-    [commitToUrl, form],
+    [commitToUrl],
   )
 
   return {
     form,
     committedState,
+    committedKey,
     fromPresetId,
-    isDirty,
+    isDirty: hasUnsavedEdits,
     commitToUrl,
-    commitFieldBlur,
+    commitDraft,
     commitAndSet,
     defaults: PRESET_BUILDER_DEFAULTS,
   }
