@@ -118,6 +118,22 @@ test('preset detail highlights icon mismatches in field options', async ({ page 
   await expect(page.getByText('preset: roentgen-slide')).toBeVisible()
 })
 
+test('child preset detail shows field option mismatch with links', async ({ page }) => {
+  await loadTestSchema(page)
+  await page.goto('/preset/leisure/playground/cushion?dataUrl=/test-schema')
+
+  const panel = page.getByLabel('Icon mismatches')
+  await expect(
+    panel.getByText(/field option icon differs from child preset icon/i),
+  ).toBeVisible()
+  await expect(panel.getByRole('link', { name: 'Field' })).toBeVisible()
+  await expect(panel.getByRole('link', { name: 'Option icon' })).toBeVisible()
+  await expect(panel.getByRole('link', { name: 'Preset icon' })).toBeVisible()
+  await expect(panel.getByRole('link', { name: 'Parent preset' })).toBeVisible()
+  await expect(panel.getByText('temaki-cushion')).toBeVisible()
+  await expect(panel.getByText('maki-playground').first()).toBeVisible()
+})
+
 test('field detail shows option icon mismatches', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/field/playground/type?dataUrl=/test-schema')
