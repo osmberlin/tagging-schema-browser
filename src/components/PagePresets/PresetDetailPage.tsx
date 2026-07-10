@@ -136,37 +136,35 @@ function PresetDetailContent({
             ) : null}
           </div>
         </div>
-        <a
-          href={githubUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={externalAccent.button}
-        >
-          View source ↗
-        </a>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <Link
+            to="/preset-switch"
+            search={(prev) => ({
+              ...presetSwitchSearchDefaults,
+              dataUrl: prev.dataUrl ?? '',
+              locale: prev.locale ?? '',
+              preset1: preset.id,
+            })}
+            className={cn(
+              'inline-flex items-center gap-1.5',
+              areaAccent.presetSwitch.navActive,
+            )}
+          >
+            <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
+            Compare preset switch
+          </Link>
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={externalAccent.button}
+          >
+            View source ↗
+          </a>
+        </div>
       </header>
 
       <MissingInheritancePanel preset={preset} />
-
-      <div className="flex flex-wrap gap-2">
-        <Link
-          to="/preset-switch"
-          search={(prev) => ({
-            ...presetSwitchSearchDefaults,
-            dataUrl: prev.dataUrl ?? '',
-            locale: prev.locale ?? '',
-            preset1: preset.id,
-          })}
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ring-1 transition ring-inset',
-            areaAccent.presetSwitch.sharedChip,
-            'hover:bg-amber-100',
-          )}
-        >
-          <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
-          Compare preset switch
-        </Link>
-      </div>
 
       <DetailDisclosure
         title="Translation"
