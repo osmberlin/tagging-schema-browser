@@ -8,7 +8,7 @@ A standalone web app to **browse, search, and inspect the [OpenStreetMap iD tagg
 
 The iD tagging schema is the dataset that drives preset and field selection in the [iD editor](https://github.com/openstreetmap/iD) (and other tools). It is large and highly cross-referenced, which makes it hard to review changes or understand how a preset, field, or icon is reused across the dataset.
 
-This app loads a built `dist/` of the schema and makes it explorable in the browser — no build step or checkout required. It is meant both as an everyday reference and as a **review tool for schema pull requests**: point it at a PR's preview build and see exactly what changed.
+This app loads pre-built schema `dist/` output from the upstream id-tagging-schema repository and makes it explorable in the browser — no local build or checkout of the schema is required. It is meant both as an everyday reference and as a **review tool for schema pull requests**: point it at a PR's preview build and see exactly what changed.
 
 ## Features
 
