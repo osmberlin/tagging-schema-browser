@@ -7,6 +7,7 @@ import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
 import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useComparison } from '@/hooks/useComparison'
 import { areaAccent } from '@/theme/areaAccent'
 import { comparisonAccent } from '@/theme/comparisonAccent'
@@ -233,9 +234,8 @@ export function PrimaryNav({
       {items.map((item) => {
         const highlighted = item.key === indicatorKey
         const itemIndicator = getIndicator(item.key)
-        return (
+        const link = (
           <Link
-            key={item.key}
             ref={(el) => {
               if (el) itemRefs.current.set(item.key, el)
               else itemRefs.current.delete(item.key)
@@ -244,7 +244,6 @@ export function PrimaryNav({
             search={item.search}
             onClick={onNavigate}
             onMouseEnter={() => setHoveredKey(item.key)}
-            title={item.title}
             className={cn(
               'relative z-10 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
               highlighted ? itemIndicator.text : 'text-slate-600',
@@ -262,6 +261,16 @@ export function PrimaryNav({
             {item.label}
             {item.children}
           </Link>
+        )
+
+        return item.title ? (
+          <Tooltip key={item.key} content={item.title} placement="bottom" openDelay={400}>
+            {link}
+          </Tooltip>
+        ) : (
+          <span key={item.key} className="contents">
+            {link}
+          </span>
         )
       })}
     </nav>

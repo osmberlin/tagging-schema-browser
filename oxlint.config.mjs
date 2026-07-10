@@ -45,6 +45,14 @@ export default defineConfig({
       },
     },
     {
+      files: ['src/components/ui/Tooltip.tsx'],
+      rules: {
+        // Floating UI assigns positioning refs during render (supported library pattern).
+        'react/react-compiler': 'off',
+        'react-hooks-js/refs': 'off',
+      },
+    },
+    {
       files: ['src/components/PagePresets/PresetTable.tsx'],
       rules: {
         'react/react-compiler': 'off',

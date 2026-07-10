@@ -1,3 +1,4 @@
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useLocale } from '@/hooks/useLocale'
 import { TRANSLATIONS_RELEASE_ONLY_MESSAGE } from '@/utils/translationsAvailability'
 
@@ -18,27 +19,8 @@ export function LanguagePicker() {
   const { translationsAvailable, locale, setLocale, locales } = useLocale()
   const valueLabel = locale || 'Choose'
 
-  return (
-    <div className="group relative h-10 w-[5.25rem]">
-      {!translationsAvailable ? (
-        <>
-          <div
-            className="absolute inset-0 z-20 cursor-not-allowed"
-            aria-describedby="compare-lang-disabled-tip"
-          />
-          <div
-            id="compare-lang-disabled-tip"
-            role="tooltip"
-            className="pointer-events-none absolute bottom-full left-1/2 z-30 mb-2 hidden w-56 -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-2 text-[11px] leading-snug font-normal text-white shadow-lg group-focus-within:block group-hover:block"
-          >
-            {TRANSLATIONS_RELEASE_ONLY_MESSAGE}
-            <span
-              aria-hidden
-              className="absolute top-full left-1/2 -mt-px -translate-x-1/2 border-4 border-transparent border-t-slate-900"
-            />
-          </div>
-        </>
-      ) : null}
+  const picker = (
+    <div className="relative h-10 w-[5.25rem]">
       <div
         aria-hidden
         className={`pointer-events-none absolute inset-0 flex flex-col justify-center gap-0.5 rounded-lg border px-1.5 py-0.5 shadow-sm transition ${
@@ -62,13 +44,6 @@ export function LanguagePicker() {
         onChange={(e) => setLocale(e.target.value)}
         disabled={!translationsAvailable}
         aria-label="Comparison language"
-        title={
-          translationsAvailable
-            ? locale
-              ? `Compare with ${locale}`
-              : 'Compare language (EN only)'
-            : undefined
-        }
         className={`absolute inset-0 z-10 h-full w-full appearance-none opacity-0 ${
           translationsAvailable ? 'cursor-pointer' : 'pointer-events-none cursor-not-allowed'
         }`}
@@ -82,5 +57,30 @@ export function LanguagePicker() {
         {locale && !locales.includes(locale) ? <option value={locale}>{locale}</option> : null}
       </select>
     </div>
+  )
+
+  if (!translationsAvailable) {
+    return (
+      <Tooltip
+        content={TRANSLATIONS_RELEASE_ONLY_MESSAGE}
+        placement="top"
+        disabled
+        openDelay={100}
+        wrapperClassName="h-10 w-[5.25rem]"
+      >
+        {picker}
+      </Tooltip>
+    )
+  }
+
+  return (
+    <Tooltip
+      content={locale ? `Compare with ${locale}` : 'Pick a language to compare against English'}
+      placement="bottom"
+      openDelay={400}
+      wrapperClassName="h-10 w-[5.25rem]"
+    >
+      {picker}
+    </Tooltip>
   )
 }

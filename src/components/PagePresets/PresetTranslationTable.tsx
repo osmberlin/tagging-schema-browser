@@ -1,4 +1,5 @@
 import { TranslationAttrRow, TranslationColumnHeader } from '@/components/TranslationTableLayout'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalLinkClass } from '@/theme/externalAccent'
 import { cn } from '@/utils/tw'
@@ -14,18 +15,25 @@ function TermChips({ terms, shared }: { terms: string[]; shared: Set<string> }) 
   if (!terms.length) return <span className="text-slate-300">—</span>
   return (
     <span className="flex flex-wrap gap-1">
-      {terms.map((t) => (
-        <span
-          key={t}
-          className={cn(
-            'rounded-full px-2 py-0.5 text-xs',
-            shared.has(t) ? areaAccent.translations.sharedChip : 'bg-slate-100 text-slate-600',
-          )}
-          title={shared.has(t) ? 'Identical in both languages' : undefined}
-        >
-          {t}
-        </span>
-      ))}
+      {terms.map((t) => {
+        const chip = (
+          <span
+            className={cn(
+              'rounded-full px-2 py-0.5 text-xs',
+              shared.has(t) ? areaAccent.translations.sharedChip : 'bg-slate-100 text-slate-600',
+            )}
+          >
+            {t}
+          </span>
+        )
+        return shared.has(t) ? (
+          <Tooltip key={t} content="Identical in both languages" placement="top">
+            {chip}
+          </Tooltip>
+        ) : (
+          <span key={t}>{chip}</span>
+        )
+      })}
     </span>
   )
 }
@@ -60,18 +68,22 @@ export function PresetTranslationTable({
           showLocale ? (
             <span className="flex items-center gap-2">
               <span>English</span>
-              <a
-                href={googleTranslateUrl(
-                  locale,
-                  [preset.name, ...preset.terms, ...preset.aliases].filter(Boolean).join('\n'),
-                )}
-                target="_blank"
-                rel="noreferrer"
-                className={externalLinkClass()}
-                title="Translate the English name, terms & aliases (one per line) via Google Translate"
+              <Tooltip
+                content="Translate the English name, terms & aliases (one per line) via Google Translate"
+                placement="top"
               >
-                GT ↗
-              </a>
+                <a
+                  href={googleTranslateUrl(
+                    locale,
+                    [preset.name, ...preset.terms, ...preset.aliases].filter(Boolean).join('\n'),
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={externalLinkClass()}
+                >
+                  GT ↗
+                </a>
+              </Tooltip>
             </span>
           ) : (
             'English'
@@ -86,13 +98,12 @@ export function PresetTranslationTable({
         localized={
           untranslated ? (
             <span className="text-slate-400">—</span>
+          ) : sameName ? (
+            <Tooltip content="Same as English" placement="top">
+              <span className="text-yellow-700">{localized?.name}</span>
+            </Tooltip>
           ) : (
-            <span
-              className={cn(sameName && 'text-yellow-700')}
-              title={sameName ? 'Same as English' : undefined}
-            >
-              {localized?.name}
-            </span>
+            <span>{localized?.name}</span>
           )
         }
       />

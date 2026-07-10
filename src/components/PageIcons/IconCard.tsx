@@ -3,6 +3,7 @@ import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { areaAccent } from '@/theme/areaAccent'
 import type { DenormalizedPreset, OptionIconUsageRef } from '@/utils/types'
 
@@ -40,30 +41,33 @@ export function IconCard({
   const body = (
     <>
       <div className="flex items-center gap-2.5">
-        <div
-          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-slate-500 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:fill-current ${
-            missingSvg ? 'border border-red-300 bg-red-50 text-red-700' : 'bg-slate-100'
-          }`}
-          title={missingSvg ? 'Missing icon asset' : '60px reference'}
+        <Tooltip
+          content={missingSvg ? 'Missing icon asset' : '60px reference size in the editor'}
+          placement="top"
         >
-          {svgDataUrl ? (
-            <img src={svgDataUrl} alt="" className="h-8 w-8" />
-          ) : missingSvg ? (
-            <span className="text-sm font-bold">!</span>
-          ) : (
-            <span className="font-mono text-[10px]">60</span>
-          )}
-        </div>
-        <div
-          className="flex h-3 w-3 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-500 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:fill-current"
-          title="12px reference"
-        >
-          {svgDataUrl ? (
-            <img src={svgDataUrl} alt="" className="h-3 w-3" />
-          ) : (
-            <span className="font-mono text-[6px]">12</span>
-          )}
-        </div>
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-slate-500 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:fill-current ${
+              missingSvg ? 'border border-red-300 bg-red-50 text-red-700' : 'bg-slate-100'
+            }`}
+          >
+            {svgDataUrl ? (
+              <img src={svgDataUrl} alt="" className="h-8 w-8" />
+            ) : missingSvg ? (
+              <span className="text-sm font-bold">!</span>
+            ) : (
+              <span className="font-mono text-[10px]">60</span>
+            )}
+          </div>
+        </Tooltip>
+        <Tooltip content="12px reference size in the editor" placement="top">
+          <div className="flex h-3 w-3 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-500 [&_svg]:h-3 [&_svg]:w-3 [&_svg]:fill-current">
+            {svgDataUrl ? (
+              <img src={svgDataUrl} alt="" className="h-3 w-3" />
+            ) : (
+              <span className="font-mono text-[6px]">12</span>
+            )}
+          </div>
+        </Tooltip>
       </div>
       <p
         className={`mt-2 truncate font-mono text-xs font-medium ${missingSvg ? 'text-red-700' : 'text-slate-900'}`}
@@ -98,26 +102,31 @@ export function IconCard({
 
   if (presetUsageCount > 0) {
     return (
-      <Link
-        to="/"
-        search={(prev) => ({
-          ...presetSearchDefaults,
-          dataUrl: prev.dataUrl ?? '',
-          locale: prev.locale ?? '',
-          iconName: [iconName],
-        })}
-        title={`Show all ${presetUsageCount} presets using "${iconName}"`}
-        data-icon={iconName}
-        className={`group/ac relative ${iconCardClass} transition duration-200 ${areaAccent.icons.cardHoverBorder} ${areaAccent.icons.cardHoverBg} hover:shadow-md hover:shadow-slate-900/5`}
+      <Tooltip
+        content={`Show all ${presetUsageCount} presets using "${iconName}"`}
+        placement="top"
+        wrapperClassName="block h-full"
       >
-        {body}
-        <span
-          aria-hidden
-          className={`absolute top-2 right-2 hidden h-5 w-5 items-center justify-center rounded-full text-sm font-semibold group-hover/ac:flex ${areaAccent.icons.cardChevron}`}
+        <Link
+          to="/"
+          search={(prev) => ({
+            ...presetSearchDefaults,
+            dataUrl: prev.dataUrl ?? '',
+            locale: prev.locale ?? '',
+            iconName: [iconName],
+          })}
+          data-icon={iconName}
+          className={`group/ac relative block ${iconCardClass} transition duration-200 ${areaAccent.icons.cardHoverBorder} ${areaAccent.icons.cardHoverBg} hover:shadow-md hover:shadow-slate-900/5`}
         >
-          ›
-        </span>
-      </Link>
+          {body}
+          <span
+            aria-hidden
+            className={`absolute top-2 right-2 hidden h-5 w-5 items-center justify-center rounded-full text-sm font-semibold group-hover/ac:flex ${areaAccent.icons.cardChevron}`}
+          >
+            ›
+          </span>
+        </Link>
+      </Tooltip>
     )
   }
 

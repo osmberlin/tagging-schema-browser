@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Fragment } from 'react'
 import { googleTranslateUrl } from '@/components/PagePresets/PresetTranslationTable'
 import { TranslationAttrRow, TranslationColumnHeader } from '@/components/TranslationTableLayout'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { externalLinkClass } from '@/theme/externalAccent'
 import {
   fieldOptionDescription,
@@ -72,15 +73,19 @@ export function FieldTranslationTable({
           showLocale ? (
             <span className="flex items-center gap-2">
               <span>English</span>
-              <a
-                href={googleTranslateUrl(locale, englishTexts.join('\n'))}
-                target="_blank"
-                rel="noreferrer"
-                className={externalLinkClass()}
-                title="Translate the English label, placeholder, terms & options (one per line) via Google Translate"
+              <Tooltip
+                content="Translate the English label, placeholder, terms & options (one per line) via Google Translate"
+                placement="top"
               >
-                GT ↗
-              </a>
+                <a
+                  href={googleTranslateUrl(locale, englishTexts.join('\n'))}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={externalLinkClass()}
+                >
+                  GT ↗
+                </a>
+              </Tooltip>
             </span>
           ) : (
             'English'

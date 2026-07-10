@@ -1,5 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { useComparison } from '@/hooks/useComparison'
 import { useSchema } from '@/hooks/useSchema'
 import { externalLinkClass } from '@/theme/externalAccent'
@@ -66,15 +67,16 @@ export function DataSourceBanner() {
       <span className="flex flex-wrap items-center gap-x-2">
         <span>
           Data for version{' '}
-          <a
-            href={presetsUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={externalLinkClass('font-medium')}
-            title="Open this build's presets.min.json"
-          >
-            {versionLabel}
-          </a>
+          <Tooltip content="Open this build's presets.min.json" placement="bottom">
+            <a
+              href={presetsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={externalLinkClass('font-medium')}
+            >
+              {versionLabel}
+            </a>
+          </Tooltip>
         </span>
         {changeCount != null ? (
           <>
