@@ -75,7 +75,11 @@ function DisclosureChevron({ open }: { open: boolean }) {
       viewBox="0 0 20 20"
       fill="currentColor"
       aria-hidden
-      className={cn('h-4 w-4 shrink-0 text-slate-500 transition-transform', open && 'rotate-90')}
+      className={cn(
+        'h-4 w-4 shrink-0 transition-transform',
+        schemaIssueStyles.disclosureChevron,
+        open && 'rotate-90',
+      )}
     >
       <path
         fillRule="evenodd"
@@ -118,10 +122,10 @@ export function SchemaIssueDisclosure({
         <span className={schemaIssueStyles.disclosureTitle}>{title}</span>
         {summary ? (
           <>
-            <span className="text-slate-400" aria-hidden>
+            <span className={schemaIssueStyles.alertDivider} aria-hidden>
               —
             </span>
-            <span className="min-w-0 text-slate-600">{summary}</span>
+            <span className={schemaIssueStyles.disclosureSummary}>{summary}</span>
           </>
         ) : null}
       </button>

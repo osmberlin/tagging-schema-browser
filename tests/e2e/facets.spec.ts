@@ -128,9 +128,7 @@ test('child preset detail shows field option mismatch with links', async ({ page
 
   const panel = page.getByLabel('Icon mismatch')
   await panel.getByRole('button', { name: 'Icon mismatch' }).click()
-  await expect(
-    panel.getByText(/field option icon differs from child preset icon/i),
-  ).toBeVisible()
+  await expect(panel.getByText(/field option icon differs from child preset icon/i)).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Field' })).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Option icon' })).toBeVisible()
   await expect(panel.getByRole('link', { name: 'Preset icon' })).toBeVisible()

@@ -192,7 +192,7 @@ function FieldDetailContent({
           title="Icon mismatch"
           summary={`${mismatchCount} option${mismatchCount === 1 ? '' : 's'} use a different icon than the linked child preset${mismatchCount === 1 ? '' : 's'}`}
         >
-          <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} />
+          <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} variant="inset" />
         </SchemaIssueDisclosure>
       ) : (
         <DetailDisclosure
