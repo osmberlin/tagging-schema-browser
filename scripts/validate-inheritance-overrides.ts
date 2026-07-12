@@ -105,8 +105,13 @@ for (const [presetId, override] of Object.entries(overrides.presets)) {
 if (unknownOverrides.length > 0 || stale.length > 0) {
   const lines: string[] = []
   if (unknownOverrides.length > 0) {
-    lines.push('Overrides for presets missing from schema:')
+    lines.push(
+      'Override entries reference presets that are absent from the validation schema (default: public/test-schema):',
+    )
     for (const presetId of unknownOverrides) lines.push(`  - ${presetId}`)
+    lines.push(
+      'Add each preset (and its slash parent / fields) to public/test-schema, or run with --schema <release-dist-url> to validate against another dist.',
+    )
   }
   if (stale.length > 0) {
     lines.push('Stale overrides (re-review and update missedFieldIds or remove entry):')

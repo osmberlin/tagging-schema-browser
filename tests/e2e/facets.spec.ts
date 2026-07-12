@@ -170,7 +170,7 @@ test('icons page usages view lists one row per preset or option reference', asyn
   await expect(page.getByRole('columnheader', { name: 'Icon' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Label' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Code' })).toBeVisible()
-  await expect(page.locator("[data-icon-usage='roentgen-bump']")).toHaveCount(2)
+  await expect(page.locator("[data-icon-usage='roentgen-bump']")).toHaveCount(3)
   await expect(
     page.getByRole('link', {
       name: 'Traffic Calming',
