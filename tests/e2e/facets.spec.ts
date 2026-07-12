@@ -171,7 +171,12 @@ test('icons page usages view lists one row per preset or option reference', asyn
   await expect(page.getByRole('columnheader', { name: 'Label' })).toBeVisible()
   await expect(page.getByRole('columnheader', { name: 'Code' })).toBeVisible()
   await expect(page.locator("[data-icon-usage='roentgen-bump']")).toHaveCount(2)
-  await expect(page.getByRole('link', { name: /Traffic Calming/i })).toBeVisible()
+  await expect(
+    page.getByRole('link', {
+      name: 'Traffic Calming',
+      exact: true,
+    }),
+  ).toBeVisible()
   await expect(page.getByText('traffic_calming=bump')).toBeVisible()
 })
 
