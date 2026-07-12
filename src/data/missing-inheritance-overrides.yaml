@@ -24,3 +24,8 @@ presets:
         - information
         - address
         - building_area_yes
+  traffic_calming/mini_bumps:
+    fields:
+      parentId: traffic_calming
+      missedFieldIds:
+        - traffic_calming
