@@ -171,7 +171,7 @@ function PresetDetailContent({
         fieldTranslations={fieldTranslations}
       />
 
-      <MissingInheritancePanel preset={preset} />
+      <MissingInheritancePanel preset={preset} dataUrl={dataUrl} />
 
       <DetailDisclosure
         title="Translation"
