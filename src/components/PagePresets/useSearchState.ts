@@ -76,17 +76,19 @@ export function useSetPreset() {
 
 export function filtersFromState(state: SearchState): Record<string, string[]> {
   const f: Record<string, string[]> = {}
-  if (state.primaryTagKey.length) f.primaryTagKey = state.primaryTagKey
-  if (state.geometry.length) f.geometry = state.geometry
-  if (state.iconPrefix.length) f.iconPrefix = state.iconPrefix
-  if (state.iconName.length) f.iconName = state.iconName
-  if (state.fieldIds.length) f.fieldIds = state.fieldIds
-  if (state.primaryFieldIds.length) f.primaryFieldIds = state.primaryFieldIds
-  if (state.moreFieldIds.length) f.moreFieldIds = state.moreFieldIds
-  if (state.categoryNames.length) f.categoryFacet = state.categoryNames
-  if (state.hasIcon.length) f.hasIcon = state.hasIcon
-  if (state.iconMismatch.length) f.iconMismatch = state.iconMismatch
-  if (state.missingInheritance.length) f.missingInheritanceFacet = state.missingInheritance
+  const nonEmpty = (values: string[]) => values.filter((value) => value.length > 0)
+  if (nonEmpty(state.primaryTagKey).length) f.primaryTagKey = nonEmpty(state.primaryTagKey)
+  if (nonEmpty(state.geometry).length) f.geometry = nonEmpty(state.geometry)
+  if (nonEmpty(state.iconPrefix).length) f.iconPrefix = nonEmpty(state.iconPrefix)
+  if (nonEmpty(state.iconName).length) f.iconName = nonEmpty(state.iconName)
+  if (nonEmpty(state.fieldIds).length) f.fieldIds = nonEmpty(state.fieldIds)
+  if (nonEmpty(state.primaryFieldIds).length) f.primaryFieldIds = nonEmpty(state.primaryFieldIds)
+  if (nonEmpty(state.moreFieldIds).length) f.moreFieldIds = nonEmpty(state.moreFieldIds)
+  if (nonEmpty(state.categoryNames).length) f.categoryFacet = nonEmpty(state.categoryNames)
+  if (nonEmpty(state.hasIcon).length) f.hasIcon = nonEmpty(state.hasIcon)
+  if (nonEmpty(state.iconMismatch).length) f.iconMismatch = nonEmpty(state.iconMismatch)
+  if (nonEmpty(state.missingInheritance).length)
+    f.missingInheritanceFacet = nonEmpty(state.missingInheritance)
   if (state.template !== 'both') f.template = [state.template]
   if (state.searchable !== 'both') f.searchable = [state.searchable]
   return f

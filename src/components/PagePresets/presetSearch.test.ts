@@ -114,5 +114,13 @@ describe('presetSearch index', () => {
         per_page: PRESET_SEARCH_ALL,
       })?.data.items.map((p) => p.id),
     ).toEqual(['highway/crossing'])
+
+    const result = searchPresets({
+      filters: { hasIcon: ['no'] },
+      page: 1,
+      per_page: PRESET_SEARCH_ALL,
+    })
+    expect(result?.data.total).toBe(1)
+    expect(result?.data.items).toHaveLength(1)
   })
 })

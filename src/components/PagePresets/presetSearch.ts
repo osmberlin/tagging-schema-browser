@@ -17,6 +17,7 @@ type PresetSearchRecord = DenormalizedPreset & {
   missingInheritanceFacet: DenormalizedPreset['missingInheritanceStatus']
   templateFacet: 'yes' | 'no'
   searchableFacet: 'yes' | 'no'
+  expectedNoIconFacet: 'yes' | 'no'
 }
 
 function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown>[] {
@@ -37,6 +38,7 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     missingInheritanceFacet: p.missingInheritanceStatus,
     templateFacet: p.isTemplate ? 'yes' : 'no',
     searchableFacet: p.searchable === false ? 'no' : 'yes',
+    expectedNoIconFacet: isExpectedNoIconPreset(p) ? 'yes' : 'no',
   }))
 }
 
@@ -68,6 +70,7 @@ const itemsJsConfig = {
     missingInheritanceFacet: { title: 'Field inheritance', size: 4 },
     templateFacet: { title: 'Template', size: 2 },
     searchableFacet: { title: 'Searchable', size: 2 },
+    expectedNoIconFacet: { title: 'Expected no icon', size: 2 },
   },
   sortings: {
     name_asc: { field: 'name', order: 'asc' },
@@ -134,7 +137,7 @@ export function ensurePresetSearchIndex(
 }
 
 /** When filtering only `hasIcon: no`, drop presets that are expected to lack icons. */
-function shouldExcludeExpectedNoIconPresets(hasIconFacet: string[] | undefined): boolean {
+export function shouldExcludeExpectedNoIconPresets(hasIconFacet: string[] | undefined): boolean {
   if (!hasIconFacet?.includes('no')) return false
   return !hasIconFacet.includes('yes') && !hasIconFacet.includes('broken')
 }
@@ -168,20 +171,16 @@ export function searchPresets(params: {
     mappedFilters.searchableFacet = mappedFilters.searchable
     mappedFilters.searchable = []
   }
+  if (shouldExcludeExpectedNoIconPresets(mappedFilters.hasIconFacet)) {
+    mappedFilters.expectedNoIconFacet = ['no']
+  }
   const query = params.query ?? ''
   const useCustomTextFilter = query.trim().length > 0
-  const excludeExpectedNoIcon = shouldExcludeExpectedNoIconPresets(mappedFilters.hasIconFacet)
-  const useCustomPresetFilter = useCustomTextFilter || excludeExpectedNoIcon
   const result = engine.search({
     query: useCustomTextFilter ? '' : query,
     filters: mappedFilters,
-    filter: useCustomPresetFilter
-      ? (item: Record<string, unknown>) => {
-          const preset = item as DenormalizedPreset
-          if (excludeExpectedNoIcon && isExpectedNoIconPreset(preset)) return false
-          if (useCustomTextFilter && !presetMatchesTextQuery(preset, query)) return false
-          return true
-        }
+    filter: useCustomTextFilter
+      ? (item: Record<string, unknown>) => presetMatchesTextQuery(item as DenormalizedPreset, query)
       : undefined,
     page: params.page ?? 1,
     per_page: params.per_page ?? 24,
@@ -213,6 +212,7 @@ export function searchPresets(params: {
           missingInheritanceFacet,
           templateFacet,
           searchableFacet,
+          expectedNoIconFacet,
           fieldText,
           fieldIds,
           primaryFieldIds,
@@ -227,6 +227,7 @@ export function searchPresets(params: {
         void missingInheritanceFacet
         void templateFacet
         void searchableFacet
+        void expectedNoIconFacet
         void fieldText
         void fieldIds
         void primaryFieldIds
@@ -262,6 +263,9 @@ export function searchPresets(params: {
       if ('searchableFacet' in mapped) {
         mapped.searchable = mapped.searchableFacet
         delete mapped.searchableFacet
+      }
+      if ('expectedNoIconFacet' in mapped) {
+        delete mapped.expectedNoIconFacet
       }
       return mapped
     })(),
