@@ -33,3 +33,17 @@ presets:
       parentId: traffic_calming
       missedFieldIds:
         - traffic_calming
+  man_made/adit:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - man_made
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  amenity/atm:
+    fields:
+      parentId: amenity
+      missedFieldIds:
+        - amenity
