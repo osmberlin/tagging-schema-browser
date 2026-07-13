@@ -21,6 +21,7 @@
     },
     "react-dev": {
       "source": "FixMyBerlin/fixmyskills",
+      "ref": "main",
       "sourceType": "github",
       "skillPath": "skills/react-dev/SKILL.md",
       "computedHash": "ed6a83384a44b6c430b696b58841cecc492c8463001ceab490cc4b9878d10c8f"
