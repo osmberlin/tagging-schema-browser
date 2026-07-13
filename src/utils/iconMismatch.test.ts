@@ -35,6 +35,7 @@ const presets: DenormalizedPreset[] = [
     categoryNames: [],
     searchable: true,
     iconMismatch: true,
+    isTemplate: false,
   },
   {
     id: 'leisure/playground/slide',
@@ -49,6 +50,7 @@ const presets: DenormalizedPreset[] = [
     categoryNames: [],
     searchable: true,
     iconMismatch: true,
+    isTemplate: false,
   },
   {
     id: 'leisure/playground/cushion',
@@ -63,6 +65,7 @@ const presets: DenormalizedPreset[] = [
     categoryNames: [],
     searchable: true,
     iconMismatch: true,
+    isTemplate: false,
   },
 ]
 

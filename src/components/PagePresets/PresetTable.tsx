@@ -168,9 +168,13 @@ function PresetHeaderCell({
   changed: boolean
   status: string | undefined
 }) {
+  const unsearchable = preset.searchable === false
   return (
     <th
-      className="sticky top-0 z-20 overflow-hidden border-r border-b border-slate-200 bg-white p-0 text-left align-bottom"
+      className={cn(
+        'sticky top-0 z-20 overflow-hidden border-r border-b border-slate-200 p-0 text-left align-bottom',
+        unsearchable ? 'bg-slate-50' : 'bg-white',
+      )}
       style={{ width: COLUMN_WIDTH, minWidth: COLUMN_WIDTH, maxWidth: COLUMN_WIDTH }}
     >
       <Link
@@ -188,6 +192,14 @@ function PresetHeaderCell({
               className={`h-2 w-2 shrink-0 rounded-full ${comparisonAccent.dot}`}
               title={status === 'added' ? 'Added vs unreleased' : 'Modified vs unreleased'}
             />
+          ) : null}
+          {unsearchable ? (
+            <span
+              className="shrink-0 rounded border border-slate-300 bg-white px-1 py-px font-sans text-[9px] font-semibold tracking-wide text-slate-500 uppercase"
+              title="searchable: false — hidden from iD search when adding features"
+            >
+              unsearchable
+            </span>
           ) : null}
           <span className="truncate" title={preset.name}>
             {preset.name}
@@ -285,6 +297,32 @@ export function PresetTable() {
         title: 'Identity',
         rows: [
           { label: 'ID', mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
+          {
+            label: 'Searchable',
+            render: (p) =>
+              p.searchable === false ? (
+                <span className="font-medium text-slate-600" title="searchable: false">
+                  no
+                </span>
+              ) : (
+                <span className="text-slate-500">yes</span>
+              ),
+            highlight: (p) => p.searchable === false,
+            highlightClass: 'bg-slate-100/80',
+          },
+          {
+            label: 'Template',
+            render: (p) =>
+              p.isTemplate ? (
+                <span className="font-medium text-slate-600" title="Template preset">
+                  yes
+                </span>
+              ) : (
+                <span className="text-slate-500">no</span>
+              ),
+            highlight: (p) => p.isTemplate,
+            highlightClass: 'bg-slate-100/80',
+          },
           { label: 'Name', breakText: true, render: (p) => p.name, title: (p) => p.name },
           {
             label: 'Terms',

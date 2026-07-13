@@ -468,3 +468,34 @@ test('preset table linked icon cells truncate icon names cleanly', async ({ page
   expect(layout.overflow).toBe('hidden')
   expect(layout.parentOverflow).toBe('visible')
 })
+
+test('template presets are hidden by default and filterable', async ({ page }) => {
+  await loadTestSchema(page)
+
+  await expect(page.locator('table thead th').filter({ hasText: '@templates/poi' })).toHaveCount(0)
+
+  const templateFacet = page.locator('aside').getByRole('heading', { name: 'Template' })
+  await expect(templateFacet).toBeVisible()
+  await templateFacet
+    .locator('..')
+    .getByRole('button', { name: /^Yes\b/i })
+    .click()
+  await expect(page.locator('table thead th').filter({ hasText: '@templates/poi' })).toBeVisible()
+})
+
+test('searchable facet filters presets with searchable false', async ({ page }) => {
+  await loadTestSchema(page)
+
+  const searchableFacet = page.locator('aside').getByRole('heading', { name: 'Searchable' })
+  await expect(searchableFacet).toBeVisible()
+  await searchableFacet.locator('..').getByRole('button', { name: /^No\b/i }).click()
+
+  await expect(page.locator('table thead th').filter({ hasText: 'shop/ice_cream' })).toBeVisible()
+  await expect(page.locator('table thead th').filter({ hasText: 'amenity/cafe' })).toHaveCount(0)
+})
+
+test('unsearchable presets are labeled in the preset column header', async ({ page }) => {
+  await loadTestSchemaPreset(page, 'shop/ice_cream')
+
+  await expect(page.getByText('unsearchable', { exact: true })).toBeVisible()
+})

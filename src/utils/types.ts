@@ -93,6 +93,8 @@ export type DenormalizedPreset = {
   missingFieldInheritance: MissingFieldInheritance | null
   missingInheritanceStatus: MissingInheritanceStatus
   searchable?: boolean
+  /** Authored under `data/presets/@templates/` or tagged with `@template`. */
+  isTemplate: boolean
 }
 
 export type SchemaData = {

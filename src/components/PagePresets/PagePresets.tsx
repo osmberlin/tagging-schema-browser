@@ -70,6 +70,26 @@ export function PagePresets() {
   }
 
   const activePills = [
+    ...(searchState.template !== 'no'
+      ? [
+          {
+            key: 'template',
+            facet: 'template',
+            label: `Template: ${searchState.template}`,
+            onRemove: () => setSearchState({ template: 'no', page: 1 }),
+          },
+        ]
+      : []),
+    ...(searchState.searchable !== 'both'
+      ? [
+          {
+            key: 'searchable',
+            facet: 'searchable',
+            label: `Searchable: ${searchState.searchable}`,
+            onRemove: () => setSearchState({ searchable: 'both', page: 1 }),
+          },
+        ]
+      : []),
     ...searchState.primaryTagKey.map((value) => ({
       key: `primary-${value}`,
       facet: 'primaryTagKey',

@@ -14,6 +14,8 @@ type PresetSearchRecord = DenormalizedPreset & {
   hasIconFacet: 'yes' | 'no' | 'broken'
   iconMismatchFacet: 'mismatch' | 'no'
   missingInheritanceFacet: DenormalizedPreset['missingInheritanceStatus']
+  templateFacet: 'yes' | 'no'
+  searchableFacet: 'yes' | 'no'
 }
 
 function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown>[] {
@@ -32,6 +34,8 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     hasIconFacet: p.icon && isIconSvgConfirmedMissing(p.icon) ? 'broken' : p.hasIcon ? 'yes' : 'no',
     iconMismatchFacet: p.iconMismatch ? 'mismatch' : 'no',
     missingInheritanceFacet: p.missingInheritanceStatus,
+    templateFacet: p.isTemplate ? 'yes' : 'no',
+    searchableFacet: p.searchable === false ? 'no' : 'yes',
   }))
 }
 
@@ -61,6 +65,8 @@ const itemsJsConfig = {
     hasIconFacet: { title: 'Has icon', size: 3 },
     iconMismatchFacet: { title: 'Icon consistency', size: 2 },
     missingInheritanceFacet: { title: 'Field inheritance', size: 4 },
+    templateFacet: { title: 'Template', size: 2 },
+    searchableFacet: { title: 'Searchable', size: 2 },
   },
   sortings: {
     name_asc: { field: 'name', order: 'asc' },
@@ -147,6 +153,14 @@ export function searchPresets(params: {
     mappedFilters.iconMismatchFacet = mappedFilters.iconMismatch
     mappedFilters.iconMismatch = []
   }
+  if (mappedFilters.template) {
+    mappedFilters.templateFacet = mappedFilters.template
+    mappedFilters.template = []
+  }
+  if (mappedFilters.searchable) {
+    mappedFilters.searchableFacet = mappedFilters.searchable
+    mappedFilters.searchable = []
+  }
   const query = params.query ?? ''
   const useCustomTextFilter = query.trim().length > 0
   const result = engine.search({
@@ -183,6 +197,8 @@ export function searchPresets(params: {
           hasIconFacet,
           iconMismatchFacet,
           missingInheritanceFacet,
+          templateFacet,
+          searchableFacet,
           fieldText,
           fieldIds,
           primaryFieldIds,
@@ -195,6 +211,8 @@ export function searchPresets(params: {
         void hasIconFacet
         void iconMismatchFacet
         void missingInheritanceFacet
+        void templateFacet
+        void searchableFacet
         void fieldText
         void fieldIds
         void primaryFieldIds
@@ -222,6 +240,14 @@ export function searchPresets(params: {
       if ('iconMismatchFacet' in mapped) {
         mapped.iconMismatch = mapped.iconMismatchFacet
         delete mapped.iconMismatchFacet
+      }
+      if ('templateFacet' in mapped) {
+        mapped.template = mapped.templateFacet
+        delete mapped.templateFacet
+      }
+      if ('searchableFacet' in mapped) {
+        mapped.searchable = mapped.searchableFacet
+        delete mapped.searchableFacet
       }
       return mapped
     })(),

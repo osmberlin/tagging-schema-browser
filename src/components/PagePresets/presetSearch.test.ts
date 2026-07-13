@@ -7,7 +7,11 @@ import {
 } from '@/components/PagePresets/presetSearch'
 import type { DenormalizedPreset } from '@/utils/types'
 
-function preset(id: string, name: string): DenormalizedPreset {
+function preset(
+  id: string,
+  name: string,
+  overrides: Partial<DenormalizedPreset> = {},
+): DenormalizedPreset {
   return {
     id,
     name,
@@ -25,6 +29,8 @@ function preset(id: string, name: string): DenormalizedPreset {
     iconMismatch: false,
     missingFieldInheritance: null,
     missingInheritanceStatus: 'none',
+    isTemplate: false,
+    ...overrides,
   }
 }
 
@@ -54,5 +60,39 @@ describe('presetSearch index', () => {
     expect(
       searchPresets({ page: 1, per_page: PRESET_SEARCH_ALL })?.data.items.map((p) => p.id),
     ).toEqual(['a'])
+  })
+
+  it('filters template and searchable facets', () => {
+    const presets = [
+      preset('amenity/cafe', 'Cafe', { searchable: true, isTemplate: false }),
+      preset('@templates/poi', 'Template POI', { searchable: false, isTemplate: true }),
+      preset('shop/ice_cream', 'Ice cream shop', { searchable: false, isTemplate: false }),
+    ]
+
+    activatePresetSearchIndex('https://facet.example/', presets)
+
+    expect(
+      searchPresets({
+        filters: { template: ['no'] },
+        page: 1,
+        per_page: PRESET_SEARCH_ALL,
+      })?.data.items.map((p) => p.id),
+    ).toEqual(['amenity/cafe', 'shop/ice_cream'])
+
+    expect(
+      searchPresets({
+        filters: { template: ['yes'] },
+        page: 1,
+        per_page: PRESET_SEARCH_ALL,
+      })?.data.items.map((p) => p.id),
+    ).toEqual(['@templates/poi'])
+
+    expect(
+      searchPresets({
+        filters: { searchable: ['no'] },
+        page: 1,
+        per_page: PRESET_SEARCH_ALL,
+      })?.data.items.map((p) => p.id),
+    ).toEqual(['shop/ice_cream', '@templates/poi'])
   })
 })

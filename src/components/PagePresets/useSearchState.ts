@@ -4,6 +4,8 @@ import { z } from 'zod'
 
 const stringArray = z.array(z.string()).catch([])
 
+const triStateFacet = z.enum(['yes', 'no', 'both'])
+
 /**
  * Search params for the presets page (route "/"), validated with Zod 4.
  * Every field uses `.catch(...)` so a malformed or missing URL param falls back
@@ -14,6 +16,10 @@ export const presetSearchSchema = z.object({
   /** Used by the translations page for its own client-side list pagination. */
   page: z.number().int().positive().catch(1),
   sort: z.enum(['name_asc', 'name_desc']).catch('name_asc'),
+  /** Template presets (`@templates/` or `@template` tag). Default hides them. */
+  template: triStateFacet.catch('no'),
+  /** `searchable: false` in preset JSON. Default shows all. */
+  searchable: triStateFacet.catch('both'),
   primaryTagKey: stringArray,
   geometry: stringArray,
   iconPrefix: stringArray,
@@ -81,5 +87,7 @@ export function filtersFromState(state: SearchState): Record<string, string[]> {
   if (state.hasIcon.length) f.hasIcon = state.hasIcon
   if (state.iconMismatch.length) f.iconMismatch = state.iconMismatch
   if (state.missingInheritance.length) f.missingInheritanceFacet = state.missingInheritance
+  if (state.template !== 'both') f.template = [state.template]
+  if (state.searchable !== 'both') f.searchable = [state.searchable]
   return f
 }
