@@ -5,12 +5,16 @@ import {
 } from '@/components/PageIcons/iconRegistry'
 import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
 import { denormalize } from '@/components/PagePresets/denormalize'
-import { refreshPresetSearchIndex } from '@/components/PagePresets/presetSearch'
+import {
+  refreshPresetSearchIndex,
+  getActivePresetSearchDataUrl,
+} from '@/components/PagePresets/presetSearch'
 import {
   detectSchemaBuildInfo,
   isSchemaBuildSupported,
   unsupportedSchemaBuildMessage,
 } from '@/utils/schemaBuildVersion'
+import { buildSchemaIndices } from '@/utils/schemaIndices'
 import type { SchemaData } from '@/utils/types'
 
 function normalizeDataUrl(url: string): string {
@@ -48,15 +52,18 @@ export function processRawSchemaPayload(
     categoryNames[cid] = raw.translations.en?.presets?.categories?.[cid]?.name ?? cid
   }
 
+  const fieldTranslations = raw.translations.en?.presets?.fields ?? {}
+
   return {
     presets,
     presetsById,
+    indices: buildSchemaIndices(presets, raw.fields, fieldTranslations),
     rawPresets: raw.presets,
     categories: raw.categories,
     categoryNames,
     fields: raw.fields,
     translations: raw.translations,
-    fieldTranslations: raw.translations.en?.presets?.fields ?? {},
+    fieldTranslations,
     schemaBuild,
     loadError: null,
     diagnostics,
@@ -109,7 +116,10 @@ export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | n
             data.fieldTranslations,
           ),
         ).then(() => {
-          refreshPresetSearchIndex(dataUrl, data.presets, getIconRegistryEpoch())
+          const activeUrl = getActivePresetSearchDataUrl()
+          if (activeUrl === key) {
+            refreshPresetSearchIndex(dataUrl, data.presets, getIconRegistryEpoch())
+          }
         })
       }
       inflight.delete(key)

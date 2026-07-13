@@ -97,9 +97,28 @@ export type DenormalizedPreset = {
   isTemplate: boolean
 }
 
+export type FieldOptionMismatchRow = {
+  optionValue: string
+  optionIcon?: string
+  labelEn: string
+  iconMismatch: boolean
+  parentPreset: { id: string; name: string }
+  childPreset: { id: string; name: string; icon?: string }
+}
+
+/** Precomputed lookups built once per loaded schema — keeps detail navigation off hot paths. */
+export type SchemaIndices = {
+  childPresetIndex: Map<string, DenormalizedPreset>
+  presetsByPrimaryField: Map<string, DenormalizedPreset[]>
+  presetsByMoreField: Map<string, DenormalizedPreset[]>
+  fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>
+}
+
 export type SchemaData = {
   presets: DenormalizedPreset[]
   presetsById: Map<string, DenormalizedPreset>
+  /** Derived once at load; reused by field/preset detail navigation. */
+  indices: SchemaIndices
   /** Source preset entries as authored in `data/presets/{id}.json`. */
   rawPresets: RawPresets
   categories: RawCategories

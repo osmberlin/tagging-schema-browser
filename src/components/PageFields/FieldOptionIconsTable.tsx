@@ -2,8 +2,8 @@ import { getIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { areaAccent } from '@/theme/areaAccent'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
-import type { FieldOptionMismatchRow } from '@/utils/fieldOptions'
 import { cn } from '@/utils/tw'
+import type { FieldOptionMismatchRow } from '@/utils/types'
 
 function SmallIcon({ icon, title, dark }: { icon?: string; title: string; dark?: boolean }) {
   if (!icon) {

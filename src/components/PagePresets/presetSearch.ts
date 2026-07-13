@@ -98,6 +98,10 @@ let activeDataUrl: string | null = null
 let engine: PresetSearchEngine | null = null
 let cachedIconEpoch = -1
 
+export function getActivePresetSearchDataUrl(): string | null {
+  return activeDataUrl
+}
+
 /** Bind the itemsjs engine to the active schema URL. Preload must not call this. */
 export function activatePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
   const key = normalizeDataUrl(dataUrl)

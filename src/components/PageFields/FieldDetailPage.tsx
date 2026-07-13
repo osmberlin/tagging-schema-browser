@@ -14,17 +14,17 @@ import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalAccent, externalPillClass } from '@/theme/externalAccent'
-import { getFieldOptionMismatchRows } from '@/utils/fieldOptions'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
+import type { FieldOptionMismatchRow } from '@/utils/types'
 import type { DenormalizedPreset, RawFieldTranslation } from '@/utils/types'
 
 type RelatedItem = { id: string; name: string }
 
 export function FieldDetailPage() {
   const { _splat: fieldId } = useParams({ strict: false })
-  const { fields, presets, dataUrl, data, loading, error } = useSchema()
+  const { fields, data, dataUrl, loading, error } = useSchema()
   const raw = fieldId ? fields[fieldId] : undefined
 
   if (!fieldId) {
@@ -40,11 +40,11 @@ export function FieldDetailPage() {
     )
   }
 
-  if (loading || !data) {
+  if (loading && !data) {
     return <p className="text-sm text-slate-600">Loading schema…</p>
   }
 
-  if (!raw) {
+  if (!raw || !data) {
     return (
       <div className="space-y-2">
         <h1 className="font-display text-xl font-semibold text-slate-900">Field not found</h1>
@@ -61,10 +61,8 @@ export function FieldDetailPage() {
     placeholder: typeof raw.placeholder === 'string' ? raw.placeholder : undefined,
   }
 
-  const primaryPresets = presets.filter((p) => p.fields.includes(fieldId))
-  const morePresets = presets.filter(
-    (p) => p.moreFields.includes(fieldId) && !p.fields.includes(fieldId),
-  )
+  const primaryPresets = data.indices.presetsByPrimaryField.get(fieldId) ?? []
+  const morePresets = data.indices.presetsByMoreField.get(fieldId) ?? []
 
   return (
     <FieldDetailContent
@@ -74,6 +72,7 @@ export function FieldDetailPage() {
       primaryPresets={primaryPresets}
       morePresets={morePresets}
       dataUrl={dataUrl ?? ''}
+      optionRows={data.indices.fieldOptionMismatchRows.get(fieldId) ?? []}
     />
   )
 }
@@ -85,6 +84,7 @@ function FieldDetailContent({
   primaryPresets,
   morePresets,
   dataUrl,
+  optionRows,
 }: {
   fieldId: string
   raw: Record<string, unknown>
@@ -92,10 +92,10 @@ function FieldDetailContent({
   primaryPresets: DenormalizedPreset[]
   morePresets: DenormalizedPreset[]
   dataUrl: string
+  optionRows: FieldOptionMismatchRow[]
 }) {
   const setPreset = useSetPreset()
-  const { fields, presets, fieldTranslations } = useSchema()
-  const { locale, fieldLocaleMap, loading: localeLoading, error: localeError } = useLocale()
+  const { loading: localeLoading, error: localeError, locale, fieldLocaleMap } = useLocale()
   const fieldLocale = locale ? fieldLocaleMap?.[fieldId] : undefined
 
   const filePath = schemaRepoPath('field', fieldId)
@@ -111,7 +111,6 @@ function FieldDetailContent({
   const onFilterMorePresets = { moreFieldIds: [fieldId] }
 
   const toItem = (p: DenormalizedPreset): RelatedItem => ({ id: p.id, name: p.name })
-  const optionRows = getFieldOptionMismatchRows(fieldId, fields, fieldTranslations, presets)
   const mismatchCount = optionRows.filter((row) => row.iconMismatch).length
   const mismatchDisclosureId = `field-icon-mismatch:${fieldId}`
   useAutoOpenFocusedIssue(mismatchDisclosureId, 'iconMismatch', mismatchCount > 0)

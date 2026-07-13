@@ -1,4 +1,5 @@
 import { Link, useParams } from '@tanstack/react-router'
+import { useMemo } from 'react'
 import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { MissingInheritancePanel } from '@/components/PagePresets/MissingInheritancePanel'
@@ -21,9 +22,13 @@ import type { DenormalizedPreset } from '@/utils/types'
 
 type RelatedItem = { id: string; name: string }
 
+function toRelatedItem(c: DenormalizedPreset): RelatedItem {
+  return { id: c.id, name: c.name }
+}
+
 export function PresetDetailPage() {
   const { _splat: presetId } = useParams({ strict: false })
-  const { presetsById, presets, rawPresets, dataUrl, loading, error } = useSchema()
+  const { presetsById, presets, rawPresets, dataUrl, data, loading, error } = useSchema()
   const preset = presetId ? presetsById.get(presetId) : undefined
   const raw = presetId ? rawPresets[presetId] : undefined
 
@@ -31,7 +36,7 @@ export function PresetDetailPage() {
     return <p className="text-sm text-slate-600">No preset id in URL.</p>
   }
 
-  if (loading) {
+  if (loading && !data) {
     return <p className="text-sm text-slate-600">Loading schema…</p>
   }
 
@@ -88,29 +93,35 @@ function PresetDetailContent({
   const filePath = schemaRepoPath('preset', preset.id, { searchable: preset.searchable })
   const githubUrl = githubFileUrl(dataUrl, filePath)
 
-  const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name })
+  const { categorySections, uncategorizedRelated, iconRelated } = useMemo(() => {
+    const categorySections = preset.categoryNames.map((categoryName, index) => {
+      const categoryId = preset.categoryIds[index]
+      const related = presets
+        .filter((c) => c.id !== preset.id && c.categoryIds.includes(categoryId))
+        .map(toRelatedItem)
+      return {
+        title: `Presets of this category "${categoryName}"`,
+        titleFilter: { categoryNames: [categoryName] },
+        related,
+      }
+    })
 
-  const categorySections = preset.categoryNames.map((categoryName, index) => {
-    const categoryId = preset.categoryIds[index]
-    const related = presets
-      .filter((c) => c.id !== preset.id && c.categoryIds.includes(categoryId))
-      .map(toItem)
-    return {
-      title: `Presets of this category "${categoryName}"`,
-      titleFilter: { categoryNames: [categoryName] },
-      related,
-    }
-  })
+    const uncategorizedRelated =
+      preset.categoryNames.length === 0
+        ? presets
+            .filter((c) => c.id !== preset.id && c.categoryNames.length === 0)
+            .map(toRelatedItem)
+        : []
 
-  const uncategorizedRelated =
-    preset.categoryNames.length === 0
-      ? presets.filter((c) => c.id !== preset.id && c.categoryNames.length === 0).map(toItem)
+    const iconId = preset.icon
+    const iconRelated = iconId
+      ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toRelatedItem)
       : []
 
+    return { categorySections, uncategorizedRelated, iconRelated }
+  }, [preset, presets])
+
   const iconId = preset.icon
-  const iconRelated = iconId
-    ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toItem)
-    : []
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">

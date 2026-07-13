@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useCallback } from 'react'
+import { startTransition, useCallback } from 'react'
 import { z } from 'zod'
 
 const stringArray = z.array(z.string()).catch([])
@@ -64,10 +64,12 @@ export function useSetPreset() {
   const navigate = useNavigate()
   return useCallback(
     (id: string) => {
-      void navigate({
-        to: '/preset/$',
-        params: { _splat: id },
-        search: (prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' }),
+      startTransition(() => {
+        void navigate({
+          to: '/preset/$',
+          params: { _splat: id },
+          search: (prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' }),
+        })
       })
     },
     [navigate],

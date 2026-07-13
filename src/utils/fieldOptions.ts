@@ -5,7 +5,13 @@ import {
   type FieldOptionTranslation,
 } from '@/utils/fieldOptionTranslation'
 import { isOptionIconMismatch } from '@/utils/iconMismatch'
-import type { DenormalizedPreset, FieldTranslations, RawField, RawFields } from '@/utils/types'
+import type {
+  DenormalizedPreset,
+  FieldOptionMismatchRow,
+  FieldTranslations,
+  RawField,
+  RawFields,
+} from '@/utils/types'
 
 const REF_REGEX = /^\{(.*)\}$/
 
@@ -92,7 +98,11 @@ export function findChildPresetForOption(
   fieldKey: string,
   optionValue: string,
   presets: DenormalizedPreset[],
+  childPresetIndex?: Map<string, DenormalizedPreset>,
 ): DenormalizedPreset | undefined {
+  if (childPresetIndex) {
+    return childPresetIndex.get(`${preset.id}\0${fieldKey}\0${optionValue}`)
+  }
   const prefix = `${preset.id}/`
   const candidates = presets.filter(
     (p) => p.id.startsWith(prefix) && p.tags[fieldKey] === optionValue,
@@ -114,15 +124,6 @@ export type PresetOptionRow = {
   childPresetIcon?: string
 }
 
-export type FieldOptionMismatchRow = {
-  optionValue: string
-  optionIcon?: string
-  labelEn: string
-  iconMismatch: boolean
-  parentPreset: { id: string; name: string }
-  childPreset: { id: string; name: string; icon?: string }
-}
-
 export type PresetFieldSection = {
   fieldId: string
   fieldKey: string
@@ -139,6 +140,7 @@ function buildOptionRowsForField(
   fieldTranslations: FieldTranslations,
   allPresets: DenormalizedPreset[],
   allFields: RawFields,
+  childPresetIndex?: Map<string, DenormalizedPreset>,
 ): PresetOptionRow[] {
   if (!field) return []
   const options = getFieldOptionValues(field, fieldTranslations, fieldId)
@@ -151,7 +153,7 @@ function buildOptionRowsForField(
 
   for (const opt of options) {
     const icon = icons[opt]
-    const child = findChildPresetForOption(preset, fieldKey, opt, allPresets)
+    const child = findChildPresetForOption(preset, fieldKey, opt, allPresets, childPresetIndex)
     const childPresetIcon = child?.icon
     rows.push({
       fieldId,
@@ -174,6 +176,7 @@ export function getPresetFieldSections(
   fields: RawFields,
   fieldTranslations: FieldTranslations,
   allPresets: DenormalizedPreset[],
+  childPresetIndex?: Map<string, DenormalizedPreset>,
 ): PresetFieldSection[] {
   const primarySet = new Set(preset.fields)
   const moreSet = new Set(preset.moreFields)
@@ -201,6 +204,7 @@ export function getPresetFieldSections(
         fieldTranslations,
         allPresets,
         fields,
+        childPresetIndex,
       ),
     }
   })
@@ -212,7 +216,12 @@ export function getFieldOptionMismatchRows(
   fields: RawFields,
   fieldTranslations: FieldTranslations,
   presets: DenormalizedPreset[],
+  precomputed?: Map<string, FieldOptionMismatchRow[]>,
 ): FieldOptionMismatchRow[] {
+  if (precomputed) {
+    return precomputed.get(fieldId) ?? []
+  }
+
   const rows: FieldOptionMismatchRow[] = []
 
   for (const preset of presets) {

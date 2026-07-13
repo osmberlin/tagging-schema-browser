@@ -97,9 +97,8 @@ export function useComparison() {
     unreleasedUpdatedAt: versionsQuery.data?.unreleasedUpdatedAt ?? null,
     result,
     loading:
-      schemaLoading ||
-      baselineQuery.isLoading ||
-      baselineQuery.isFetching ||
+      (schemaLoading && presets.length === 0) ||
+      (baselineQuery.isLoading && !baselinePresets) ||
       (baselineUrl !== null && !baselineQuery.isError && baselinePresets === undefined),
     error: schemaError ?? baselineError,
   }
