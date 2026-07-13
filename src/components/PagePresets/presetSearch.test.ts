@@ -95,4 +95,24 @@ describe('presetSearch index', () => {
       })?.data.items.map((p) => p.id),
     ).toEqual(['shop/ice_cream', '@templates/poi'])
   })
+
+  it('excludes expected no-icon presets when filtering hasIcon no', () => {
+    const presets = [
+      preset('line', 'Line', { hasIcon: false }),
+      preset('point', 'Point', { hasIcon: false }),
+      preset('area', 'Area', { hasIcon: false }),
+      preset('address', 'Address', { hasIcon: false }),
+      preset('highway/crossing', 'Crossing', { hasIcon: false }),
+    ]
+
+    activatePresetSearchIndex('https://expected-no-icon.example/', presets)
+
+    expect(
+      searchPresets({
+        filters: { hasIcon: ['no'] },
+        page: 1,
+        per_page: PRESET_SEARCH_ALL,
+      })?.data.items.map((p) => p.id),
+    ).toEqual(['highway/crossing'])
+  })
 })

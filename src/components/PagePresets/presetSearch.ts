@@ -1,5 +1,6 @@
 import itemsjs from 'itemsjs'
 import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import { isExpectedNoIconPreset } from '@/utils/presetExpectedNoIcon'
 import { presetMatchesTextQuery } from '@/utils/presetTextMatch'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -132,6 +133,12 @@ export function ensurePresetSearchIndex(
   cachedIconEpoch = iconEpoch
 }
 
+/** When filtering only `hasIcon: no`, drop presets that are expected to lack icons. */
+function shouldExcludeExpectedNoIconPresets(hasIconFacet: string[] | undefined): boolean {
+  if (!hasIconFacet?.includes('no')) return false
+  return !hasIconFacet.includes('yes') && !hasIconFacet.includes('broken')
+}
+
 export function searchPresets(params: {
   query?: string
   filters?: Record<string, string[]>
@@ -163,11 +170,18 @@ export function searchPresets(params: {
   }
   const query = params.query ?? ''
   const useCustomTextFilter = query.trim().length > 0
+  const excludeExpectedNoIcon = shouldExcludeExpectedNoIconPresets(mappedFilters.hasIconFacet)
+  const useCustomPresetFilter = useCustomTextFilter || excludeExpectedNoIcon
   const result = engine.search({
     query: useCustomTextFilter ? '' : query,
     filters: mappedFilters,
-    filter: useCustomTextFilter
-      ? (item: Record<string, unknown>) => presetMatchesTextQuery(item as DenormalizedPreset, query)
+    filter: useCustomPresetFilter
+      ? (item: Record<string, unknown>) => {
+          const preset = item as DenormalizedPreset
+          if (excludeExpectedNoIcon && isExpectedNoIconPreset(preset)) return false
+          if (useCustomTextFilter && !presetMatchesTextQuery(preset, query)) return false
+          return true
+        }
       : undefined,
     page: params.page ?? 1,
     per_page: params.per_page ?? 24,
