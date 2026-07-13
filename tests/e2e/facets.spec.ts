@@ -494,8 +494,12 @@ test('searchable facet filters presets with searchable false', async ({ page }) 
   await expect(page.locator('table thead th').filter({ hasText: 'amenity/cafe' })).toHaveCount(0)
 })
 
-test('unsearchable presets are labeled in the preset column header', async ({ page }) => {
+test('unsearchable presets are highlighted in the searchable row', async ({ page }) => {
   await loadTestSchemaPreset(page, 'shop/ice_cream')
 
-  await expect(page.getByText('unsearchable', { exact: true })).toBeVisible()
+  const searchableRow = page.locator('tbody tr', {
+    has: page.locator('th', { hasText: /^Searchable$/ }),
+  })
+  await expect(searchableRow.locator('td').filter({ hasText: /^no$/ })).toBeVisible()
+  await expect(page.getByText('unsearchable', { exact: true })).toHaveCount(0)
 })
