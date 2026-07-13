@@ -1,5 +1,4 @@
 import { Link, useParams } from '@tanstack/react-router'
-import { useMemo } from 'react'
 import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { MissingInheritancePanel } from '@/components/PagePresets/MissingInheritancePanel'
@@ -63,6 +62,7 @@ export function PresetDetailPage() {
 
   return (
     <PresetDetailContent
+      key={preset.id}
       preset={preset}
       raw={raw as Record<string, unknown>}
       presets={presets}
@@ -93,35 +93,27 @@ function PresetDetailContent({
   const filePath = schemaRepoPath('preset', preset.id, { searchable: preset.searchable })
   const githubUrl = githubFileUrl(dataUrl, filePath)
 
-  const { categorySections, uncategorizedRelated, iconRelated } = useMemo(() => {
-    const categorySections = preset.categoryNames.map((categoryName, index) => {
-      const categoryId = preset.categoryIds[index]
-      const related = presets
-        .filter((c) => c.id !== preset.id && c.categoryIds.includes(categoryId))
-        .map(toRelatedItem)
-      return {
-        title: `Presets of this category "${categoryName}"`,
-        titleFilter: { categoryNames: [categoryName] },
-        related,
-      }
-    })
+  const categorySections = preset.categoryNames.map((categoryName, index) => {
+    const categoryId = preset.categoryIds[index]
+    const related = presets
+      .filter((c) => c.id !== preset.id && c.categoryIds.includes(categoryId))
+      .map(toRelatedItem)
+    return {
+      title: `Presets of this category "${categoryName}"`,
+      titleFilter: { categoryNames: [categoryName] },
+      related,
+    }
+  })
 
-    const uncategorizedRelated =
-      preset.categoryNames.length === 0
-        ? presets
-            .filter((c) => c.id !== preset.id && c.categoryNames.length === 0)
-            .map(toRelatedItem)
-        : []
-
-    const iconId = preset.icon
-    const iconRelated = iconId
-      ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toRelatedItem)
+  const uncategorizedRelated =
+    preset.categoryNames.length === 0
+      ? presets.filter((c) => c.id !== preset.id && c.categoryNames.length === 0).map(toRelatedItem)
       : []
 
-    return { categorySections, uncategorizedRelated, iconRelated }
-  }, [preset, presets])
-
   const iconId = preset.icon
+  const iconRelated = iconId
+    ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toRelatedItem)
+    : []
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">

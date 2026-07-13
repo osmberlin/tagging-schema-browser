@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useIconRegistryEpoch } from '@/components/PageIcons/iconRegistry'
 import { useSchema } from '@/hooks/useSchema'
 import { ensurePresetSearchIndex, PRESET_SEARCH_ALL, searchPresets } from './presetSearch'
@@ -9,16 +8,13 @@ export function usePresetSearch() {
   const { data, dataUrl } = useSchema()
   const [state] = useSearchState()
   const iconEpoch = useIconRegistryEpoch()
-
-  return useMemo(() => {
-    if (!data) return null
-    ensurePresetSearchIndex(dataUrl, data.presets, iconEpoch)
-    return searchPresets({
-      query: state.q,
-      filters: filtersFromState(state),
-      page: 1,
-      per_page: PRESET_SEARCH_ALL,
-      sort: state.sort,
-    })
-  }, [data, dataUrl, iconEpoch, state])
+  if (!data) return null
+  ensurePresetSearchIndex(dataUrl, data.presets, iconEpoch)
+  return searchPresets({
+    query: state.q,
+    filters: filtersFromState(state),
+    page: 1,
+    per_page: PRESET_SEARCH_ALL,
+    sort: state.sort,
+  })
 }

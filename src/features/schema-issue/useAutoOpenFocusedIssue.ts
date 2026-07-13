@@ -15,10 +15,13 @@ export function useAutoOpenFocusedIssue(
   const focus = useActiveIssueFocus()
   const { setOpen } = useSchemaIssueDisclosureActions()
 
-  useEffect(() => {
-    if (focus !== issue || !applies) return
-    const stored = getSchemaIssueDisclosureStore().openById[disclosureId]
-    if (stored !== undefined) return
-    setOpen(disclosureId, true)
-  }, [focus, issue, applies, disclosureId, setOpen])
+  useEffect(
+    function autoOpenFocusedIssueDisclosure() {
+      if (focus !== issue || !applies) return
+      const stored = getSchemaIssueDisclosureStore().openById[disclosureId]
+      if (stored !== undefined) return
+      setOpen(disclosureId, true)
+    },
+    [focus, issue, applies, disclosureId, setOpen],
+  )
 }

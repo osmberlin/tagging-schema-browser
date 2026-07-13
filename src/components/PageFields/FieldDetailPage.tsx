@@ -22,6 +22,10 @@ import type { DenormalizedPreset, RawFieldTranslation } from '@/utils/types'
 
 type RelatedItem = { id: string; name: string }
 
+function toRelatedItem(p: DenormalizedPreset): RelatedItem {
+  return { id: p.id, name: p.name }
+}
+
 export function FieldDetailPage() {
   const { _splat: fieldId } = useParams({ strict: false })
   const { fields, data, dataUrl, loading, error } = useSchema()
@@ -66,6 +70,7 @@ export function FieldDetailPage() {
 
   return (
     <FieldDetailContent
+      key={fieldId}
       fieldId={fieldId}
       raw={raw as Record<string, unknown>}
       english={english}
@@ -110,7 +115,6 @@ function FieldDetailContent({
   const onFilterPrimaryPresets = { primaryFieldIds: [fieldId] }
   const onFilterMorePresets = { moreFieldIds: [fieldId] }
 
-  const toItem = (p: DenormalizedPreset): RelatedItem => ({ id: p.id, name: p.name })
   const mismatchCount = optionRows.filter((row) => row.iconMismatch).length
   const mismatchDisclosureId = `field-icon-mismatch:${fieldId}`
   useAutoOpenFocusedIssue(mismatchDisclosureId, 'iconMismatch', mismatchCount > 0)
@@ -260,13 +264,13 @@ function FieldDetailContent({
             title="Presets with this field (primary)"
             count={primaryPresets.length}
             titleFilter={onFilterPrimaryPresets}
-            presets={primaryPresets.map(toItem)}
+            presets={primaryPresets.map(toRelatedItem)}
           />
           <RelatedBlock
             title="Presets with this field (more fields)"
             count={morePresets.length}
             titleFilter={onFilterMorePresets}
-            presets={morePresets.map(toItem)}
+            presets={morePresets.map(toRelatedItem)}
           />
         </div>
       </DetailDisclosure>
