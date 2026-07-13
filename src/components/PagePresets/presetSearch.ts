@@ -1,5 +1,6 @@
 import itemsjs from 'itemsjs'
 import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import { isExpectedNoIconPreset } from '@/utils/presetExpectedNoIcon'
 import { presetMatchesTextQuery } from '@/utils/presetTextMatch'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -14,6 +15,9 @@ type PresetSearchRecord = DenormalizedPreset & {
   hasIconFacet: 'yes' | 'no' | 'broken'
   iconMismatchFacet: 'mismatch' | 'no'
   missingInheritanceFacet: DenormalizedPreset['missingInheritanceStatus']
+  templateFacet: 'yes' | 'no'
+  searchableFacet: 'yes' | 'no'
+  expectedNoIconFacet: 'yes' | 'no'
 }
 
 function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown>[] {
@@ -32,6 +36,9 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     hasIconFacet: p.icon && isIconSvgConfirmedMissing(p.icon) ? 'broken' : p.hasIcon ? 'yes' : 'no',
     iconMismatchFacet: p.iconMismatch ? 'mismatch' : 'no',
     missingInheritanceFacet: p.missingInheritanceStatus,
+    templateFacet: p.isTemplate ? 'yes' : 'no',
+    searchableFacet: p.searchable === false ? 'no' : 'yes',
+    expectedNoIconFacet: isExpectedNoIconPreset(p) ? 'yes' : 'no',
   }))
 }
 
@@ -61,6 +68,9 @@ const itemsJsConfig = {
     hasIconFacet: { title: 'Has icon', size: 3 },
     iconMismatchFacet: { title: 'Icon consistency', size: 2 },
     missingInheritanceFacet: { title: 'Field inheritance', size: 4 },
+    templateFacet: { title: 'Template', size: 2 },
+    searchableFacet: { title: 'Searchable', size: 2 },
+    expectedNoIconFacet: { title: 'Expected no icon', size: 2 },
   },
   sortings: {
     name_asc: { field: 'name', order: 'asc' },
@@ -126,6 +136,12 @@ export function ensurePresetSearchIndex(
   cachedIconEpoch = iconEpoch
 }
 
+/** When filtering only `hasIcon: no`, drop presets that are expected to lack icons. */
+export function shouldExcludeExpectedNoIconPresets(hasIconFacet: string[] | undefined): boolean {
+  if (!hasIconFacet?.includes('no')) return false
+  return !hasIconFacet.includes('yes') && !hasIconFacet.includes('broken')
+}
+
 export function searchPresets(params: {
   query?: string
   filters?: Record<string, string[]>
@@ -146,6 +162,17 @@ export function searchPresets(params: {
   if (mappedFilters.iconMismatch) {
     mappedFilters.iconMismatchFacet = mappedFilters.iconMismatch
     mappedFilters.iconMismatch = []
+  }
+  if (mappedFilters.template) {
+    mappedFilters.templateFacet = mappedFilters.template
+    mappedFilters.template = []
+  }
+  if (mappedFilters.searchable) {
+    mappedFilters.searchableFacet = mappedFilters.searchable
+    mappedFilters.searchable = []
+  }
+  if (shouldExcludeExpectedNoIconPresets(mappedFilters.hasIconFacet)) {
+    mappedFilters.expectedNoIconFacet = ['no']
   }
   const query = params.query ?? ''
   const useCustomTextFilter = query.trim().length > 0
@@ -183,6 +210,9 @@ export function searchPresets(params: {
           hasIconFacet,
           iconMismatchFacet,
           missingInheritanceFacet,
+          templateFacet,
+          searchableFacet,
+          expectedNoIconFacet,
           fieldText,
           fieldIds,
           primaryFieldIds,
@@ -195,6 +225,9 @@ export function searchPresets(params: {
         void hasIconFacet
         void iconMismatchFacet
         void missingInheritanceFacet
+        void templateFacet
+        void searchableFacet
+        void expectedNoIconFacet
         void fieldText
         void fieldIds
         void primaryFieldIds
@@ -222,6 +255,17 @@ export function searchPresets(params: {
       if ('iconMismatchFacet' in mapped) {
         mapped.iconMismatch = mapped.iconMismatchFacet
         delete mapped.iconMismatchFacet
+      }
+      if ('templateFacet' in mapped) {
+        mapped.template = mapped.templateFacet
+        delete mapped.templateFacet
+      }
+      if ('searchableFacet' in mapped) {
+        mapped.searchable = mapped.searchableFacet
+        delete mapped.searchableFacet
+      }
+      if ('expectedNoIconFacet' in mapped) {
+        delete mapped.expectedNoIconFacet
       }
       return mapped
     })(),

@@ -7,6 +7,7 @@ import { nameRefFromRaw } from '@/components/PagePresets/presetLabelInheritance'
 import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
 import { annotatePresetIconMismatches } from '@/utils/iconMismatch'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
+import { isTemplatePreset } from '@/utils/presetTemplate'
 import type {
   DenormalizedPreset,
   RawCategories,
@@ -192,6 +193,7 @@ export function denormalize(
       missingFieldInheritance,
       missingInheritanceStatus,
       searchable: r.searchable !== false,
+      isTemplate: isTemplatePreset({ id, tags }),
     })
   }
 

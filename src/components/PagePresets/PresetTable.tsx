@@ -285,6 +285,33 @@ export function PresetTable() {
         title: 'Identity',
         rows: [
           { label: 'ID', mono: true, truncate: true, render: (p) => p.id, title: (p) => p.id },
+          {
+            label: 'Searchable',
+            render: (p) =>
+              p.searchable === false ? (
+                <span
+                  className={`font-semibold ${areaAccent.presets.pillText}`}
+                  title="searchable: false"
+                >
+                  no
+                </span>
+              ) : (
+                <span className="text-slate-500">yes</span>
+              ),
+          },
+          {
+            label: 'Template',
+            render: (p) =>
+              p.isTemplate ? (
+                <span className="font-medium text-slate-600" title="Template preset">
+                  yes
+                </span>
+              ) : (
+                <span className="text-slate-500">no</span>
+              ),
+            highlight: (p) => p.isTemplate,
+            highlightClass: 'bg-slate-100/80',
+          },
           { label: 'Name', breakText: true, render: (p) => p.name, title: (p) => p.name },
           {
             label: 'Terms',

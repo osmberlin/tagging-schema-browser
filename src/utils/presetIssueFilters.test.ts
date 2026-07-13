@@ -5,6 +5,8 @@ const emptySearch = {
   q: '',
   page: 1,
   sort: 'name_asc' as const,
+  template: 'no' as const,
+  searchable: 'both' as const,
   primaryTagKey: [] as string[],
   geometry: [] as string[],
   iconPrefix: [] as string[],

@@ -49,6 +49,28 @@ describe('denormalize', () => {
     expect(result[0]?.aliases).toEqual(['Coffee Shop'])
   })
 
+  it('flags template presets from @templates paths and @template tags', () => {
+    const presets = {
+      '@templates/poi': {
+        tags: { '@template': 'poi' },
+        geometry: ['point'],
+        fields: [],
+        searchable: false,
+      },
+      'amenity/cafe': { tags: { amenity: 'cafe' }, geometry: ['point'], fields: [] },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      {},
+    )
+
+    expect(result.find((p) => p.id === '@templates/poi')?.isTemplate).toBe(true)
+    expect(result.find((p) => p.id === 'amenity/cafe')?.isTemplate).toBe(false)
+  })
+
   it('inherits only the matching field list from nested preset refs', () => {
     const presets = {
       'preset/base': {
