@@ -34,8 +34,8 @@ export function SchemaCubeLoader({ className }: { className?: string }) {
           'relative flex h-16 w-16 items-center justify-center rounded-xl text-white shadow-lg',
           brandAccent.logo,
         )}
-        initial={reducedMotion ? false : { scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        initial={reducedMotion ? false : { scale: 0.96 }}
+        animate={{ scale: 1 }}
         transition={reducedMotion ? loadingInstant : loadingCardSpring}
       >
         <motion.svg

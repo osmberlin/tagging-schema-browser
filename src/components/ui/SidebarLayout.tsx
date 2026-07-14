@@ -226,8 +226,6 @@ export function SidebarLayout({
         <DataSourceBanner />
       </header>
 
-      <SchemaLoadIndicator />
-
       <div className="flex w-full flex-auto overflow-x-clip">
         {showSidebar ? (
           <aside className="hidden w-72 shrink-0 border-r border-slate-200 bg-slate-50 md:block">
@@ -282,7 +280,10 @@ export function SidebarLayout({
           </div>
         </Dialog>
 
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <SchemaLoadIndicator />
+          {children}
+        </main>
       </div>
 
       <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
