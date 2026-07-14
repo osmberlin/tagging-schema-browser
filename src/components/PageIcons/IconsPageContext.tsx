@@ -16,7 +16,8 @@ const IconsPageContext = createContext<IconsPageContextValue | null>(null)
 export function IconsPageProvider({ children }: { children: ReactNode }) {
   const { data } = useSchema()
   const [state] = useIconFacetState()
-  const { suppliersReady } = useIconSupplierLoad(state.i_supplier)
+  const loadFullCatalog = iconBrowseNeedsFullCatalog(state.i_usage)
+  const { suppliersReady } = useIconSupplierLoad(state.i_supplier, loadFullCatalog)
   const { icons } = useIconSearch(
     data?.presets ?? [],
     data?.fields ?? {},
@@ -36,7 +37,12 @@ export function useIconsPage(): IconsPageContextValue {
   return value
 }
 
-/** True when usage counts need the full supplier catalog (All / Unused with every supplier). */
+/** True when the browse view needs a supplier's full icon catalog (not schema-referenced only). */
+export function iconBrowseNeedsFullCatalog(i_usage: string): boolean {
+  return i_usage === 'all' || i_usage === 'unused'
+}
+
+/** True when All / Unused sidebar counts need the full catalog (all suppliers selected). */
 export function iconFacetCountsNeedFullCatalog(i_usage: string, i_supplier: string): boolean {
-  return i_supplier === 'all' && (i_usage === 'all' || i_usage === 'unused')
+  return i_supplier === 'all' && iconBrowseNeedsFullCatalog(i_usage)
 }

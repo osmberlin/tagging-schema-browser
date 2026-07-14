@@ -42,12 +42,11 @@ function FacetButton({
             label
           )}
         </span>
-        <span
-          className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500"
-          title={countPending ? 'Count updates after icon libraries finish loading' : undefined}
-        >
-          {countPending ? '…' : count}
-        </span>
+        {countPending ? null : (
+          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+            {count}
+          </span>
+        )}
       </button>
     </li>
   )

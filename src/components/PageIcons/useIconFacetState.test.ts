@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { IconViewModel } from '@/utils/types'
 import { buildIconFacetMeta } from './iconFacetMeta'
-import { iconFacetCountsNeedFullCatalog } from './IconsPageContext'
+import { iconBrowseNeedsFullCatalog, iconFacetCountsNeedFullCatalog } from './IconsPageContext'
 
 function icon(name: string, presetUsageCount: number, optionUsageCount = 0): IconViewModel {
   const prefix = name.split('-')[0] ?? 'unknown'
@@ -15,6 +15,16 @@ function icon(name: string, presetUsageCount: number, optionUsageCount = 0): Ico
     optionUsages: [],
   }
 }
+
+describe('iconBrowseNeedsFullCatalog', () => {
+  it('is true only for All and Unused usage facets', () => {
+    expect(iconBrowseNeedsFullCatalog('all')).toBe(true)
+    expect(iconBrowseNeedsFullCatalog('unused')).toBe(true)
+    expect(iconBrowseNeedsFullCatalog('any')).toBe(false)
+    expect(iconBrowseNeedsFullCatalog('presets')).toBe(false)
+    expect(iconBrowseNeedsFullCatalog('options')).toBe(false)
+  })
+})
 
 describe('iconFacetCountsNeedFullCatalog', () => {
   it('is true for All / Unused with every supplier', () => {
