@@ -22,7 +22,7 @@ const ICON_CARD_ROW_ESTIMATE = 208
 export function PageIcons() {
   const { data, dataUrl } = useSchema()
   const [facetState, setFacetState] = useIconFacetState()
-  const { icons } = useIconsPage()
+  const { icons, suppliersReady } = useIconsPage()
   const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
   const { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view } = facetState
   const { deferredQuery, isSearchPending } = useDeferredSearchQuery(i_q)
@@ -144,7 +144,7 @@ export function PageIcons() {
           )}
         />
       ) : null}
-      {filtered.length === 0 && (
+      {filtered.length === 0 && suppliersReady && (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
           No icons match the current filters.
         </p>

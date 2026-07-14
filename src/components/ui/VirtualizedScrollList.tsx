@@ -38,16 +38,12 @@ export function VirtualizedScrollList<T>({
   const virtualItems = virtualizer.getVirtualItems()
 
   return (
-    <div
-      className={cn('flex min-h-0 flex-col overflow-hidden', className)}
-      style={{ maxHeight }}
-      aria-busy={busy || undefined}
-    >
+    <div className={cn('w-full', className)} aria-busy={busy || undefined}>
       {header}
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 overflow-auto"
-        style={{ opacity: busy ? 0.65 : undefined }}
+        className="overflow-auto"
+        style={{ height: maxHeight, opacity: busy ? 0.65 : undefined }}
       >
         <div ref={virtualizer.containerRef} className="relative w-full">
           {virtualItems.map((virtualItem) => {

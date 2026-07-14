@@ -58,17 +58,31 @@ export function VirtualizedGrid<T>({
     [columnCount, gap],
   )
 
+  if (rowCount <= 6) {
+    return (
+      <div
+        ref={containerRef}
+        className={cn('w-full overflow-auto', className)}
+        style={{ height: maxHeight, opacity: busy ? 0.65 : undefined }}
+        aria-busy={busy || undefined}
+      >
+        <ul className={cn('grid', listClassName)} style={gridStyle}>
+          {items.map((item) => (
+            <li key={getKey(item)} className="min-w-0">
+              {renderItem(item)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
   return (
-    <div
-      ref={containerRef}
-      className={cn('flex min-h-0 w-full flex-col overflow-hidden', className)}
-      style={{ maxHeight }}
-      aria-busy={busy || undefined}
-    >
+    <div ref={containerRef} className={cn('w-full', className)} aria-busy={busy || undefined}>
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 overflow-auto"
-        style={{ opacity: busy ? 0.65 : undefined }}
+        className="overflow-auto"
+        style={{ height: maxHeight, opacity: busy ? 0.65 : undefined }}
       >
         <div ref={virtualizer.containerRef} className={cn('relative w-full', listClassName)}>
           {virtualRows.map((virtualRow) => {

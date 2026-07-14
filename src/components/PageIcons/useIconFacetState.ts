@@ -2,7 +2,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useCallback, useMemo } from 'react'
 import { z } from 'zod'
 import { buildIconFacetMeta } from '@/components/PageIcons/iconFacetMeta'
-import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
+import { isIconSvgMissingOrPending } from '@/components/PageIcons/iconRegistry'
 import type { IconViewModel } from '@/utils/types'
 
 /** Search params for the icons page (route "/icons"), validated with Zod 4. */
@@ -54,7 +54,7 @@ export function applyIconFacets(icons: IconViewModel[], state: IconFacetState): 
 
   if (state.i_hasSvg === 'with') filtered = filtered.filter((icon) => Boolean(icon.svgRaw))
   if (state.i_hasSvg === 'missing')
-    filtered = filtered.filter((icon) => isIconSvgConfirmedMissing(icon.name))
+    filtered = filtered.filter((icon) => isIconSvgMissingOrPending(icon.name))
 
   if (state.i_supplier !== 'all') {
     filtered = filtered.filter((icon) => icon.prefix === state.i_supplier)
