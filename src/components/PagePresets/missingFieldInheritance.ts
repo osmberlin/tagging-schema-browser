@@ -1,6 +1,7 @@
 import {
   presetIdFromRef,
   resolvePresetFieldList,
+  shouldInheritField,
 } from '@/components/PagePresets/presetFieldInheritance'
 import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
 
@@ -88,8 +89,15 @@ export function detectMissingFieldInheritance(
       allFields,
     )
 
+    const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
+    const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
+
     const childSet = new Set(childResolved)
-    const missedFieldIds = parentResolved.filter((fieldId) => !childSet.has(fieldId))
+    const missedFieldIds = parentResolved
+      .filter((fieldId) => !childSet.has(fieldId))
+      .filter((fieldId) =>
+        shouldInheritField(preset, fieldId, hostOriginalFields, hostOriginalMoreFields, allFields),
+      )
     if (missedFieldIds.length === 0) continue
 
     result[fieldListKey] = {

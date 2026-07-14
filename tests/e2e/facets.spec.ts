@@ -57,14 +57,14 @@ test('missing slash-parent field inheritance is flagged and filterable', async (
   await page.getByRole('button', { name: 'show unreviewed' }).click()
   await expect(page.getByRole('button', { name: 'Field inheritance: unreviewed' })).toBeVisible()
   await expect(
-    page.locator('tbody').getByText('man_made/crane/gantry_crane', { exact: true }),
+    page.locator('tbody').getByText('man_made/crane/untyped_crane', { exact: true }),
   ).toBeVisible()
   await expect(page.getByText('Missing inheritance', { exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'show unreviewed' })).toHaveCount(0)
 })
 
 test('preset detail shows missing inheritance panel', async ({ page }) => {
-  await page.goto('/preset/man_made/crane/gantry_crane?dataUrl=/test-schema')
+  await page.goto('/preset/man_made/crane/untyped_crane?dataUrl=/test-schema')
 
   await page.getByRole('button', { name: 'Missing inheritance' }).click()
   await expect(page.getByTestId('missing-inheritance-panel')).toBeVisible()
@@ -72,7 +72,7 @@ test('preset detail shows missing inheritance panel', async ({ page }) => {
   await expect(page.getByText('crane/type', { exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'man_made/crane' })).toBeVisible()
   await expect(page.getByTestId('missing-inheritance-override-snippet')).toContainText(
-    'man_made/crane/gantry_crane:',
+    'man_made/crane/untyped_crane:',
   )
   await expect(page.getByTestId('missing-inheritance-override-snippet')).toContainText(
     'parentId: man_made/crane',

@@ -193,7 +193,7 @@ test.describe('release schema navigation (optional)', () => {
 
   test.describe.configure({ mode: 'serial' })
 
-  test('release: field highway → mini_roundabout preset (issue #109)', async ({ page }) => {
+  test('release: field highway → highway preset (issue #109)', async ({ page }) => {
     test.setTimeout(120_000)
 
     await page.goto('/?reference=release')
@@ -210,14 +210,14 @@ test.describe('release schema navigation (optional)', () => {
       page,
       () =>
         page
-          .getByRole('link', { name: /Mini-Roundabout|mini_roundabout/i })
+          .getByRole('link', { name: /Highway Feature|^highway$/i })
           .first()
           .click(),
-      page.getByText('highway/mini_roundabout', { exact: true }),
+      page.getByText('highway', { exact: true }),
       RELEASE_NAV_BUDGET_MS,
     )
-    expectWithinBudget('release field → mini_roundabout', toPreset, RELEASE_NAV_BUDGET_MS)
-    console.log(`release field → mini_roundabout: ${toPreset}ms`)
+    expectWithinBudget('release field → highway', toPreset, RELEASE_NAV_BUDGET_MS)
+    console.log(`release field → highway: ${toPreset}ms`)
 
     const hops = [
       { link: 'Fields', heading: /^Fields\b/i },
