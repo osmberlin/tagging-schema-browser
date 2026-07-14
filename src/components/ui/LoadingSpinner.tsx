@@ -155,9 +155,24 @@ export function SchemaLoadingFloat({ label }: { label: string }) {
 
 /** Wraps a floating loader with enter/exit transitions (for live schema refresh). */
 export function SchemaLoadingFloatPresence({ show, label }: { show: boolean; label: string }) {
+  const { reducedMotion, card } = useLoadingTransitions()
+
   return (
     <AnimatePresence>
-      {show ? <SchemaLoadingFloat key="schema-loading-float" label={label} /> : null}
+      {show ? (
+        <motion.div
+          key="schema-loading-float"
+          className="pointer-events-none sticky top-4 z-20 -mt-2 mb-4 flex justify-center px-4"
+          aria-live="polite"
+          role="status"
+          initial={reducedMotion ? false : { opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.98 }}
+          transition={card}
+        >
+          <SchemaLoadingCard label={label} spinnerSize="sm" animated={false} />
+        </motion.div>
+      ) : null}
     </AnimatePresence>
   )
 }
