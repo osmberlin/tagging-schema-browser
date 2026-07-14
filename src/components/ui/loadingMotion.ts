@@ -9,9 +9,3 @@ export const loadingCardSpring: Transition = {
 }
 
 export const loadingInstant: Transition = { duration: 0 }
-
-export const loadingSpinnerSpin: Transition = {
-  duration: 0.75,
-  repeat: Infinity,
-  ease: 'linear',
-}
