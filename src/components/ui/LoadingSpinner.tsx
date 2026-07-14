@@ -23,11 +23,43 @@ export function LoadingSpinner({
   )
 }
 
+function SchemaLoadingCard({
+  label,
+  spinnerSize = 'lg',
+}: {
+  label: string
+  spinnerSize?: 'md' | 'lg'
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white px-5 py-4 shadow-lg shadow-slate-900/5">
+      <LoadingSpinner size={spinnerSize} />
+      <p className="text-sm font-medium text-slate-600">{label}</p>
+    </div>
+  )
+}
+
+/** Full-page schema load — used when there is no cached data yet. */
 export function SchemaLoadingPanel({ label = 'Loading schema…' }: { label?: string }) {
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-slate-500">
-      <LoadingSpinner size="lg" />
-      <p className="text-sm">{label}</p>
+    <div
+      role="status"
+      className="flex min-h-[min(70vh,calc(100svh-10rem))] flex-col items-center justify-center px-4"
+      aria-live="polite"
+    >
+      <SchemaLoadingCard label={label} />
+    </div>
+  )
+}
+
+/** Floating schema refresh — used when data is already on screen (refetch / reference switch). */
+export function SchemaLoadingFloat({ label }: { label: string }) {
+  return (
+    <div
+      className="pointer-events-none fixed inset-x-0 top-[4.75rem] z-50 flex justify-center px-4 sm:top-16"
+      aria-live="polite"
+      role="status"
+    >
+      <SchemaLoadingCard label={label} spinnerSize="md" />
     </div>
   )
 }

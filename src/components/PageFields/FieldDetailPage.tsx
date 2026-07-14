@@ -7,6 +7,7 @@ import { useSetPreset, presetSearchDefaults } from '@/components/PagePresets/use
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
+import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
@@ -45,7 +46,7 @@ export function FieldDetailPage() {
   }
 
   if (loading && !data) {
-    return <p className="text-sm text-slate-600">Loading schema…</p>
+    return <SchemaLoadingPanel label="Loading schema…" />
   }
 
   if (!raw || !data) {

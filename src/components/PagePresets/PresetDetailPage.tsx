@@ -11,6 +11,7 @@ import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/preset
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
+import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
@@ -31,7 +32,7 @@ export function PresetDetailPage() {
   }
 
   if (loading && !data) {
-    return <p className="text-sm text-slate-600">Loading schema…</p>
+    return <SchemaLoadingPanel label="Loading schema…" />
   }
 
   if (error) {

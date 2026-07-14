@@ -3,6 +3,7 @@ import { useSetPreset } from '@/components/PagePresets/useSearchState'
 import { PresetCombobox, SwapPresetsButton } from '@/components/PagePresetSwitch/PresetCombobox'
 import { usePresetSwitchSearch } from '@/components/PagePresetSwitch/usePresetSwitchSearch'
 import { AreaIcon } from '@/components/ui/areaIcons'
+import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalLinkClass } from '@/theme/externalAccent'
@@ -104,7 +105,7 @@ export function PagePresetSwitch() {
   const changedCount = result?.rows.filter((row) => row.action !== 'unchanged').length ?? 0
 
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading schema…</p>
+    return <SchemaLoadingPanel label="Loading schema…" />
   }
 
   if (error) {
