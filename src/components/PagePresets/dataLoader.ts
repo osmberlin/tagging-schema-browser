@@ -1,12 +1,12 @@
 import { fetchSchemaJson } from '@/utils/schemaFetch'
 import type { RawCategories, RawFields, RawPresets, RawTranslations } from '@/utils/types'
 
-const REQUIRED_FILES = [
+/** JSON files required to denormalize and browse a schema dist. */
+export const SCHEMA_CORE_FILES = [
   'presets.min.json',
   'translations/en.min.json',
   'preset_categories.min.json',
   'fields.min.json',
-  'preset_defaults.min.json',
 ] as const
 
 export type RawSchemaPayload = {
@@ -14,7 +14,6 @@ export type RawSchemaPayload = {
   translations: RawTranslations
   categories: RawCategories
   fields: RawFields
-  defaults: unknown
   loadErrors: string[]
 }
 
@@ -33,10 +32,9 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
   let translations: RawTranslations = {}
   let categories: RawCategories = {}
   let fields: RawFields = {}
-  let defaults: unknown = {}
 
   const results = await Promise.all(
-    REQUIRED_FILES.map(async (file) => {
+    SCHEMA_CORE_FILES.map(async (file) => {
       try {
         const data = await fetchJson<unknown>(base, file)
         return { file, data } as const
@@ -57,12 +55,11 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
     else if (file === 'translations/en.min.json') translations = data as RawTranslations
     else if (file === 'preset_categories.min.json') categories = data as RawCategories
     else if (file === 'fields.min.json') fields = data as RawFields
-    else if (file === 'preset_defaults.min.json') defaults = data
   }
 
-  return { presets, translations, categories, fields, defaults, loadErrors }
+  return { presets, translations, categories, fields, loadErrors }
 }
 
 export function getExpectedFilesHelp(): string {
-  return `Expected at dataUrl: ${REQUIRED_FILES.join(', ')}. Example: ?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7/dist`
+  return `Expected at dataUrl: ${SCHEMA_CORE_FILES.join(', ')}. Example: ?dataUrl=https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7/dist`
 }

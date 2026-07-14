@@ -20,7 +20,6 @@ async function loadLocalTestSchema(): Promise<RawSchemaPayload> {
     translations: await read('translations/en.min.json'),
     categories: await read('preset_categories.min.json'),
     fields: await read('fields.min.json'),
-    defaults: await read('preset_defaults.min.json'),
     loadErrors: [],
   }
 }
