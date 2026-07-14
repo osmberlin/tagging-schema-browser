@@ -5,10 +5,7 @@ import {
 } from '@/components/PageIcons/iconRegistry'
 import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
 import { denormalize } from '@/components/PagePresets/denormalize'
-import {
-  refreshPresetSearchIndex,
-  getActivePresetSearchDataUrl,
-} from '@/components/PagePresets/presetSearch'
+import { refreshPresetSearchIndex } from '@/components/PagePresets/presetSearch'
 import {
   detectSchemaBuildInfo,
   isSchemaBuildSupported,
@@ -116,10 +113,7 @@ export async function preloadSchemaData(dataUrl: string): Promise<SchemaData | n
             data.fieldTranslations,
           ),
         ).then(() => {
-          const activeUrl = getActivePresetSearchDataUrl()
-          if (activeUrl === key) {
-            refreshPresetSearchIndex(dataUrl, data.presets, getIconRegistryEpoch())
-          }
+          refreshPresetSearchIndex(dataUrl, data.presets, getIconRegistryEpoch())
         })
       }
       inflight.delete(key)

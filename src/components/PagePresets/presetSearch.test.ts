@@ -3,6 +3,7 @@ import {
   activatePresetSearchIndex,
   ensurePresetSearchIndex,
   PRESET_SEARCH_ALL,
+  refreshPresetSearchIndex,
   searchPresets,
 } from '@/components/PagePresets/presetSearch'
 import type { DenormalizedPreset } from '@/utils/types'
@@ -60,6 +61,30 @@ describe('presetSearch index', () => {
     expect(
       searchPresets({ page: 1, per_page: PRESET_SEARCH_ALL })?.data.items.map((p) => p.id),
     ).toEqual(['a'])
+  })
+
+  it('reuses a cached engine when switching back to a previously active URL', () => {
+    const releasePresets = [preset('release/a', 'Release A')]
+    const stagingPresets = [preset('staging/b', 'Staging B')]
+
+    activatePresetSearchIndex('https://release.example/', releasePresets)
+    activatePresetSearchIndex('https://staging.example/', stagingPresets)
+    activatePresetSearchIndex('https://release.example/', [
+      preset('release/overwritten', 'Should not apply'),
+    ])
+
+    expect(
+      searchPresets({ page: 1, per_page: PRESET_SEARCH_ALL })?.data.items.map((p) => p.id),
+    ).toEqual(['release/a'])
+  })
+
+  it('refreshing a non-active URL does not repoint search results', () => {
+    activatePresetSearchIndex('https://active.example/', [preset('active/a', 'Active A')])
+    refreshPresetSearchIndex('https://prefetch.example/', [preset('prefetch/b', 'Prefetch B')])
+
+    expect(
+      searchPresets({ page: 1, per_page: PRESET_SEARCH_ALL })?.data.items.map((p) => p.id),
+    ).toEqual(['active/a'])
   })
 
   it('filters template and searchable facets', () => {
