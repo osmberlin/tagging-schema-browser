@@ -1,4 +1,4 @@
-import { SchemaLoadingFloat } from '@/components/ui/LoadingSpinner'
+import { SchemaLoadingFloatPresence } from '@/components/ui/LoadingSpinner'
 import { useReferencePreloading } from '@/features/data-source/reference-store'
 import { useSchema } from '@/hooks/useSchema'
 
@@ -10,9 +10,8 @@ export function SchemaLoadIndicator() {
   const { loading, refetching } = useSchema()
   const referencePreloading = useReferencePreloading()
 
-  if (loading || (!refetching && !referencePreloading)) return null
-
+  const show = !loading && (refetching || referencePreloading)
   const label = referencePreloading ? 'Preparing schema…' : 'Refreshing schema…'
 
-  return <SchemaLoadingFloat label={label} />
+  return <SchemaLoadingFloatPresence show={show} label={label} />
 }
