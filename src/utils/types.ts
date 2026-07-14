@@ -121,6 +121,8 @@ export type SchemaIndices = {
   childIconMismatchRefsByPresetId: Map<string, PresetIconMismatchRef[]>
   presetsByCategoryId: Map<string, DenormalizedPreset[]>
   presetsByIcon: Map<string, DenormalizedPreset[]>
+  /** Option icon name → field option usages — built once for icon source links. */
+  optionIconUsagesByIcon: Map<string, OptionIconUsageRef[]>
   /** Fields page list + sidebar facets — built once to avoid duplicate scans on /fields. */
   fieldCatalog: FieldViewModel[]
   fieldTypes: string[]

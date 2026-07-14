@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { Fragment, type ReactNode, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
+import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
   getInheritedFieldItems,
@@ -16,6 +17,7 @@ import {
   resolveLabelSourcePresetId,
 } from '@/components/PagePresets/presetLabelInheritance'
 import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent, areaSourceLinkClass } from '@/theme/areaAccent'
 import { externalAccent } from '@/theme/externalAccent'
@@ -102,6 +104,78 @@ function WikiLink({
 
 function SourceActionGroup({ children }: { children: ReactNode }) {
   return <span className="inline-flex shrink-0 items-center gap-1 self-center">{children}</span>
+}
+
+function IconValueSourceActions({ iconName }: { iconName: string }) {
+  const { data } = useSchema()
+  const presetCount = data?.indices.presetsByIcon.get(iconName)?.length ?? 0
+  const optionUsages = data?.indices.optionIconUsagesByIcon.get(iconName) ?? []
+  const fieldCount = new Set(optionUsages.map((usage) => usage.fieldId)).size
+  const usageCount = presetCount + optionUsages.length
+
+  return (
+    <SourceActionGroup>
+      <Link
+        to="/icons"
+        search={(prev) => ({
+          ...iconFacetDefaults,
+          dataUrl: prev.dataUrl ?? '',
+          locale: prev.locale ?? '',
+          i_q: iconName,
+          i_usage: 'all',
+        })}
+        title={`Browse icon “${iconName}” (${usageCount} usage${usageCount === 1 ? '' : 's'})`}
+        className={cn(sourceActionPillClass, areaSourceLinkClass('icons'))}
+      >
+        <AreaIcon area="icons" className="h-3 w-3" />
+        Icons
+        {usageCount > 0 ? (
+          <CountPill className={`${areaAccent.icons.pill} ${areaAccent.icons.pillText}`}>
+            {usageCount}
+          </CountPill>
+        ) : null}
+      </Link>
+      {presetCount > 0 ? (
+        <Link
+          to="/"
+          search={(prev) => ({
+            ...presetSearchDefaults,
+            dataUrl: prev.dataUrl ?? '',
+            locale: prev.locale ?? '',
+            iconName: [iconName],
+            page: 1,
+          })}
+          title={`Show ${presetCount} preset${presetCount === 1 ? '' : 's'} using “${iconName}”`}
+          className={cn(sourceActionPillClass, areaSourceLinkClass('presets'))}
+        >
+          <AreaIcon area="presets" className="h-3 w-3" />
+          Presets
+          <CountPill className={`${areaAccent.presets.pill} ${areaAccent.presets.pillText}`}>
+            {presetCount}
+          </CountPill>
+        </Link>
+      ) : null}
+      {fieldCount > 0 ? (
+        <Link
+          to="/fields"
+          search={(prev) => ({
+            ...fieldFacetDefaults,
+            dataUrl: prev.dataUrl ?? '',
+            locale: prev.locale ?? '',
+            f_optionIcon: iconName,
+          })}
+          title={`Show ${fieldCount} field${fieldCount === 1 ? '' : 's'} with options using “${iconName}”`}
+          className={cn(sourceActionPillClass, areaSourceLinkClass('fields'))}
+        >
+          <AreaIcon area="fields" className="h-3 w-3" />
+          Fields
+          <CountPill className={`${areaAccent.fields.pill} ${areaAccent.fields.pillText}`}>
+            {fieldCount}
+          </CountPill>
+        </Link>
+      ) : null}
+    </SourceActionGroup>
+  )
 }
 
 const sourceActionPillClass =
@@ -758,6 +832,16 @@ function JsonObjectEntry({
           <SourceActionGroup>
             <WikiLink href={osmWikiKeyUrl(value)} title={`OSM Wiki key: ${value}`} />
           </SourceActionGroup>
+        </JsonLine>
+      )
+    }
+    if (parentKey === 'icons' && typeof value === 'string') {
+      return (
+        <JsonLine level={level} trailingComma={trailingComma}>
+          <JsonKey name={keyName} />
+          <span className="text-slate-500">: </span>
+          <JsonScalar value={value} />
+          <IconValueSourceActions iconName={value} />
         </JsonLine>
       )
     }

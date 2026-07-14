@@ -1,4 +1,5 @@
 import {
+  collectOptionIconUsages,
   getFieldOptionValues,
   getPresetFieldSections,
   listFieldOptionIconNames,
@@ -294,6 +295,7 @@ export function buildSchemaIndices(
     childIconMismatchRefsByPresetId,
     presetsByCategoryId: buildPresetsByCategoryId(presets),
     presetsByIcon: buildPresetsByIcon(presets),
+    optionIconUsagesByIcon: collectOptionIconUsages(fields, presets, fieldTranslations),
     fieldCatalog,
     fieldTypes,
   }
