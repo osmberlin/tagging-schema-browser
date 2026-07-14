@@ -16,7 +16,7 @@ import { useFieldSearch } from './useFieldSearch'
 
 const FIELD_CARD_MIN_WIDTH = 220
 const FIELD_CARD_GAP = 12
-const FIELD_CARD_ROW_ESTIMATE = 220
+const FIELD_CARD_ROW_ESTIMATE = 224
 
 export function PageFields() {
   const { data, loading, dataUrl } = useSchema()

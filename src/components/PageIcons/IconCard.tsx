@@ -24,7 +24,7 @@ function formatOptionUsages(usages: OptionIconUsageRef[]): string {
 }
 
 const iconCardClass =
-  'flex h-full min-h-36 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white'
+  'flex h-52 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white'
 
 const footerSlotClass =
   'flex flex-1 items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-medium'

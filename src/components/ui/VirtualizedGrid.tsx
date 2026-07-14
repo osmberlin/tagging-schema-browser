@@ -1,5 +1,5 @@
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { type ReactNode, useMemo, useRef } from 'react'
+import { type ReactNode, useLayoutEffect, useMemo, useRef } from 'react'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { useScrollMargin } from '@/hooks/useScrollMargin'
 import { cn } from '@/utils/tw'
@@ -8,6 +8,7 @@ type VirtualizedGridProps<T> = {
   items: T[]
   minColumnWidth: number
   gap: number
+  /** Fixed card height in px — rows are uniform so the virtualizer can stride predictably. */
   rowEstimate: number
   getKey: (item: T) => string
   renderItem: (item: T) => ReactNode
@@ -37,13 +38,18 @@ export function VirtualizedGrid<T>({
   const scrollMargin = useScrollMargin(containerRef)
   const columnCount = columnCountForWidth(width, minColumnWidth, gap)
   const rowCount = Math.ceil(items.length / columnCount)
+  const rowStride = rowEstimate + gap
 
   const virtualizer = useWindowVirtualizer({
     count: rowCount,
-    estimateSize: () => rowEstimate,
+    estimateSize: () => rowStride,
     overscan: 4,
     scrollMargin,
   })
+
+  useLayoutEffect(() => {
+    virtualizer.measure()
+  }, [columnCount, items.length, rowEstimate, gap, virtualizer])
 
   const virtualRows = virtualizer.getVirtualItems()
   const gridStyle = useMemo(
@@ -75,11 +81,14 @@ export function VirtualizedGrid<T>({
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               className="absolute top-0 left-0 w-full"
-              style={{ transform: `translateY(${virtualRow.start - scrollMargin}px)` }}
+              style={{
+                transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                paddingBottom: gap,
+              }}
             >
               <ul className="grid" style={gridStyle}>
                 {rowItems.map((item) => (
-                  <li key={getKey(item)} className="h-full min-w-0">
+                  <li key={getKey(item)} className="min-w-0">
                     {renderItem(item)}
                   </li>
                 ))}
