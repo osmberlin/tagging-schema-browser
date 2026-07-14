@@ -75,6 +75,21 @@ export function PageFields() {
           />
         </div>
       </div>
+      {facetState.f_optionIcon ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setFacetState({ f_optionIcon: '' })}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${areaAccent.icons.sharedChip}`}
+          >
+            <AreaIcon area="icons" className={`h-3 w-3 ${areaAccent.icons.icon}`} />
+            Option icon: {facetState.f_optionIcon}
+            <span aria-hidden className="text-slate-400">
+              ×
+            </span>
+          </button>
+        </div>
+      ) : null}
       {facetState.f_iconMismatch !== 'mismatch' ? (
         <FieldIconMismatchAlert
           count={mismatchFieldCount}

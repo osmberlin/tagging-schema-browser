@@ -25,8 +25,8 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
       title: 'Go to page',
       items: [
         { label: 'Presets', keys: [['g', 'p']] },
-        { label: 'Icons', keys: [['g', 'i']] },
         { label: 'Fields', keys: [['g', 'f']] },
+        { label: 'Icons', keys: [['g', 'i']] },
         { label: 'Translations', keys: [['g', 't']] },
         { label: 'Preset switch', keys: [['g', 's']] },
         { label: 'About', keys: [['g', 'a']] },

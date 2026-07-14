@@ -121,23 +121,23 @@ export function PrimaryNav({
       }),
     },
     {
-      key: 'icons',
-      to: '/icons',
-      label: 'Icons',
-      area: 'icons',
-      search: (prev) => ({
-        ...iconFacetDefaults,
-        dataUrl: prev.dataUrl ?? '',
-        locale: prev.locale ?? '',
-      }),
-    },
-    {
       key: 'fields',
       to: '/fields',
       label: 'Fields',
       area: 'fields',
       search: (prev) => ({
         ...fieldFacetDefaults,
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
+      }),
+    },
+    {
+      key: 'icons',
+      to: '/icons',
+      label: 'Icons',
+      area: 'icons',
+      search: (prev) => ({
+        ...iconFacetDefaults,
         dataUrl: prev.dataUrl ?? '',
         locale: prev.locale ?? '',
       }),

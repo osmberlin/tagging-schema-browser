@@ -252,6 +252,7 @@ export function buildFieldCatalog(
       moreCount: morePresets.length,
       presets: Array.from(presetsById.values()),
       iconMismatchCount: mismatchCounts.get(id) ?? 0,
+      optionIconNames: [...new Set(Object.values(resolveFieldIcons(raw, fields)))],
     }
   })
 

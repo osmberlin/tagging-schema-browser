@@ -95,7 +95,11 @@ test('icons page tracks option icon usage', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /^Icons\b/i })).toBeVisible()
   await expect(page.getByText('Used by presets or options')).toBeVisible()
   await expect(page.locator("[data-icon='roentgen-bump']")).toBeVisible()
-  await expect(page.locator("[data-icon='roentgen-bump']").getByText('Options')).toBeVisible()
+  const bumpCard = page.locator("[data-icon='roentgen-bump']")
+  await expect(bumpCard.getByRole('link', { name: /Fields/i })).toBeVisible()
+  await bumpCard.getByRole('link', { name: /Fields/i }).click()
+  await expect(page).toHaveURL(/\/fields/)
+  await expect(page.locator("[data-field='traffic_calming']")).toBeVisible()
 })
 
 test('icon mismatch presets are flagged and filterable', async ({ page }) => {
