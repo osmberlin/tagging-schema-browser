@@ -16,8 +16,6 @@ type RelatedBlockProps = {
   area?: SchemaArea
   titleFilter: Partial<SearchState>
   presets: RelatedItem[]
-  /** When false, count is expected in the title (field detail columns). Default true. */
-  showCountPill?: boolean
   className?: string
 }
 
@@ -27,7 +25,6 @@ export function RelatedBlock({
   area = 'presets',
   titleFilter,
   presets,
-  showCountPill = true,
   className,
 }: RelatedBlockProps) {
   return (
@@ -47,7 +44,7 @@ export function RelatedBlock({
         >
           {title}
         </AreaLink>
-        {showCountPill ? <CountPill>{count}</CountPill> : null}
+        <CountPill>{count}</CountPill>
       </h2>
       {presets.length === 0 ? (
         <p className="text-sm text-slate-500">No related presets.</p>
