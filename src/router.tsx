@@ -226,17 +226,19 @@ function RootContent() {
     )
 
   const layout = (
-    <>
-      <HeadContent />
-      <SidebarLayout sidebar={sidebar} sidebarSearch={sidebarSearch}>
-        <SchemaContent>
-          <Outlet />
-        </SchemaContent>
-      </SidebarLayout>
-    </>
+    <SidebarLayout sidebar={sidebar} sidebarSearch={sidebarSearch}>
+      <SchemaContent>
+        <Outlet />
+      </SchemaContent>
+    </SidebarLayout>
   )
 
-  return location.pathname === '/icons' ? <IconsPageProvider>{layout}</IconsPageProvider> : layout
+  return (
+    <>
+      <HeadContent />
+      {location.pathname === '/icons' ? <IconsPageProvider>{layout}</IconsPageProvider> : layout}
+    </>
+  )
 }
 
 const rootRoute = createRootRoute({

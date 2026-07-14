@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { IconViewModel } from '@/utils/types'
-import { buildIconFacetMeta } from './iconFacetMeta'
-import { iconBrowseNeedsFullCatalog, iconFacetCountsNeedFullCatalog } from './IconsPageContext'
+import {
+  buildIconFacetMeta,
+  iconBrowseNeedsFullCatalog,
+  iconFacetCountsNeedFullCatalog,
+} from './iconFacetMeta'
 
 function icon(name: string, presetUsageCount: number, optionUsageCount = 0): IconViewModel {
   const prefix = name.split('-')[0] ?? 'unknown'
