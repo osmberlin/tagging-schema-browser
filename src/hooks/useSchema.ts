@@ -52,7 +52,8 @@ export function useSchema() {
     load: (url: string) => {
       void navigate({ to: '.', search: (prev) => ({ ...prev, dataUrl: url.trim() || '' }) })
     },
-    loading: query.isLoading || query.isFetching,
+    loading: query.isLoading && !query.data,
+    refetching: query.isFetching && Boolean(query.data),
     error:
       query.error instanceof Error ? query.error.message : query.error ? String(query.error) : null,
     data,

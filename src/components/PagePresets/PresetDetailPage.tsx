@@ -1,10 +1,10 @@
 import { Link, useParams } from '@tanstack/react-router'
 import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
+import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
 import { MissingInheritancePanel } from '@/components/PagePresets/MissingInheritancePanel'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetIconMismatchPanel } from '@/components/PagePresets/PresetIconMismatchPanel'
-import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { AreaIcon } from '@/components/ui/areaIcons'
@@ -17,13 +17,17 @@ import { areaAccent } from '@/theme/areaAccent'
 import { externalAccent, externalLinkClass, externalPillClass } from '@/theme/externalAccent'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { cn } from '@/utils/tw'
-import type { DenormalizedPreset } from '@/utils/types'
+import type { DenormalizedPreset, SchemaIndices } from '@/utils/types'
 
 type RelatedItem = { id: string; name: string }
 
+function toRelatedItem(c: DenormalizedPreset): RelatedItem {
+  return { id: c.id, name: c.name }
+}
+
 export function PresetDetailPage() {
   const { _splat: presetId } = useParams({ strict: false })
-  const { presetsById, presets, rawPresets, dataUrl, loading, error } = useSchema()
+  const { presetsById, presets, rawPresets, dataUrl, data, loading, error } = useSchema()
   const preset = presetId ? presetsById.get(presetId) : undefined
   const raw = presetId ? rawPresets[presetId] : undefined
 
@@ -31,7 +35,7 @@ export function PresetDetailPage() {
     return <p className="text-sm text-slate-600">No preset id in URL.</p>
   }
 
-  if (loading) {
+  if (loading && !data) {
     return <p className="text-sm text-slate-600">Loading schema…</p>
   }
 
@@ -44,7 +48,7 @@ export function PresetDetailPage() {
     )
   }
 
-  if (!preset || !raw) {
+  if (!preset || !raw || !data) {
     return (
       <div className="space-y-2">
         <h1 className="font-display text-xl font-semibold text-slate-900">Preset not found</h1>
@@ -58,9 +62,11 @@ export function PresetDetailPage() {
 
   return (
     <PresetDetailContent
+      key={preset.id}
       preset={preset}
       raw={raw as Record<string, unknown>}
       presets={presets}
+      indices={data.indices}
       dataUrl={dataUrl ?? ''}
     />
   )
@@ -70,15 +76,16 @@ function PresetDetailContent({
   preset,
   raw,
   presets,
+  indices,
   dataUrl,
 }: {
   preset: DenormalizedPreset
   raw: Record<string, unknown>
   presets: DenormalizedPreset[]
+  indices: SchemaIndices
   dataUrl: string
 }) {
   const { locale, localeMap, loading: localeLoading, error: localeError } = useLocale()
-  const { fields, fieldTranslations } = useSchema()
   const loc = locale ? localeMap?.get(preset.id) : undefined
 
   const { result: comparison } = useComparison()
@@ -88,13 +95,11 @@ function PresetDetailContent({
   const filePath = schemaRepoPath('preset', preset.id, { searchable: preset.searchable })
   const githubUrl = githubFileUrl(dataUrl, filePath)
 
-  const toItem = (c: DenormalizedPreset): RelatedItem => ({ id: c.id, name: c.name })
-
   const categorySections = preset.categoryNames.map((categoryName, index) => {
     const categoryId = preset.categoryIds[index]
-    const related = presets
-      .filter((c) => c.id !== preset.id && c.categoryIds.includes(categoryId))
-      .map(toItem)
+    const related = (indices.presetsByCategoryId.get(categoryId) ?? [])
+      .filter((c) => c.id !== preset.id)
+      .map(toRelatedItem)
     return {
       title: `Presets of this category "${categoryName}"`,
       titleFilter: { categoryNames: [categoryName] },
@@ -104,12 +109,12 @@ function PresetDetailContent({
 
   const uncategorizedRelated =
     preset.categoryNames.length === 0
-      ? presets.filter((c) => c.id !== preset.id && c.categoryNames.length === 0).map(toItem)
+      ? presets.filter((c) => c.id !== preset.id && c.categoryNames.length === 0).map(toRelatedItem)
       : []
 
   const iconId = preset.icon
   const iconRelated = iconId
-    ? presets.filter((c) => c.id !== preset.id && c.icon === iconId).map(toItem)
+    ? (indices.presetsByIcon.get(iconId) ?? []).filter((c) => c.id !== preset.id).map(toRelatedItem)
     : []
 
   return (
@@ -166,9 +171,8 @@ function PresetDetailContent({
 
       <PresetIconMismatchPanel
         preset={preset}
-        presets={presets}
-        fields={fields}
-        fieldTranslations={fieldTranslations}
+        parentRows={indices.parentIconMismatchRowsByPresetId.get(preset.id) ?? []}
+        childRefs={indices.childIconMismatchRefsByPresetId.get(preset.id) ?? []}
       />
 
       <MissingInheritancePanel preset={preset} dataUrl={dataUrl} />
@@ -219,13 +223,7 @@ function PresetDetailContent({
         }
         defaultOpen
       >
-        <PresetSourceTree
-          key={preset.id}
-          presetId={preset.id}
-          raw={raw}
-          preset={preset}
-          presets={presets}
-        />
+        <LazyPresetSourceTree presetId={preset.id} raw={raw} preset={preset} presets={presets} />
       </DetailDisclosure>
 
       {changeStatus === 'added' || changeStatus === 'modified' ? (

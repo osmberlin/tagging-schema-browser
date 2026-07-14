@@ -15,11 +15,7 @@ import { useFieldSearch } from './useFieldSearch'
 export function PageFields() {
   const { data, loading, dataUrl } = useSchema()
   const [facetState, setFacetState] = useFieldFacetState()
-  const { fields } = useFieldSearch(
-    data?.fields ?? {},
-    data?.presets ?? [],
-    data?.fieldTranslations ?? {},
-  )
+  const { fields } = useFieldSearch()
   const filtered = useMemo(() => {
     if (!data) return []
     return applyFieldFacets(fields, facetState)

@@ -90,32 +90,59 @@ type PresetSearchEngine = {
   search: (params: Record<string, unknown>) => unknown
 }
 
+type PresetSearchIndexEntry = {
+  engine: PresetSearchEngine
+  iconEpoch: number
+}
+
 function normalizeDataUrl(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
 }
 
+/** One itemsjs engine per schema URL — background prefetch must not repoint the active index. */
+const enginesByDataUrl = new Map<string, PresetSearchIndexEntry>()
 let activeDataUrl: string | null = null
-let engine: PresetSearchEngine | null = null
-let cachedIconEpoch = -1
 
-/** Bind the itemsjs engine to the active schema URL. Preload must not call this. */
-export function activatePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
-  const key = normalizeDataUrl(dataUrl)
-  if (activeDataUrl === key && engine) return
-  refreshPresetSearchIndex(dataUrl, presets)
-  cachedIconEpoch = 0
+export function getActivePresetSearchDataUrl(): string | null {
+  return activeDataUrl
 }
 
-/** Rebuild facet buckets after async icon suppliers finish loading. */
+function buildEngine(presets: DenormalizedPreset[]): PresetSearchEngine {
+  return itemsjs(toItemsJsRecords(presets), itemsJsConfig as never)
+}
+
+function setEngineForUrl(
+  dataUrl: string,
+  presets: DenormalizedPreset[],
+  iconEpoch: number,
+): PresetSearchIndexEntry {
+  const key = normalizeDataUrl(dataUrl)
+  const entry: PresetSearchIndexEntry = { engine: buildEngine(presets), iconEpoch }
+  enginesByDataUrl.set(key, entry)
+  return entry
+}
+
+function getEngineEntry(dataUrl: string): PresetSearchIndexEntry | undefined {
+  return enginesByDataUrl.get(normalizeDataUrl(dataUrl))
+}
+
+/** Bind search results to a schema URL. Reuses a cached engine when already built. */
+export function activatePresetSearchIndex(dataUrl: string, presets: DenormalizedPreset[]): void {
+  const key = normalizeDataUrl(dataUrl)
+  activeDataUrl = key
+  if (!enginesByDataUrl.has(key)) {
+    setEngineForUrl(dataUrl, presets, 0)
+  }
+}
+
+/** Rebuild facet buckets for one schema URL (e.g. after async icons load). Does not change active URL. */
 export function refreshPresetSearchIndex(
   dataUrl: string,
   presets: DenormalizedPreset[],
   iconEpoch?: number,
 ): void {
-  const key = normalizeDataUrl(dataUrl)
-  activeDataUrl = key
-  engine = itemsjs(toItemsJsRecords(presets), itemsJsConfig as never)
-  if (iconEpoch !== undefined) cachedIconEpoch = iconEpoch
+  const epoch = iconEpoch ?? getEngineEntry(dataUrl)?.iconEpoch ?? 0
+  setEngineForUrl(dataUrl, presets, epoch)
 }
 
 /** Idempotent — safe during render when the active schema is on screen. */
@@ -125,15 +152,28 @@ export function ensurePresetSearchIndex(
   iconEpoch = 0,
 ): void {
   const key = normalizeDataUrl(dataUrl)
-  const needsIconRefresh = iconEpoch !== cachedIconEpoch
-  if (activeDataUrl === key && engine && !needsIconRefresh) return
-  if (activeDataUrl === key && engine && needsIconRefresh) {
-    refreshPresetSearchIndex(dataUrl, presets)
-    cachedIconEpoch = iconEpoch
+  const cached = getEngineEntry(dataUrl)
+  const needsIconRefresh = cached !== undefined && cached.iconEpoch !== iconEpoch
+
+  if (activeDataUrl === key && cached && !needsIconRefresh) return
+
+  if (activeDataUrl === key && cached && needsIconRefresh) {
+    refreshPresetSearchIndex(dataUrl, presets, iconEpoch)
     return
   }
-  activatePresetSearchIndex(dataUrl, presets)
-  cachedIconEpoch = iconEpoch
+
+  if (cached && !needsIconRefresh) {
+    activeDataUrl = key
+    return
+  }
+
+  activeDataUrl = key
+  if (cached && needsIconRefresh) {
+    refreshPresetSearchIndex(dataUrl, presets, iconEpoch)
+    return
+  }
+
+  setEngineForUrl(dataUrl, presets, iconEpoch)
 }
 
 /** When filtering only `hasIcon: no`, drop presets that are expected to lack icons. */
@@ -149,7 +189,9 @@ export function searchPresets(params: {
   per_page?: number
   sort?: string
 }): PresetSearchResult | null {
-  if (!engine || !activeDataUrl) return null
+  const entry = activeDataUrl ? enginesByDataUrl.get(activeDataUrl) : undefined
+  if (!entry) return null
+  const engine = entry.engine
   const mappedFilters: Record<string, string[]> = { ...params.filters }
   if (mappedFilters.hasIcon) {
     mappedFilters.hasIconFacet = mappedFilters.hasIcon

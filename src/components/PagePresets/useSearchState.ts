@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useCallback } from 'react'
+import { useCallback, useTransition } from 'react'
 import { z } from 'zod'
 
 const stringArray = z.array(z.string()).catch([])
@@ -62,16 +62,16 @@ export function useSearchState() {
 /** Navigate to the full-page preset detail route (pushes history). */
 export function useSetPreset() {
   const navigate = useNavigate()
-  return useCallback(
-    (id: string) => {
+  const [, startPresetNavigation] = useTransition()
+  return (id: string) => {
+    startPresetNavigation(() => {
       void navigate({
         to: '/preset/$',
         params: { _splat: id },
         search: (prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' }),
       })
-    },
-    [navigate],
-  )
+    })
+  }
 }
 
 export function filtersFromState(state: SearchState): Record<string, string[]> {

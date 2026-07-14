@@ -3,8 +3,11 @@ import type {
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
 import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
+import type { PresetIconMismatchRef, PresetIconMismatchRow } from '@/utils/iconMismatch'
 import type { PrerequisiteTag } from '@/utils/prerequisiteTag'
 import type { SchemaBuildInfo } from '@/utils/schemaBuildVersion'
+
+export type { PresetIconMismatchRef, PresetIconMismatchRow } from '@/utils/iconMismatch'
 
 export type RawPresets = Record<string, RawPreset>
 export type RawPreset = {
@@ -97,9 +100,37 @@ export type DenormalizedPreset = {
   isTemplate: boolean
 }
 
+export type FieldOptionMismatchRow = {
+  optionValue: string
+  optionIcon?: string
+  labelEn: string
+  iconMismatch: boolean
+  parentPreset: { id: string; name: string }
+  childPreset: { id: string; name: string; icon?: string }
+}
+
+/** Precomputed lookups built once per loaded schema — keeps detail navigation off hot paths. */
+export type SchemaIndices = {
+  childPresetIndex: Map<string, DenormalizedPreset>
+  presetsByPrimaryField: Map<string, DenormalizedPreset[]>
+  presetsByMoreField: Map<string, DenormalizedPreset[]>
+  fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>
+  /** Mismatched field-option rows on each preset — avoids scanning all presets on detail mount. */
+  parentIconMismatchRowsByPresetId: Map<string, PresetIconMismatchRow[]>
+  /** Parent presets whose field option icon mismatches this child preset id. */
+  childIconMismatchRefsByPresetId: Map<string, PresetIconMismatchRef[]>
+  presetsByCategoryId: Map<string, DenormalizedPreset[]>
+  presetsByIcon: Map<string, DenormalizedPreset[]>
+  /** Fields page list + sidebar facets — built once to avoid duplicate scans on /fields. */
+  fieldCatalog: FieldViewModel[]
+  fieldTypes: string[]
+}
+
 export type SchemaData = {
   presets: DenormalizedPreset[]
   presetsById: Map<string, DenormalizedPreset>
+  /** Derived once at load; reused by field/preset detail navigation. */
+  indices: SchemaIndices
   /** Source preset entries as authored in `data/presets/{id}.json`. */
   rawPresets: RawPresets
   categories: RawCategories

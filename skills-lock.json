@@ -21,6 +21,7 @@
     },
     "react-dev": {
       "source": "FixMyBerlin/fixmyskills",
+      "ref": "main",
       "sourceType": "github",
       "skillPath": "skills/react-dev/SKILL.md",
       "computedHash": "ed6a83384a44b6c430b696b58841cecc492c8463001ceab490cc4b9878d10c8f"
@@ -39,6 +40,7 @@
     },
     "tech-stack": {
       "source": "FixMyBerlin/fixmyskills",
+      "ref": "main",
       "sourceType": "github",
       "skillPath": "skills/tech-stack/SKILL.md",
       "computedHash": "c30dbc872281df3e9342b7288ee88382a1d66f700ae8b05ee80da4d21ca7c06c"

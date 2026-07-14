@@ -23,6 +23,7 @@ import { iconFacetDefaults, iconFacetSchema } from '@/components/PageIcons/useIc
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
 import { PagePresets } from '@/components/PagePresets/PagePresets'
 import { PresetDetailPage } from '@/components/PagePresets/PresetDetailPage'
+import { clearPresetSourceTreeCache } from '@/components/PagePresets/presetSourceTreeCache'
 import { SearchBar } from '@/components/PagePresets/SearchBar'
 import { presetSearchDefaults, presetSearchSchema } from '@/components/PagePresets/useSearchState'
 import {
@@ -99,6 +100,13 @@ type RootSearch = z.infer<typeof rootSearchSchema>
 
 function SchemaContent({ children }: { children: React.ReactNode }) {
   const { unsupportedBuild, customDataUrl, dataUrl, error } = useSchema()
+
+  useEffect(
+    function clearSourceTreeCacheOnSchemaChange() {
+      clearPresetSourceTreeCache()
+    },
+    [dataUrl],
+  )
 
   if (unsupportedBuild && customDataUrl) {
     return <UnsupportedSchemaNotice build={unsupportedBuild} dataUrl={dataUrl} />

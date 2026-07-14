@@ -4,9 +4,9 @@ import { useSchema } from '@/hooks/useSchema'
 
 /** Slim header hint while schema JSON is loading — does not block the reference toggle. */
 export function SchemaLoadIndicator() {
-  const { loading } = useSchema()
+  const { loading, refetching } = useSchema()
   const referencePreloading = useReferencePreloading()
-  if (!loading && !referencePreloading) return null
+  if (!loading && !refetching && !referencePreloading) return null
 
   return (
     <div
@@ -14,7 +14,13 @@ export function SchemaLoadIndicator() {
       aria-live="polite"
     >
       <LoadingSpinner size="sm" />
-      <span>{referencePreloading ? 'Preparing schema…' : 'Loading schema data…'}</span>
+      <span>
+        {referencePreloading
+          ? 'Preparing schema…'
+          : refetching
+            ? 'Refreshing schema…'
+            : 'Loading schema data…'}
+      </span>
     </div>
   )
 }
