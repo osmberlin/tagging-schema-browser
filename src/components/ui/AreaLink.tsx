@@ -26,8 +26,8 @@ export function AreaLink({
       title={title}
       className={cn('inline-flex items-center gap-1.5', areaLinkClass(area), className)}
     >
-      <AreaIcon area={area} className={cn('h-3.5 w-3.5', iconClassName)} />
-      <span>{children}</span>
+      <AreaIcon area={area} className={cn('h-3.5 w-3.5 shrink-0', iconClassName)} />
+      <span className="min-w-0">{children}</span>
     </Link>
   )
 }
