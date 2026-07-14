@@ -5,6 +5,8 @@ import { cn } from '@/utils/tw'
 
 type AreaLinkProps = {
   area: SchemaArea
+  /** Icon area when it should differ from link color (e.g. presets filter with icons icon). */
+  iconArea?: SchemaArea
   className?: string
   iconClassName?: string
   children: React.ReactNode
@@ -14,19 +16,21 @@ type AreaLinkProps = {
 /** Cross-area navigation link that always shows the destination area icon. */
 export function AreaLink({
   area,
+  iconArea,
   className,
   iconClassName,
   children,
   title,
   ...linkProps
 }: AreaLinkProps) {
+  const icon = iconArea ?? area
   return (
     <Link
       {...linkProps}
       title={title}
-      className={cn('inline-flex items-center gap-1.5', areaLinkClass(area), className)}
+      className={cn('group inline-flex items-center gap-1.5', areaLinkClass(area), className)}
     >
-      <AreaIcon area={area} className={cn('h-3.5 w-3.5 shrink-0', iconClassName)} />
+      <AreaIcon area={icon} className={cn('h-3.5 w-3.5 shrink-0', iconClassName)} />
       <span className="min-w-0">{children}</span>
     </Link>
   )

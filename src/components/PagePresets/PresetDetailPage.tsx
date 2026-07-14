@@ -144,7 +144,8 @@ function PresetDetailContent({
                   ))}
                   {iconId ? (
                     <AreaLink
-                      area="icons"
+                      area="presets"
+                      iconArea="icons"
                       to="/"
                       search={(prev) => ({
                         ...presetSearchDefaults,
@@ -157,17 +158,16 @@ function PresetDetailContent({
                       className="shrink-0 gap-1 whitespace-nowrap"
                       iconClassName="shrink-0"
                     >
-                      <span className="inline-flex items-center gap-1">
-                        Presets for icon
-                        <code
-                          className={cn(
-                            'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
-                            areaAccent.icons.sharedChip,
-                          )}
-                        >
-                          {iconId}
-                        </code>
-                      </span>
+                      Presets for icon{' '}
+                      <code
+                        className={cn(
+                          'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset transition-colors',
+                          areaAccent.presets.sharedChip,
+                          'group-hover:bg-rose-100 group-hover:text-rose-800 group-hover:ring-rose-200',
+                        )}
+                      >
+                        {iconId}
+                      </code>
                     </AreaLink>
                   ) : null}
                 </span>
