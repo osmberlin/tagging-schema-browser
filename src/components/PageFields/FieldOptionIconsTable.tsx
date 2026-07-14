@@ -1,6 +1,6 @@
 import { getIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
-import { areaAccent } from '@/theme/areaAccent'
+import { areaLinkClass } from '@/theme/areaAccent'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { cn } from '@/utils/tw'
 import type { FieldOptionMismatchRow } from '@/utils/types'
@@ -51,7 +51,7 @@ export function FieldOptionIconsTable({
 
   const presetLinkClass = dark
     ? cn(schemaIssueStyles.disclosureActionLink, schemaIssueStyles.disclosurePresetLink)
-    : `inline-flex items-center gap-1 text-sm font-medium hover:underline ${areaAccent.presets.link}`
+    : cn('inline-flex items-center gap-1 text-sm', areaLinkClass('presets'))
 
   return (
     <div className={cn('not-prose overflow-x-auto', dark && schemaIssueStyles.disclosureBodyInset)}>

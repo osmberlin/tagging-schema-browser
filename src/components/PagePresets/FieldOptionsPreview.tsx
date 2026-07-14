@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
-import { areaAccent } from '@/theme/areaAccent'
+import { areaLinkClass } from '@/theme/areaAccent'
 import type { PresetOptionRow } from '@/utils/fieldOptions'
 import { fieldOptionTitle, type FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 import { cn } from '@/utils/tw'
@@ -147,7 +147,7 @@ export function FieldOptionsPreview({
                   to="/preset/$"
                   params={{ _splat: childPreset.id }}
                   search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-                  className={`mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline ${areaAccent.presets.link}`}
+                  className={cn('mt-1 inline-flex items-center gap-1 text-xs', areaLinkClass('presets'))}
                 >
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {childPreset.name}
