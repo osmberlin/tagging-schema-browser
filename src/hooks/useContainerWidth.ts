@@ -1,12 +1,19 @@
-import { useEffect, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-/** Tracks an element's content width via ResizeObserver. */
-export function useContainerWidth(ref: RefObject<HTMLElement | null>) {
+/** Tracks an element's content width via ResizeObserver (callback ref survives DOM swaps). */
+export function useContainerWidth() {
   const [width, setWidth] = useState(0)
+  const [element, setElement] = useState<HTMLElement | null>(null)
+
+  const ref = useCallback((node: HTMLElement | null) => {
+    setElement(node)
+  }, [])
 
   useEffect(() => {
-    const element = ref.current
-    if (!element) return
+    if (!element) {
+      setWidth(0)
+      return
+    }
 
     const measure = () => setWidth(element.offsetWidth)
     measure()
@@ -14,7 +21,7 @@ export function useContainerWidth(ref: RefObject<HTMLElement | null>) {
     const observer = new ResizeObserver(measure)
     observer.observe(element)
     return () => observer.disconnect()
-  }, [ref])
+  }, [element])
 
-  return width
+  return { ref, width }
 }

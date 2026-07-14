@@ -4,7 +4,7 @@ import type { IconViewModel } from '@/utils/types'
 import { iconBrowseNeedsFullCatalog } from './iconFacetMeta'
 import {
   areAllIconSuppliersLoaded,
-  areSuppliersLoadedForNames,
+  areIconsReadyForMissingSvgCheck,
   collectSchemaIconNames,
   ensureIconsForNames,
   useIconRegistryEpoch,
@@ -53,7 +53,7 @@ export function IconsPageProvider({ children }: { children: ReactNode }) {
   const referencedReady = !needsReferencedSuppliers
     ? true
     : data
-      ? referencedIconNames.length === 0 || areSuppliersLoadedForNames(referencedIconNames)
+      ? referencedIconNames.length === 0 || areIconsReadyForMissingSvgCheck(referencedIconNames)
       : false
 
   const suppliersReady = loadFullCatalog ? catalogReady : referencedReady

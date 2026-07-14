@@ -35,11 +35,11 @@ export function VirtualizedGrid<T>({
   maxHeight = 'calc(100svh - 12rem)',
 }: VirtualizedGridProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const width = useContainerWidth(containerRef)
+  const { ref: containerRef, width } = useContainerWidth()
   const columnCount = columnCountForWidth(width, minColumnWidth, gap)
   const rowCount = Math.ceil(items.length / columnCount)
   const rowStride = rowEstimate + gap
+  const useVirtualization = rowCount > 6
 
   const virtualizer = useVirtualizer({
     count: rowCount,
@@ -58,25 +58,6 @@ export function VirtualizedGrid<T>({
     [columnCount, gap],
   )
 
-  if (rowCount <= 6) {
-    return (
-      <div
-        ref={containerRef}
-        className={cn('w-full overflow-auto', className)}
-        style={{ height: maxHeight, opacity: busy ? 0.65 : undefined }}
-        aria-busy={busy || undefined}
-      >
-        <ul className={cn('grid', listClassName)} style={gridStyle}>
-          {items.map((item) => (
-            <li key={getKey(item)} className="min-w-0">
-              {renderItem(item)}
-            </li>
-          ))}
-        </ul>
-      </div>
-    )
-  }
-
   return (
     <div ref={containerRef} className={cn('w-full', className)} aria-busy={busy || undefined}>
       <div
@@ -84,30 +65,40 @@ export function VirtualizedGrid<T>({
         className="overflow-auto"
         style={{ height: maxHeight, opacity: busy ? 0.65 : undefined }}
       >
-        <div ref={virtualizer.containerRef} className={cn('relative w-full', listClassName)}>
-          {virtualRows.map((virtualRow) => {
-            const startIndex = virtualRow.index * columnCount
-            const rowItems = items.slice(startIndex, startIndex + columnCount)
+        {useVirtualization ? (
+          <div ref={virtualizer.containerRef} className={cn('relative w-full', listClassName)}>
+            {virtualRows.map((virtualRow) => {
+              const startIndex = virtualRow.index * columnCount
+              const rowItems = items.slice(startIndex, startIndex + columnCount)
 
-            return (
-              <div
-                key={virtualRow.key}
-                data-index={virtualRow.index}
-                ref={virtualizer.measureElement}
-                className="absolute top-0 left-0 w-full"
-                style={{ paddingBottom: gap }}
-              >
-                <ul className="grid" style={gridStyle}>
-                  {rowItems.map((item) => (
-                    <li key={getKey(item)} className="min-w-0">
-                      {renderItem(item)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          })}
-        </div>
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={virtualizer.measureElement}
+                  className="absolute top-0 left-0 w-full"
+                  style={{ paddingBottom: gap }}
+                >
+                  <ul className="grid" style={gridStyle}>
+                    {rowItems.map((item) => (
+                      <li key={getKey(item)} className="min-w-0">
+                        {renderItem(item)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <ul className={cn('grid', listClassName)} style={gridStyle}>
+            {items.map((item) => (
+              <li key={getKey(item)} className="min-w-0">
+                {renderItem(item)}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )
