@@ -156,6 +156,16 @@ test('field detail shows option icon mismatches', async ({ page }) => {
   ).toBeVisible()
 })
 
+test('field source JSON links icon values to icons, presets, and fields', async ({ page }) => {
+  await page.goto('/field/playground/type?dataUrl=/test-schema')
+  await expect(page.getByRole('heading', { name: 'Equipment', exact: true })).toBeVisible()
+
+  const slideIconLink = page.locator('a[href*="i_q=temaki-slide2"]')
+  await expect(slideIconLink).toBeVisible()
+  await slideIconLink.click()
+  await expect(page).toHaveURL(/\/icons\?.*i_q=temaki-slide2/)
+})
+
 test('fields page filters icon mismatch fields', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/fields?dataUrl=/test-schema')
