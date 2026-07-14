@@ -59,4 +59,4 @@ Internal-only (no user-visible change): maintainer bullets ok; omit user bullets
 
 ## Related
 
-[playwright-skill](../playwright-skill/SKILL.md) | [tech-stack](../tech-stack/SKILL.md) | [review-dependabot](../review-dependabot/SKILL.md) / babysit | [user-changelog](../user-changelog/SKILL.md)
+[playwright-skill](../playwright-skill/SKILL.md) | [tech-stack](../tech-stack/SKILL.md) | [review-dependabot](../review-dependabot/SKILL.md) / [land-pr](../land-pr/SKILL.md) | [user-changelog](../user-changelog/SKILL.md)

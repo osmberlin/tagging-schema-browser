@@ -12,7 +12,7 @@ description: >-
 
 Workflow for FMC geo React apps. Dependabot **config** (groups, schedule, ignores) lives in skill `tech-stack` — [dependabot.md](../tech-stack/references/dependabot.md). This skill covers **review and merge decisions**.
 
-After merge, use skill `babysit` only if the PR needs conflict/CI/comment follow-up on a feature branch — not for routine weekly bumps on `develop`.
+After merge, use skill `land-pr` only if the PR needs conflict/CI/comment follow-up on a feature branch — not for routine weekly bumps on `develop`.
 
 ## Repo scope
 
@@ -165,5 +165,5 @@ flowchart TD
 | Skill              | When                                                           |
 | ------------------ | -------------------------------------------------------------- |
 | `tech-stack`       | dependabot.yml, groups, ignores, browserslist                  |
-| `babysit`          | Feature PR stuck on CI/comments — not standard Dependabot flow |
+| `land-pr`          | Feature PR stuck on CI/comments — not standard Dependabot flow |
 | `playwright-skill` | After bumps to Playwright, maps, or auth-related deps          |
