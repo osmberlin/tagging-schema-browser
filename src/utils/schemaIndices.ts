@@ -1,6 +1,7 @@
 import {
   getFieldOptionValues,
   getPresetFieldSections,
+  listFieldOptionIconNames,
   resolveFieldIcons,
 } from '@/utils/fieldOptions'
 import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
@@ -252,7 +253,7 @@ export function buildFieldCatalog(
       moreCount: morePresets.length,
       presets: Array.from(presetsById.values()),
       iconMismatchCount: mismatchCounts.get(id) ?? 0,
-      optionIconNames: [...new Set(Object.values(resolveFieldIcons(raw, fields)))],
+      optionIconNames: listFieldOptionIconNames(id, raw, fields, fieldTranslations),
     }
   })
 
