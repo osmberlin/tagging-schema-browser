@@ -6,15 +6,15 @@ import { MissingInheritancePanel } from '@/components/PagePresets/MissingInherit
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetIconMismatchPanel } from '@/components/PagePresets/PresetIconMismatchPanel'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
-import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
+import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
-import { areaAccent, areaNavButtonClass } from '@/theme/areaAccent'
+import { areaInlineCodeClass, areaNavButtonClass } from '@/theme/areaAccent'
 import { externalLinkClass, externalActionPillClass } from '@/theme/externalAccent'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { cn } from '@/utils/tw'
@@ -99,7 +99,9 @@ function PresetDetailContent({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
+                <h1 className="font-display text-2xl font-semibold text-slate-950">
+                  {preset.name}
+                </h1>
                 <p className="mt-1 font-mono text-sm text-slate-500">{preset.id}</p>
               </div>
               <Link
@@ -110,19 +112,22 @@ function PresetDetailContent({
                   locale: prev.locale ?? '',
                   preset1: preset.id,
                 })}
-                className={cn('inline-flex shrink-0 items-center gap-1.5', areaNavButtonClass('presetSwitch'))}
+                className={cn(
+                  'inline-flex shrink-0 items-center gap-1.5',
+                  areaNavButtonClass('presetSwitch'),
+                )}
               >
                 <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
                 Compare preset switch
               </Link>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-4 text-sm">
+            <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
               <span className="inline-flex shrink-0 items-center gap-2 text-slate-600">
                 <span className="font-medium text-slate-500">Geometry</span>
                 <GeometryIcons geometry={preset.geometry} />
               </span>
               {preset.categoryNames.length > 0 || iconId ? (
-                <span className="flex shrink-0 items-center gap-3">
+                <span className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-1">
                   {preset.categoryNames.map((categoryName) => (
                     <AreaLink
                       key={categoryName}
@@ -136,7 +141,7 @@ function PresetDetailContent({
                         page: 1,
                       })}
                       title={`Show presets in category "${categoryName}"`}
-                      className="shrink-0 gap-1 whitespace-nowrap"
+                      className="max-w-full gap-1"
                       iconClassName="shrink-0"
                     >
                       Presets for Category &ldquo;{categoryName}&rdquo;
@@ -155,19 +160,11 @@ function PresetDetailContent({
                         page: 1,
                       })}
                       title={`Show presets using icon "${iconId}"`}
-                      className="shrink-0 gap-1 whitespace-nowrap"
+                      className="max-w-full gap-1"
                       iconClassName="shrink-0"
                     >
                       Presets for icon{' '}
-                      <code
-                        className={cn(
-                          'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset transition-colors',
-                          areaAccent.presets.sharedChip,
-                          'group-hover:bg-rose-100 group-hover:text-rose-800 group-hover:ring-rose-200',
-                        )}
-                      >
-                        {iconId}
-                      </code>
+                      <code className={areaInlineCodeClass('presets')}>{iconId}</code>
                     </AreaLink>
                   ) : null}
                 </span>
