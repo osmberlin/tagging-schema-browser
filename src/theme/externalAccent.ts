@@ -21,3 +21,12 @@ export function externalPillClass(...extra: (string | undefined)[]): string {
     ...extra,
   )
 }
+
+/** Larger mauve pill for disclosure actions (e.g. GitHub in source sections). */
+export function externalActionPillClass(...extra: (string | undefined)[]): string {
+  return cn(
+    'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset',
+    externalAccent.pill,
+    ...extra,
+  )
+}

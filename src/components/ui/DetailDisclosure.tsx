@@ -1,5 +1,6 @@
 import { type ReactNode, useState } from 'react'
 import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
+import { CountPill } from '@/components/ui/CountPill'
 import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 
@@ -28,6 +29,7 @@ function DisclosureChevron({ open }: { open: boolean }) {
 
 export function DetailDisclosure({
   title,
+  count,
   area,
   subtitle,
   actions,
@@ -36,6 +38,7 @@ export function DetailDisclosure({
   className,
 }: {
   title: string
+  count?: number
   area?: SchemaArea
   subtitle?: ReactNode
   actions?: ReactNode
@@ -64,6 +67,7 @@ export function DetailDisclosure({
               <AreaIcon area={area} className={cn('h-3.5 w-3.5 shrink-0', areaAccent[area].icon)} />
             ) : null}
             <span>{title}</span>
+            {count != null ? <CountPill className="ml-1.5">{count}</CountPill> : null}
           </span>
           {subtitle ? <span className="ml-2 font-normal text-slate-400">{subtitle}</span> : null}
         </span>
