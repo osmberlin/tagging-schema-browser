@@ -1,19 +1,19 @@
 ---
-name: land-pr
+name: finish-pr
 description: >-
   Cloud agent workflow for osmberlin/tagging-schema-browser: finish-work and
   push, rebase on main, mark PR ready, wait for Bugbot and fix findings,
   parallel react-dev + performance review, rebase merge when green. Use for
-  land PR, ready for review, Bugbot follow-up, or merge my PR on this repo.
+  finish PR, ready for review, Bugbot follow-up, or merge my PR on this repo.
 user-invocable: true
 disable-model-invocation: true
 ---
 
-# Land PR
+# Finish PR
 
 **Repo:** `osmberlin/tagging-schema-browser` · **Base:** `main`
 
-Cloud-agent workflow to land the current feature PR.
+Cloud-agent workflow to finish the current feature PR.
 
 ```
 - [ ] finish-work + push

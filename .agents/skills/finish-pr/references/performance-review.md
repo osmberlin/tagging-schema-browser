@@ -1,4 +1,4 @@
-# Performance review (land PR)
+# Performance review (finish PR)
 
 Load with `react-dev` during the review lane. **Extra lens for this app:** work must happen in **one place** — not duplicated across render, effects, and siblings.
 
