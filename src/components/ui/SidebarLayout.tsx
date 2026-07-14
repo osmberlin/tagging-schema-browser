@@ -224,8 +224,9 @@ export function SidebarLayout({
         </div>
 
         <DataSourceBanner />
-        <SchemaLoadIndicator />
       </header>
+
+      <SchemaLoadIndicator />
 
       <div className="flex w-full flex-auto overflow-x-clip">
         {showSidebar ? (

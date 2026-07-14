@@ -30,11 +30,14 @@ import {
   presetSwitchSearchDefaults,
   presetSwitchSearchSchema,
 } from '@/components/PagePresetSwitch/presetSwitchSearch'
+import { PagePreviewLoading } from '@/components/PagePreview/PagePreviewLoading'
+import { PagePreviewLoadingRefresh } from '@/components/PagePreview/PagePreviewLoadingRefresh'
 import {
   translationsSearchDefaults,
   translationsSearchSchema,
 } from '@/components/PageTranslations/translationsSearch'
 import { TranslationsSidebar } from '@/components/PageTranslations/TranslationsSidebar'
+import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { SidebarLayout } from '@/components/ui/SidebarLayout'
 import { UnsupportedSchemaNotice } from '@/components/ui/UnsupportedSchemaNotice'
 import {
@@ -241,7 +244,7 @@ const iconsRoute = createRoute({
   validateSearch: iconFacetSchema,
   search: { middlewares: [stripSearchParams(iconFacetDefaults)] },
   component: () => (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading icons...</p>}>
+    <Suspense fallback={<SchemaLoadingPanel label="Loading icons…" />}>
       <LazyPageIcons />
     </Suspense>
   ),
@@ -254,7 +257,7 @@ const fieldsRoute = createRoute({
   validateSearch: fieldFacetSchema,
   search: { middlewares: [stripSearchParams(fieldFacetDefaults)] },
   component: () => (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading fields...</p>}>
+    <Suspense fallback={<SchemaLoadingPanel label="Loading fields…" />}>
       <LazyPageFields />
     </Suspense>
   ),
@@ -267,7 +270,7 @@ const translationsRoute = createRoute({
   validateSearch: translationsSearchSchema,
   search: { middlewares: [stripSearchParams(translationsSearchDefaults)] },
   component: () => (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading translations...</p>}>
+    <Suspense fallback={<SchemaLoadingPanel label="Loading translations…" />}>
       <LazyPageTranslations />
     </Suspense>
   ),
@@ -280,7 +283,7 @@ const presetSwitchRoute = createRoute({
   validateSearch: presetSwitchSearchSchema,
   search: { middlewares: [stripSearchParams(presetSwitchSearchDefaults)] },
   component: () => (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading preset switch...</p>}>
+    <Suspense fallback={<SchemaLoadingPanel label="Loading preset switch…" />}>
       <LazyPagePresetSwitch />
     </Suspense>
   ),
@@ -291,7 +294,7 @@ const comparisonRoute = createRoute({
   path: '/comparison',
   head: documentTitleHead('Comparison'),
   component: () => (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading comparison...</p>}>
+    <Suspense fallback={<SchemaLoadingPanel label="Loading comparison…" />}>
       <LazyPageComparison />
     </Suspense>
   ),
@@ -318,6 +321,20 @@ const aboutRoute = createRoute({
   component: PageAbout,
 })
 
+const previewLoadingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/preview-loading',
+  head: documentTitleHead('Preview loading'),
+  component: PagePreviewLoading,
+})
+
+const previewLoadingRefreshRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/preview-loading-refresh',
+  head: documentTitleHead('Preview loading refresh'),
+  component: PagePreviewLoadingRefresh,
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   iconsRoute,
@@ -328,6 +345,8 @@ const routeTree = rootRoute.addChildren([
   presetRoute,
   fieldRoute,
   aboutRoute,
+  previewLoadingRoute,
+  previewLoadingRefreshRoute,
 ])
 
 export const router = createRouter({
