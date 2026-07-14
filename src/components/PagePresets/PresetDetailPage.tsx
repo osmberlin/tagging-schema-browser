@@ -93,19 +93,39 @@ function PresetDetailContent({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
-        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
+      <header className="border-b border-slate-200 pb-6">
+        <div className="flex items-start gap-4">
           <PresetIconBox preset={preset} size="md" />
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
-            <p className="mt-1 font-mono text-sm text-slate-500">{preset.id}</p>
-            <div className="mt-3 flex w-full items-center justify-between gap-4 text-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
+                <p className="mt-1 font-mono text-sm text-slate-500">{preset.id}</p>
+              </div>
+              <Link
+                to="/preset-switch"
+                search={(prev) => ({
+                  ...presetSwitchSearchDefaults,
+                  dataUrl: prev.dataUrl ?? '',
+                  locale: prev.locale ?? '',
+                  preset1: preset.id,
+                })}
+                className={cn(
+                  'inline-flex shrink-0 items-center gap-1.5',
+                  areaAccent.presetSwitch.navActive,
+                )}
+              >
+                <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
+                Compare preset switch
+              </Link>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-4 text-sm">
               <span className="inline-flex shrink-0 items-center gap-2 text-slate-600">
                 <span className="font-medium text-slate-500">Geometry</span>
                 <GeometryIcons geometry={preset.geometry} />
               </span>
               {preset.categoryNames.length > 0 || iconId ? (
-                <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-1">
+                <span className="flex shrink-0 items-center gap-3">
                   {preset.categoryNames.map((categoryName) => (
                     <AreaLink
                       key={categoryName}
@@ -119,7 +139,7 @@ function PresetDetailContent({
                         page: 1,
                       })}
                       title={`Show presets in category "${categoryName}"`}
-                      className="gap-1"
+                      className="shrink-0 gap-1 whitespace-nowrap"
                       iconClassName="shrink-0"
                     >
                       Presets for Category &ldquo;{categoryName}&rdquo;
@@ -137,7 +157,7 @@ function PresetDetailContent({
                         page: 1,
                       })}
                       title={`Show presets using icon "${iconId}"`}
-                      className="gap-1"
+                      className="shrink-0 gap-1 whitespace-nowrap"
                       iconClassName="shrink-0"
                     >
                       <span className="inline-flex items-center gap-1">
@@ -153,7 +173,7 @@ function PresetDetailContent({
                       </span>
                     </AreaLink>
                   ) : null}
-                </div>
+                </span>
               ) : null}
             </div>
             {preset.imageURL ? (
@@ -170,21 +190,6 @@ function PresetDetailContent({
               </p>
             ) : null}
           </div>
-        </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          <Link
-            to="/preset-switch"
-            search={(prev) => ({
-              ...presetSwitchSearchDefaults,
-              dataUrl: prev.dataUrl ?? '',
-              locale: prev.locale ?? '',
-              preset1: preset.id,
-            })}
-            className={cn('inline-flex items-center gap-1.5', areaAccent.presetSwitch.navActive)}
-          >
-            <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
-            Compare preset switch
-          </Link>
         </div>
       </header>
 
