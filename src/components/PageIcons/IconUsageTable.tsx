@@ -5,7 +5,7 @@ import {
   useIconRegistryEpoch,
 } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
-import { areaAccent } from '@/theme/areaAccent'
+import { areaAccent, areaLinkClass } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 import type { IconUsageRow } from './iconUsageRows'
 
@@ -49,7 +49,7 @@ function UsageLabelLink({ row }: { row: IconUsageRow }) {
         to="/preset/$"
         params={{ _splat: row.presetId }}
         search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-        className={`inline-flex items-center gap-1.5 hover:underline ${areaAccent.presets.link}`}
+        className={cn('inline-flex items-center gap-1.5', areaLinkClass('presets'))}
         title={`Open preset "${row.presetId}"`}
       >
         <AreaIcon area="presets" className={`h-3.5 w-3.5 ${areaAccent.presets.icon}`} />
@@ -64,7 +64,7 @@ function UsageLabelLink({ row }: { row: IconUsageRow }) {
         to="/field/$"
         params={{ _splat: row.fieldId }}
         search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-        className={`inline-flex items-center gap-1.5 hover:underline ${areaAccent.fields.link}`}
+        className={cn('inline-flex items-center gap-1.5', areaLinkClass('fields'))}
         title={`Open field "${row.fieldId}"`}
       >
         <AreaIcon area="fields" className={`h-3.5 w-3.5 ${areaAccent.fields.icon}`} />

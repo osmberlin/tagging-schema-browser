@@ -3,8 +3,9 @@ import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { ExpandIcon } from '@/components/ui/ExpandIcon'
-import { areaAccent } from '@/theme/areaAccent'
+import { areaAccent, areaLinkClass } from '@/theme/areaAccent'
 import { fieldTypeHint } from '@/utils/fieldTypes'
+import { cn } from '@/utils/tw'
 import type { FieldViewModel } from '@/utils/types'
 
 const fieldCardClass =
@@ -92,7 +93,10 @@ export function FieldCard({ field }: { field: FieldViewModel }) {
             fieldIds: [field.id],
           })}
           title={`Show all ${field.usageCount} presets using "${field.id}"`}
-          className={`relative z-10 mt-2 inline-flex items-center gap-1 self-start text-[11px] font-medium hover:underline ${areaAccent.presets.link}`}
+          className={cn(
+            'relative z-10 mt-2 inline-flex items-center gap-1 self-start text-[11px]',
+            areaLinkClass('presets'),
+          )}
         >
           <AreaIcon area="presets" className={`h-3 w-3 ${areaAccent.presets.icon}`} />
           Filter presets

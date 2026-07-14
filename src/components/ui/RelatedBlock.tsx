@@ -5,7 +5,7 @@ import type { SchemaArea } from '@/components/ui/areaIcons'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { CountPill } from '@/components/ui/CountPill'
-import { areaAccent } from '@/theme/areaAccent'
+import { areaAccent, areaChipLinkClass } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 
 type RelatedItem = { id: string; name: string }
@@ -40,7 +40,7 @@ export function RelatedBlock({
             ...titleFilter,
             page: 1,
           })}
-          className="min-w-0 text-left no-underline hover:underline"
+          className="min-w-0 text-left"
         >
           {title}
         </AreaLink>
@@ -58,8 +58,8 @@ export function RelatedBlock({
               search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
               title={p.id}
               className={cn(
-                'inline-flex max-w-full items-center gap-1 truncate rounded-full px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-90',
-                areaAccent.presets.sharedChip,
+                'inline-flex max-w-full items-center gap-1 truncate rounded-full px-2.5 py-1 text-xs font-medium',
+                areaChipLinkClass('presets'),
               )}
             >
               <AreaIcon

@@ -1,4 +1,5 @@
 import type { SchemaArea } from '@/components/ui/areaIcons'
+import { cn } from '@/utils/tw'
 
 /** Per-area accent palette. Violet is reserved for comparison / non-release only. */
 export type AreaAccent = {
@@ -38,7 +39,7 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
     iconSection: 'text-rose-500',
     iconBg: 'bg-rose-50 text-rose-600',
     navActive:
-      'rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-100 ring-inset',
+      'rounded-lg bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 ring-1 ring-rose-100 ring-inset transition-colors hover:bg-rose-100 hover:text-rose-800 hover:ring-rose-200',
     navInactive:
       'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-rose-50 hover:text-rose-700',
     navIndicatorBg: 'bg-rose-50',
@@ -70,7 +71,7 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
     iconSection: 'text-sky-500',
     iconBg: 'bg-sky-50 text-sky-600',
     navActive:
-      'rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 ring-1 ring-sky-100 ring-inset',
+      'rounded-lg bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 ring-1 ring-sky-100 ring-inset transition-colors hover:bg-sky-100 hover:text-sky-800 hover:ring-sky-200',
     navInactive:
       'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-sky-50 hover:text-sky-700',
     navIndicatorBg: 'bg-sky-50',
@@ -102,7 +103,7 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
     iconSection: 'text-emerald-500',
     iconBg: 'bg-emerald-50 text-emerald-600',
     navActive:
-      'rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100 ring-inset',
+      'rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 ring-1 ring-emerald-100 ring-inset transition-colors hover:bg-emerald-100 hover:text-emerald-800 hover:ring-emerald-200',
     navInactive:
       'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-emerald-50 hover:text-emerald-700',
     navIndicatorBg: 'bg-emerald-50',
@@ -134,7 +135,7 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
     iconSection: 'text-yellow-500',
     iconBg: 'bg-yellow-50 text-yellow-600',
     navActive:
-      'rounded-lg bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700 ring-1 ring-yellow-100 ring-inset',
+      'rounded-lg bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700 ring-1 ring-yellow-100 ring-inset transition-colors hover:bg-yellow-100 hover:text-yellow-800 hover:ring-yellow-200',
     navInactive:
       'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-yellow-50 hover:text-yellow-700',
     navIndicatorBg: 'bg-yellow-50',
@@ -166,7 +167,7 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
     iconSection: 'text-amber-500',
     iconBg: 'bg-amber-50 text-amber-600',
     navActive:
-      'rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 ring-1 ring-amber-100 ring-inset',
+      'rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 ring-1 ring-amber-100 ring-inset transition-colors hover:bg-amber-100 hover:text-amber-800 hover:ring-amber-200',
     navInactive:
       'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-amber-50 hover:text-amber-700',
     navIndicatorBg: 'bg-amber-50',
@@ -201,12 +202,32 @@ export function areaNavClass(area: SchemaArea, active: boolean): string {
 
 export function utilityNavClass(active: boolean): string {
   return active
-    ? 'rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-900 ring-1 ring-slate-200 ring-inset'
-    : 'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900'
+    ? 'rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-900 ring-1 ring-slate-200 ring-inset transition-colors hover:bg-slate-200 hover:text-slate-950'
+    : 'rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900'
+}
+
+/** Filled area button (header actions, compare preset switch, etc.). */
+export function areaNavButtonClass(area: SchemaArea): string {
+  return areaAccent[area].navActive
 }
 
 export function areaLinkClass(area: SchemaArea): string {
-  return `font-medium ${areaAccent[area].link} transition hover:underline`
+  return cn(
+    'font-medium underline-offset-2 decoration-current/40 transition-colors hover:underline hover:decoration-current',
+    areaAccent[area].link,
+  )
+}
+
+/** Chip-styled area links (preset lists, filter chips). */
+export function areaChipLinkClass(area: SchemaArea): string {
+  const chipHover: Record<SchemaArea, string> = {
+    presets: 'hover:bg-rose-100 hover:text-rose-800 hover:ring-rose-200',
+    icons: 'hover:bg-sky-100 hover:text-sky-800 hover:ring-sky-200',
+    fields: 'hover:bg-emerald-100 hover:text-emerald-800 hover:ring-emerald-200',
+    translations: 'hover:bg-yellow-100 hover:text-yellow-800 hover:ring-yellow-200',
+    presetSwitch: 'hover:bg-amber-100 hover:text-amber-800 hover:ring-amber-200',
+  }
+  return cn('transition-colors', areaAccent[area].sharedChip, chipHover[area])
 }
 
 export function areaSourceLinkClass(area: SchemaArea): string {

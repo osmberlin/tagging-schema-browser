@@ -14,7 +14,7 @@ import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
-import { areaAccent } from '@/theme/areaAccent'
+import { areaAccent, areaNavButtonClass } from '@/theme/areaAccent'
 import { externalLinkClass, externalActionPillClass } from '@/theme/externalAccent'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { cn } from '@/utils/tw'
@@ -110,10 +110,7 @@ function PresetDetailContent({
                   locale: prev.locale ?? '',
                   preset1: preset.id,
                 })}
-                className={cn(
-                  'inline-flex shrink-0 items-center gap-1.5',
-                  areaAccent.presetSwitch.navActive,
-                )}
+                className={cn('inline-flex shrink-0 items-center gap-1.5', areaNavButtonClass('presetSwitch'))}
               >
                 <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
                 Compare preset switch

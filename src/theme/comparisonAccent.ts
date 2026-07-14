@@ -1,7 +1,7 @@
 /** Violet accent reserved for comparison / non-release data only. */
 export const comparisonAccent = {
   navActive:
-    'rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 ring-1 ring-violet-200 ring-inset',
+    'rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 ring-1 ring-violet-200 ring-inset transition-colors hover:bg-violet-100 hover:text-violet-800 hover:ring-violet-300',
   navInactive:
     'rounded-lg px-3 py-1.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50 hover:text-violet-700',
   navIndicatorBg: 'bg-violet-50',
