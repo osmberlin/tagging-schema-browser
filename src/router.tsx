@@ -19,6 +19,7 @@ import { FieldSearchBar } from '@/components/PageFields/FieldSearchBar'
 import { fieldFacetDefaults, fieldFacetSchema } from '@/components/PageFields/useFieldFacetState'
 import { IconFacetSidebar } from '@/components/PageIcons/IconFacetSidebar'
 import { IconSearchBar } from '@/components/PageIcons/IconSearchBar'
+import { IconsPageProvider } from '@/components/PageIcons/IconsPageContext'
 import { iconFacetDefaults, iconFacetSchema } from '@/components/PageIcons/useIconFacetState'
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
 import { PagePresets } from '@/components/PagePresets/PagePresets'
@@ -224,7 +225,7 @@ function RootContent() {
       </p>
     )
 
-  return (
+  const layout = (
     <>
       <HeadContent />
       <SidebarLayout sidebar={sidebar} sidebarSearch={sidebarSearch}>
@@ -234,6 +235,8 @@ function RootContent() {
       </SidebarLayout>
     </>
   )
+
+  return location.pathname === '/icons' ? <IconsPageProvider>{layout}</IconsPageProvider> : layout
 }
 
 const rootRoute = createRootRoute({
