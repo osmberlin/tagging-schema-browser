@@ -180,4 +180,5 @@ export type FieldViewModel = {
   presets: DenormalizedPreset[]
   /** Option ↔ child-preset icon mismatches involving this field. */
   iconMismatchCount: number
+  optionIconNames: string[]
 }

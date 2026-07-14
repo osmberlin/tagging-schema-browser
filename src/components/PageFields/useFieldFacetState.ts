@@ -10,6 +10,7 @@ export const fieldFacetSchema = z.object({
   f_usage: z.enum(['all', 'used', 'unused']).catch('all'),
   f_iconMismatch: z.enum(['all', 'mismatch']).catch('all'),
   f_sort: z.enum(['name', 'label', 'usage_desc', 'usage_asc']).catch('usage_desc'),
+  f_optionIcon: z.string().catch(''),
 })
 
 export type FieldFacetState = z.infer<typeof fieldFacetSchema>
@@ -43,6 +44,10 @@ export function applyFieldFacets(
 
   if (state.f_iconMismatch === 'mismatch') {
     filtered = filtered.filter((field) => field.iconMismatchCount > 0)
+  }
+
+  if (state.f_optionIcon) {
+    filtered = filtered.filter((field) => field.optionIconNames.includes(state.f_optionIcon))
   }
 
   const query = state.f_q.trim().toLowerCase()
