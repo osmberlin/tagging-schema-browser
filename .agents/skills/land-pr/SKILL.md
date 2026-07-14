@@ -1,19 +1,19 @@
 ---
-name: babysit
+name: land-pr
 description: >-
   Cloud agent workflow for osmberlin/tagging-schema-browser: finish-work and
   push, rebase on main, mark PR ready, wait for Bugbot and fix findings,
   parallel react-dev + performance review, rebase merge when green. Use for
-  babysit, land PR, Bugbot follow-up, or merge my PR on this repo.
+  land PR, ready for review, Bugbot follow-up, or merge my PR on this repo.
 user-invocable: true
 disable-model-invocation: true
 ---
 
-# Babysit
+# Land PR
 
 **Repo:** `osmberlin/tagging-schema-browser` · **Base:** `main`
 
-Cloud-agent landing workflow for the current feature PR.
+Cloud-agent workflow to land the current feature PR.
 
 ```
 - [ ] finish-work + push
@@ -25,7 +25,7 @@ Cloud-agent landing workflow for the current feature PR.
 
 ## 1. finish-work + push
 
-Load [`finish-work`](../finish-work/SKILL.md), then **always push** (babysit continues past finish-work’s default stop).
+Load [`finish-work`](../finish-work/SKILL.md), then **always push** (this skill continues past finish-work’s default stop).
 
 ## 2. Rebase on main
 
