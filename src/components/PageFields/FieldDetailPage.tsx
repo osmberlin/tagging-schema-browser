@@ -13,6 +13,7 @@ import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalActionPillClass } from '@/theme/externalAccent'
+import { cn } from '@/utils/tw'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
@@ -239,12 +240,18 @@ function FieldDetailContent({
           <RelatedBlock
             title={
               <>
-                ({primaryPresets.length}) Presets use {label} in{' '}
-                <code className="font-mono text-xs font-normal text-slate-600">fields</code>
+                Presets use {label} in{' '}
+                <code
+                  className={cn(
+                    'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
+                    areaAccent.presets.sharedChip,
+                  )}
+                >
+                  fields
+                </code>
               </>
             }
             count={primaryPresets.length}
-            showCountPill={false}
             titleFilter={onFilterPrimaryPresets}
             presets={primaryPresets.map(toRelatedItem)}
             className="sm:border-r sm:border-slate-200 sm:pr-6"
@@ -252,12 +259,18 @@ function FieldDetailContent({
           <RelatedBlock
             title={
               <>
-                ({morePresets.length}) Presets use {label} in{' '}
-                <code className="font-mono text-xs font-normal text-slate-600">moreFields</code>
+                Presets use {label} in{' '}
+                <code
+                  className={cn(
+                    'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
+                    areaAccent.presets.sharedChip,
+                  )}
+                >
+                  moreFields
+                </code>
               </>
             }
             count={morePresets.length}
-            showCountPill={false}
             titleFilter={onFilterMorePresets}
             presets={morePresets.map(toRelatedItem)}
             className="sm:pl-2"
