@@ -4,7 +4,9 @@ import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { FieldIconMismatchAlert } from '@/components/ui/SchemaIssueAlerts'
+import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
+import { useDeferredSearchQuery } from '@/hooks/useDeferredSearchQuery'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportFields } from '@/utils/pageExports'
@@ -12,14 +14,27 @@ import { FieldCard } from './FieldCard'
 import { applyFieldFacets, useFieldFacetState } from './useFieldFacetState'
 import { useFieldSearch } from './useFieldSearch'
 
+const FIELD_CARD_MIN_WIDTH = 220
+const FIELD_CARD_GAP = 12
+const FIELD_CARD_ROW_ESTIMATE = 224
+
 export function PageFields() {
   const { data, loading, dataUrl } = useSchema()
   const [facetState, setFacetState] = useFieldFacetState()
   const { fields } = useFieldSearch()
+  const { f_q, f_type, f_usage, f_iconMismatch, f_sort, f_optionIcon } = facetState
+  const { deferredQuery, isSearchPending } = useDeferredSearchQuery(f_q)
   const filtered = useMemo(() => {
     if (!data) return []
-    return applyFieldFacets(fields, facetState)
-  }, [data, fields, facetState])
+    return applyFieldFacets(fields, {
+      f_q: deferredQuery,
+      f_type,
+      f_usage,
+      f_iconMismatch,
+      f_sort,
+      f_optionIcon,
+    })
+  }, [data, fields, deferredQuery, f_type, f_usage, f_iconMismatch, f_sort, f_optionIcon])
   const mismatchFieldCount = fields.filter((field) => field.iconMismatchCount > 0).length
   const { setActiveIssueFocus } = useSchemaIssueDisclosureActions()
 
@@ -48,7 +63,11 @@ export function PageFields() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="flex items-center gap-2 font-display text-2xl font-semibold text-slate-900">
           <AreaIcon area="fields" className={`h-7 w-7 ${areaAccent.fields.icon}`} />
-          Fields <CountPill className="text-sm">{filtered.length}</CountPill>
+          Fields{' '}
+          <CountPill className="text-sm">
+            {filtered.length}
+            {isSearchPending ? <span className="sr-only"> — filtering</span> : null}
+          </CountPill>
         </h1>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-slate-500">
@@ -96,18 +115,21 @@ export function PageFields() {
           onShowMismatch={() => setFacetState({ f_iconMismatch: 'mismatch' })}
         />
       ) : null}
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
-        {filtered.map((field) => (
-          <li key={field.id}>
-            <FieldCard field={field} />
-          </li>
-        ))}
-      </ul>
-      {filtered.length === 0 ? (
+      {filtered.length > 0 ? (
+        <VirtualizedGrid
+          items={filtered}
+          minColumnWidth={FIELD_CARD_MIN_WIDTH}
+          gap={FIELD_CARD_GAP}
+          rowEstimate={FIELD_CARD_ROW_ESTIMATE}
+          busy={isSearchPending}
+          getKey={(field) => field.id}
+          renderItem={(field) => <FieldCard field={field} />}
+        />
+      ) : (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
           No fields match the current filters.
         </p>
-      ) : null}
+      )}
     </div>
   )
 }

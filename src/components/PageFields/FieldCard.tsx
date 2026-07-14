@@ -9,13 +9,13 @@ import { cn } from '@/utils/tw'
 import type { FieldViewModel } from '@/utils/types'
 
 const fieldCardClass =
-  'group/fc relative flex flex-col rounded-xl border border-slate-200 bg-white p-2.5 transition duration-200 hover:shadow-md hover:shadow-slate-900/5'
+  'group/fc relative flex h-56 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-2.5 transition duration-200 hover:shadow-md hover:shadow-slate-900/5'
 
 export function FieldCard({ field }: { field: FieldViewModel }) {
   const names = field.presets.map((p) => p.name).join(', ')
 
   const body = (
-    <div className="pointer-events-none flex flex-col">
+    <div className="pointer-events-none flex min-h-0 flex-1 flex-col">
       <div className="flex items-start gap-2.5">
         <span
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${areaAccent.fields.iconBg}`}

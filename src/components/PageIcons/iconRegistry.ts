@@ -153,6 +153,7 @@ export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
         mergeRegistryEntries(entries)
         loadedSuppliers.add(supplier)
         clearMissCacheForSupplier(supplier)
+        notifyRegistryChange()
       })
       .catch(() => {
         failedSuppliers.add(supplier)
@@ -255,6 +256,28 @@ export function areAllIconSuppliersLoaded(): boolean {
   )
 }
 
+/** True when every supplier referenced by the given icon names has finished loading. */
+export function areSuppliersLoadedForNames(names: Iterable<string>): boolean {
+  for (const supplier of suppliersFromIconNames(names)) {
+    if (!loadedSuppliers.has(supplier) && !failedSuppliers.has(supplier)) return false
+  }
+  return true
+}
+
+/** True when missing-SVG checks can run without unknown pending pinhead or supplier loads. */
+export function areIconsReadyForMissingSvgCheck(names: Iterable<string>): boolean {
+  for (const name of names) {
+    const supplier = iconSupplierFromName(name)
+    if (supplier === 'pinhead') {
+      if (pendingPinheadIcons.has(name)) return false
+      if (!resolvedPinheadIcons.has(name) && !failedSuppliers.has('pinhead')) return false
+      continue
+    }
+    if (supplier && !loadedSuppliers.has(supplier) && !failedSuppliers.has(supplier)) return false
+  }
+  return true
+}
+
 /** @deprecated Use ensureIconSupplier("fas") or ensureIconsForNames instead. */
 export function ensureFontAwesomeRegistry(): Promise<void> {
   return Promise.all([
@@ -290,6 +313,21 @@ export function isIconSvgConfirmedMissing(iconName?: string): boolean {
   if (!supplier || !loadedSuppliers.has(supplier)) return false
   const entry = registryCache.get(iconName)
   return !entry?.svgRaw
+}
+
+/** Missing SVG, or supplier still loading so missing status is not yet known. */
+export function isIconSvgMissingOrPending(iconName?: string): boolean {
+  if (!iconName) return false
+  const supplier = iconSupplierFromName(iconName)
+  if (supplier === 'pinhead') {
+    if (isIconSvgConfirmedMissing(iconName)) return true
+    if (pendingPinheadIcons.has(iconName)) return true
+    if (!resolvedPinheadIcons.has(iconName)) return !failedSuppliers.has('pinhead')
+    return false
+  }
+  if (isIconSvgConfirmedMissing(iconName)) return true
+  if (!supplier) return false
+  return !loadedSuppliers.has(supplier) && !failedSuppliers.has(supplier)
 }
 
 export function getIconSvgDataUrl(iconName?: string): string | null {

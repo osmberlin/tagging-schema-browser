@@ -2,18 +2,22 @@ import { useMemo } from 'react'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
-import { SchemaLoadingInline } from '@/components/ui/LoadingSpinner'
 import { BrokenPresetIconsAlert } from '@/components/ui/SchemaIssueAlerts'
+import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
+import { useDeferredSearchQuery } from '@/hooks/useDeferredSearchQuery'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportIcons } from '@/utils/pageExports'
 import { IconCard } from './IconCard'
-import { iconBrowseNeedsFullCatalog } from './iconFacetMeta'
 import { useIconsPage } from './IconsPageContext'
 import { flattenIconUsages, sortIconUsageRows } from './iconUsageRows'
 import { IconUsageTable } from './IconUsageTable'
 import { applyIconFacets, useIconFacetState } from './useIconFacetState'
+
+const ICON_CARD_MIN_WIDTH = 180
+const ICON_CARD_GAP = 12
+const ICON_CARD_ROW_ESTIMATE = 208
 
 export function PageIcons() {
   const { data, dataUrl } = useSchema()
@@ -21,11 +25,18 @@ export function PageIcons() {
   const { icons, suppliersReady } = useIconsPage()
   const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
   const { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view } = facetState
-  const catalogLoading = iconBrowseNeedsFullCatalog(i_usage) && !suppliersReady
+  const { deferredQuery, isSearchPending } = useDeferredSearchQuery(i_q)
   const filtered = useMemo(() => {
     if (!data) return []
-    return applyIconFacets(icons, { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view })
-  }, [data, icons, i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view])
+    return applyIconFacets(icons, {
+      i_q: deferredQuery,
+      i_supplier,
+      i_usage,
+      i_hasSvg,
+      i_sort,
+      i_view,
+    })
+  }, [data, icons, deferredQuery, i_supplier, i_usage, i_hasSvg, i_sort, i_view])
   const usageRows = useMemo(() => {
     if (!data || i_view !== 'usages') return []
     const rows = flattenIconUsages(filtered, data.fields, data.fieldTranslations)
@@ -53,6 +64,7 @@ export function PageIcons() {
             {i_view === 'usages'
               ? `${filtered.length} icons · ${usageRows.length} usages`
               : filtered.length}
+            {isSearchPending ? <span className="sr-only"> — filtering</span> : null}
           </CountPill>
         </h1>
         <div className="flex flex-wrap items-center gap-3">
@@ -110,26 +122,29 @@ export function PageIcons() {
           onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
         />
       ) : null}
-      {catalogLoading ? <SchemaLoadingInline label="Loading icon libraries…" /> : null}
       {i_view === 'usages' ? (
-        <IconUsageTable rows={usageRows} />
-      ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-          {filtered.map((icon) => (
-            <li key={icon.name} className="h-full">
-              <IconCard
-                iconName={icon.name}
-                svgRaw={icon.svgRaw}
-                presetUsageCount={icon.presetUsageCount}
-                optionUsageCount={icon.optionUsageCount}
-                presets={icon.presets}
-                optionUsages={icon.optionUsages}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
-      {filtered.length === 0 && (
+        <IconUsageTable rows={usageRows} busy={isSearchPending} />
+      ) : filtered.length > 0 ? (
+        <VirtualizedGrid
+          items={filtered}
+          minColumnWidth={ICON_CARD_MIN_WIDTH}
+          gap={ICON_CARD_GAP}
+          rowEstimate={ICON_CARD_ROW_ESTIMATE}
+          busy={isSearchPending}
+          getKey={(icon) => icon.name}
+          renderItem={(icon) => (
+            <IconCard
+              iconName={icon.name}
+              svgRaw={icon.svgRaw}
+              presetUsageCount={icon.presetUsageCount}
+              optionUsageCount={icon.optionUsageCount}
+              presets={icon.presets}
+              optionUsages={icon.optionUsages}
+            />
+          )}
+        />
+      ) : null}
+      {filtered.length === 0 && suppliersReady && (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
           No icons match the current filters.
         </p>

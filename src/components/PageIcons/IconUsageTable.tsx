@@ -5,9 +5,12 @@ import {
   useIconRegistryEpoch,
 } from '@/components/PageIcons/iconRegistry'
 import { AreaIcon } from '@/components/ui/areaIcons'
+import { VirtualizedScrollList } from '@/components/ui/VirtualizedScrollList'
 import { areaAccent, areaLinkClass } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 import type { IconUsageRow } from './iconUsageRows'
+
+const USAGE_ROW_HEIGHT = 48
 
 function IconNameCell({ iconName }: { iconName: string }) {
   const src = getIconSvgDataUrl(iconName)
@@ -49,10 +52,10 @@ function UsageLabelLink({ row }: { row: IconUsageRow }) {
         to="/preset/$"
         params={{ _splat: row.presetId }}
         search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-        className={cn('inline-flex items-center gap-1.5', areaLinkClass('presets'))}
+        className={cn('inline-flex min-w-0 items-center gap-1.5', areaLinkClass('presets'))}
         title={`Open preset "${row.presetId}"`}
       >
-        <AreaIcon area="presets" className={`h-3.5 w-3.5 ${areaAccent.presets.icon}`} />
+        <AreaIcon area="presets" className={`h-3.5 w-3.5 shrink-0 ${areaAccent.presets.icon}`} />
         <span className="truncate">{row.label}</span>
       </Link>
     )
@@ -64,10 +67,10 @@ function UsageLabelLink({ row }: { row: IconUsageRow }) {
         to="/field/$"
         params={{ _splat: row.fieldId }}
         search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-        className={cn('inline-flex items-center gap-1.5', areaLinkClass('fields'))}
+        className={cn('inline-flex min-w-0 items-center gap-1.5', areaLinkClass('fields'))}
         title={`Open field "${row.fieldId}"`}
       >
-        <AreaIcon area="fields" className={`h-3.5 w-3.5 ${areaAccent.fields.icon}`} />
+        <AreaIcon area="fields" className={`h-3.5 w-3.5 shrink-0 ${areaAccent.fields.icon}`} />
         <span className="truncate">{row.label}</span>
       </Link>
     )
@@ -76,39 +79,48 @@ function UsageLabelLink({ row }: { row: IconUsageRow }) {
   return <span className="truncate text-slate-900">{row.label}</span>
 }
 
-export function IconUsageTable({ rows }: { rows: IconUsageRow[] }) {
+function UsageTableRow({ row }: { row: IconUsageRow }) {
+  return (
+    <div
+      data-icon-usage={row.iconName}
+      className="grid h-12 grid-cols-[minmax(0,16rem)_minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-100 px-3 text-sm"
+    >
+      <div className="max-w-xs min-w-0">
+        <IconNameCell iconName={row.iconName} />
+      </div>
+      <div className="max-w-md min-w-0 text-slate-900">
+        <UsageLabelLink row={row} />
+      </div>
+      <div className="truncate font-mono text-xs text-slate-600" title={row.code}>
+        {row.code}
+      </div>
+    </div>
+  )
+}
+
+export function IconUsageTable({ rows, busy = false }: { rows: IconUsageRow[]; busy?: boolean }) {
   void useIconRegistryEpoch()
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table className="min-w-full text-left text-sm">
-        <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-          <tr>
-            <th className="px-3 py-2.5 font-semibold">Icon</th>
-            <th className="px-3 py-2.5 font-semibold">Label</th>
-            <th className="px-3 py-2.5 font-semibold">Code</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr
-              key={`${row.iconName}:${row.kind}:${row.code}`}
-              data-icon-usage={row.iconName}
-              className="border-b border-slate-100 last:border-b-0"
-            >
-              <td className="max-w-xs px-3 py-2 align-top">
-                <IconNameCell iconName={row.iconName} />
-              </td>
-              <td className="max-w-md px-3 py-2 align-top text-slate-900">
-                <UsageLabelLink row={row} />
-              </td>
-              <td className="px-3 py-2 align-top font-mono text-xs text-slate-600" title={row.code}>
-                {row.code}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white text-left text-sm">
+      <VirtualizedScrollList
+        items={rows}
+        estimateSize={USAGE_ROW_HEIGHT}
+        busy={busy}
+        maxHeight="calc(100svh - 12rem)"
+        getKey={(row) => `${row.iconName}:${row.kind}:${row.code}`}
+        renderItem={(row) => <UsageTableRow row={row} />}
+        header={
+          <div
+            role="row"
+            className="grid shrink-0 grid-cols-[minmax(0,16rem)_minmax(0,1fr)_auto] gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold tracking-wide text-slate-500 uppercase"
+          >
+            <div role="columnheader">Icon</div>
+            <div role="columnheader">Label</div>
+            <div role="columnheader">Code</div>
+          </div>
+        }
+      />
     </div>
   )
 }

@@ -53,10 +53,18 @@ export default defineConfig({
       },
     },
     {
-      files: ['src/components/PagePresets/PresetTable.tsx'],
+      // TanStack Virtual + React Compiler: use `directDomUpdates` for runtime correctness.
+      // eslint-plugin-react-hooks still flags useVirtualizer / containerRef until it learns
+      // about directDomUpdates (TanStack/virtual#736, react#34493).
+      files: [
+        'src/components/PagePresets/PresetTable.tsx',
+        'src/components/ui/VirtualizedGrid.tsx',
+        'src/components/ui/VirtualizedScrollList.tsx',
+      ],
       rules: {
         'react/react-compiler': 'off',
         'react-hooks-js/incompatible-library': 'off',
+        'react-hooks-js/refs': 'off',
       },
     },
   ],
