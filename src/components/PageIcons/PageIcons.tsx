@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
-import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { SchemaLoadingInline } from '@/components/ui/LoadingSpinner'
 import { BrokenPresetIconsAlert } from '@/components/ui/SchemaIssueAlerts'
 import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
@@ -16,7 +16,7 @@ import { useIconSearch } from './useIconSearch'
 import { useIconSupplierLoad } from './useIconSupplierLoad'
 
 export function PageIcons() {
-  const { data, loading, dataUrl } = useSchema()
+  const { data, dataUrl } = useSchema()
   const [facetState, setFacetState] = useIconFacetState()
   const { suppliersReady } = useIconSupplierLoad(facetState.i_supplier)
   const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
@@ -43,10 +43,6 @@ export function PageIcons() {
         Load schema data from the Presets page first (enter a data URL and click Load).
       </p>
     )
-  }
-
-  if (loading && !data) {
-    return <SchemaLoadingPanel />
   }
 
   if (!data) return null
@@ -118,9 +114,7 @@ export function PageIcons() {
           onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
         />
       ) : null}
-      {!suppliersReady && filtered.length === 0 ? (
-        <SchemaLoadingPanel label="Loading icon libraries…" />
-      ) : null}
+      {!suppliersReady ? <SchemaLoadingInline label="Loading icon libraries…" /> : null}
       {i_view === 'usages' ? (
         <IconUsageTable rows={usageRows} />
       ) : (

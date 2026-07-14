@@ -101,8 +101,23 @@ const rootSearchSchema = z.object({
 })
 type RootSearch = z.infer<typeof rootSearchSchema>
 
+function schemaRouteWaitsForInitialLoad(pathname: string): boolean {
+  if (pathname === '/about') return false
+  if (pathname.startsWith('/preview-loading')) return false
+  return true
+}
+
+function RouteChunkFallback({ label }: { label: string }) {
+  return (
+    <p className="text-sm text-slate-500" role="status">
+      {label}
+    </p>
+  )
+}
+
 function SchemaContent({ children }: { children: React.ReactNode }) {
-  const { unsupportedBuild, customDataUrl, dataUrl, error } = useSchema()
+  const location = useLocation()
+  const { unsupportedBuild, customDataUrl, dataUrl, error, loading, data } = useSchema()
 
   useEffect(
     function clearSourceTreeCacheOnSchemaChange() {
@@ -117,6 +132,15 @@ function SchemaContent({ children }: { children: React.ReactNode }) {
 
   if (error && customDataUrl && error.includes('only supports id-tagging-schema v')) {
     return <UnsupportedSchemaNotice message={error} dataUrl={dataUrl} />
+  }
+
+  if (
+    schemaRouteWaitsForInitialLoad(location.pathname) &&
+    loading &&
+    !data &&
+    dataUrl.trim().length > 0
+  ) {
+    return <SchemaLoadingPanel />
   }
 
   return children
@@ -244,7 +268,7 @@ const iconsRoute = createRoute({
   validateSearch: iconFacetSchema,
   search: { middlewares: [stripSearchParams(iconFacetDefaults)] },
   component: () => (
-    <Suspense fallback={<SchemaLoadingPanel label="Loading icons…" />}>
+    <Suspense fallback={<RouteChunkFallback label="Loading icons…" />}>
       <LazyPageIcons />
     </Suspense>
   ),
@@ -257,7 +281,7 @@ const fieldsRoute = createRoute({
   validateSearch: fieldFacetSchema,
   search: { middlewares: [stripSearchParams(fieldFacetDefaults)] },
   component: () => (
-    <Suspense fallback={<SchemaLoadingPanel label="Loading fields…" />}>
+    <Suspense fallback={<RouteChunkFallback label="Loading fields…" />}>
       <LazyPageFields />
     </Suspense>
   ),
@@ -270,7 +294,7 @@ const translationsRoute = createRoute({
   validateSearch: translationsSearchSchema,
   search: { middlewares: [stripSearchParams(translationsSearchDefaults)] },
   component: () => (
-    <Suspense fallback={<SchemaLoadingPanel label="Loading translations…" />}>
+    <Suspense fallback={<RouteChunkFallback label="Loading translations…" />}>
       <LazyPageTranslations />
     </Suspense>
   ),
@@ -283,7 +307,7 @@ const presetSwitchRoute = createRoute({
   validateSearch: presetSwitchSearchSchema,
   search: { middlewares: [stripSearchParams(presetSwitchSearchDefaults)] },
   component: () => (
-    <Suspense fallback={<SchemaLoadingPanel label="Loading preset switch…" />}>
+    <Suspense fallback={<RouteChunkFallback label="Loading preset switch…" />}>
       <LazyPagePresetSwitch />
     </Suspense>
   ),
@@ -294,7 +318,7 @@ const comparisonRoute = createRoute({
   path: '/comparison',
   head: documentTitleHead('Comparison'),
   component: () => (
-    <Suspense fallback={<SchemaLoadingPanel label="Loading comparison…" />}>
+    <Suspense fallback={<RouteChunkFallback label="Loading comparison…" />}>
       <LazyPageComparison />
     </Suspense>
   ),

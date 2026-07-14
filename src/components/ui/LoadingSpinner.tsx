@@ -12,6 +12,20 @@ function useLoadingTransitions() {
   }
 }
 
+/** Compact inline loader for sub-resources (icon suppliers, source trees, etc.). */
+export function SchemaLoadingInline({ label }: { label: string }) {
+  return (
+    <div
+      className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500"
+      role="status"
+      aria-live="polite"
+    >
+      <LoadingSpinner size="sm" />
+      <span>{label}</span>
+    </div>
+  )
+}
+
 /** Compact ring spinner for inline / floating refresh states. */
 export function LoadingSpinner({
   className,
@@ -26,8 +40,7 @@ export function LoadingSpinner({
 
   return (
     <span
-      role="status"
-      aria-hidden={className?.includes('sr-only') ? undefined : true}
+      aria-hidden
       className={cn(
         'inline-block shrink-0 rounded-full border-slate-200 border-t-sky-600',
         !reducedMotion && 'animate-spin',
@@ -111,8 +124,8 @@ export function SchemaLoadingPanel({ label = 'Loading schema…' }: { label?: st
       <SchemaCubeLoader />
       <motion.p
         className="text-sm font-medium text-slate-600"
-        initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={reducedMotion ? false : { y: 6 }}
+        animate={{ y: 0 }}
         transition={labelTransition}
       >
         {label}
@@ -127,7 +140,7 @@ export function SchemaLoadingFloat({ label }: { label: string }) {
 
   return (
     <motion.div
-      className="pointer-events-none fixed inset-x-0 top-[4.75rem] z-50 flex justify-center px-4 sm:top-16"
+      className="pointer-events-none sticky top-4 z-20 -mt-2 mb-4 flex justify-center px-4"
       aria-live="polite"
       role="status"
       initial={reducedMotion ? false : { opacity: 0, y: -14 }}
