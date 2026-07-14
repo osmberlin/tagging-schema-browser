@@ -2,10 +2,8 @@ import { useEffect } from 'react'
 import {
   type IconSupplier,
   ICON_SUPPLIERS,
-  areAllIconSuppliersLoaded,
   ensureAllIconSuppliers,
   ensureIconSupplier,
-  isIconSupplierLoaded,
   useIconRegistryEpoch,
 } from '@/components/PageIcons/iconRegistry'
 
@@ -26,13 +24,4 @@ export function useIconSupplierLoad(selectedSupplier: string) {
       void ensureIconSupplier(selectedSupplier)
     }
   }, [selectedSupplier])
-
-  const suppliersReady =
-    selectedSupplier === 'all'
-      ? areAllIconSuppliersLoaded()
-      : isIconSupplier(selectedSupplier)
-        ? isIconSupplierLoaded(selectedSupplier)
-        : true
-
-  return { suppliersReady }
 }

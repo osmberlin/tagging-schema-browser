@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
-import { SchemaLoadingFloatPresence } from '@/components/ui/LoadingSpinner'
 import { BrokenPresetIconsAlert } from '@/components/ui/SchemaIssueAlerts'
 import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
@@ -24,7 +23,7 @@ const ICON_CARD_ROW_ESTIMATE = 168
 export function PageIcons() {
   const { data, dataUrl } = useSchema()
   const [facetState, setFacetState] = useIconFacetState()
-  const { suppliersReady } = useIconSupplierLoad(facetState.i_supplier)
+  useIconSupplierLoad(facetState.i_supplier)
   const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
   const { icons } = useIconSearch(
     data?.presets ?? [],
@@ -129,7 +128,6 @@ export function PageIcons() {
           onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
         />
       ) : null}
-      <SchemaLoadingFloatPresence show={!suppliersReady} label="Loading icon libraries…" />
       {i_view === 'usages' ? (
         <IconUsageTable rows={usageRows} busy={isSearchPending} />
       ) : filtered.length > 0 ? (
