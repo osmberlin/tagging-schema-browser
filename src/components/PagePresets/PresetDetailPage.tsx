@@ -14,7 +14,7 @@ import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
-import { externalAccent, externalLinkClass, externalPillClass } from '@/theme/externalAccent'
+import { externalLinkClass, externalActionPillClass } from '@/theme/externalAccent'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset, SchemaIndices } from '@/utils/types'
@@ -158,14 +158,6 @@ function PresetDetailContent({
             <AreaIcon area="presetSwitch" className="h-3.5 w-3.5" />
             Compare preset switch
           </Link>
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={externalAccent.button}
-          >
-            View source ↗
-          </a>
         </div>
       </header>
 
@@ -215,7 +207,7 @@ function PresetDetailContent({
               href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={externalPillClass()}
+              className={externalActionPillClass()}
             >
               GitHub ↗
             </a>
@@ -254,7 +246,7 @@ function PresetDetailContent({
       ) : null}
 
       <DetailDisclosure title="Related presets" area="presets">
-        <div className="grid gap-4 p-4 sm:grid-cols-2">
+        <div className="grid gap-6 px-4 py-4 sm:grid-cols-2 sm:gap-8">
           {categorySections.map((section) => (
             <RelatedBlock
               key={section.title}

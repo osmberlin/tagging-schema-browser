@@ -1,17 +1,24 @@
 import { Link } from '@tanstack/react-router'
+import { type ReactNode } from 'react'
 import { type SearchState, presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import type { SchemaArea } from '@/components/ui/areaIcons'
+import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { CountPill } from '@/components/ui/CountPill'
+import { areaAccent } from '@/theme/areaAccent'
+import { cn } from '@/utils/tw'
 
 type RelatedItem = { id: string; name: string }
 
 type RelatedBlockProps = {
-  title: string
+  title: ReactNode
   count: number
   area?: SchemaArea
   titleFilter: Partial<SearchState>
   presets: RelatedItem[]
+  /** When false, count is expected in the title (field detail columns). Default true. */
+  showCountPill?: boolean
+  className?: string
 }
 
 export function RelatedBlock({
@@ -20,10 +27,12 @@ export function RelatedBlock({
   area = 'presets',
   titleFilter,
   presets,
+  showCountPill = true,
+  className,
 }: RelatedBlockProps) {
   return (
-    <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <h2 className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-900">
+    <section className={cn('min-w-0 space-y-3', className)}>
+      <h2 className="flex items-start justify-between gap-2 text-sm font-semibold text-slate-900">
         <AreaLink
           area={area}
           to="/"
@@ -38,7 +47,7 @@ export function RelatedBlock({
         >
           {title}
         </AreaLink>
-        <CountPill>{count}</CountPill>
+        {showCountPill ? <CountPill>{count}</CountPill> : null}
       </h2>
       {presets.length === 0 ? (
         <p className="text-sm text-slate-500">No related presets.</p>
@@ -51,9 +60,16 @@ export function RelatedBlock({
               params={{ _splat: p.id }}
               search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
               title={p.id}
-              className="max-w-full truncate rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200 ring-inset hover:bg-slate-100"
+              className={cn(
+                'inline-flex max-w-full items-center gap-1 truncate rounded-full px-2.5 py-1 text-xs font-medium transition-colors hover:opacity-90',
+                areaAccent.presets.sharedChip,
+              )}
             >
-              {p.name}
+              <AreaIcon
+                area="presets"
+                className={cn('h-3 w-3 shrink-0', areaAccent.presets.icon)}
+              />
+              <span className="truncate">{p.name}</span>
             </Link>
           ))}
           {presets.length > 30 ? (

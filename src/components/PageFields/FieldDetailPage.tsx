@@ -3,9 +3,8 @@ import { FieldOptionIconsTable } from '@/components/PageFields/FieldOptionIconsT
 import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
-import { presetSearchDefaults, useSetPreset } from '@/components/PagePresets/useSearchState'
+import { useSetPreset } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
-import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
@@ -13,7 +12,7 @@ import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocu
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
-import { externalAccent, externalPillClass } from '@/theme/externalAccent'
+import { externalActionPillClass } from '@/theme/externalAccent'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
@@ -121,8 +120,8 @@ function FieldDetailContent({
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
-        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
+      <header className="border-b border-slate-200 pb-6">
+        <div className="flex min-w-0 flex-wrap items-start gap-4">
           <span
             className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ring-1 ring-emerald-100 ring-inset ${areaAccent.fields.iconBg}`}
           >
@@ -162,30 +161,6 @@ function FieldDetailContent({
             ) : null}
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <a
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={externalAccent.button}
-          >
-            View source ↗
-          </a>
-          <AreaLink
-            area="presets"
-            to="/"
-            search={(prev) => ({
-              ...presetSearchDefaults,
-              dataUrl: prev.dataUrl ?? '',
-              locale: prev.locale ?? '',
-              fieldIds: [fieldId],
-              page: 1,
-            })}
-            className="text-xs"
-          >
-            Filter presets using this field
-          </AreaLink>
-        </div>
       </header>
 
       {mismatchCount > 0 ? (
@@ -201,6 +176,7 @@ function FieldDetailContent({
       ) : (
         <DetailDisclosure
           title="Option icons"
+          count={optionRows.length}
           area="icons"
           subtitle="Field option icons vs dedicated child preset icons"
         >
@@ -247,7 +223,7 @@ function FieldDetailContent({
               href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={externalPillClass()}
+              className={externalActionPillClass()}
             >
               GitHub ↗
             </a>
@@ -259,18 +235,32 @@ function FieldDetailContent({
       </DetailDisclosure>
 
       <DetailDisclosure title="Related presets" area="presets" defaultOpen>
-        <div className="grid gap-4 p-4 sm:grid-cols-2">
+        <div className="grid gap-6 px-4 py-4 sm:grid-cols-2 sm:gap-8">
           <RelatedBlock
-            title="Presets with this field (primary)"
+            title={
+              <>
+                ({primaryPresets.length}) Presets use {label} in{' '}
+                <code className="font-mono text-xs font-normal text-slate-600">fields</code>
+              </>
+            }
             count={primaryPresets.length}
+            showCountPill={false}
             titleFilter={onFilterPrimaryPresets}
             presets={primaryPresets.map(toRelatedItem)}
+            className="sm:border-r sm:border-slate-200 sm:pr-6"
           />
           <RelatedBlock
-            title="Presets with this field (more fields)"
+            title={
+              <>
+                ({morePresets.length}) Presets use {label} in{' '}
+                <code className="font-mono text-xs font-normal text-slate-600">moreFields</code>
+              </>
+            }
             count={morePresets.length}
+            showCountPill={false}
             titleFilter={onFilterMorePresets}
             presets={morePresets.map(toRelatedItem)}
+            className="sm:pl-2"
           />
         </div>
       </DetailDisclosure>
