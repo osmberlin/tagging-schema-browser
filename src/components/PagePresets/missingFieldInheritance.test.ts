@@ -89,13 +89,43 @@ describe('missingFieldInheritance', () => {
     ).toEqual({
       fields: {
         parentId: 'tourism/information',
-        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        missedFieldIds: ['address', 'building_area_yes'],
         explicitPresetRefs: [],
       },
     })
   })
 
-  it('lists parent field ids missing from crane child without parent ref', () => {
+  it('does not flag typeCombo fields the child already fixes via tags', () => {
+    const presets = {
+      highway: {
+        tags: { highway: '*' },
+        geometry: ['line', 'vertex'],
+        fields: ['name', 'highway'],
+      },
+      'highway/mini_roundabout': {
+        tags: { highway: 'mini_roundabout' },
+        geometry: ['vertex'],
+        fields: ['name'],
+        moreFields: ['direction_clock'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      highway: { key: 'highway', type: 'typeCombo' },
+      direction_clock: { key: 'direction', type: 'combo' },
+    }
+
+    expect(
+      detectMissingFieldInheritance(
+        'highway/mini_roundabout',
+        presets['highway/mini_roundabout'],
+        presets,
+        fields,
+      ),
+    ).toBeNull()
+  })
+
+  it('does not flag combo fields the child already fixes via tags', () => {
     const presets = {
       'man_made/crane': {
         tags: { man_made: 'crane' },
@@ -120,6 +150,34 @@ describe('missingFieldInheritance', () => {
         presets,
         fields,
       ),
+    ).toBeNull()
+  })
+
+  it('lists parent field ids missing from crane child without parent ref', () => {
+    const presets = {
+      'man_made/crane': {
+        tags: { man_made: 'crane' },
+        geometry: ['point'],
+        fields: ['name', 'crane/type'],
+      },
+      'man_made/crane/untyped_crane': {
+        tags: { man_made: 'crane' },
+        geometry: ['point'],
+        fields: ['name'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      'crane/type': { key: 'crane:type', type: 'combo' },
+    }
+
+    expect(
+      detectMissingFieldInheritance(
+        'man_made/crane/untyped_crane',
+        presets['man_made/crane/untyped_crane'],
+        presets,
+        fields,
+      ),
     ).toEqual({
       fields: {
         parentId: 'man_made/crane',
@@ -133,7 +191,7 @@ describe('missingFieldInheritance', () => {
     const current = {
       fields: {
         parentId: 'tourism/information',
-        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        missedFieldIds: ['address', 'building_area_yes'],
         explicitPresetRefs: [],
       },
     }
@@ -142,7 +200,7 @@ describe('missingFieldInheritance', () => {
       resolveMissingInheritanceStatus(current, {
         fields: {
           parentId: 'tourism/information',
-          missedFieldIds: ['information', 'address', 'building_area_yes'],
+          missedFieldIds: ['address', 'building_area_yes'],
         },
       }),
     ).toBe('intentional')
@@ -158,7 +216,7 @@ describe('missingFieldInheritance', () => {
       resolveMissingInheritanceStatus(null, {
         fields: {
           parentId: 'tourism/information',
-          missedFieldIds: ['information', 'address', 'building_area_yes'],
+          missedFieldIds: ['address', 'building_area_yes'],
         },
       }),
     ).toBe('stale')
@@ -168,7 +226,7 @@ describe('missingFieldInheritance', () => {
     const current = {
       fields: {
         parentId: 'tourism/information',
-        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        missedFieldIds: ['address', 'building_area_yes'],
         explicitPresetRefs: ['other/preset'],
       },
     }
@@ -176,7 +234,7 @@ describe('missingFieldInheritance', () => {
     expect(missingInheritanceOverrideFromCurrent(current)).toEqual({
       fields: {
         parentId: 'tourism/information',
-        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        missedFieldIds: ['address', 'building_area_yes'],
       },
     })
   })
@@ -185,7 +243,7 @@ describe('missingFieldInheritance', () => {
     const current = {
       fields: {
         parentId: 'tourism/information',
-        missedFieldIds: ['information', 'address', 'building_area_yes'],
+        missedFieldIds: ['address', 'building_area_yes'],
         explicitPresetRefs: [],
       },
     }
@@ -195,7 +253,6 @@ describe('missingFieldInheritance', () => {
     fields:
       parentId: tourism/information
       missedFieldIds:
-        - information
         - address
         - building_area_yes`)
 

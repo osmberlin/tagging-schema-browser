@@ -12,7 +12,8 @@ function fieldKey(fieldId: string, allFields: RawFields): string {
   return allFields[fieldId]?.key ?? fieldId
 }
 
-function shouldInherit(
+/** Whether a resolved field id applies to this preset (iD `Preset#shouldInherit`). */
+export function shouldInheritField(
   hostPreset: RawPreset,
   fieldId: string,
   hostOriginalFields: string[],
@@ -79,7 +80,9 @@ function resolveInheritedFieldList(
       continue
     }
 
-    if (!shouldInherit(hostPreset, item, hostOriginalFields, hostOriginalMoreFields, allFields)) {
+    if (
+      !shouldInheritField(hostPreset, item, hostOriginalFields, hostOriginalMoreFields, allFields)
+    ) {
       continue
     }
     resolved.push(item)
@@ -137,7 +140,24 @@ export function resolvePresetFieldList(
       const parentId = presetId.substring(0, endIndex)
       const parent = rawPresets[parentId]
       if (parent) {
-        return resolvePresetFieldList(parentId, parent, fieldListKey, rawPresets, allFields)
+        const inherited = resolvePresetFieldList(
+          parentId,
+          parent,
+          fieldListKey,
+          rawPresets,
+          allFields,
+        )
+        const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
+        const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
+        return inherited.filter((fieldId) =>
+          shouldInheritField(
+            preset,
+            fieldId,
+            hostOriginalFields,
+            hostOriginalMoreFields,
+            allFields,
+          ),
+        )
       }
     }
     return []

@@ -157,6 +157,38 @@ describe('denormalize', () => {
     expect(abortion?.moreFields).toEqual(['wheelchair'])
   })
 
+  it('omits inherited typeCombo when slash-parent fields are omitted (highway/mini_roundabout)', () => {
+    const presets = {
+      highway: {
+        tags: { highway: '*' },
+        geometry: ['line', 'vertex'],
+        fields: ['name', 'highway'],
+      },
+      'highway/mini_roundabout': {
+        tags: { highway: 'mini_roundabout' },
+        geometry: ['vertex'],
+        moreFields: ['direction_clock'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      highway: { key: 'highway', type: 'typeCombo' },
+      direction_clock: { key: 'direction', type: 'combo' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const miniRoundabout = result.find((p) => p.id === 'highway/mini_roundabout')
+    expect(miniRoundabout?.fields).toEqual(['name'])
+    expect(miniRoundabout?.fields).not.toContain('highway')
+    expect(miniRoundabout?.moreFields).toEqual(['direction_clock'])
+  })
+
   it('omits inherited typeCombo when the preset already fixes that tag (landuse/grass)', () => {
     const presets = {
       landuse: {
@@ -235,8 +267,8 @@ describe('denormalize', () => {
         geometry: ['point'],
         fields: ['name', 'crane/type'],
       },
-      'man_made/crane/gantry_crane': {
-        tags: { man_made: 'crane', 'crane:type': 'gantry_crane' },
+      'man_made/crane/untyped_crane': {
+        tags: { man_made: 'crane' },
         geometry: ['point'],
         fields: ['name'],
       },
@@ -259,13 +291,12 @@ describe('denormalize', () => {
     )
 
     const terminal = result.find((p) => p.id === 'tourism/information/terminal')
-    const gantry = result.find((p) => p.id === 'man_made/crane/gantry_crane')
+    const untyped = result.find((p) => p.id === 'man_made/crane/untyped_crane')
     expect(terminal?.missingInheritanceStatus).toBe('intentional')
     expect(terminal?.missingFieldInheritance?.fields?.missedFieldIds).toEqual([
-      'information',
       'address',
       'building_area_yes',
     ])
-    expect(gantry?.missingInheritanceStatus).toBe('unreviewed')
+    expect(untyped?.missingInheritanceStatus).toBe('unreviewed')
   })
 })

@@ -1,6 +1,6 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useCallback, useMemo } from 'react'
-import { z } from 'zod'
+import * as z from 'zod'
 import type { FieldViewModel } from '@/utils/types'
 
 export { applyFieldFacets } from '@/components/PageFields/fieldFacetFilter'
