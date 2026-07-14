@@ -9,6 +9,7 @@ import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslati
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
+import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
@@ -97,50 +98,52 @@ function PresetDetailContent({
           <PresetIconBox preset={preset} size="md" />
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
-            <p className="mt-1 font-mono text-xs text-slate-500">{preset.id}</p>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-slate-500">Geometry</span>
+            <p className="mt-1 font-mono text-sm text-slate-500">{preset.id}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+              <span className="inline-flex items-center gap-2 text-slate-600">
+                <span className="font-medium text-slate-500">Geometry</span>
                 <GeometryIcons geometry={preset.geometry} />
-              </div>
-              {preset.categoryNames.length > 0 || iconId ? (
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  {preset.categoryNames.map((categoryName) => (
-                    <Link
-                      key={categoryName}
-                      to="/"
-                      search={(prev) => ({
-                        ...presetSearchDefaults,
-                        dataUrl: prev.dataUrl ?? '',
-                        locale: prev.locale ?? '',
-                        categoryNames: [categoryName],
-                        page: 1,
-                      })}
-                      title={`Show presets in category "${categoryName}"`}
-                      className={cn('inline-flex max-w-full items-center gap-1.5', areaAccent.presets.navActive)}
-                    >
-                      <AreaIcon area="presets" className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">Filter presets · {categoryName}</span>
-                    </Link>
-                  ))}
-                  {iconId ? (
-                    <Link
-                      to="/"
-                      search={(prev) => ({
-                        ...presetSearchDefaults,
-                        dataUrl: prev.dataUrl ?? '',
-                        locale: prev.locale ?? '',
-                        iconName: [iconId],
-                        page: 1,
-                      })}
-                      title={`Show presets using icon "${iconId}"`}
-                      className={cn('inline-flex max-w-full items-center gap-1.5', areaAccent.icons.navActive)}
-                    >
-                      <AreaIcon area="icons" className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate font-mono text-xs">Filter presets · {iconId}</span>
-                    </Link>
-                  ) : null}
-                </div>
+              </span>
+              {preset.categoryNames.map((categoryName) => (
+                <AreaLink
+                  key={categoryName}
+                  area="presets"
+                  to="/"
+                  search={(prev) => ({
+                    ...presetSearchDefaults,
+                    dataUrl: prev.dataUrl ?? '',
+                    locale: prev.locale ?? '',
+                    categoryNames: [categoryName],
+                    page: 1,
+                  })}
+                  title={`Show presets in category "${categoryName}"`}
+                >
+                  Presets for Category &ldquo;{categoryName}&rdquo;
+                </AreaLink>
+              ))}
+              {iconId ? (
+                <AreaLink
+                  area="icons"
+                  to="/"
+                  search={(prev) => ({
+                    ...presetSearchDefaults,
+                    dataUrl: prev.dataUrl ?? '',
+                    locale: prev.locale ?? '',
+                    iconName: [iconId],
+                    page: 1,
+                  })}
+                  title={`Show presets using icon "${iconId}"`}
+                >
+                  Presets for icon{' '}
+                  <code
+                    className={cn(
+                      'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
+                      areaAccent.icons.sharedChip,
+                    )}
+                  >
+                    {iconId}
+                  </code>
+                </AreaLink>
               ) : null}
             </div>
             {preset.imageURL ? (
