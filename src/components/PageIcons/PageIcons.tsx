@@ -9,7 +9,7 @@ import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportIcons } from '@/utils/pageExports'
 import { IconCard } from './IconCard'
-import { useIconsPage } from './IconsPageContext'
+import { iconBrowseNeedsFullCatalog, useIconsPage } from './IconsPageContext'
 import { flattenIconUsages, sortIconUsageRows } from './iconUsageRows'
 import { IconUsageTable } from './IconUsageTable'
 import { applyIconFacets, useIconFacetState } from './useIconFacetState'
@@ -20,6 +20,7 @@ export function PageIcons() {
   const { icons, suppliersReady } = useIconsPage()
   const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
   const { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view } = facetState
+  const catalogLoading = iconBrowseNeedsFullCatalog(i_usage) && !suppliersReady
   const filtered = useMemo(() => {
     if (!data) return []
     return applyIconFacets(icons, { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view })
@@ -108,7 +109,7 @@ export function PageIcons() {
           onShowBroken={() => setFacetState({ i_hasSvg: 'missing', i_usage: 'presets' })}
         />
       ) : null}
-      {!suppliersReady ? <SchemaLoadingInline label="Loading icon libraries…" /> : null}
+      {catalogLoading ? <SchemaLoadingInline label="Loading icon libraries…" /> : null}
       {i_view === 'usages' ? (
         <IconUsageTable rows={usageRows} />
       ) : (

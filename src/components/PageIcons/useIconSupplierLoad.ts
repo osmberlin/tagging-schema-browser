@@ -14,10 +14,11 @@ function isIconSupplier(value: string): value is IconSupplier {
 }
 
 /** Load bundled icon supplier chunks for the active Icons facet (lazy per supplier). */
-export function useIconSupplierLoad(selectedSupplier: string) {
+export function useIconSupplierLoad(selectedSupplier: string, loadFullCatalog = false) {
   useIconRegistryEpoch()
 
   useEffect(() => {
+    if (!loadFullCatalog) return
     if (selectedSupplier === 'all') {
       void ensureAllIconSuppliers()
       return
@@ -25,10 +26,11 @@ export function useIconSupplierLoad(selectedSupplier: string) {
     if (isIconSupplier(selectedSupplier)) {
       void ensureIconSupplier(selectedSupplier)
     }
-  }, [selectedSupplier])
+  }, [selectedSupplier, loadFullCatalog])
 
-  const suppliersReady =
-    selectedSupplier === 'all'
+  const suppliersReady = !loadFullCatalog
+    ? true
+    : selectedSupplier === 'all'
       ? areAllIconSuppliersLoaded()
       : isIconSupplier(selectedSupplier)
         ? isIconSupplierLoaded(selectedSupplier)
