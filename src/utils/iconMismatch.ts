@@ -5,6 +5,8 @@ import {
 } from '@/utils/fieldOptions'
 import type { DenormalizedPreset, FieldTranslations, RawFields } from '@/utils/types'
 
+export type PresetIconMismatchRow = { section: PresetFieldSection; row: PresetOptionRow }
+
 export type PresetIconMismatchRef = {
   parent: DenormalizedPreset
   section: PresetFieldSection
@@ -71,7 +73,11 @@ export function getParentPresetIconMismatchRows(
   fields: RawFields,
   fieldTranslations: FieldTranslations,
   allPresets: DenormalizedPreset[],
-): Array<{ section: PresetFieldSection; row: PresetOptionRow }> {
+  precomputed?: Map<string, PresetIconMismatchRow[]>,
+): PresetIconMismatchRow[] {
+  if (precomputed) {
+    return precomputed.get(preset.id) ?? []
+  }
   return getPresetFieldSections(preset, fields, fieldTranslations, allPresets).flatMap((section) =>
     section.options.filter((row) => row.iconMismatch).map((row) => ({ section, row })),
   )
@@ -83,7 +89,11 @@ export function getChildPresetIconMismatchRefs(
   fields: RawFields,
   fieldTranslations: FieldTranslations,
   presets: DenormalizedPreset[],
+  precomputed?: Map<string, PresetIconMismatchRef[]>,
 ): PresetIconMismatchRef[] {
+  if (precomputed) {
+    return precomputed.get(presetId) ?? []
+  }
   return presets.flatMap((parent) =>
     getPresetFieldSections(parent, fields, fieldTranslations, presets).flatMap((section) =>
       section.options

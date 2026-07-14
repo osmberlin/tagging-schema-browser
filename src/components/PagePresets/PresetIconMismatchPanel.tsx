@@ -7,13 +7,9 @@ import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import type { PresetFieldSection, PresetOptionRow } from '@/utils/fieldOptions'
-import {
-  getChildPresetIconMismatchRefs,
-  getParentPresetIconMismatchRows,
-  type PresetIconMismatchRef,
-} from '@/utils/iconMismatch'
+import type { PresetIconMismatchRef } from '@/utils/iconMismatch'
 import { cn } from '@/utils/tw'
-import type { DenormalizedPreset, FieldTranslations, RawFields } from '@/utils/types'
+import type { DenormalizedPreset } from '@/utils/types'
 
 function MismatchIcon({
   icon,
@@ -224,17 +220,13 @@ function ChildMismatchBlock({ mismatch }: { mismatch: PresetIconMismatchRef }) {
 
 export function PresetIconMismatchPanel({
   preset,
-  presets,
-  fields,
-  fieldTranslations,
+  parentRows,
+  childRefs,
 }: {
   preset: DenormalizedPreset
-  presets: DenormalizedPreset[]
-  fields: RawFields
-  fieldTranslations: FieldTranslations
+  parentRows: Array<{ section: PresetFieldSection; row: PresetOptionRow }>
+  childRefs: PresetIconMismatchRef[]
 }) {
-  const parentRows = getParentPresetIconMismatchRows(preset, fields, fieldTranslations, presets)
-  const childRefs = getChildPresetIconMismatchRefs(preset.id, fields, fieldTranslations, presets)
   const disclosureId = `preset-icon-mismatch:${preset.id}`
   useAutoOpenFocusedIssue(
     disclosureId,

@@ -80,6 +80,24 @@ async function main() {
   const indexStart = performance.now()
   buildSchemaIndices(data.presets, data.fields, data.fieldTranslations)
   console.log(`  rebuild indices: ${ms(indexStart)}`)
+
+  const childPresetId =
+    data.presets.find((p) => p.id.includes('/'))?.id ?? data.presets[0]?.id ?? ''
+  if (childPresetId) {
+    console.log(`\nPreset detail hot path for child "${childPresetId}":`)
+    const { getChildPresetIconMismatchRefs } = await import('@/utils/iconMismatch')
+    bench('getChildPresetIconMismatchRefs (legacy scan)', 5, () => {
+      getChildPresetIconMismatchRefs(
+        childPresetId,
+        data.fields,
+        data.fieldTranslations,
+        data.presets,
+      )
+    })
+    bench('indices.childIconMismatchRefsByPresetId.get', 5000, () => {
+      data.indices.childIconMismatchRefsByPresetId.get(childPresetId)
+    })
+  }
 }
 
 void main()

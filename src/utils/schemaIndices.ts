@@ -1,12 +1,17 @@
-import { getFieldOptionValues, resolveFieldIcons } from '@/utils/fieldOptions'
+import {
+  getFieldOptionValues,
+  getPresetFieldSections,
+  resolveFieldIcons,
+} from '@/utils/fieldOptions'
 import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
 import { sortFieldTypes } from '@/utils/fieldTypes'
-import { isOptionIconMismatch } from '@/utils/iconMismatch'
+import { isOptionIconMismatch, type PresetIconMismatchRef } from '@/utils/iconMismatch'
 import type {
   DenormalizedPreset,
   FieldOptionMismatchRow,
   FieldTranslations,
   FieldViewModel,
+  PresetIconMismatchRow,
   RawField,
   RawFields,
   SchemaIndices,
@@ -150,6 +155,75 @@ function buildFieldMismatchCounts(
   return counts
 }
 
+export function buildPresetsByCategoryId(
+  presets: DenormalizedPreset[],
+): Map<string, DenormalizedPreset[]> {
+  const index = new Map<string, DenormalizedPreset[]>()
+  for (const preset of presets) {
+    for (const categoryId of preset.categoryIds) {
+      const list = index.get(categoryId) ?? []
+      list.push(preset)
+      index.set(categoryId, list)
+    }
+  }
+  return index
+}
+
+export function buildPresetsByIcon(
+  presets: DenormalizedPreset[],
+): Map<string, DenormalizedPreset[]> {
+  const index = new Map<string, DenormalizedPreset[]>()
+  for (const preset of presets) {
+    if (!preset.icon) continue
+    const list = index.get(preset.icon) ?? []
+    list.push(preset)
+    index.set(preset.icon, list)
+  }
+  return index
+}
+
+/** One pass over presets — replaces O(all presets) scans on each preset detail mount. */
+export function buildPresetIconMismatchIndices(
+  presets: DenormalizedPreset[],
+  fields: RawFields,
+  fieldTranslations: FieldTranslations,
+  childPresetIndex: Map<string, DenormalizedPreset>,
+): {
+  parentIconMismatchRowsByPresetId: Map<string, PresetIconMismatchRow[]>
+  childIconMismatchRefsByPresetId: Map<string, PresetIconMismatchRef[]>
+} {
+  const parentIconMismatchRowsByPresetId = new Map<string, PresetIconMismatchRow[]>()
+  const childIconMismatchRefsByPresetId = new Map<string, PresetIconMismatchRef[]>()
+
+  for (const preset of presets) {
+    const sections = getPresetFieldSections(
+      preset,
+      fields,
+      fieldTranslations,
+      presets,
+      childPresetIndex,
+    )
+
+    const parentRows: PresetIconMismatchRow[] = []
+    for (const section of sections) {
+      for (const row of section.options) {
+        if (!row.iconMismatch) continue
+        parentRows.push({ section, row })
+        const childId = row.childPreset?.id
+        if (!childId) continue
+        const childRefs = childIconMismatchRefsByPresetId.get(childId) ?? []
+        childRefs.push({ parent: preset, section, row })
+        childIconMismatchRefsByPresetId.set(childId, childRefs)
+      }
+    }
+    if (parentRows.length > 0) {
+      parentIconMismatchRowsByPresetId.set(preset.id, parentRows)
+    }
+  }
+
+  return { parentIconMismatchRowsByPresetId, childIconMismatchRefsByPresetId }
+}
+
 export function buildFieldCatalog(
   fields: RawFields,
   fieldTranslations: FieldTranslations,
@@ -200,6 +274,8 @@ export function buildSchemaIndices(
     fieldTranslations,
     childPresetIndex,
   )
+  const { parentIconMismatchRowsByPresetId, childIconMismatchRefsByPresetId } =
+    buildPresetIconMismatchIndices(presets, fields, fieldTranslations, childPresetIndex)
   const { fieldCatalog, fieldTypes } = buildFieldCatalog(
     fields,
     fieldTranslations,
@@ -212,6 +288,10 @@ export function buildSchemaIndices(
     presetsByPrimaryField: primary,
     presetsByMoreField: more,
     fieldOptionMismatchRows,
+    parentIconMismatchRowsByPresetId,
+    childIconMismatchRefsByPresetId,
+    presetsByCategoryId: buildPresetsByCategoryId(presets),
+    presetsByIcon: buildPresetsByIcon(presets),
     fieldCatalog,
     fieldTypes,
   }

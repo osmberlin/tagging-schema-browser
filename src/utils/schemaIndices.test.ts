@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { getFieldOptionMismatchRows } from '@/utils/fieldOptions'
-import { computeFieldIconMismatchCounts } from '@/utils/iconMismatch'
+import {
+  computeFieldIconMismatchCounts,
+  getChildPresetIconMismatchRefs,
+  getParentPresetIconMismatchRows,
+} from '@/utils/iconMismatch'
 import {
   buildChildPresetIndex,
   buildFieldPresetIndex,
@@ -128,5 +132,51 @@ describe('schemaIndices', () => {
     for (const field of indices.fieldCatalog) {
       expect(field.iconMismatchCount).toBe(mismatchCounts.get(field.id) ?? 0)
     }
+  })
+
+  it('precomputed icon mismatch rows match runtime helpers', () => {
+    const presets = [
+      {
+        ...stubPreset('leisure/playground', ['playground/type']),
+        name: 'Playground',
+        icon: 'maki-playground',
+        tags: { leisure: 'playground' },
+      },
+      {
+        ...stubPreset('leisure/playground/slide'),
+        name: 'Playground Slide',
+        icon: 'roentgen-slide',
+        tags: { leisure: 'playground', playground: 'slide' },
+      },
+    ] as DenormalizedPreset[]
+    const fields = {
+      'playground/type': {
+        key: 'playground',
+        type: 'combo',
+        icons: { slide: 'temaki-slide2' },
+        options: ['slide'],
+      },
+    }
+    const fieldTranslations = {
+      'playground/type': {
+        label: 'Equipment',
+        options: { slide: { title: 'Slide' } },
+      },
+    }
+
+    const indices = buildSchemaIndices(presets, fields, fieldTranslations)
+    const parent = presets[0]!
+
+    expect(getParentPresetIconMismatchRows(parent, fields, fieldTranslations, presets)).toEqual(
+      indices.parentIconMismatchRowsByPresetId.get(parent.id) ?? [],
+    )
+    expect(
+      getChildPresetIconMismatchRefs(
+        'leisure/playground/slide',
+        fields,
+        fieldTranslations,
+        presets,
+      ),
+    ).toEqual(indices.childIconMismatchRefsByPresetId.get('leisure/playground/slide') ?? [])
   })
 })
