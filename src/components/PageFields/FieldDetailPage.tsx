@@ -2,7 +2,7 @@ import { useParams } from '@tanstack/react-router'
 import { FieldOptionIconsTable } from '@/components/PageFields/FieldOptionIconsTable'
 import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
-import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
+import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
 import { presetSearchDefaults, useSetPreset } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
@@ -255,7 +255,7 @@ function FieldDetailContent({
         }
         defaultOpen
       >
-        <PresetSourceTree presetId={fieldId} raw={raw} sourceKind="field" />
+        <LazyPresetSourceTree presetId={fieldId} raw={raw} sourceKind="field" />
       </DetailDisclosure>
 
       <DetailDisclosure title="Related presets" area="presets" defaultOpen>

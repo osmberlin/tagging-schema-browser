@@ -171,6 +171,14 @@ function JsonKey({ name }: { name: string }) {
 
 type JsonRootKind = 'field' | 'preset'
 
+export type PresetSourceTreeProps = {
+  presetId: string
+  raw: Record<string, unknown>
+  preset?: DenormalizedPreset
+  presets?: DenormalizedPreset[]
+  sourceKind?: JsonRootKind
+}
+
 type HostPresetContext = {
   hostPreset: RawPreset
   hostOriginalFields: string[]
@@ -890,13 +898,7 @@ export function PresetSourceTree({
   preset,
   presets,
   sourceKind = 'preset',
-}: {
-  presetId: string
-  raw: Record<string, unknown>
-  preset?: DenormalizedPreset
-  presets?: DenormalizedPreset[]
-  sourceKind?: JsonRootKind
-}) {
+}: PresetSourceTreeProps) {
   void presetId
   const { dataUrl, rawPresets } = useSchema()
   const host: HostPresetContext = {

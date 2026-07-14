@@ -1,10 +1,10 @@
 import { Link, useParams } from '@tanstack/react-router'
 import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
+import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
 import { MissingInheritancePanel } from '@/components/PagePresets/MissingInheritancePanel'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetIconMismatchPanel } from '@/components/PagePresets/PresetIconMismatchPanel'
-import { PresetSourceTree } from '@/components/PagePresets/PresetSourceTree'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { AreaIcon } from '@/components/ui/areaIcons'
@@ -222,13 +222,7 @@ function PresetDetailContent({
         }
         defaultOpen
       >
-        <PresetSourceTree
-          key={preset.id}
-          presetId={preset.id}
-          raw={raw}
-          preset={preset}
-          presets={presets}
-        />
+        <LazyPresetSourceTree presetId={preset.id} raw={raw} preset={preset} presets={presets} />
       </DetailDisclosure>
 
       {changeStatus === 'added' || changeStatus === 'modified' ? (
