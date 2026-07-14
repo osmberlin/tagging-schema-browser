@@ -115,11 +115,6 @@ export function PageFields() {
           onShowMismatch={() => setFacetState({ f_iconMismatch: 'mismatch' })}
         />
       ) : null}
-      {isSearchPending ? (
-        <p className="text-xs text-slate-500" role="status" aria-live="polite">
-          Filtering fields…
-        </p>
-      ) : null}
       {filtered.length > 0 ? (
         <VirtualizedGrid
           items={filtered}

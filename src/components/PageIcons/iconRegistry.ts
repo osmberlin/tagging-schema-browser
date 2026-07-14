@@ -153,6 +153,7 @@ export function ensureIconSupplier(supplier: IconSupplier): Promise<void> {
         mergeRegistryEntries(entries)
         loadedSuppliers.add(supplier)
         clearMissCacheForSupplier(supplier)
+        notifyRegistryChange()
       })
       .catch(() => {
         failedSuppliers.add(supplier)
