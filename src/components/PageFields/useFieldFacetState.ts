@@ -47,7 +47,9 @@ export function applyFieldFacets(
   }
 
   if (state.f_optionIcon) {
-    filtered = filtered.filter((field) => field.optionIconNames.includes(state.f_optionIcon))
+    filtered = filtered.filter(
+      (field) => field.usageCount > 0 && field.optionIconNames.includes(state.f_optionIcon),
+    )
   }
 
   const query = state.f_q.trim().toLowerCase()
