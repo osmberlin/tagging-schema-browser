@@ -4,7 +4,9 @@ import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingInline } from '@/components/ui/LoadingSpinner'
 import { BrokenPresetIconsAlert } from '@/components/ui/SchemaIssueAlerts'
+import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
+import { useDeferredSearchQuery } from '@/hooks/useDeferredSearchQuery'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportIcons } from '@/utils/pageExports'
@@ -14,6 +16,10 @@ import { IconUsageTable } from './IconUsageTable'
 import { applyIconFacets, useIconFacetState } from './useIconFacetState'
 import { useIconSearch } from './useIconSearch'
 import { useIconSupplierLoad } from './useIconSupplierLoad'
+
+const ICON_CARD_MIN_WIDTH = 180
+const ICON_CARD_GAP = 12
+const ICON_CARD_ROW_ESTIMATE = 168
 
 export function PageIcons() {
   const { data, dataUrl } = useSchema()
@@ -26,10 +32,18 @@ export function PageIcons() {
     data?.fieldTranslations ?? {},
   )
   const { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view } = facetState
+  const { deferredQuery, isSearchPending } = useDeferredSearchQuery(i_q)
   const filtered = useMemo(() => {
     if (!data) return []
-    return applyIconFacets(icons, { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view })
-  }, [data, icons, i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view])
+    return applyIconFacets(icons, {
+      i_q: deferredQuery,
+      i_supplier,
+      i_usage,
+      i_hasSvg,
+      i_sort,
+      i_view,
+    })
+  }, [data, icons, deferredQuery, i_supplier, i_usage, i_hasSvg, i_sort, i_view])
   const usageRows = useMemo(() => {
     if (!data || i_view !== 'usages') return []
     const rows = flattenIconUsages(filtered, data.fields, data.fieldTranslations)
@@ -57,6 +71,7 @@ export function PageIcons() {
             {i_view === 'usages'
               ? `${filtered.length} icons · ${usageRows.length} usages`
               : filtered.length}
+            {isSearchPending ? <span className="sr-only"> — filtering</span> : null}
           </CountPill>
         </h1>
         <div className="flex flex-wrap items-center gap-3">
@@ -115,24 +130,33 @@ export function PageIcons() {
         />
       ) : null}
       {!suppliersReady ? <SchemaLoadingInline label="Loading icon libraries…" /> : null}
+      {isSearchPending ? (
+        <p className="text-xs text-slate-500" role="status" aria-live="polite">
+          Filtering icons…
+        </p>
+      ) : null}
       {i_view === 'usages' ? (
-        <IconUsageTable rows={usageRows} />
-      ) : (
-        <ul className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-          {filtered.map((icon) => (
-            <li key={icon.name} className="h-full">
-              <IconCard
-                iconName={icon.name}
-                svgRaw={icon.svgRaw}
-                presetUsageCount={icon.presetUsageCount}
-                optionUsageCount={icon.optionUsageCount}
-                presets={icon.presets}
-                optionUsages={icon.optionUsages}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+        <IconUsageTable rows={usageRows} busy={isSearchPending} />
+      ) : filtered.length > 0 ? (
+        <VirtualizedGrid
+          items={filtered}
+          minColumnWidth={ICON_CARD_MIN_WIDTH}
+          gap={ICON_CARD_GAP}
+          rowEstimate={ICON_CARD_ROW_ESTIMATE}
+          busy={isSearchPending}
+          getKey={(icon) => icon.name}
+          renderItem={(icon) => (
+            <IconCard
+              iconName={icon.name}
+              svgRaw={icon.svgRaw}
+              presetUsageCount={icon.presetUsageCount}
+              optionUsageCount={icon.optionUsageCount}
+              presets={icon.presets}
+              optionUsages={icon.optionUsages}
+            />
+          )}
+        />
+      ) : null}
       {filtered.length === 0 && (
         <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
           No icons match the current filters.
