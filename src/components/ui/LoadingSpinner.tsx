@@ -1,9 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import {
-  loadingCardSpring,
-  loadingInstant,
-  loadingSpinnerSpin,
-} from '@/components/ui/loadingMotion'
+import { loadingCardSpring, loadingInstant } from '@/components/ui/loadingMotion'
+import { SchemaCubeLoader } from '@/components/ui/SchemaCubeLoader'
 import { cn } from '@/utils/tw'
 
 function useLoadingTransitions() {
@@ -11,11 +8,11 @@ function useLoadingTransitions() {
   return {
     reducedMotion,
     card: reducedMotion ? loadingInstant : loadingCardSpring,
-    label: reducedMotion ? loadingInstant : { ...loadingCardSpring, delay: 0.06 },
+    label: reducedMotion ? loadingInstant : { ...loadingCardSpring, delay: 0.08 },
   }
 }
 
-/** Lightweight spinner — Motion rotate with CSS fallback when reduced motion is on. */
+/** Compact ring spinner for inline / floating refresh states. */
 export function LoadingSpinner({
   className,
   size = 'md',
@@ -26,40 +23,28 @@ export function LoadingSpinner({
   const reducedMotion = useReducedMotion()
   const sizeClass =
     size === 'sm' ? 'h-4 w-4 border-2' : size === 'lg' ? 'h-8 w-8 border-[3px]' : 'h-5 w-5 border-2'
-  const spinnerClass = cn(
-    'inline-block shrink-0 rounded-full border-slate-200 border-t-sky-600',
-    sizeClass,
-    className,
-  )
-
-  if (reducedMotion) {
-    return (
-      <span
-        role="status"
-        aria-hidden={className?.includes('sr-only') ? undefined : true}
-        className={spinnerClass}
-      />
-    )
-  }
 
   return (
-    <motion.span
+    <span
       role="status"
       aria-hidden={className?.includes('sr-only') ? undefined : true}
-      className={spinnerClass}
-      animate={{ rotate: 360 }}
-      transition={loadingSpinnerSpin}
+      className={cn(
+        'inline-block shrink-0 rounded-full border-slate-200 border-t-sky-600',
+        !reducedMotion && 'animate-spin',
+        sizeClass,
+        className,
+      )}
     />
   )
 }
 
 function SchemaLoadingCardContent({
   label,
-  spinnerSize = 'lg',
+  spinnerSize = 'md',
   labelDelay = false,
 }: {
   label: string
-  spinnerSize?: 'md' | 'lg'
+  spinnerSize?: 'sm' | 'md'
   labelDelay?: boolean
 }) {
   const { reducedMotion, label: labelTransition } = useLoadingTransitions()
@@ -67,7 +52,7 @@ function SchemaLoadingCardContent({
   const labelNode = <p className="text-sm font-medium text-slate-600">{label}</p>
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white/95 px-5 py-4 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
+    <div className="flex items-center gap-3 rounded-xl border border-l-2 border-slate-200/80 border-l-mist-400 bg-white/95 px-5 py-3.5 shadow-lg shadow-slate-900/5 backdrop-blur-sm">
       <LoadingSpinner size={spinnerSize} />
       {labelDelay && !reducedMotion ? (
         <motion.div
@@ -86,11 +71,11 @@ function SchemaLoadingCardContent({
 
 function SchemaLoadingCard({
   label,
-  spinnerSize = 'lg',
+  spinnerSize = 'md',
   animated = true,
 }: {
   label: string
-  spinnerSize?: 'md' | 'lg'
+  spinnerSize?: 'sm' | 'md'
   animated?: boolean
 }) {
   const { reducedMotion, card } = useLoadingTransitions()
@@ -113,15 +98,25 @@ function SchemaLoadingCard({
   )
 }
 
-/** Full-page schema load — used when there is no cached data yet. */
+/** Full-page schema load — branded cube loader when there is no cached data yet. */
 export function SchemaLoadingPanel({ label = 'Loading schema…' }: { label?: string }) {
+  const { reducedMotion, label: labelTransition } = useLoadingTransitions()
+
   return (
     <div
       role="status"
-      className="flex min-h-[min(70vh,calc(100svh-10rem))] flex-col items-center justify-center px-4"
+      className="flex min-h-[min(70vh,calc(100svh-10rem))] flex-col items-center justify-center gap-5 px-4"
       aria-live="polite"
     >
-      <SchemaLoadingCard label={label} />
+      <SchemaCubeLoader />
+      <motion.p
+        className="text-sm font-medium text-slate-600"
+        initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={labelTransition}
+      >
+        {label}
+      </motion.p>
     </div>
   )
 }
@@ -140,7 +135,7 @@ export function SchemaLoadingFloat({ label }: { label: string }) {
       exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.98 }}
       transition={card}
     >
-      <SchemaLoadingCard label={label} spinnerSize="md" animated={false} />
+      <SchemaLoadingCard label={label} spinnerSize="sm" animated={false} />
     </motion.div>
   )
 }

@@ -13,8 +13,9 @@ export function PagePreviewLoading() {
   return (
     <>
       <PreviewDevBanner>
-        Preview route for the initial schema load. This card appears when JSON is fetched for the
-        first time (no cached data). The header strip is not shown during this state.
+        Preview route for the initial schema load. Branded wireframe cube with tracing stroke
+        animation — no generic ring spinner. The floating refresh card is not shown during this
+        state.
       </PreviewDevBanner>
       <SchemaLoadingPanel label="Loading schema…" />
     </>
