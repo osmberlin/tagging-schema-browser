@@ -40,6 +40,7 @@
     },
     "tech-stack": {
       "source": "FixMyBerlin/fixmyskills",
+      "ref": "main",
       "sourceType": "github",
       "skillPath": "skills/tech-stack/SKILL.md",
       "computedHash": "c30dbc872281df3e9342b7288ee88382a1d66f700ae8b05ee80da4d21ca7c06c"
