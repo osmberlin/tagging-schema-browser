@@ -53,7 +53,11 @@ export default defineConfig({
       },
     },
     {
-      files: ['src/components/PagePresets/PresetTable.tsx'],
+      files: [
+        'src/components/PagePresets/PresetTable.tsx',
+        'src/components/ui/VirtualizedGrid.tsx',
+        'src/components/ui/VirtualizedScrollList.tsx',
+      ],
       rules: {
         'react/react-compiler': 'off',
         'react-hooks-js/incompatible-library': 'off',

@@ -1,6 +1,10 @@
 import { useLayoutEffect, useState, type RefObject } from 'react'
 
-/** Distance from the window top to a list container — required by window virtualizers. */
+function documentOffsetTop(element: HTMLElement): number {
+  return element.getBoundingClientRect().top + window.scrollY
+}
+
+/** Distance from the document top to a list container — required by window virtualizers. */
 export function useScrollMargin(ref: RefObject<HTMLElement | null>) {
   const [scrollMargin, setScrollMargin] = useState(0)
 
@@ -8,7 +12,8 @@ export function useScrollMargin(ref: RefObject<HTMLElement | null>) {
     const element = ref.current
     if (!element) return
 
-    const measure = () => setScrollMargin(element.offsetTop)
+    const measure = () => setScrollMargin(documentOffsetTop(element))
+
     measure()
 
     const observer = new ResizeObserver(measure)
