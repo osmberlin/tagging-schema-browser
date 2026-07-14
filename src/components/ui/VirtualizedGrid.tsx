@@ -45,6 +45,7 @@ export function VirtualizedGrid<T>({
     estimateSize: () => rowStride,
     overscan: 4,
     scrollMargin,
+    directDomUpdates: true,
   })
 
   useLayoutEffect(() => {
@@ -67,10 +68,7 @@ export function VirtualizedGrid<T>({
       aria-busy={busy || undefined}
       style={{ opacity: busy ? 0.65 : undefined }}
     >
-      <div
-        className={cn('relative w-full', listClassName)}
-        style={{ height: `${virtualizer.getTotalSize()}px` }}
-      >
+      <div ref={virtualizer.containerRef} className={cn('relative w-full', listClassName)}>
         {virtualRows.map((virtualRow) => {
           const startIndex = virtualRow.index * columnCount
           const rowItems = items.slice(startIndex, startIndex + columnCount)
@@ -81,10 +79,7 @@ export function VirtualizedGrid<T>({
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               className="absolute top-0 left-0 w-full"
-              style={{
-                transform: `translateY(${virtualRow.start - scrollMargin}px)`,
-                paddingBottom: gap,
-              }}
+              style={{ paddingBottom: gap }}
             >
               <ul className="grid" style={gridStyle}>
                 {rowItems.map((item) => (

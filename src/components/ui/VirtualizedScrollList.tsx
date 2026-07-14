@@ -31,6 +31,8 @@ export function VirtualizedScrollList<T>({
     getScrollElement: () => scrollRef.current,
     estimateSize: () => estimateSize,
     overscan: 12,
+    // React Compiler caches getVirtualItems() unless positions are written directly.
+    directDomUpdates: true,
   })
 
   const virtualItems = virtualizer.getVirtualItems()
@@ -47,7 +49,7 @@ export function VirtualizedScrollList<T>({
         className="min-h-0 flex-1 overflow-auto"
         style={{ opacity: busy ? 0.65 : undefined }}
       >
-        <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+        <div ref={virtualizer.containerRef} className="relative w-full">
           {virtualItems.map((virtualItem) => {
             const item = items[virtualItem.index]
             if (!item) return null
@@ -58,7 +60,6 @@ export function VirtualizedScrollList<T>({
                 data-index={virtualItem.index}
                 ref={virtualizer.measureElement}
                 className="absolute top-0 left-0 w-full"
-                style={{ transform: `translateY(${virtualItem.start}px)` }}
               >
                 {renderItem(item, virtualItem.index)}
               </div>
