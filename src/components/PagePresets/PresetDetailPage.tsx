@@ -99,13 +99,13 @@ function PresetDetailContent({
           <div className="min-w-0 flex-1">
             <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
             <p className="mt-1 font-mono text-sm text-slate-500">{preset.id}</p>
-            <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+            <div className="mt-3 flex w-full items-center justify-between gap-4 text-sm">
               <span className="inline-flex shrink-0 items-center gap-2 text-slate-600">
                 <span className="font-medium text-slate-500">Geometry</span>
                 <GeometryIcons geometry={preset.geometry} />
               </span>
               {preset.categoryNames.length > 0 || iconId ? (
-                <span className="inline-flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-3 gap-y-1">
                   {preset.categoryNames.map((categoryName) => (
                     <AreaLink
                       key={categoryName}
@@ -119,12 +119,10 @@ function PresetDetailContent({
                         page: 1,
                       })}
                       title={`Show presets in category "${categoryName}"`}
-                      className="max-w-full gap-1"
+                      className="gap-1"
                       iconClassName="shrink-0"
                     >
-                      <span className="min-w-0">
-                        Presets for Category &ldquo;{categoryName}&rdquo;
-                      </span>
+                      Presets for Category &ldquo;{categoryName}&rdquo;
                     </AreaLink>
                   ))}
                   {iconId ? (
@@ -139,10 +137,10 @@ function PresetDetailContent({
                         page: 1,
                       })}
                       title={`Show presets using icon "${iconId}"`}
-                      className="max-w-full gap-1"
+                      className="gap-1"
                       iconClassName="shrink-0"
                     >
-                      <span className="inline-flex min-w-0 flex-wrap items-center gap-1">
+                      <span className="inline-flex items-center gap-1">
                         Presets for icon
                         <code
                           className={cn(
@@ -155,7 +153,7 @@ function PresetDetailContent({
                       </span>
                     </AreaLink>
                   ) : null}
-                </span>
+                </div>
               ) : null}
             </div>
             {preset.imageURL ? (
