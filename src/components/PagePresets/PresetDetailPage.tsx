@@ -96,54 +96,66 @@ function PresetDetailContent({
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-6">
         <div className="flex min-w-0 flex-1 flex-wrap items-start gap-4">
           <PresetIconBox preset={preset} size="md" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
             <p className="mt-1 font-mono text-sm text-slate-500">{preset.id}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-              <span className="inline-flex items-center gap-2 text-slate-600">
+            <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+              <span className="inline-flex shrink-0 items-center gap-2 text-slate-600">
                 <span className="font-medium text-slate-500">Geometry</span>
                 <GeometryIcons geometry={preset.geometry} />
               </span>
-              {preset.categoryNames.map((categoryName) => (
-                <AreaLink
-                  key={categoryName}
-                  area="presets"
-                  to="/"
-                  search={(prev) => ({
-                    ...presetSearchDefaults,
-                    dataUrl: prev.dataUrl ?? '',
-                    locale: prev.locale ?? '',
-                    categoryNames: [categoryName],
-                    page: 1,
-                  })}
-                  title={`Show presets in category "${categoryName}"`}
-                >
-                  Presets for Category &ldquo;{categoryName}&rdquo;
-                </AreaLink>
-              ))}
-              {iconId ? (
-                <AreaLink
-                  area="icons"
-                  to="/"
-                  search={(prev) => ({
-                    ...presetSearchDefaults,
-                    dataUrl: prev.dataUrl ?? '',
-                    locale: prev.locale ?? '',
-                    iconName: [iconId],
-                    page: 1,
-                  })}
-                  title={`Show presets using icon "${iconId}"`}
-                >
-                  Presets for icon{' '}
-                  <code
-                    className={cn(
-                      'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
-                      areaAccent.icons.sharedChip,
-                    )}
-                  >
-                    {iconId}
-                  </code>
-                </AreaLink>
+              {preset.categoryNames.length > 0 || iconId ? (
+                <span className="inline-flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
+                  {preset.categoryNames.map((categoryName) => (
+                    <AreaLink
+                      key={categoryName}
+                      area="presets"
+                      to="/"
+                      search={(prev) => ({
+                        ...presetSearchDefaults,
+                        dataUrl: prev.dataUrl ?? '',
+                        locale: prev.locale ?? '',
+                        categoryNames: [categoryName],
+                        page: 1,
+                      })}
+                      title={`Show presets in category "${categoryName}"`}
+                      className="max-w-full gap-1"
+                      iconClassName="shrink-0"
+                    >
+                      <span className="min-w-0">
+                        Presets for Category &ldquo;{categoryName}&rdquo;
+                      </span>
+                    </AreaLink>
+                  ))}
+                  {iconId ? (
+                    <AreaLink
+                      area="icons"
+                      to="/"
+                      search={(prev) => ({
+                        ...presetSearchDefaults,
+                        dataUrl: prev.dataUrl ?? '',
+                        locale: prev.locale ?? '',
+                        iconName: [iconId],
+                        page: 1,
+                      })}
+                      title={`Show presets using icon "${iconId}"`}
+                      className="max-w-full gap-1"
+                      iconClassName="shrink-0"
+                    >
+                      <span className="inline-flex min-w-0 flex-wrap items-center gap-1">
+                        Presets for icon
+                        <code
+                          className={cn(
+                            'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
+                            areaAccent.icons.sharedChip,
+                          )}
+                        >
+                          {iconId}
+                        </code>
+                      </span>
+                    </AreaLink>
+                  ) : null}
+                </span>
               ) : null}
             </div>
             {preset.imageURL ? (
