@@ -3,6 +3,7 @@ import { AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
 import { SidebarSection } from '@/components/ui/Sidebar'
 import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
+import { iconBrowseNeedsFullCatalog } from './iconFacetMeta'
 import { useIconsPage } from './IconsPageContext'
 import { useIconFacetMeta, useIconFacetState } from './useIconFacetState'
 
@@ -54,9 +55,11 @@ function FacetButton({
 
 export function IconFacetSidebar() {
   const [state, setState] = useIconFacetState()
-  const { icons, allSupplierCatalogLoaded } = useIconsPage()
+  const { icons, allSupplierCatalogLoaded, suppliersReady } = useIconsPage()
   const meta = useIconFacetMeta(icons)
-  const allUnusedCountsPending = state.i_supplier === 'all' && !allSupplierCatalogLoaded
+  const needsFullCatalog = iconBrowseNeedsFullCatalog(state.i_usage)
+  const allUnusedCountsPending =
+    state.i_supplier === 'all' ? !allSupplierCatalogLoaded : needsFullCatalog && !suppliersReady
 
   return (
     <div className="mt-4 flex flex-col gap-4">
