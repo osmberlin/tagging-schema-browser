@@ -44,6 +44,22 @@ export function getFieldOptionValues(
   return []
 }
 
+/** Icon names assigned to this field's actual option values (not every key in `icons`). */
+export function listFieldOptionIconNames(
+  fieldId: string,
+  field: RawField,
+  allFields: RawFields,
+  fieldTranslations: FieldTranslations = {},
+): string[] {
+  const icons = resolveFieldIcons(field, allFields)
+  const names = new Set<string>()
+  for (const opt of getFieldOptionValues(field, fieldTranslations, fieldId)) {
+    const iconName = icons[opt]
+    if (iconName) names.add(iconName)
+  }
+  return [...names]
+}
+
 export type OptionIconUsage = {
   fieldId: string
   fieldKey: string
