@@ -112,6 +112,9 @@ export type SchemaIndices = {
   presetsByPrimaryField: Map<string, DenormalizedPreset[]>
   presetsByMoreField: Map<string, DenormalizedPreset[]>
   fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>
+  /** Fields page list + sidebar facets — built once to avoid duplicate scans on /fields. */
+  fieldCatalog: FieldViewModel[]
+  fieldTypes: string[]
 }
 
 export type SchemaData = {

@@ -1,10 +1,12 @@
 import { getFieldOptionValues, resolveFieldIcons } from '@/utils/fieldOptions'
 import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
+import { sortFieldTypes } from '@/utils/fieldTypes'
 import { isOptionIconMismatch } from '@/utils/iconMismatch'
 import type {
   DenormalizedPreset,
   FieldOptionMismatchRow,
   FieldTranslations,
+  FieldViewModel,
   RawField,
   RawFields,
   SchemaIndices,
@@ -129,6 +131,62 @@ export function buildFieldOptionMismatchIndex(
   return index
 }
 
+function fieldLabel(
+  id: string,
+  raw: RawField | undefined,
+  fieldTranslations: FieldTranslations,
+): string {
+  return fieldTranslations[id]?.label ?? ((typeof raw?.label === 'string' ? raw.label : '') || id)
+}
+
+function buildFieldMismatchCounts(
+  fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>,
+): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const [fieldId, rows] of fieldOptionMismatchRows) {
+    const mismatchCount = rows.filter((row) => row.iconMismatch).length
+    if (mismatchCount > 0) counts.set(fieldId, mismatchCount)
+  }
+  return counts
+}
+
+export function buildFieldCatalog(
+  fields: RawFields,
+  fieldTranslations: FieldTranslations,
+  presetsByPrimaryField: Map<string, DenormalizedPreset[]>,
+  presetsByMoreField: Map<string, DenormalizedPreset[]>,
+  fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>,
+): { fieldCatalog: FieldViewModel[]; fieldTypes: string[] } {
+  const mismatchCounts = buildFieldMismatchCounts(fieldOptionMismatchRows)
+
+  const fieldCatalog: FieldViewModel[] = Object.entries(fields).map(([id, raw]) => {
+    const primaryPresets = presetsByPrimaryField.get(id) ?? []
+    const morePresets = presetsByMoreField.get(id) ?? []
+    const presetsById = new Map<string, DenormalizedPreset>()
+    for (const preset of primaryPresets) presetsById.set(preset.id, preset)
+    for (const preset of morePresets) presetsById.set(preset.id, preset)
+
+    return {
+      id,
+      key: raw.key ?? id,
+      type: raw.type ?? 'unknown',
+      label: fieldLabel(id, raw, fieldTranslations),
+      geometry: raw.geometry ?? [],
+      universal: Boolean(raw.universal),
+      usageCount: presetsById.size,
+      primaryCount: primaryPresets.length,
+      moreCount: morePresets.length,
+      presets: Array.from(presetsById.values()),
+      iconMismatchCount: mismatchCounts.get(id) ?? 0,
+    }
+  })
+
+  return {
+    fieldCatalog,
+    fieldTypes: sortFieldTypes(fieldCatalog.map((field) => field.type)),
+  }
+}
+
 export function buildSchemaIndices(
   presets: DenormalizedPreset[],
   fields: RawFields,
@@ -142,10 +200,19 @@ export function buildSchemaIndices(
     fieldTranslations,
     childPresetIndex,
   )
+  const { fieldCatalog, fieldTypes } = buildFieldCatalog(
+    fields,
+    fieldTranslations,
+    primary,
+    more,
+    fieldOptionMismatchRows,
+  )
   return {
     childPresetIndex,
     presetsByPrimaryField: primary,
     presetsByMoreField: more,
     fieldOptionMismatchRows,
+    fieldCatalog,
+    fieldTypes,
   }
 }

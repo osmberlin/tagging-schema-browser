@@ -1,6 +1,5 @@
 import { AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
 import { SidebarSection } from '@/components/ui/Sidebar'
-import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { cn } from '@/utils/tw'
@@ -50,12 +49,7 @@ function FacetButton({
 }
 
 export function FieldFacetSidebar() {
-  const { data } = useSchema()
-  const { fields, types } = useFieldSearch(
-    data?.fields ?? {},
-    data?.presets ?? [],
-    data?.fieldTranslations ?? {},
-  )
+  const { fields, types } = useFieldSearch()
   const [state, setState] = useFieldFacetState()
   const meta = useFieldFacetMeta(fields)
 
