@@ -7,9 +7,9 @@ import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetIconMismatchPanel } from '@/components/PagePresets/PresetIconMismatchPanel'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
+import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
-import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
@@ -18,12 +18,6 @@ import { externalLinkClass, externalActionPillClass } from '@/theme/externalAcce
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset, SchemaIndices } from '@/utils/types'
-
-type RelatedItem = { id: string; name: string }
-
-function toRelatedItem(c: DenormalizedPreset): RelatedItem {
-  return { id: c.id, name: c.name }
-}
 
 export function PresetDetailPage() {
   const { _splat: presetId } = useParams({ strict: false })
@@ -94,23 +88,7 @@ function PresetDetailContent({
 
   const filePath = schemaRepoPath('preset', preset.id, { searchable: preset.searchable })
   const githubUrl = githubFileUrl(dataUrl, filePath)
-
-  const categorySections = preset.categoryNames.map((categoryName, index) => {
-    const categoryId = preset.categoryIds[index]
-    const related = (indices.presetsByCategoryId.get(categoryId) ?? [])
-      .filter((c) => c.id !== preset.id)
-      .map(toRelatedItem)
-    return {
-      title: `Presets of this category "${categoryName}"`,
-      titleFilter: { categoryNames: [categoryName] },
-      related,
-    }
-  })
-
   const iconId = preset.icon
-  const iconRelated = iconId
-    ? (indices.presetsByIcon.get(iconId) ?? []).filter((c) => c.id !== preset.id).map(toRelatedItem)
-    : []
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
@@ -120,9 +98,50 @@ function PresetDetailContent({
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-semibold text-slate-950">{preset.name}</h1>
             <p className="mt-1 font-mono text-xs text-slate-500">{preset.id}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-slate-500">Geometry</span>
-              <GeometryIcons geometry={preset.geometry} />
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-medium text-slate-500">Geometry</span>
+                <GeometryIcons geometry={preset.geometry} />
+              </div>
+              {preset.categoryNames.length > 0 || iconId ? (
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {preset.categoryNames.map((categoryName) => (
+                    <Link
+                      key={categoryName}
+                      to="/"
+                      search={(prev) => ({
+                        ...presetSearchDefaults,
+                        dataUrl: prev.dataUrl ?? '',
+                        locale: prev.locale ?? '',
+                        categoryNames: [categoryName],
+                        page: 1,
+                      })}
+                      title={`Show presets in category "${categoryName}"`}
+                      className={cn('inline-flex max-w-full items-center gap-1.5', areaAccent.presets.navActive)}
+                    >
+                      <AreaIcon area="presets" className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">Filter presets · {categoryName}</span>
+                    </Link>
+                  ))}
+                  {iconId ? (
+                    <Link
+                      to="/"
+                      search={(prev) => ({
+                        ...presetSearchDefaults,
+                        dataUrl: prev.dataUrl ?? '',
+                        locale: prev.locale ?? '',
+                        iconName: [iconId],
+                        page: 1,
+                      })}
+                      title={`Show presets using icon "${iconId}"`}
+                      className={cn('inline-flex max-w-full items-center gap-1.5', areaAccent.icons.navActive)}
+                    >
+                      <AreaIcon area="icons" className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate font-mono text-xs">Filter presets · {iconId}</span>
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             {preset.imageURL ? (
               <p className="mt-2 text-sm">
@@ -236,31 +255,6 @@ function PresetDetailContent({
                 ))}
               </ul>
             )}
-          </div>
-        </DetailDisclosure>
-      ) : null}
-
-      {categorySections.length > 0 || iconId ? (
-        <DetailDisclosure title="Related presets" area="presets">
-          <div className="grid gap-6 px-4 py-4 sm:grid-cols-2 sm:gap-8">
-            {categorySections.map((section) => (
-              <RelatedBlock
-                key={section.title}
-                title={section.title}
-                count={section.related.length}
-                titleFilter={section.titleFilter}
-                presets={section.related}
-              />
-            ))}
-            {iconId ? (
-              <RelatedBlock
-                title={`Presets with this icon \`${iconId}\``}
-                count={iconRelated.length}
-                titleFilter={{ iconName: [iconId] }}
-                presets={iconRelated}
-                area="icons"
-              />
-            ) : null}
           </div>
         </DetailDisclosure>
       ) : null}
