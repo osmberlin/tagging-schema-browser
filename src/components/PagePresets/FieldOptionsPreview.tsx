@@ -147,7 +147,10 @@ export function FieldOptionsPreview({
                   to="/preset/$"
                   params={{ _splat: childPreset.id }}
                   search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-                  className={cn('mt-1 inline-flex items-center gap-1 text-xs', areaLinkClass('presets'))}
+                  className={cn(
+                    'mt-1 inline-flex items-center gap-1 text-xs',
+                    areaLinkClass('presets'),
+                  )}
                 >
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {childPreset.name}

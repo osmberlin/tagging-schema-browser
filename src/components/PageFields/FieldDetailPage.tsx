@@ -3,17 +3,17 @@ import { FieldOptionIconsTable } from '@/components/PageFields/FieldOptionIconsT
 import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
-import { useSetPreset } from '@/components/PagePresets/useSearchState'
+import { useSetPreset, presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
+import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { useLocale } from '@/hooks/useLocale'
 import { useSchema } from '@/hooks/useSchema'
-import { areaAccent } from '@/theme/areaAccent'
+import { areaAccent, areaInlineCodeClass } from '@/theme/areaAccent'
 import { externalActionPillClass } from '@/theme/externalAccent'
-import { cn } from '@/utils/tw'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
@@ -118,6 +118,7 @@ function FieldDetailContent({
   const mismatchCount = optionRows.filter((row) => row.iconMismatch).length
   const mismatchDisclosureId = `field-icon-mismatch:${fieldId}`
   useAutoOpenFocusedIssue(mismatchDisclosureId, 'iconMismatch', mismatchCount > 0)
+  const presetUsageCount = primaryPresets.length + morePresets.length
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-12">
@@ -128,9 +129,9 @@ function FieldDetailContent({
           >
             <AreaIcon area="fields" className="h-8 w-8" />
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="font-display text-2xl font-semibold text-slate-950">{label}</h1>
-            <p className="mt-1 font-mono text-xs text-slate-500">{fieldId}</p>
+            <p className="mt-1 font-mono text-sm text-slate-500">{fieldId}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
               <span
                 className="rounded-full bg-slate-100 px-2.5 py-0.5 font-mono text-xs"
@@ -154,10 +155,32 @@ function FieldDetailContent({
                 {formatPrerequisiteTag(prerequisiteTag)}
               </p>
             ) : null}
-            {geometry.length > 0 ? (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-slate-500">Geometry</span>
-                <GeometryIcons geometry={geometry} />
+            {geometry.length > 0 || presetUsageCount > 0 ? (
+              <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
+                {geometry.length > 0 ? (
+                  <span className="inline-flex shrink-0 items-center gap-2 text-slate-600">
+                    <span className="font-medium text-slate-500">Geometry</span>
+                    <GeometryIcons geometry={geometry} />
+                  </span>
+                ) : (
+                  <span />
+                )}
+                {presetUsageCount > 0 ? (
+                  <AreaLink
+                    area="presets"
+                    to="/"
+                    search={(prev) => ({
+                      ...presetSearchDefaults,
+                      dataUrl: prev.dataUrl ?? '',
+                      locale: prev.locale ?? '',
+                      fieldIds: [fieldId],
+                      page: 1,
+                    })}
+                    title={`Show all ${presetUsageCount} presets using "${fieldId}"`}
+                  >
+                    Filter presets using this field
+                  </AreaLink>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -241,14 +264,7 @@ function FieldDetailContent({
             title={
               <>
                 Presets use {label} in{' '}
-                <code
-                  className={cn(
-                    'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
-                    areaAccent.presets.sharedChip,
-                  )}
-                >
-                  fields
-                </code>
+                <code className={areaInlineCodeClass('presets')}>fields</code>
               </>
             }
             count={primaryPresets.length}
@@ -260,14 +276,7 @@ function FieldDetailContent({
             title={
               <>
                 Presets use {label} in{' '}
-                <code
-                  className={cn(
-                    'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 ring-inset',
-                    areaAccent.presets.sharedChip,
-                  )}
-                >
-                  moreFields
-                </code>
+                <code className={areaInlineCodeClass('presets')}>moreFields</code>
               </>
             }
             count={morePresets.length}

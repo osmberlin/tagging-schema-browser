@@ -196,6 +196,22 @@ export const areaAccent: Record<SchemaArea, AreaAccent> = {
   },
 }
 
+const areaChipHoverClass: Record<SchemaArea, string> = {
+  presets: 'hover:bg-rose-100 hover:text-rose-800 hover:ring-rose-200',
+  icons: 'hover:bg-sky-100 hover:text-sky-800 hover:ring-sky-200',
+  fields: 'hover:bg-emerald-100 hover:text-emerald-800 hover:ring-emerald-200',
+  translations: 'hover:bg-yellow-100 hover:text-yellow-800 hover:ring-yellow-200',
+  presetSwitch: 'hover:bg-amber-100 hover:text-amber-800 hover:ring-amber-200',
+}
+
+const areaChipHoverInLinkClass: Record<SchemaArea, string> = {
+  presets: 'group-hover:bg-rose-100 group-hover:text-rose-800 group-hover:ring-rose-200',
+  icons: 'group-hover:bg-sky-100 group-hover:text-sky-800 group-hover:ring-sky-200',
+  fields: 'group-hover:bg-emerald-100 group-hover:text-emerald-800 group-hover:ring-emerald-200',
+  translations: 'group-hover:bg-yellow-100 group-hover:text-yellow-800 group-hover:ring-yellow-200',
+  presetSwitch: 'group-hover:bg-amber-100 group-hover:text-amber-800 group-hover:ring-amber-200',
+}
+
 export function areaNavClass(area: SchemaArea, active: boolean): string {
   return active ? areaAccent[area].navActive : areaAccent[area].navInactive
 }
@@ -213,21 +229,23 @@ export function areaNavButtonClass(area: SchemaArea): string {
 
 export function areaLinkClass(area: SchemaArea): string {
   return cn(
-    'font-medium underline-offset-2 decoration-current/40 transition-colors hover:underline hover:decoration-current',
+    'font-medium decoration-current/40 underline-offset-2 transition-colors hover:underline hover:decoration-current',
     areaAccent[area].link,
   )
 }
 
 /** Chip-styled area links (preset lists, filter chips). */
 export function areaChipLinkClass(area: SchemaArea): string {
-  const chipHover: Record<SchemaArea, string> = {
-    presets: 'hover:bg-rose-100 hover:text-rose-800 hover:ring-rose-200',
-    icons: 'hover:bg-sky-100 hover:text-sky-800 hover:ring-sky-200',
-    fields: 'hover:bg-emerald-100 hover:text-emerald-800 hover:ring-emerald-200',
-    translations: 'hover:bg-yellow-100 hover:text-yellow-800 hover:ring-yellow-200',
-    presetSwitch: 'hover:bg-amber-100 hover:text-amber-800 hover:ring-amber-200',
-  }
-  return cn('transition-colors', areaAccent[area].sharedChip, chipHover[area])
+  return cn('transition-colors', areaAccent[area].sharedChip, areaChipHoverClass[area])
+}
+
+/** Inline code chip inside an area link (inherits group-hover from AreaLink). */
+export function areaInlineCodeClass(area: SchemaArea): string {
+  return cn(
+    'rounded px-1 py-0.5 font-mono text-[11px] font-normal ring-1 transition-colors ring-inset',
+    areaAccent[area].sharedChip,
+    areaChipHoverInLinkClass[area],
+  )
 }
 
 export function areaSourceLinkClass(area: SchemaArea): string {

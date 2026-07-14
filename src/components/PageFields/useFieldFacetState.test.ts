@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyFieldFacets } from '@/components/PageFields/useFieldFacetState'
+import { applyFieldFacets } from '@/components/PageFields/fieldFacetFilter'
 import type { FieldViewModel } from '@/utils/types'
 
 describe('applyFieldFacets f_optionIcon', () => {
