@@ -107,11 +107,6 @@ function PresetDetailContent({
     }
   })
 
-  const uncategorizedRelated =
-    preset.categoryNames.length === 0
-      ? presets.filter((c) => c.id !== preset.id && c.categoryNames.length === 0).map(toRelatedItem)
-      : []
-
   const iconId = preset.icon
   const iconRelated = iconId
     ? (indices.presetsByIcon.get(iconId) ?? []).filter((c) => c.id !== preset.id).map(toRelatedItem)
@@ -245,36 +240,30 @@ function PresetDetailContent({
         </DetailDisclosure>
       ) : null}
 
-      <DetailDisclosure title="Related presets" area="presets">
-        <div className="grid gap-6 px-4 py-4 sm:grid-cols-2 sm:gap-8">
-          {categorySections.map((section) => (
-            <RelatedBlock
-              key={section.title}
-              title={section.title}
-              count={section.related.length}
-              titleFilter={section.titleFilter}
-              presets={section.related}
-            />
-          ))}
-          {preset.categoryNames.length === 0 && (
-            <RelatedBlock
-              title="Presets with no category"
-              count={uncategorizedRelated.length}
-              titleFilter={{ categoryNames: ['No Category'] }}
-              presets={uncategorizedRelated}
-            />
-          )}
-          {iconId ? (
-            <RelatedBlock
-              title={`Presets with this icon \`${iconId}\``}
-              count={iconRelated.length}
-              titleFilter={{ iconName: [iconId] }}
-              presets={iconRelated}
-              area="icons"
-            />
-          ) : null}
-        </div>
-      </DetailDisclosure>
+      {categorySections.length > 0 || iconId ? (
+        <DetailDisclosure title="Related presets" area="presets">
+          <div className="grid gap-6 px-4 py-4 sm:grid-cols-2 sm:gap-8">
+            {categorySections.map((section) => (
+              <RelatedBlock
+                key={section.title}
+                title={section.title}
+                count={section.related.length}
+                titleFilter={section.titleFilter}
+                presets={section.related}
+              />
+            ))}
+            {iconId ? (
+              <RelatedBlock
+                title={`Presets with this icon \`${iconId}\``}
+                count={iconRelated.length}
+                titleFilter={{ iconName: [iconId] }}
+                presets={iconRelated}
+                area="icons"
+              />
+            ) : null}
+          </div>
+        </DetailDisclosure>
+      ) : null}
     </div>
   )
 }
