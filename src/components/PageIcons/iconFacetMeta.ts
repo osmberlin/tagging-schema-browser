@@ -1,6 +1,16 @@
 import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import type { IconViewModel } from '@/utils/types'
 
+/** True when the browse view needs a supplier's full icon catalog (not schema-referenced only). */
+export function iconBrowseNeedsFullCatalog(i_usage: string): boolean {
+  return i_usage === 'all' || i_usage === 'unused'
+}
+
+/** True when All / Unused sidebar counts need the full catalog (all suppliers selected). */
+export function iconFacetCountsNeedFullCatalog(i_usage: string, i_supplier: string): boolean {
+  return i_supplier === 'all' && iconBrowseNeedsFullCatalog(i_usage)
+}
+
 export function buildIconFacetMeta(icons: IconViewModel[]) {
   const supplierCounts = new Map<string, number>()
   let withSvg = 0
