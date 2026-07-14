@@ -10,11 +10,10 @@ import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { exportIcons } from '@/utils/pageExports'
 import { IconCard } from './IconCard'
+import { useIconsPage } from './IconsPageContext'
 import { flattenIconUsages, sortIconUsageRows } from './iconUsageRows'
 import { IconUsageTable } from './IconUsageTable'
 import { applyIconFacets, useIconFacetState } from './useIconFacetState'
-import { useIconSearch } from './useIconSearch'
-import { useIconSupplierLoad } from './useIconSupplierLoad'
 
 const ICON_CARD_MIN_WIDTH = 180
 const ICON_CARD_GAP = 12
@@ -23,13 +22,8 @@ const ICON_CARD_ROW_ESTIMATE = 208
 export function PageIcons() {
   const { data, dataUrl } = useSchema()
   const [facetState, setFacetState] = useIconFacetState()
-  useIconSupplierLoad(facetState.i_supplier)
+  const { icons } = useIconsPage()
   const brokenPresetIconCount = useBrokenPresetIconCount(data?.presets ?? [])
-  const { icons } = useIconSearch(
-    data?.presets ?? [],
-    data?.fields ?? {},
-    data?.fieldTranslations ?? {},
-  )
   const { i_q, i_supplier, i_usage, i_hasSvg, i_sort, i_view } = facetState
   const { deferredQuery, isSearchPending } = useDeferredSearchQuery(i_q)
   const filtered = useMemo(() => {

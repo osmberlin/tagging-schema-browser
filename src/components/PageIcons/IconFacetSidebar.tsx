@@ -1,24 +1,25 @@
 import { ICON_SUPPLIERS } from '@/components/PageIcons/iconRegistry'
 import { AreaLabel, type SchemaArea } from '@/components/ui/areaIcons'
 import { SidebarSection } from '@/components/ui/Sidebar'
-import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
+import { iconBrowseNeedsFullCatalog } from './iconFacetMeta'
+import { useIconsPage } from './IconsPageContext'
 import { useIconFacetMeta, useIconFacetState } from './useIconFacetState'
-import { useIconSearch } from './useIconSearch'
-import { useIconSupplierLoad } from './useIconSupplierLoad'
 
 function FacetButton({
   active,
   label,
   labelArea,
   count,
+  countPending,
   onClick,
 }: {
   active: boolean
   label: string
   labelArea?: SchemaArea
   count: number
+  countPending?: boolean
   onClick: () => void
 }) {
   return (
@@ -42,24 +43,23 @@ function FacetButton({
             label
           )}
         </span>
-        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
-          {count}
-        </span>
+        {countPending ? null : (
+          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+            {count}
+          </span>
+        )}
       </button>
     </li>
   )
 }
 
 export function IconFacetSidebar() {
-  const { data } = useSchema()
   const [state, setState] = useIconFacetState()
-  useIconSupplierLoad(state.i_supplier)
-  const { icons } = useIconSearch(
-    data?.presets ?? [],
-    data?.fields ?? {},
-    data?.fieldTranslations ?? {},
-  )
+  const { icons, allSupplierCatalogLoaded, suppliersReady } = useIconsPage()
   const meta = useIconFacetMeta(icons)
+  const needsFullCatalog = iconBrowseNeedsFullCatalog(state.i_usage)
+  const allUnusedCountsPending =
+    state.i_supplier === 'all' ? !allSupplierCatalogLoaded : needsFullCatalog && !suppliersReady
 
   return (
     <div className="mt-4 flex flex-col gap-4">
@@ -69,6 +69,7 @@ export function IconFacetSidebar() {
             active={state.i_usage === 'all'}
             label="All"
             count={icons.length}
+            countPending={allUnusedCountsPending}
             onClick={() => setState({ i_usage: 'all' })}
           />
           <FacetButton
@@ -96,6 +97,7 @@ export function IconFacetSidebar() {
             active={state.i_usage === 'unused'}
             label="Unused"
             count={meta.unusedCount}
+            countPending={allUnusedCountsPending}
             onClick={() => setState({ i_usage: 'unused' })}
           />
         </ul>
