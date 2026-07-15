@@ -32,6 +32,7 @@ export function RelatedBlock({
       <h2 className="text-sm font-semibold text-slate-900">
         <AreaLink
           area={area}
+          showIcon={false}
           to="/"
           search={(prev) => ({
             ...presetSearchDefaults,
