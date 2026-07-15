@@ -135,21 +135,57 @@ function FieldDetailContent({
           <div className="min-w-0 flex-1">
             <h1 className="font-display text-2xl font-semibold text-slate-950">{label}</h1>
             <p className="mt-1 font-mono text-sm text-slate-500">{fieldId}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-              <span
-                className="rounded-full bg-slate-100 px-2.5 py-0.5 font-mono text-xs"
-                title={typeHint}
-              >
-                {type}
-              </span>
-              {typeHint ? <span className="text-xs text-slate-500">{typeHint}</span> : null}
-              <span>
-                key: <code className="font-mono text-xs">{key}</code>
-              </span>
-              {raw.universal ? (
-                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
-                  universal
+            <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-slate-600">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span
+                  className="rounded-full bg-slate-100 px-2.5 py-0.5 font-mono text-xs"
+                  title={typeHint}
+                >
+                  {type}
                 </span>
+                {typeHint ? <span className="text-xs text-slate-500">{typeHint}</span> : null}
+                <span>
+                  key: <code className="font-mono text-xs">{key}</code>
+                </span>
+                {raw.universal ? (
+                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100 ring-inset">
+                    universal
+                  </span>
+                ) : null}
+                {geometry.length > 0 ? (
+                  <span className="inline-flex shrink-0 items-center gap-2">
+                    <span className="font-medium text-slate-500">Geometry</span>
+                    <GeometryIcons geometry={geometry} />
+                  </span>
+                ) : null}
+              </div>
+              {presetUsageCount > 0 ? (
+                <AreaLink
+                  area="presets"
+                  showIcon={false}
+                  to="/"
+                  search={(prev) => ({
+                    ...presetSearchDefaults,
+                    dataUrl: prev.dataUrl ?? '',
+                    locale: prev.locale ?? '',
+                    fieldIds: [fieldId],
+                    page: 1,
+                  })}
+                  title={`Show all ${presetUsageCount} presets using “${label}” in fields or moreFields`}
+                  className="inline-flex shrink-0 flex-wrap items-center gap-1.5"
+                >
+                  <span className="inline-flex flex-wrap items-center gap-1.5">
+                    <CountPill className={cn(areaAccent.presets.pill, areaAccent.presets.pillText)}>
+                      {presetUsageCount}
+                    </CountPill>
+                    <span>
+                      Presets using {label} in{' '}
+                      <code className={areaInlineCodeClass('presets')}>fields</code>
+                      {' or '}
+                      <code className={areaInlineCodeClass('presets')}>moreFields</code>
+                    </span>
+                  </span>
+                </AreaLink>
               ) : null}
             </div>
             {prerequisiteTag ? (
@@ -157,48 +193,6 @@ function FieldDetailContent({
                 <span className="font-medium">Visibility: </span>
                 {formatPrerequisiteTag(prerequisiteTag)}
               </p>
-            ) : null}
-            {geometry.length > 0 || presetUsageCount > 0 ? (
-              <div className="mt-3 flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
-                {geometry.length > 0 ? (
-                  <span className="inline-flex shrink-0 items-center gap-2 text-slate-600">
-                    <span className="font-medium text-slate-500">Geometry</span>
-                    <GeometryIcons geometry={geometry} />
-                  </span>
-                ) : (
-                  <span />
-                )}
-                {presetUsageCount > 0 ? (
-                  <AreaLink
-                    area="presets"
-                    showIcon={false}
-                    to="/"
-                    search={(prev) => ({
-                      ...presetSearchDefaults,
-                      dataUrl: prev.dataUrl ?? '',
-                      locale: prev.locale ?? '',
-                      fieldIds: [fieldId],
-                      page: 1,
-                    })}
-                    title={`Show all ${presetUsageCount} presets using “${label}” in fields or moreFields`}
-                    className="inline-flex flex-wrap items-center gap-1.5"
-                  >
-                    <span className="inline-flex flex-wrap items-center gap-1.5">
-                      <CountPill
-                        className={cn(areaAccent.presets.pill, areaAccent.presets.pillText)}
-                      >
-                        {presetUsageCount}
-                      </CountPill>
-                      <span>
-                        Presets using {label} in{' '}
-                        <code className={areaInlineCodeClass('presets')}>fields</code>
-                        {' or '}
-                        <code className={areaInlineCodeClass('presets')}>moreFields</code>
-                      </span>
-                    </span>
-                  </AreaLink>
-                ) : null}
-              </div>
             ) : null}
           </div>
         </div>
