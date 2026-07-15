@@ -171,6 +171,7 @@ function FieldDetailContent({
                 {presetUsageCount > 0 ? (
                   <AreaLink
                     area="presets"
+                    showIcon={false}
                     to="/"
                     search={(prev) => ({
                       ...presetSearchDefaults,
