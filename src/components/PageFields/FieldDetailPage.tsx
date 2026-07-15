@@ -6,6 +6,7 @@ import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceT
 import { useSetPreset, presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
+import { CountPill } from '@/components/ui/CountPill'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
@@ -18,6 +19,7 @@ import { externalActionPillClass } from '@/theme/externalAccent'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
+import { cn } from '@/utils/tw'
 import type { FieldOptionMismatchRow } from '@/utils/types'
 import type { DenormalizedPreset, RawFieldTranslation } from '@/utils/types'
 
@@ -177,9 +179,22 @@ function FieldDetailContent({
                       fieldIds: [fieldId],
                       page: 1,
                     })}
-                    title={`Show all ${presetUsageCount} presets using "${fieldId}"`}
+                    title={`Show all ${presetUsageCount} presets using “${label}” in fields or moreFields`}
+                    className="inline-flex flex-wrap items-center gap-1.5"
                   >
-                    Filter presets using this field
+                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                      <CountPill
+                        className={cn(areaAccent.presets.pill, areaAccent.presets.pillText)}
+                      >
+                        {presetUsageCount}
+                      </CountPill>
+                      <span>
+                        Presets using {label} in{' '}
+                        <code className={areaInlineCodeClass('presets')}>fields</code>
+                        {' or '}
+                        <code className={areaInlineCodeClass('presets')}>moreFields</code>
+                      </span>
+                    </span>
                   </AreaLink>
                 ) : null}
               </div>
@@ -264,7 +279,7 @@ function FieldDetailContent({
           <RelatedBlock
             title={
               <>
-                Presets use {label} in{' '}
+                Presets using {label} in{' '}
                 <code className={areaInlineCodeClass('presets')}>fields</code>
               </>
             }
@@ -276,7 +291,7 @@ function FieldDetailContent({
           <RelatedBlock
             title={
               <>
-                Presets use {label} in{' '}
+                Presets using {label} in{' '}
                 <code className={areaInlineCodeClass('presets')}>moreFields</code>
               </>
             }

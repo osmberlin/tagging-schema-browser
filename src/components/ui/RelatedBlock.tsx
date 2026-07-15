@@ -29,7 +29,7 @@ export function RelatedBlock({
 }: RelatedBlockProps) {
   return (
     <section className={cn('min-w-0 space-y-3', className)}>
-      <h2 className="flex items-start justify-between gap-2 text-sm font-semibold text-slate-900">
+      <h2 className="text-sm font-semibold text-slate-900">
         <AreaLink
           area={area}
           to="/"
@@ -40,11 +40,15 @@ export function RelatedBlock({
             ...titleFilter,
             page: 1,
           })}
-          className="min-w-0 text-left"
+          className="inline-flex min-w-0 flex-wrap items-center gap-1.5 text-left"
         >
-          {title}
+          <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
+            <CountPill className={cn(areaAccent[area].pill, areaAccent[area].pillText)}>
+              {count}
+            </CountPill>
+            <span>{title}</span>
+          </span>
         </AreaLink>
-        <CountPill>{count}</CountPill>
       </h2>
       {presets.length === 0 ? (
         <p className="text-sm text-slate-500">No related presets.</p>
