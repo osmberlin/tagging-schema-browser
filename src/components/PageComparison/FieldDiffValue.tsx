@@ -83,7 +83,7 @@ function ListDiffValue({ diff, arrowClass }: { diff: FieldDiff; arrowClass: stri
   return (
     <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
       {removed.map((item, index) => (
-        <span key={`removed-${item}`} className="inline-flex items-center">
+        <span key={`removed-${index}`} className="inline-flex items-center">
           {index > 0 ? <span className="text-slate-300">, </span> : null}
           <ListItemValue item={item} tone="before" label={diff.label} />
         </span>
@@ -92,7 +92,7 @@ function ListDiffValue({ diff, arrowClass }: { diff: FieldDiff; arrowClass: stri
         <span className={`mx-0.5 ${arrowClass}`}>→</span>
       ) : null}
       {added.map((item, index) => (
-        <span key={`added-${item}`} className="inline-flex items-center">
+        <span key={`added-${index}`} className="inline-flex items-center">
           {index > 0 ? <span className="text-slate-300">, </span> : null}
           <ListItemValue item={item} tone="after" label={diff.label} />
         </span>

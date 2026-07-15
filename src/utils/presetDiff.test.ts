@@ -83,6 +83,14 @@ describe('diffSortedLists', () => {
       unchangedCount: 2,
     })
   })
+
+  it('detects duplicate count changes', () => {
+    expect(diffSortedLists(['brand', 'brand', 'phone'], ['brand', 'phone'])).toEqual({
+      removed: ['brand'],
+      added: [],
+      unchangedCount: 2,
+    })
+  })
 })
 
 describe('comparePresets', () => {

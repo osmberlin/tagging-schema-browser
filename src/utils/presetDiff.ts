@@ -61,13 +61,33 @@ function dimensions(p: DenormalizedPreset): Dimension[] {
 }
 
 export function diffSortedLists(before: string[], after: string[]): ListChanges | null {
-  const afterSet = new Set(after)
-  const beforeSet = new Set(before)
-  const removed = before.filter((item) => !afterSet.has(item))
-  const added = after.filter((item) => !beforeSet.has(item))
+  const beforeCounts = countItems(before)
+  const afterCounts = countItems(after)
+  const keys = new Set([...beforeCounts.keys(), ...afterCounts.keys()])
+
+  const removed: string[] = []
+  const added: string[] = []
+  let unchangedCount = 0
+
+  for (const key of [...keys].sort((a, b) => a.localeCompare(b))) {
+    const beforeCount = beforeCounts.get(key) ?? 0
+    const afterCount = afterCounts.get(key) ?? 0
+    const shared = Math.min(beforeCount, afterCount)
+    unchangedCount += shared
+    for (let i = 0; i < beforeCount - shared; i++) removed.push(key)
+    for (let i = 0; i < afterCount - shared; i++) added.push(key)
+  }
+
   if (removed.length === 0 && added.length === 0) return null
-  const unchangedCount = before.filter((item) => afterSet.has(item)).length
   return { removed, added, unchangedCount }
+}
+
+function countItems(items: string[]): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const item of items) {
+    counts.set(item, (counts.get(item) ?? 0) + 1)
+  }
+  return counts
 }
 
 function diffDimension(before: Dimension, after: Dimension): FieldDiff | null {
