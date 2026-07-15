@@ -1,14 +1,16 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
+import { ComparisonStaleBranchNotice } from '@/components/PageComparison/ComparisonStaleBranchNotice'
 import { FieldDiffValue } from '@/components/PageComparison/FieldDiffValue'
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
+import { UnsupportedSchemaNotice } from '@/components/ui/UnsupportedSchemaNotice'
 import { useComparison } from '@/hooks/useComparison'
 import { useSchema } from '@/hooks/useSchema'
 import { comparisonAccent } from '@/theme/comparisonAccent'
 import { exportComparison } from '@/utils/pageExports'
-import type { FieldDiff } from '@/utils/presetDiff'
+import { isLikelyStaleBranchComparison, type FieldDiff } from '@/utils/presetDiff'
 import { formatUnreleasedUpdatedAt } from '@/utils/schemaVersion'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -100,10 +102,19 @@ export function PageComparison() {
     loading,
     error,
     unreleasedUpdatedAt,
+    baselineUnsupported,
+    schemaUnsupported,
+    baselineUrl,
+    customPreviewUrl,
   } = useComparison()
   const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
-  const { dataUrl, data } = useSchema()
+  const { dataUrl, data, unsupportedBuild } = useSchema()
   const exportData = useMemo(() => (result ? exportComparison(result) : null), [result])
+  const staleBranchHint = result ? isLikelyStaleBranchComparison(result) : false
+  const unsupportedNoticeUrl =
+    (baselineUnsupported ? baselineUrl : null) ??
+    (schemaUnsupported ? customPreviewUrl : null) ??
+    dataUrl
 
   if (!dataUrl && !data) {
     return <p className="text-sm text-slate-500">Load schema data from the Presets page first.</p>
@@ -152,12 +163,20 @@ export function PageComparison() {
 
       {loading ? (
         <p className="text-sm text-slate-500">{loadingLabel}</p>
+      ) : baselineUnsupported || schemaUnsupported || unsupportedBuild ? (
+        <UnsupportedSchemaNotice
+          build={unsupportedBuild ?? undefined}
+          message={error ?? undefined}
+          dataUrl={unsupportedNoticeUrl}
+          comparisonBaseline={baselineUnsupported}
+        />
       ) : error ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {errorLabel}: {error}
         </p>
       ) : result ? (
         <div className="space-y-8">
+          {staleBranchHint ? <ComparisonStaleBranchNotice /> : null}
           <Section title="Added" count={result.added.length} accent="bg-emerald-500">
             {result.added.map((p) => (
               <PresetRow key={p.id} preset={p} />

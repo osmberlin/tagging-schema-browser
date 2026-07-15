@@ -18,6 +18,7 @@ import {
   resolveSchemaReference,
 } from '@/utils/dataUrl'
 import { type ComparisonResult, comparePresets } from '@/utils/presetDiff'
+import { isUnsupportedSchemaBuildMessage } from '@/utils/schemaBuildVersion'
 
 function ensureSlash(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
@@ -84,11 +85,16 @@ export function useComparison() {
       : baselineQuery.error
         ? String(baselineQuery.error)
         : null
+  const baselineUnsupported =
+    baselineError !== null && isUnsupportedSchemaBuildMessage(baselineError)
+  const schemaUnsupported = schemaError !== null && isUnsupportedSchemaBuildMessage(schemaError)
 
   return {
     isComparing,
     compareMode,
     dataUrl: activeDataUrl,
+    customPreviewUrl: previewCompareMode ? trimmedCompare : null,
+    baselineUrl,
     domain: hostnameFromUrl(activeDataUrl),
     compareDomain,
     compareLabel,
@@ -101,6 +107,8 @@ export function useComparison() {
       (baselineQuery.isLoading && !baselinePresets) ||
       (baselineUrl !== null && !baselineQuery.isError && baselinePresets === undefined),
     error: schemaError ?? baselineError,
+    baselineUnsupported,
+    schemaUnsupported,
   }
 }
 

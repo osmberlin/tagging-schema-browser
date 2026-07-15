@@ -132,7 +132,8 @@ export function PageAbout() {
       <p>
         Older v6 <code>dist/</code> URLs are not supported. If you open one via{' '}
         <code>?dataUrl=</code>, the app shows a notice and keeps the default unreleased or release
-        dataset instead.
+        dataset instead. PR previews built from v6 branches show the same notice on Comparison and
+        ask you to update the PR against current <code>main</code>.
       </p>
       <h2>Release vs unreleased</h2>
       <p>

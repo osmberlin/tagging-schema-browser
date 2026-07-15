@@ -3,6 +3,7 @@ import {
   detectSchemaBuildInfo,
   formatSchemaBuildLabel,
   isSchemaBuildSupported,
+  isUnsupportedSchemaBuildMessage,
   majorFromVersionSpec,
   predictSchemaBuildFromUrl,
   unsupportedSchemaBuildMessage,
@@ -147,5 +148,16 @@ describe('unsupportedSchemaBuildMessage', () => {
         detection: 'url',
       }),
     ).toContain('cannot be shown')
+  })
+})
+
+describe('isUnsupportedSchemaBuildMessage', () => {
+  it('matches the v7+ gate error text', () => {
+    expect(
+      isUnsupportedSchemaBuildMessage(
+        'The linked schema is v6.18.0. This browser only supports id-tagging-schema v7 and newer, so that dataset cannot be shown here.',
+      ),
+    ).toBe(true)
+    expect(isUnsupportedSchemaBuildMessage('Failed to load comparison baseline')).toBe(false)
   })
 })
