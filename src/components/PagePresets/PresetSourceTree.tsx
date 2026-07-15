@@ -216,14 +216,19 @@ function JsonLine({
   level,
   children,
   trailingComma,
+  wrap = true,
 }: {
   level: number
   children: ReactNode
   trailingComma?: boolean
+  wrap?: boolean
 }) {
   return (
     <div
-      className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-1"
+      className={cn(
+        'flex min-w-0 items-baseline gap-x-1.5 gap-y-1',
+        wrap ? 'flex-wrap' : 'flex-nowrap',
+      )}
       style={{ paddingLeft: level > 0 ? `${level * 1.25}rem` : undefined }}
     >
       {children}
@@ -837,11 +842,13 @@ function JsonObjectEntry({
     }
     if (parentKey === 'icons' && typeof value === 'string') {
       return (
-        <JsonLine level={level} trailingComma={trailingComma}>
+        <JsonLine level={level} trailingComma={trailingComma} wrap={false}>
           <JsonKey name={keyName} />
-          <span className="text-slate-500">: </span>
-          <JsonScalar value={value} />
-          <IconValueSourceActions iconName={value} />
+          <span className="shrink-0 text-slate-500">: </span>
+          <span className="inline-flex min-w-0 shrink-0 flex-nowrap items-baseline gap-x-1.5">
+            <JsonScalar value={value} />
+            <IconValueSourceActions iconName={value} />
+          </span>
         </JsonLine>
       )
     }
