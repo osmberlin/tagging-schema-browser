@@ -141,6 +141,14 @@ test('child preset detail shows field option mismatch with links', async ({ page
   await expect(panel.getByText('maki-playground').first()).toBeVisible()
 })
 
+test('schedule field detail shows opening hours checker', async ({ page }) => {
+  await page.goto('/field/opening_hours?dataUrl=/test-schema')
+  await expect(page.getByRole('heading', { name: 'opening_hours', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Opening hours checker/i })).toBeVisible()
+  await page.getByPlaceholder('Mo-Fr 09:00-17:00').fill('Mo-Fr 09:00-17:00')
+  await expect(page.getByText('Syntax is valid.')).toBeVisible()
+})
+
 test('field detail shows option icon mismatches', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/field/playground/type?dataUrl=/test-schema')

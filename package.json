@@ -43,6 +43,7 @@
     "@waysidemapping/pinhead": "^15.25.0",
     "itemsjs": "^2.4.4",
     "motion": "^12.42.0",
+    "opening_hours": "3.14.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.0",

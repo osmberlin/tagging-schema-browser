@@ -1,6 +1,7 @@
 import { useParams } from '@tanstack/react-router'
 import { FieldOptionIconsTable } from '@/components/PageFields/FieldOptionIconsTable'
 import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
+import { OpeningHoursChecker } from '@/components/PageFields/OpeningHoursChecker'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
 import { useSetPreset, presetSearchDefaults } from '@/components/PagePresets/useSearchState'
@@ -112,6 +113,7 @@ function FieldDetailContent({
   const key = typeof raw.key === 'string' ? raw.key : fieldId
   const type = typeof raw.type === 'string' ? raw.type : 'unknown'
   const typeHint = fieldTypeHint(type)
+  const fieldDefault = typeof raw.default === 'string' ? raw.default : ''
   const prerequisiteTag = parsePrerequisiteTag(raw.prerequisiteTag)
   const geometry = Array.isArray(raw.geometry) ? (raw.geometry as string[]) : []
 
@@ -218,6 +220,17 @@ function FieldDetailContent({
           <FieldOptionIconsTable rows={optionRows} onOpenPreset={setPreset} />
         </DetailDisclosure>
       )}
+
+      {type === 'schedule' ? (
+        <DetailDisclosure
+          title="Opening hours checker"
+          area="fields"
+          subtitle="Validate syntax with opening_hours.js"
+          defaultOpen
+        >
+          <OpeningHoursChecker fieldKey={key} initialValue={fieldDefault} />
+        </DetailDisclosure>
+      ) : null}
 
       <DetailDisclosure
         title="Translation"
