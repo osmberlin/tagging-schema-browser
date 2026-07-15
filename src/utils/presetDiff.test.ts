@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { comparePresets, diffPreset } from './presetDiff'
+import { comparePresets, diffPreset, diffSortedLists } from './presetDiff'
 import type { DenormalizedPreset } from './types'
 
 function preset(id: string, overrides: Partial<DenormalizedPreset> = {}): DenormalizedPreset {
@@ -27,6 +27,61 @@ describe('diffPreset', () => {
 
   it('returns empty when presets match', () => {
     expect(diffPreset(preset('a'), preset('a'))).toEqual([])
+  })
+
+  it('lists only added and removed fields, not unchanged ones', () => {
+    const shared = ['brand', 'opening_hours', 'phone', 'website']
+    const diffs = diffPreset(
+      preset('shop', { fields: ['fhrs/id-GB', ...shared] }),
+      preset('shop', { fields: ['address', ...shared] }),
+    )
+
+    expect(diffs).toEqual([
+      {
+        label: 'Fields',
+        before: 'brand, fhrs/id-GB, opening_hours, phone, website',
+        after: 'address, brand, opening_hours, phone, website',
+        listChanges: {
+          removed: ['fhrs/id-GB'],
+          added: ['address'],
+          unchangedCount: 4,
+        },
+      },
+    ])
+  })
+
+  it('detects list-only additions and removals', () => {
+    const diffs = diffPreset(
+      preset('a', { terms: ['alpha', 'beta'] }),
+      preset('a', { terms: ['alpha', 'gamma'] }),
+    )
+
+    expect(diffs).toEqual([
+      {
+        label: 'Terms',
+        before: 'alpha, beta',
+        after: 'alpha, gamma',
+        listChanges: {
+          removed: ['beta'],
+          added: ['gamma'],
+          unchangedCount: 1,
+        },
+      },
+    ])
+  })
+})
+
+describe('diffSortedLists', () => {
+  it('returns null when lists match', () => {
+    expect(diffSortedLists(['a', 'b'], ['a', 'b'])).toBeNull()
+  })
+
+  it('classifies removed, added, and unchanged items', () => {
+    expect(diffSortedLists(['a', 'b', 'c'], ['a', 'c', 'd'])).toEqual({
+      removed: ['b'],
+      added: ['d'],
+      unchangedCount: 2,
+    })
   })
 })
 

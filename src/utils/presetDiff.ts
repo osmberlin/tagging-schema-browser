@@ -2,8 +2,20 @@ import type { DenormalizedPreset } from './types'
 
 export type PresetStatus = 'added' | 'removed' | 'modified' | 'unchanged'
 
+export type ListChanges = {
+  removed: string[]
+  added: string[]
+  unchangedCount: number
+}
+
 /** A single changed dimension of a preset (e.g. its tags or fields). */
-export type FieldDiff = { label: string; before: string; after: string }
+export type FieldDiff = {
+  label: string
+  before: string
+  after: string
+  /** Per-item additions/removals when this dimension is a sorted list. */
+  listChanges?: ListChanges
+}
 
 export type ModifiedPreset = {
   current: DenormalizedPreset
@@ -20,24 +32,60 @@ export type ComparisonResult = {
 
 const sortedJoin = (arr: string[]) => [...arr].sort((a, b) => a.localeCompare(b)).join(', ')
 
+type Dimension =
+  | { label: string; kind: 'scalar'; value: string }
+  | { label: string; kind: 'list'; value: string[] }
+
 /** The comparable dimensions of a preset, each reduced to a stable string. */
-function dimensions(p: DenormalizedPreset): { label: string; value: string }[] {
+function dimensions(p: DenormalizedPreset): Dimension[] {
   return [
-    { label: 'Name', value: p.name },
+    { label: 'Name', kind: 'scalar', value: p.name },
     {
       label: 'Tags',
+      kind: 'list',
       value: Object.entries(p.tags ?? {})
         .map(([k, v]) => `${k}=${v}`)
-        .sort((a, b) => a.localeCompare(b))
-        .join(', '),
+        .sort((a, b) => a.localeCompare(b)),
     },
-    { label: 'Geometry', value: sortedJoin(p.geometry) },
-    { label: 'Fields', value: sortedJoin(p.fields) },
-    { label: 'More fields', value: sortedJoin(p.moreFields) },
-    { label: 'Terms', value: sortedJoin(p.terms) },
-    { label: 'Aliases', value: sortedJoin(p.aliases) },
-    { label: 'Icon', value: p.icon ?? '' },
+    { label: 'Geometry', kind: 'list', value: [...p.geometry].sort((a, b) => a.localeCompare(b)) },
+    { label: 'Fields', kind: 'list', value: [...p.fields].sort((a, b) => a.localeCompare(b)) },
+    {
+      label: 'More fields',
+      kind: 'list',
+      value: [...p.moreFields].sort((a, b) => a.localeCompare(b)),
+    },
+    { label: 'Terms', kind: 'list', value: [...p.terms].sort((a, b) => a.localeCompare(b)) },
+    { label: 'Aliases', kind: 'list', value: [...p.aliases].sort((a, b) => a.localeCompare(b)) },
+    { label: 'Icon', kind: 'scalar', value: p.icon ?? '' },
   ]
+}
+
+export function diffSortedLists(before: string[], after: string[]): ListChanges | null {
+  const afterSet = new Set(after)
+  const beforeSet = new Set(before)
+  const removed = before.filter((item) => !afterSet.has(item))
+  const added = after.filter((item) => !beforeSet.has(item))
+  if (removed.length === 0 && added.length === 0) return null
+  const unchangedCount = before.filter((item) => afterSet.has(item)).length
+  return { removed, added, unchangedCount }
+}
+
+function diffDimension(before: Dimension, after: Dimension): FieldDiff | null {
+  if (before.kind === 'list' && after.kind === 'list') {
+    const listChanges = diffSortedLists(before.value, after.value)
+    if (!listChanges) return null
+    return {
+      label: before.label,
+      before: sortedJoin(before.value),
+      after: sortedJoin(after.value),
+      listChanges,
+    }
+  }
+
+  if (before.kind === 'scalar' && after.kind === 'scalar' && before.value !== after.value) {
+    return { label: before.label, before: before.value, after: after.value }
+  }
+  return null
 }
 
 /** Field-level diff between the release version and the current version of one preset. */
@@ -46,9 +94,8 @@ export function diffPreset(release: DenormalizedPreset, current: DenormalizedPre
   const b = dimensions(current)
   const diffs: FieldDiff[] = []
   for (let i = 0; i < a.length; i++) {
-    if (a[i].value !== b[i].value) {
-      diffs.push({ label: a[i].label, before: a[i].value, after: b[i].value })
-    }
+    const diff = diffDimension(a[i], b[i])
+    if (diff) diffs.push(diff)
   }
   return diffs
 }

@@ -39,6 +39,73 @@ function IconDiffLink({ iconName, tone }: { iconName: string; tone: 'before' | '
   )
 }
 
+function FieldDiffLink({ fieldId, tone }: { fieldId: string; tone: 'before' | 'after' }) {
+  const textClass =
+    tone === 'before'
+      ? 'font-mono text-xs text-rose-600 line-through hover:underline'
+      : 'font-mono text-xs text-emerald-700 hover:text-emerald-800 hover:underline'
+
+  return (
+    <Link
+      to="/field/$"
+      params={{ _splat: fieldId }}
+      search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+      className={textClass}
+      title={`Open field “${fieldId}”`}
+    >
+      {fieldId}
+    </Link>
+  )
+}
+
+function ListItemValue({
+  item,
+  tone,
+  label,
+}: {
+  item: string
+  tone: 'before' | 'after'
+  label: string
+}) {
+  if (label === 'Fields' || label === 'More fields') {
+    return <FieldDiffLink fieldId={item} tone={tone} />
+  }
+  const textClass =
+    tone === 'before'
+      ? 'font-mono text-xs text-rose-600 line-through'
+      : 'font-mono text-xs text-emerald-700'
+  return <span className={textClass}>{item}</span>
+}
+
+function ListDiffValue({ diff, arrowClass }: { diff: FieldDiff; arrowClass: string }) {
+  const { removed, added, unchangedCount } = diff.listChanges!
+
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
+      {removed.map((item, index) => (
+        <span key={`removed-${item}`} className="inline-flex items-center">
+          {index > 0 ? <span className="text-slate-300">, </span> : null}
+          <ListItemValue item={item} tone="before" label={diff.label} />
+        </span>
+      ))}
+      {removed.length > 0 && added.length > 0 ? (
+        <span className={`mx-0.5 ${arrowClass}`}>→</span>
+      ) : null}
+      {added.map((item, index) => (
+        <span key={`added-${item}`} className="inline-flex items-center">
+          {index > 0 ? <span className="text-slate-300">, </span> : null}
+          <ListItemValue item={item} tone="after" label={diff.label} />
+        </span>
+      ))}
+      {unchangedCount > 0 ? (
+        <span className="text-slate-400">
+          ({unchangedCount} unchanged{unchangedCount === 1 ? '' : 's'})
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
 function PlainDiffValue({ diff, arrowClass }: { diff: FieldDiff; arrowClass: string }) {
   return (
     <>
@@ -56,6 +123,10 @@ export function FieldDiffValue({
   diff: FieldDiff
   arrowClass?: string
 }) {
+  if (diff.listChanges) {
+    return <ListDiffValue diff={diff} arrowClass={arrowClass} />
+  }
+
   if (diff.label !== 'Icon') {
     return <PlainDiffValue diff={diff} arrowClass={arrowClass} />
   }
