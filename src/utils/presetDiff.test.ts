@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { comparePresets, diffPreset, diffSortedLists } from './presetDiff'
+import {
+  comparePresets,
+  diffPreset,
+  diffSortedLists,
+  isLikelyStaleBranchComparison,
+} from './presetDiff'
 import type { DenormalizedPreset } from './types'
 
 function preset(id: string, overrides: Partial<DenormalizedPreset> = {}): DenormalizedPreset {
@@ -107,5 +112,21 @@ describe('comparePresets', () => {
     expect(result.statusById.get('added')).toBe('added')
     expect(result.statusById.get('removed')).toBe('removed')
     expect(result.statusById.get('mod')).toBe('modified')
+  })
+})
+
+describe('isLikelyStaleBranchComparison', () => {
+  it('flags many removals with few intentional PR changes', () => {
+    const release = Array.from({ length: 40 }, (_, i) => preset(`r${i}`))
+    const current = [preset('added'), preset('mod', { name: 'After' }), preset('r0')]
+    const result = comparePresets(release, current)
+    expect(isLikelyStaleBranchComparison(result)).toBe(true)
+  })
+
+  it('ignores balanced diffs', () => {
+    const release = [preset('a'), preset('b'), preset('c')]
+    const current = [preset('a'), preset('d'), preset('e')]
+    const result = comparePresets(release, current)
+    expect(isLikelyStaleBranchComparison(result)).toBe(false)
   })
 })

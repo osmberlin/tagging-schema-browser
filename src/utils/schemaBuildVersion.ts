@@ -120,3 +120,8 @@ export function unsupportedSchemaBuildMessage(build: SchemaBuildInfo): string {
   const label = formatSchemaBuildLabel(build)
   return `The linked schema is ${label}. This browser only supports id-tagging-schema v${SUPPORTED_SCHEMA_MAJOR} and newer, so that dataset cannot be shown here.`
 }
+
+/** True when a schema load error came from the v7+ gate (URL or dist content). */
+export function isUnsupportedSchemaBuildMessage(message: string): boolean {
+  return message.includes(`only supports id-tagging-schema v${SUPPORTED_SCHEMA_MAJOR}`)
+}

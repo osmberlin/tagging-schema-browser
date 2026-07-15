@@ -162,3 +162,15 @@ export function comparePresets(
 
   return { statusById, added, removed, modified }
 }
+
+/**
+ * Heuristic for PR previews built from a branch behind current main: many presets
+ * appear "removed" because unreleased moved on, not because the PR deleted them.
+ */
+export function isLikelyStaleBranchComparison(result: ComparisonResult): boolean {
+  const intentional = result.added.length + result.modified.length
+  const removed = result.removed.length
+  if (removed < 10) return false
+  if (intentional === 0) return true
+  return removed > intentional * 3
+}
