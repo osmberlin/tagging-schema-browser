@@ -219,6 +219,151 @@ describe('denormalize', () => {
     expect(grass?.fields).not.toContain('landuse')
   })
 
+  it('omits inherited shop typeCombo from v7 dist expansion (shop/agrarian)', () => {
+    const presets = {
+      shop: {
+        tags: { shop: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'shop',
+          'operator',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'payment_multi',
+          'phone',
+        ],
+      },
+      'shop/agrarian': {
+        tags: { shop: 'agrarian' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'shop',
+          'operator',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'payment_multi',
+          'phone',
+          'agrarian',
+        ],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      shop: { key: 'shop', type: 'typeCombo' },
+      operator: { key: 'operator', type: 'text' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      opening_hours: { key: 'opening_hours', type: 'text' },
+      payment_multi: { key: 'payment', type: 'multiCombo' },
+      phone: { key: 'phone', type: 'tel' },
+      agrarian: { key: 'agrarian', type: 'combo' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const agrarian = result.find((p) => p.id === 'shop/agrarian')
+    expect(agrarian?.fields).toContain('agrarian')
+    expect(agrarian?.fields).not.toContain('shop')
+  })
+
+  it('keeps explicit typeCombo overrides in v7 dist output (highway/road)', () => {
+    const presets = {
+      'highway/residential': {
+        tags: { highway: 'residential' },
+        geometry: ['line'],
+        fields: ['name', 'oneway', 'maxspeed', 'lanes', 'surface', 'structure'],
+      },
+      'highway/road': {
+        tags: { highway: 'road' },
+        geometry: ['line'],
+        fields: ['highway', 'name', 'oneway', 'maxspeed', 'lanes', 'surface', 'structure'],
+      },
+    }
+    const fields = {
+      highway: { key: 'highway', type: 'typeCombo' },
+      name: { key: 'name', type: 'text' },
+      oneway: { key: 'oneway', type: 'combo' },
+      maxspeed: { key: 'maxspeed', type: 'roadspeed' },
+      lanes: { key: 'lanes', type: 'lanes' },
+      surface: { key: 'surface', type: 'combo' },
+      structure: { key: 'structure', type: 'combo' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const road = result.find((p) => p.id === 'highway/road')
+    expect(road?.fields?.[0]).toBe('highway')
+  })
+
+  it('keeps shop typeCombo for shop=yes presets with explicit shop in v7 dist', () => {
+    const presets = {
+      shop: {
+        tags: { shop: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'shop',
+          'operator',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'payment_multi',
+          'phone',
+        ],
+      },
+      'shop/yes': {
+        tags: { shop: 'yes' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'shop',
+          'name',
+          'shop',
+          'operator',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'payment_multi',
+          'phone',
+        ],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      shop: { key: 'shop', type: 'typeCombo' },
+      operator: { key: 'operator', type: 'text' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      opening_hours: { key: 'opening_hours', type: 'text' },
+      payment_multi: { key: 'payment', type: 'multiCombo' },
+      phone: { key: 'phone', type: 'tel' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const shopYes = result.find((p) => p.id === 'shop/yes')
+    expect(shopYes?.fields).toContain('shop')
+  })
+
   it('keeps a directly listed field even when the preset tag is already fixed', () => {
     const presets = {
       landuse: {
