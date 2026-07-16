@@ -3,7 +3,8 @@
  * Validates `src/data/missing-inheritance-overrides.yaml` against a schema dist.
  *
  * Fails when an override snapshot no longer matches the live preset (stale).
- * Pass `--schema <url>` to check a release dist; defaults to public/test-schema.
+ * Defaults to the published npm release dist. Pass `--dir` for a local fixture
+ * (e.g. public/test-schema) or `--schema <url>` for another dist.
  */
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -13,10 +14,9 @@ import {
   resolveMissingInheritanceStatus,
   type MissingInheritanceOverrides,
 } from '../src/components/PagePresets/missingFieldInheritance.ts'
+import { RELEASE_DATA_URL } from '../src/utils/constants.ts'
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
-const DEFAULT_SCHEMA_DIR = path.resolve(scriptDir, '../public/test-schema')
-
 type SchemaFiles = {
   presets: Record<string, unknown>
   fields: Record<string, unknown>
@@ -62,9 +62,9 @@ function loadOverrides(): MissingInheritanceOverrides {
   return { version: 1, presets: parsed.presets ?? {} }
 }
 
-function parseArgs(argv: string[]): { schemaUrl?: string; schemaDir: string } {
+function parseArgs(argv: string[]): { schemaUrl?: string; schemaDir?: string } {
   let schemaUrl: string | undefined
-  let schemaDir = DEFAULT_SCHEMA_DIR
+  let schemaDir: string | undefined
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]
     if (arg === '--schema') {
@@ -80,7 +80,10 @@ function parseArgs(argv: string[]): { schemaUrl?: string; schemaDir: string } {
 
 const { schemaUrl, schemaDir } = parseArgs(process.argv.slice(2))
 const overrides = loadOverrides()
-const schema = schemaUrl ? await loadSchemaFromUrl(schemaUrl) : loadSchemaFromDir(schemaDir)
+const schemaSource = schemaDir ?? schemaUrl ?? RELEASE_DATA_URL
+const schema = schemaDir
+  ? loadSchemaFromDir(schemaDir)
+  : await loadSchemaFromUrl(schemaUrl ?? RELEASE_DATA_URL)
 
 const stale: string[] = []
 const unknownOverrides: string[] = []
@@ -106,11 +109,11 @@ if (unknownOverrides.length > 0 || stale.length > 0) {
   const lines: string[] = []
   if (unknownOverrides.length > 0) {
     lines.push(
-      'Override entries reference presets that are absent from the validation schema (default: public/test-schema):',
+      `Override entries reference presets that are absent from the validation schema (${schemaSource}):`,
     )
     for (const presetId of unknownOverrides) lines.push(`  - ${presetId}`)
     lines.push(
-      'Add each preset (and its slash parent / fields) to public/test-schema, or run with --schema <release-dist-url> to validate against another dist.',
+      'Check that the preset exists in the published schema, or pass --schema <dist-url> / --dir <fixture-dir> to validate against another dist.',
     )
   }
   if (stale.length > 0) {
@@ -122,7 +125,5 @@ if (unknownOverrides.length > 0 || stale.length > 0) {
 }
 
 console.log(
-  `Validated ${Object.keys(overrides.presets).length} missing-inheritance override(s) against ${
-    schemaUrl ?? schemaDir
-  }.`,
+  `Validated ${Object.keys(overrides.presets).length} missing-inheritance override(s) against ${schemaSource}.`,
 )

@@ -4,9 +4,7 @@
 # `{parent}` and without inheriting some parent fields. Record `missedFieldIds`
 # as a snapshot — CI fails when the live schema no longer matches (stale override).
 #
-# CI validates against public/test-schema (not the release dist). When you add an
-# override copied from the release browser, also add that preset to the fixture if
-# validate-inheritance-overrides reports it as missing from the validation schema.
+# CI validates against the published npm release dist (see validate-inheritance-overrides).
 #
 # Example from id-tagging-schema: tourism/information/terminal.json lists only
 # `operator` in fields (not `{tourism/information}`) while moreFields inherits
