@@ -85,8 +85,8 @@ function PresetDetailContent({
   const loc = locale ? localeMap?.get(preset.id) : undefined
 
   const { result: comparison } = useComparison()
-  const changeStatus = comparison?.statusById.get(preset.id)
-  const modified = comparison?.modified.find((m) => m.current.id === preset.id)
+  const changeStatus = comparison?.presets.statusById.get(preset.id)
+  const modified = comparison?.presets.modified.find((m) => m.current.id === preset.id)
 
   const filePath = schemaRepoPath('preset', preset.id, { searchable: preset.searchable })
   const githubUrl = githubFileUrl(dataUrl, filePath)

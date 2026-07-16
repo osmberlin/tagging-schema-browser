@@ -496,7 +496,7 @@ export function PresetTable() {
                 paddingLeft={paddingLeft}
                 paddingRight={paddingRight}
                 renderColumn={(preset) => {
-                  const status = comparison?.statusById.get(preset.id)
+                  const status = comparison?.presets.statusById.get(preset.id)
                   const changed = status === 'added' || status === 'modified'
                   return <PresetHeaderCell preset={preset} changed={changed} status={status} />
                 }}
