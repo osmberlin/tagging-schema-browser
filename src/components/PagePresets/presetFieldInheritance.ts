@@ -1,6 +1,7 @@
 import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
 
 const INHERITABLE_TYPES = new Set(['multiCombo', 'semiCombo', 'manyCombo', 'check'])
+const GENERIC_TAG_VALUES = new Set(['yes', '*'])
 
 /** Preset id from a `{path/to/preset}` template reference. */
 export function presetIdFromRef(ref: string): string | null {
@@ -25,6 +26,8 @@ export function shouldInheritField(
 
   for (const tagKey of Object.keys(tags)) {
     if (tagKey === key) {
+      const tagValue = tags[tagKey]
+      if (tagValue && GENERIC_TAG_VALUES.has(tagValue)) return true
       const type = allFields[fieldId]?.type
       if (type && INHERITABLE_TYPES.has(type)) continue
       return false
@@ -37,6 +40,71 @@ export function shouldInheritField(
   }
 
   return true
+}
+
+function listUsesPresetRefs(list: string[] | undefined): boolean {
+  return (
+    Array.isArray(list) && list.some((item) => typeof item === 'string' && presetIdFromRef(item))
+  )
+}
+
+/** Indices of fields expanded from ancestor `{preset}` blocks in v7 dist output. */
+function getDistInheritedFieldIndices(
+  presetId: string,
+  hostFields: string[],
+  rawPresets: RawPresets,
+): Set<number> {
+  const inherited = new Set<number>()
+  if (hostFields.length === 0) return inherited
+
+  const parts = presetId.split('/')
+  for (let depth = parts.length - 1; depth > 0; depth--) {
+    const ancestorId = parts.slice(0, depth).join('/')
+    const ancestor = rawPresets[ancestorId]
+    const ancestorFields = ancestor?.fields
+    if (!Array.isArray(ancestorFields) || ancestorFields.length === 0) continue
+    markSubsequenceMatches(hostFields, ancestorFields, inherited)
+  }
+
+  return inherited
+}
+
+function markSubsequenceMatches(haystack: string[], needle: string[], out: Set<number>): void {
+  if (needle.length === 0) return
+
+  for (let i = 0; i <= haystack.length - needle.length; i++) {
+    let matches = true
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        matches = false
+        break
+      }
+    }
+    if (!matches) continue
+    for (let j = 0; j < needle.length; j++) out.add(i + j)
+  }
+}
+
+function explicitDistFieldIds(
+  presetId: string,
+  fieldList: string[],
+  inheritedIndices: Set<number>,
+): string[] {
+  return fieldList.filter((_, index) => !inheritedIndices.has(index))
+}
+
+function shouldIncludeDistField(
+  hostPreset: RawPreset,
+  fieldId: string,
+  fieldIndex: number,
+  inheritedIndices: Set<number>,
+  explicitFieldIdsInList: string[],
+  allFields: RawFields,
+): boolean {
+  if (shouldInheritField(hostPreset, fieldId, explicitFieldIdsInList, [], allFields)) {
+    return true
+  }
+  return !inheritedIndices.has(fieldIndex)
 }
 
 function resolveInheritedFieldList(
@@ -165,10 +233,21 @@ export function resolvePresetFieldList(
 
   const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
   const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
+  const usesPresetRefs =
+    listUsesPresetRefs(list) ||
+    listUsesPresetRefs(hostOriginalFields) ||
+    listUsesPresetRefs(hostOriginalMoreFields)
+  const inheritedIndices = usesPresetRefs
+    ? null
+    : getDistInheritedFieldIndices(presetId, list, rawPresets)
+  const explicitFieldIdsInList = usesPresetRefs
+    ? hostOriginalFields.filter((fieldId) => !presetIdFromRef(fieldId))
+    : explicitDistFieldIds(presetId, list, inheritedIndices ?? new Set())
 
   const resolved: string[] = []
 
-  for (const item of list) {
+  for (let index = 0; index < list.length; index++) {
+    const item = list[index]
     if (typeof item !== 'string') continue
 
     if (presetIdFromRef(item)) {
@@ -186,7 +265,19 @@ export function resolvePresetFieldList(
       continue
     }
 
-    resolved.push(item)
+    if (
+      usesPresetRefs ||
+      shouldIncludeDistField(
+        preset,
+        item,
+        index,
+        inheritedIndices ?? new Set(),
+        explicitFieldIdsInList,
+        allFields,
+      )
+    ) {
+      resolved.push(item)
+    }
   }
 
   return resolved
