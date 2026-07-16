@@ -51,6 +51,7 @@ function listUsesPresetRefs(list: string[] | undefined): boolean {
 /** Indices of fields expanded from ancestor `{preset}` blocks in v7 dist output. */
 function getDistInheritedFieldIndices(
   presetId: string,
+  fieldListKey: 'fields' | 'moreFields',
   hostFields: string[],
   rawPresets: RawPresets,
 ): Set<number> {
@@ -61,7 +62,7 @@ function getDistInheritedFieldIndices(
   for (let depth = parts.length - 1; depth > 0; depth--) {
     const ancestorId = parts.slice(0, depth).join('/')
     const ancestor = rawPresets[ancestorId]
-    const ancestorFields = ancestor?.fields
+    const ancestorFields = ancestor?.[fieldListKey]
     if (!Array.isArray(ancestorFields) || ancestorFields.length === 0) continue
     markSubsequenceMatches(hostFields, ancestorFields, inherited)
   }
@@ -85,11 +86,7 @@ function markSubsequenceMatches(haystack: string[], needle: string[], out: Set<n
   }
 }
 
-function explicitDistFieldIds(
-  presetId: string,
-  fieldList: string[],
-  inheritedIndices: Set<number>,
-): string[] {
+function explicitDistFieldIds(fieldList: string[], inheritedIndices: Set<number>): string[] {
   return fieldList.filter((_, index) => !inheritedIndices.has(index))
 }
 
@@ -239,10 +236,12 @@ export function resolvePresetFieldList(
     listUsesPresetRefs(hostOriginalMoreFields)
   const inheritedIndices = usesPresetRefs
     ? null
-    : getDistInheritedFieldIndices(presetId, list, rawPresets)
+    : getDistInheritedFieldIndices(presetId, fieldListKey, list, rawPresets)
   const explicitFieldIdsInList = usesPresetRefs
-    ? hostOriginalFields.filter((fieldId) => !presetIdFromRef(fieldId))
-    : explicitDistFieldIds(presetId, list, inheritedIndices ?? new Set())
+    ? (fieldListKey === 'fields' ? hostOriginalFields : hostOriginalMoreFields).filter(
+        (fieldId) => !presetIdFromRef(fieldId),
+      )
+    : explicitDistFieldIds(list, inheritedIndices ?? new Set())
 
   const resolved: string[] = []
 

@@ -275,6 +275,41 @@ describe('denormalize', () => {
     expect(agrarian?.fields).not.toContain('shop')
   })
 
+  it('omits inherited shop typeCombo from v7 dist moreFields expansion', () => {
+    const presets = {
+      shop: {
+        tags: { shop: '*' },
+        geometry: ['point', 'area'],
+        fields: ['name', 'shop'],
+        moreFields: ['shop', 'operator', 'wheelchair'],
+      },
+      'shop/boutique': {
+        tags: { shop: 'boutique' },
+        geometry: ['point', 'area'],
+        fields: ['name', 'operator'],
+        moreFields: ['shop', 'operator', 'wheelchair', 'boutique'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      shop: { key: 'shop', type: 'typeCombo' },
+      operator: { key: 'operator', type: 'text' },
+      wheelchair: { key: 'wheelchair', type: 'combo' },
+      boutique: { key: 'boutique', type: 'combo' },
+    }
+
+    const result = denormalize(
+      presets,
+      { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+      {},
+      fields,
+    )
+
+    const boutique = result.find((p) => p.id === 'shop/boutique')
+    expect(boutique?.moreFields).toContain('boutique')
+    expect(boutique?.moreFields).not.toContain('shop')
+  })
+
   it('keeps explicit typeCombo overrides in v7 dist output (highway/road)', () => {
     const presets = {
       'highway/residential': {
