@@ -26,3 +26,8 @@ presets:
       missedFieldIds:
         - address
         - building_area_yes
+  man_made/adit:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
