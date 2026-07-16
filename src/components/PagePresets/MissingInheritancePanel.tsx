@@ -10,11 +10,7 @@ import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
-import {
-  isBundledTestSchemaUrl,
-  MISSING_INHERITANCE_OVERRIDES_EDIT_URL,
-  TEST_SCHEMA_PRESETS_EDIT_URL,
-} from '@/utils/constants'
+import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -90,11 +86,9 @@ function OverridesYamlLink() {
 function OverrideSnippet({
   presetId,
   missingFieldInheritance,
-  needsTestSchemaFixture,
 }: {
   presetId: string
   missingFieldInheritance: MissingFieldInheritance
-  needsTestSchemaFixture: boolean
 }) {
   const snippet = formatMissingInheritanceOverrideYaml(presetId, missingFieldInheritance)
   const [copied, setCopied] = useState(false)
@@ -114,24 +108,9 @@ function OverrideSnippet({
       <ol className="list-decimal space-y-1.5 ps-5 text-sm text-slate-300">
         <li>Copy the YAML snippet below.</li>
         <li>
-          Paste it under <code>presets:</code> in <OverridesYamlLink /> (keep two-space indent).
+          Paste it under <code>presets:</code> in <OverridesYamlLink /> (keep two-space indent). CI
+          validates overrides against the published release schema.
         </li>
-        {needsTestSchemaFixture ? (
-          <li>
-            CI validates against <code>public/test-schema</code>, not the release dist. If{' '}
-            <code>validate-inheritance-overrides</code> reports this preset as missing from the
-            validation schema, also add it (and its slash parent / fields) to{' '}
-            <a
-              href={TEST_SCHEMA_PRESETS_EDIT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={schemaIssueStyles.externalLink}
-            >
-              public/test-schema/presets.min.json
-            </a>
-            .
-          </li>
-        ) : null}
       </ol>
       <div className="flex items-center justify-between gap-3">
         <p className="mb-0 min-w-0 flex-1 text-sm text-slate-400">Snippet for {presetId}:</p>
@@ -155,13 +134,7 @@ function OverrideSnippet({
   )
 }
 
-export function MissingInheritancePanel({
-  preset,
-  dataUrl,
-}: {
-  preset: DenormalizedPreset
-  dataUrl: string
-}) {
+export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset }) {
   const { missingFieldInheritance, missingInheritanceStatus } = preset
   const disclosureId = `preset-missing-inheritance:${preset.id}`
   useAutoOpenFocusedIssue(disclosureId, 'missingInheritance', missingInheritanceStatus !== 'none')
@@ -212,11 +185,7 @@ export function MissingInheritancePanel({
           </p>
         ) : null}
         {showOverrideSnippet ? (
-          <OverrideSnippet
-            presetId={preset.id}
-            missingFieldInheritance={missingFieldInheritance}
-            needsTestSchemaFixture={!isBundledTestSchemaUrl(dataUrl)}
-          />
+          <OverrideSnippet presetId={preset.id} missingFieldInheritance={missingFieldInheritance} />
         ) : null}
         <div className="mt-4 space-y-4">
           {missingFieldInheritance?.fields ? (
