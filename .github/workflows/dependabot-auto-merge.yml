@@ -1,0 +1,75 @@
+# Auto-merge low-risk Dependabot PRs after CI passes.
+# Policy: .agents/skills/review-dependabot/SKILL.md (patch/minor only; majors need human review).
+# Replaces the Cursor Approval Agent approach from #104 (approve-only, never triggered on Dependabot).
+name: Dependabot auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' ||
+      github.event.pull_request.user.login == 'app/dependabot'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: Decide if this bump is auto-merge eligible
+        id: qualify
+        env:
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          qualifies=false
+          case "$UPDATE_TYPE" in
+            version-update:semver-patch|version-update:semver-minor)
+              qualifies=true
+              ;;
+          esac
+          if [ "$qualifies" = false ]; then
+            if echo "$PR_TITLE" | grep -qiE 'minor-patch|misc-patch|icon-libraries|security-dev-tools'; then
+              qualifies=true
+            fi
+          fi
+          echo "eligible=$qualifies" >> "$GITHUB_OUTPUT"
+          if [ "$qualifies" = false ]; then
+            echo "Skipping auto-merge ($UPDATE_TYPE): major or ungrouped bump needs manual review."
+          fi
+
+      - name: Comment when manual review is required
+        if: steps.qualify.outputs.eligible != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body '🤖 **Dependabot auto-merge skipped** — this bump needs manual review (semver-major or ungrouped update). See [.agents/skills/review-dependabot/SKILL.md](https://github.com/osmberlin/tagging-schema-browser/blob/main/.agents/skills/review-dependabot/SKILL.md).'
+
+      - name: Wait for CI, then rebase-merge
+        if: steps.qualify.outputs.eligible == 'true'
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: rebase
+          MERGE_COMMIT_MESSAGE: pull-request-title
+          MERGE_DELETE_BRANCH: true
+          MERGE_LABELS: ''
+          MERGE_REQUIRED_APPROVALS: 0
+          MERGE_FORKS: false
+
+      - name: Comment when auto-merge is queued
+        if: steps.qualify.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body '🤖 **Dependabot auto-merge enabled** — this PR will rebase-merge once required checks pass (patch/minor group or security bump).'
