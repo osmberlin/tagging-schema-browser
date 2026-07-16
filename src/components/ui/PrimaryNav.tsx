@@ -93,7 +93,7 @@ export function PrimaryNav({
   className?: string
 }) {
   const { pathname } = useLocation()
-  const { isComparing, result } = useComparison()
+  const { isComparing, changeCount } = useComparison()
   const reducedMotion = useReducedMotion()
   const navRef = useRef<HTMLElement>(null)
   const itemRefs = useRef(new Map<NavKey, HTMLAnchorElement>())
@@ -103,10 +103,6 @@ export function PrimaryNav({
   const activeKey = getActiveKey(pathname)
   const indicatorKey = hoveredKey ?? activeKey
   const indicator = getIndicator(indicatorKey)
-
-  const changeCount = result
-    ? result.added.length + result.removed.length + result.modified.length
-    : null
 
   const items: NavItem[] = [
     {

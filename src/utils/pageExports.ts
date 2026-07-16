@@ -1,5 +1,6 @@
 import type { LocaleEntry } from '@/queries/locale'
 import type { ComparisonResult } from '@/utils/presetDiff'
+import type { SchemaComparisonResult } from '@/utils/schemaDiff'
 import type { DenormalizedPreset, FieldViewModel, IconViewModel } from '@/utils/types'
 
 export type PresetExport = {
@@ -52,6 +53,29 @@ export type ComparisonExport = {
     name: string
     diffs: ComparisonResult['modified'][number]['diffs']
   }>
+}
+
+export type SchemaComparisonExport = {
+  presets: ComparisonExport
+  fields: {
+    added: Array<{ id: string; label: string; type: string }>
+    removed: Array<{ id: string; label: string; type: string }>
+    modified: Array<{
+      id: string
+      label: string
+      type: string
+      diffs: ComparisonResult['modified'][number]['diffs']
+    }>
+  }
+  categories: {
+    added: Array<{ id: string; name: string }>
+    removed: Array<{ id: string; name: string }>
+    modified: Array<{
+      id: string
+      name: string
+      diffs: ComparisonResult['modified'][number]['diffs']
+    }>
+  }
 }
 
 export function exportPresets(presets: DenormalizedPreset[]): PresetExport[] {
@@ -130,5 +154,30 @@ export function exportComparison(result: ComparisonResult): ComparisonExport {
       name: entry.current.name,
       diffs: entry.diffs,
     })),
+  }
+}
+
+export function exportSchemaComparison(result: SchemaComparisonResult): SchemaComparisonExport {
+  return {
+    presets: exportComparison(result.presets),
+    fields: {
+      added: result.fields.added.map((f) => ({ id: f.id, label: f.label, type: f.type })),
+      removed: result.fields.removed.map((f) => ({ id: f.id, label: f.label, type: f.type })),
+      modified: result.fields.modified.map((entry) => ({
+        id: entry.current.id,
+        label: entry.current.label,
+        type: entry.current.type,
+        diffs: entry.diffs,
+      })),
+    },
+    categories: {
+      added: result.categories.added.map((c) => ({ id: c.id, name: c.name })),
+      removed: result.categories.removed.map((c) => ({ id: c.id, name: c.name })),
+      modified: result.categories.modified.map((entry) => ({
+        id: entry.current.id,
+        name: entry.current.name,
+        diffs: entry.diffs,
+      })),
+    },
   }
 }

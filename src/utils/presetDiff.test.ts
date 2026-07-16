@@ -1,25 +1,57 @@
 import { describe, expect, it } from 'vitest'
-import {
-  comparePresets,
-  diffPreset,
-  diffSortedLists,
-  isLikelyStaleBranchComparison,
-} from './presetDiff'
-import type { DenormalizedPreset } from './types'
+import { comparePresets, diffPreset, isLikelyStaleBranchComparison } from './presetDiff'
+import { compareFields } from './schemaDiff'
+import type { DenormalizedPreset, SchemaData } from './types'
 
 function preset(id: string, overrides: Partial<DenormalizedPreset> = {}): DenormalizedPreset {
   return {
     id,
     name: id,
     tags: {},
+    tagString: '',
     geometry: [],
     fields: [],
     moreFields: [],
     terms: [],
     aliases: [],
-    icon: null,
-    category: '',
-    searchable: id,
+    categoryIds: [],
+    categoryNames: [],
+    matchScore: 1,
+    hasIcon: false,
+    iconMismatch: false,
+    missingFieldInheritance: null,
+    missingInheritanceStatus: 'ok',
+    isTemplate: false,
+    ...overrides,
+  }
+}
+
+function minimalSchema(overrides: Partial<SchemaData> = {}): SchemaData {
+  return {
+    presets: [],
+    presetsById: new Map(),
+    indices: {
+      childPresetIndex: new Map(),
+      presetsByPrimaryField: new Map(),
+      presetsByMoreField: new Map(),
+      fieldOptionMismatchRows: new Map(),
+      parentIconMismatchRowsByPresetId: new Map(),
+      childIconMismatchRefsByPresetId: new Map(),
+      presetsByCategoryId: new Map(),
+      presetsByIcon: new Map(),
+      optionIconUsagesByIcon: new Map(),
+      fieldCatalog: [],
+      fieldTypes: [],
+    },
+    rawPresets: {},
+    categories: {},
+    categoryNames: {},
+    fields: {},
+    translations: { en: { presets: { presets: {}, categories: {}, fields: {} } } },
+    fieldTranslations: {},
+    schemaBuild: { major: 7, versionSpec: null, detection: 'content' },
+    loadError: null,
+    diagnostics: [],
     ...overrides,
   }
 }
@@ -27,14 +59,14 @@ function preset(id: string, overrides: Partial<DenormalizedPreset> = {}): Denorm
 describe('diffPreset', () => {
   it('detects name changes', () => {
     const diffs = diffPreset(preset('a', { name: 'Old' }), preset('a', { name: 'New' }))
-    expect(diffs).toEqual([{ label: 'Name', before: 'Old', after: 'New' }])
+    expect(diffs).toEqual([{ label: 'Name', kind: 'scalar', before: 'Old', after: 'New' }])
   })
 
   it('returns empty when presets match', () => {
     expect(diffPreset(preset('a'), preset('a'))).toEqual([])
   })
 
-  it('lists only added and removed fields, not unchanged ones', () => {
+  it('lists only added and removed fields with order-aware diff', () => {
     const shared = ['brand', 'opening_hours', 'phone', 'website']
     const diffs = diffPreset(
       preset('shop', { fields: ['fhrs/id-GB', ...shared] }),
@@ -44,18 +76,20 @@ describe('diffPreset', () => {
     expect(diffs).toEqual([
       {
         label: 'Fields',
-        before: 'brand, fhrs/id-GB, opening_hours, phone, website',
+        kind: 'ordered-list',
+        before: 'fhrs/id-GB, brand, opening_hours, phone, website',
         after: 'address, brand, opening_hours, phone, website',
-        listChanges: {
+        orderedListChanges: {
           removed: ['fhrs/id-GB'],
           added: ['address'],
+          moved: [],
           unchangedCount: 4,
         },
       },
     ])
   })
 
-  it('detects list-only additions and removals', () => {
+  it('detects unordered list changes for terms', () => {
     const diffs = diffPreset(
       preset('a', { terms: ['alpha', 'beta'] }),
       preset('a', { terms: ['alpha', 'gamma'] }),
@@ -64,6 +98,7 @@ describe('diffPreset', () => {
     expect(diffs).toEqual([
       {
         label: 'Terms',
+        kind: 'unordered-list',
         before: 'alpha, beta',
         after: 'alpha, gamma',
         listChanges: {
@@ -73,28 +108,6 @@ describe('diffPreset', () => {
         },
       },
     ])
-  })
-})
-
-describe('diffSortedLists', () => {
-  it('returns null when lists match', () => {
-    expect(diffSortedLists(['a', 'b'], ['a', 'b'])).toBeNull()
-  })
-
-  it('classifies removed, added, and unchanged items', () => {
-    expect(diffSortedLists(['a', 'b', 'c'], ['a', 'c', 'd'])).toEqual({
-      removed: ['b'],
-      added: ['d'],
-      unchangedCount: 2,
-    })
-  })
-
-  it('detects duplicate count changes', () => {
-    expect(diffSortedLists(['brand', 'brand', 'phone'], ['brand', 'phone'])).toEqual({
-      removed: ['brand'],
-      added: [],
-      unchangedCount: 2,
-    })
   })
 })
 
@@ -109,9 +122,46 @@ describe('comparePresets', () => {
     expect(result.removed.map((p) => p.id)).toEqual(['removed'])
     expect(result.modified.map((m) => m.current.id)).toEqual(['mod'])
     expect(result.statusById.get('keep')).toBe('unchanged')
-    expect(result.statusById.get('added')).toBe('added')
-    expect(result.statusById.get('removed')).toBe('removed')
-    expect(result.statusById.get('mod')).toBe('modified')
+  })
+})
+
+describe('compareFields', () => {
+  it('detects added field options', () => {
+    const baseline = minimalSchema({
+      fields: {
+        surface: { key: 'surface', type: 'combo', options: ['clay', 'gravel'] },
+      },
+      fieldTranslations: {
+        surface: { label: 'Surface' },
+      },
+    })
+    const current = minimalSchema({
+      fields: {
+        surface: { key: 'surface', type: 'combo', options: ['clay', 'gravel', 'laterite'] },
+      },
+      fieldTranslations: {
+        surface: { label: 'Surface' },
+      },
+    })
+
+    const result = compareFields(baseline, current)
+
+    expect(result.modified).toHaveLength(1)
+    expect(result.modified[0]?.current.id).toBe('surface')
+    expect(result.modified[0]?.diffs).toEqual([
+      {
+        label: 'Options',
+        kind: 'ordered-list',
+        before: 'clay, gravel',
+        after: 'clay, gravel, laterite',
+        orderedListChanges: {
+          removed: [],
+          added: ['laterite'],
+          moved: [],
+          unchangedCount: 2,
+        },
+      },
+    ])
   })
 })
 

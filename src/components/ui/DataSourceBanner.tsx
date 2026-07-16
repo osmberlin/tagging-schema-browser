@@ -22,7 +22,7 @@ export function DataSourceBanner() {
     presetsUrl,
     unreleasedUpdatedAt,
     releaseVersion,
-    result,
+    changeCount,
     loading,
   } = useComparison()
   const { schemaBuild } = useSchema()
@@ -43,9 +43,7 @@ export function DataSourceBanner() {
       search: (prev) => ({ ...prev, dataUrl: undefined, reference: 'release' }),
     })
   }
-  const changeCount = result
-    ? result.added.length + result.removed.length + result.modified.length
-    : null
+  const changeCountFromResult = changeCount
 
   const versionLabel =
     compareMode === 'release'
@@ -78,7 +76,7 @@ export function DataSourceBanner() {
             </a>
           </Tooltip>
         </span>
-        {changeCount != null ? (
+        {changeCountFromResult != null ? (
           <>
             <span className="text-violet-300">·</span>
             <Link
@@ -91,7 +89,8 @@ export function DataSourceBanner() {
               })}
               className="font-medium hover:underline"
             >
-              {changeCount} change{changeCount === 1 ? '' : 's'} vs {compareTarget}
+              {changeCountFromResult} change{changeCountFromResult === 1 ? '' : 's'} vs{' '}
+              {compareTarget}
             </Link>
           </>
         ) : loading ? (

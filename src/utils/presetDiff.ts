@@ -1,26 +1,34 @@
-import type { DenormalizedPreset } from './types'
+import {
+  type DiffEntry,
+  diffOrderedListDimension,
+  diffRecordDimension,
+  diffScalars,
+  diffUnorderedListDimension,
+  normalizeStringList,
+  sortedJoin,
+} from '@/utils/jsonDiff'
+import type {
+  DenormalizedPreset,
+  RawCategories,
+  RawPreset,
+  RawTranslations,
+  SchemaData,
+} from '@/utils/types'
+
+export type {
+  DiffEntry as FieldDiff,
+  ListChanges,
+  OrderedListChanges,
+  RecordChanges,
+} from '@/utils/jsonDiff'
+export { diffSortedLists } from '@/utils/jsonDiff'
 
 export type PresetStatus = 'added' | 'removed' | 'modified' | 'unchanged'
-
-export type ListChanges = {
-  removed: string[]
-  added: string[]
-  unchangedCount: number
-}
-
-/** A single changed dimension of a preset (e.g. its tags or fields). */
-export type FieldDiff = {
-  label: string
-  before: string
-  after: string
-  /** Per-item additions/removals when this dimension is a sorted list. */
-  listChanges?: ListChanges
-}
 
 export type ModifiedPreset = {
   current: DenormalizedPreset
   release: DenormalizedPreset
-  diffs: FieldDiff[]
+  diffs: DiffEntry[]
 }
 
 export type ComparisonResult = {
@@ -30,89 +38,56 @@ export type ComparisonResult = {
   modified: ModifiedPreset[]
 }
 
-const sortedJoin = (arr: string[]) => [...arr].sort((a, b) => a.localeCompare(b)).join(', ')
-
 type Dimension =
   | { label: string; kind: 'scalar'; value: string }
-  | { label: string; kind: 'list'; value: string[] }
+  | { label: string; kind: 'unordered-list'; value: string[] }
+  | { label: string; kind: 'ordered-list'; value: string[] }
+  | { label: string; kind: 'record'; value: Record<string, string> }
 
-/** The comparable dimensions of a preset, each reduced to a stable string. */
+/** Fallback comparable dimensions from denormalized presets (no raw schema available). */
 function dimensions(p: DenormalizedPreset): Dimension[] {
   return [
     { label: 'Name', kind: 'scalar', value: p.name },
     {
       label: 'Tags',
-      kind: 'list',
-      value: Object.entries(p.tags ?? {})
-        .map(([k, v]) => `${k}=${v}`)
-        .sort((a, b) => a.localeCompare(b)),
+      kind: 'record',
+      value: p.tags ?? {},
     },
-    { label: 'Geometry', kind: 'list', value: [...p.geometry].sort((a, b) => a.localeCompare(b)) },
-    { label: 'Fields', kind: 'list', value: [...p.fields].sort((a, b) => a.localeCompare(b)) },
-    {
-      label: 'More fields',
-      kind: 'list',
-      value: [...p.moreFields].sort((a, b) => a.localeCompare(b)),
-    },
-    { label: 'Terms', kind: 'list', value: [...p.terms].sort((a, b) => a.localeCompare(b)) },
-    { label: 'Aliases', kind: 'list', value: [...p.aliases].sort((a, b) => a.localeCompare(b)) },
+    { label: 'Geometry', kind: 'ordered-list', value: [...p.geometry] },
+    { label: 'Fields', kind: 'ordered-list', value: [...p.fields] },
+    { label: 'More fields', kind: 'ordered-list', value: [...p.moreFields] },
+    { label: 'Terms', kind: 'unordered-list', value: [...p.terms] },
+    { label: 'Aliases', kind: 'unordered-list', value: [...p.aliases] },
     { label: 'Icon', kind: 'scalar', value: p.icon ?? '' },
+    {
+      label: 'Categories',
+      kind: 'unordered-list',
+      value: [...p.categoryIds].sort((a, b) => a.localeCompare(b)),
+    },
   ]
 }
 
-export function diffSortedLists(before: string[], after: string[]): ListChanges | null {
-  const beforeCounts = countItems(before)
-  const afterCounts = countItems(after)
-  const keys = new Set([...beforeCounts.keys(), ...afterCounts.keys()])
-
-  const removed: string[] = []
-  const added: string[] = []
-  let unchangedCount = 0
-
-  for (const key of [...keys].sort((a, b) => a.localeCompare(b))) {
-    const beforeCount = beforeCounts.get(key) ?? 0
-    const afterCount = afterCounts.get(key) ?? 0
-    const shared = Math.min(beforeCount, afterCount)
-    unchangedCount += shared
-    for (let i = 0; i < beforeCount - shared; i++) removed.push(key)
-    for (let i = 0; i < afterCount - shared; i++) added.push(key)
+function diffDimension(before: Dimension, after: Dimension): DiffEntry | null {
+  if (before.kind === 'ordered-list' && after.kind === 'ordered-list') {
+    return diffOrderedListDimension(before.label, before.value, after.value)
   }
-
-  if (removed.length === 0 && added.length === 0) return null
-  return { removed, added, unchangedCount }
-}
-
-function countItems(items: string[]): Map<string, number> {
-  const counts = new Map<string, number>()
-  for (const item of items) {
-    counts.set(item, (counts.get(item) ?? 0) + 1)
+  if (before.kind === 'unordered-list' && after.kind === 'unordered-list') {
+    return diffUnorderedListDimension(before.label, before.value, after.value)
   }
-  return counts
-}
-
-function diffDimension(before: Dimension, after: Dimension): FieldDiff | null {
-  if (before.kind === 'list' && after.kind === 'list') {
-    const listChanges = diffSortedLists(before.value, after.value)
-    if (!listChanges) return null
-    return {
-      label: before.label,
-      before: sortedJoin(before.value),
-      after: sortedJoin(after.value),
-      listChanges,
-    }
+  if (before.kind === 'record' && after.kind === 'record') {
+    return diffRecordDimension(before.label, before.value, after.value)
   }
-
   if (before.kind === 'scalar' && after.kind === 'scalar' && before.value !== after.value) {
-    return { label: before.label, before: before.value, after: after.value }
+    return diffScalars(before.label, before.value, after.value)
   }
   return null
 }
 
-/** Field-level diff between the release version and the current version of one preset. */
-export function diffPreset(release: DenormalizedPreset, current: DenormalizedPreset): FieldDiff[] {
+/** Field-level diff between baseline and current preset (denormalized fallback). */
+export function diffPreset(release: DenormalizedPreset, current: DenormalizedPreset): DiffEntry[] {
   const a = dimensions(release)
   const b = dimensions(current)
-  const diffs: FieldDiff[] = []
+  const diffs: DiffEntry[] = []
   for (let i = 0; i < a.length; i++) {
     const diff = diffDimension(a[i], b[i])
     if (diff) diffs.push(diff)
@@ -120,13 +95,147 @@ export function diffPreset(release: DenormalizedPreset, current: DenormalizedPre
   return diffs
 }
 
-/** Compare the current dataset against the release, keyed by preset id. */
+function categoryIdsForPreset(presetId: string, categories: RawCategories): string[] {
+  return Object.entries(categories)
+    .filter(([, category]) => category.members?.includes(presetId))
+    .map(([id]) => id)
+    .sort((a, b) => a.localeCompare(b))
+}
+
+function diffPresetTranslation(
+  presetId: string,
+  baseline: RawTranslations,
+  current: RawTranslations,
+): DiffEntry[] {
+  const b = baseline.en?.presets?.presets?.[presetId]
+  const c = current.en?.presets?.presets?.[presetId]
+  const diffs: DiffEntry[] = []
+
+  const scalar = (label: string, before: unknown, after: unknown) => {
+    const d = diffScalars(label, before, after)
+    if (d) diffs.push(d)
+  }
+
+  scalar('Name', b?.name, c?.name)
+
+  const terms = diffUnorderedListDimension(
+    'Terms',
+    normalizeStringList(b?.terms),
+    normalizeStringList(c?.terms),
+  )
+  if (terms) diffs.push(terms)
+
+  const aliases = diffUnorderedListDimension(
+    'Aliases',
+    normalizeStringList(b?.aliases),
+    normalizeStringList(c?.aliases),
+  )
+  if (aliases) diffs.push(aliases)
+
+  return diffs
+}
+
+function diffRawPreset(
+  presetId: string,
+  baseline: RawPreset,
+  current: RawPreset,
+  baselineTranslations: RawTranslations,
+  currentTranslations: RawTranslations,
+  baselineCategories: RawCategories,
+  currentCategories: RawCategories,
+): DiffEntry[] {
+  const diffs: DiffEntry[] = []
+  const scalar = (label: string, b: unknown, a: unknown) => {
+    const d = diffScalars(label, b, a)
+    if (d) diffs.push(d)
+  }
+
+  scalar('Icon', baseline.icon, current.icon)
+  scalar('Image URL', baseline.imageURL, current.imageURL)
+  scalar('Match score', baseline.matchScore, current.matchScore)
+  scalar('Searchable', baseline.searchable, current.searchable)
+  scalar('Suggestion', baseline.suggestion, current.suggestion)
+
+  const tags = diffRecordDimension('Tags', baseline.tags ?? {}, current.tags ?? {})
+  if (tags) diffs.push(tags)
+
+  const addTags = diffRecordDimension('Add tags', baseline.addTags ?? {}, current.addTags ?? {})
+  if (addTags) diffs.push(addTags)
+
+  const removeTags = diffRecordDimension(
+    'Remove tags',
+    baseline.removeTags ?? {},
+    current.removeTags ?? {},
+  )
+  if (removeTags) diffs.push(removeTags)
+
+  const fields = diffOrderedListDimension('Fields', baseline.fields ?? [], current.fields ?? [])
+  if (fields) diffs.push(fields)
+
+  const moreFields = diffOrderedListDimension(
+    'More fields',
+    baseline.moreFields ?? [],
+    current.moreFields ?? [],
+  )
+  if (moreFields) diffs.push(moreFields)
+
+  const geometry = diffOrderedListDimension(
+    'Geometry',
+    baseline.geometry ?? [],
+    current.geometry ?? [],
+  )
+  if (geometry) diffs.push(geometry)
+
+  const baselineCategoryIds = categoryIdsForPreset(presetId, baselineCategories)
+  const currentCategoryIds = categoryIdsForPreset(presetId, currentCategories)
+  const categories = diffUnorderedListDimension(
+    'Categories',
+    baselineCategoryIds,
+    currentCategoryIds,
+  )
+  if (categories) diffs.push(categories)
+
+  diffs.push(...diffPresetTranslation(presetId, baselineTranslations, currentTranslations))
+
+  return diffs
+}
+
+export function diffRawPresetById(
+  presetId: string,
+  baseline: SchemaData,
+  current: SchemaData,
+): DiffEntry[] {
+  const basePreset = baseline.rawPresets[presetId]
+  const currPreset = current.rawPresets[presetId]
+  if (!basePreset || !currPreset) return []
+  return diffRawPreset(
+    presetId,
+    basePreset,
+    currPreset,
+    baseline.translations,
+    current.translations,
+    baseline.categories,
+    current.categories,
+  )
+}
+
+export function diffPresetWithSchema(
+  presetId: string,
+  baseline: SchemaData,
+  current: SchemaData,
+): DiffEntry[] {
+  return diffRawPresetById(presetId, baseline, current)
+}
+
+/** Compare preset datasets keyed by id. Prefer schema-aware diffs when both sides are loaded. */
 export function comparePresets(
   release: DenormalizedPreset[],
   current: DenormalizedPreset[],
+  options?: { baseline?: SchemaData; current?: SchemaData },
 ): ComparisonResult {
   const releaseById = new Map(release.map((p) => [p.id, p]))
   const currentById = new Map(current.map((p) => [p.id, p]))
+  const useSchema = Boolean(options?.baseline && options?.current)
 
   const statusById = new Map<string, PresetStatus>()
   const added: DenormalizedPreset[] = []
@@ -140,7 +249,9 @@ export function comparePresets(
       added.push(p)
       continue
     }
-    const diffs = diffPreset(r, p)
+    const diffs = useSchema
+      ? diffPresetWithSchema(p.id, options!.baseline!, options!.current!)
+      : diffPreset(r, p)
     if (diffs.length > 0) {
       statusById.set(p.id, 'modified')
       modified.push({ current: p, release: r, diffs })
@@ -172,4 +283,20 @@ export function isLikelyStaleBranchComparison(result: ComparisonResult): boolean
   const removed = result.removed.length
   if (removed < 10 || intentional === 0) return false
   return removed > intentional * 3
+}
+
+/** Format denormalized terms/aliases for tests and exports. */
+export function formatPresetTermsAliases(preset: DenormalizedPreset): {
+  terms: string[]
+  aliases: string[]
+} {
+  return {
+    terms: normalizeStringList(preset.terms),
+    aliases: normalizeStringList(preset.aliases),
+  }
+}
+
+/** @deprecated use sortedJoin from jsonDiff */
+export function legacySortedJoin(arr: string[]): string {
+  return sortedJoin(arr)
 }

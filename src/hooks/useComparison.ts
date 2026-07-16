@@ -17,8 +17,9 @@ import {
   resolveCompareBaselineUrl,
   resolveSchemaReference,
 } from '@/utils/dataUrl'
-import { type ComparisonResult, comparePresets } from '@/utils/presetDiff'
+import { comparePresets } from '@/utils/presetDiff'
 import { isUnsupportedSchemaBuildMessage } from '@/utils/schemaBuildVersion'
+import { compareSchemas, type SchemaComparisonResult, schemaChangeCount } from '@/utils/schemaDiff'
 
 function ensureSlash(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
@@ -41,7 +42,7 @@ export function useComparison() {
   const reference = resolveSchemaReference(urlReference, persistedReference)
   const activeDataUrl = resolveActiveDataUrl(rawDataUrl, reference)
 
-  const { presets, loading: schemaLoading, error: schemaError } = useSchema()
+  const { data: currentSchema, loading: schemaLoading, error: schemaError } = useSchema()
 
   const trimmedCompare = rawDataUrl.trim()
   const releaseCompareMode = isReleaseCompareMode(trimmedCompare, reference)
@@ -68,9 +69,18 @@ export function useComparison() {
     staleTime: SCHEMA_STALE_TIME,
   })
 
-  const baselinePresets = baselineQuery.data
-  const result: ComparisonResult | null =
-    baselinePresets && presets.length > 0 ? comparePresets(baselinePresets, presets) : null
+  const baselineSchema = baselineQuery.data
+  const result: SchemaComparisonResult | null =
+    baselineSchema && currentSchema
+      ? compareSchemas(
+          baselineSchema,
+          currentSchema,
+          comparePresets(baselineSchema.presets, currentSchema.presets, {
+            baseline: baselineSchema,
+            current: currentSchema,
+          }),
+        )
+      : null
 
   const compareDomain = baselineUrl ? hostnameFromUrl(baselineUrl) : null
   const compareLabel = baselineUrl
@@ -102,10 +112,11 @@ export function useComparison() {
     releaseVersion: versionsQuery.data?.releaseVersion ?? null,
     unreleasedUpdatedAt: versionsQuery.data?.unreleasedUpdatedAt ?? null,
     result,
+    changeCount: result ? schemaChangeCount(result) : null,
     loading:
-      (schemaLoading && presets.length === 0) ||
-      (baselineQuery.isLoading && !baselinePresets) ||
-      (baselineUrl !== null && !baselineQuery.isError && baselinePresets === undefined),
+      (schemaLoading && !currentSchema) ||
+      (baselineQuery.isLoading && !baselineSchema) ||
+      (baselineUrl !== null && !baselineQuery.isError && baselineSchema === undefined),
     error: schemaError ?? baselineError,
     baselineError,
     schemaError,
