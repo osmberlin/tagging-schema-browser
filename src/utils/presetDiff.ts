@@ -170,7 +170,6 @@ export function comparePresets(
 export function isLikelyStaleBranchComparison(result: ComparisonResult): boolean {
   const intentional = result.added.length + result.modified.length
   const removed = result.removed.length
-  if (removed < 10) return false
-  if (intentional === 0) return true
+  if (removed < 10 || intentional === 0) return false
   return removed > intentional * 3
 }
