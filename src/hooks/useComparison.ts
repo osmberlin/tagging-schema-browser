@@ -107,6 +107,13 @@ export function useComparison() {
       (baselineQuery.isLoading && !baselinePresets) ||
       (baselineUrl !== null && !baselineQuery.isError && baselinePresets === undefined),
     error: schemaError ?? baselineError,
+    baselineError,
+    schemaError,
+    unsupportedNoticeMessage: baselineUnsupported
+      ? baselineError
+      : schemaUnsupported
+        ? schemaError
+        : null,
     baselineUnsupported,
     schemaUnsupported,
   }

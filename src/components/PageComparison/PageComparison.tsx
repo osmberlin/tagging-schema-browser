@@ -106,11 +106,13 @@ export function PageComparison() {
     schemaUnsupported,
     baselineUrl,
     customPreviewUrl,
+    unsupportedNoticeMessage,
   } = useComparison()
   const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
   const { dataUrl, data, unsupportedBuild } = useSchema()
   const exportData = useMemo(() => (result ? exportComparison(result) : null), [result])
-  const staleBranchHint = result ? isLikelyStaleBranchComparison(result) : false
+  const staleBranchHint =
+    compareMode === 'preview' && result ? isLikelyStaleBranchComparison(result) : false
   const unsupportedNoticeUrl =
     (baselineUnsupported ? baselineUrl : null) ??
     (schemaUnsupported ? customPreviewUrl : null) ??
@@ -166,7 +168,7 @@ export function PageComparison() {
       ) : baselineUnsupported || schemaUnsupported || unsupportedBuild ? (
         <UnsupportedSchemaNotice
           build={unsupportedBuild ?? undefined}
-          message={error ?? undefined}
+          message={unsupportedNoticeMessage ?? undefined}
           dataUrl={unsupportedNoticeUrl}
           comparisonBaseline={baselineUnsupported}
         />
