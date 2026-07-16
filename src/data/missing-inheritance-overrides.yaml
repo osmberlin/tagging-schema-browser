@@ -29,3 +29,103 @@ presets:
       parentId: man_made
       missedFieldIds:
         - material
+  man_made/antenna:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  aerialway/pylon:
+    fields:
+      parentId: aerialway
+      missedFieldIds:
+        - name
+  type/route/aerialway:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  amenity/shelter/lean_to:
+    fields:
+      parentId: amenity/shelter
+      missedFieldIds:
+        - bench
+        - bin
+  barrier/jersey_barrier:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  man_made/manhole:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  leisure/fitness_station:
+    fields:
+      parentId: leisure
+      missedFieldIds:
+        - name
+  highway/toll_gantry:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  man_made/petroleum_well:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/silo:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  power/plant/source/solar/photovoltaic:
+    fields:
+      parentId: power/plant/source/solar
+      missedFieldIds:
+        - plant/output
+  highway/speed_camera:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/stop:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  man_made/storage_tank:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  natural/water/stream:
+    fields:
+      parentId: natural/water
+      missedFieldIds:
+        - name
+  man_made/surveillance:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  highway/street_lamp:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  man_made/street_cabinet:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  barrier/swing_gate:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
