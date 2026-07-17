@@ -4,6 +4,7 @@ import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
+  displayPresetFieldList,
   getInheritedFieldItems,
   presetIdFromRef,
 } from '@/components/PagePresets/presetFieldInheritance'
@@ -990,8 +991,33 @@ export function PresetSourceTree({
   presets,
   sourceKind = 'preset',
 }: PresetSourceTreeProps) {
-  void presetId
   const { dataUrl, rawPresets } = useSchema()
+  const displayRaw =
+    sourceKind === 'preset'
+      ? {
+          ...raw,
+          ...(Array.isArray(raw.fields)
+            ? {
+                fields: displayPresetFieldList(
+                  presetId,
+                  'fields',
+                  raw.fields as string[],
+                  rawPresets,
+                ),
+              }
+            : {}),
+          ...(Array.isArray(raw.moreFields)
+            ? {
+                moreFields: displayPresetFieldList(
+                  presetId,
+                  'moreFields',
+                  raw.moreFields as string[],
+                  rawPresets,
+                ),
+              }
+            : {}),
+        }
+      : raw
   const host: HostPresetContext = {
     hostPreset: raw as RawPreset,
     hostOriginalFields: Array.isArray(raw.fields)
@@ -1014,7 +1040,7 @@ export function PresetSourceTree({
       )}
     >
       <JsonNode
-        value={raw}
+        value={displayRaw}
         level={0}
         dataUrl={dataUrl ?? ''}
         host={host}

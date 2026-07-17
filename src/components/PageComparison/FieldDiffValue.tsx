@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { isIconSvgConfirmedMissing, useIconSvgDataUrl } from '@/components/PageIcons/iconRegistry'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
+import { presetIdFromRef } from '@/components/PagePresets/presetFieldInheritance'
 import type { DiffEntry } from '@/utils/jsonDiff'
 
 function IconDiffLink({ iconName, tone }: { iconName: string; tone: 'before' | 'after' }) {
@@ -87,6 +88,10 @@ function ListItemValue({
   label: string
 }) {
   if (label === 'Fields' || label === 'More fields') {
+    const presetRef = presetIdFromRef(item)
+    if (presetRef) {
+      return <PresetDiffLink presetId={presetRef} tone={tone} />
+    }
     return <FieldDiffLink fieldId={item} tone={tone} />
   }
   if (label === 'Members') {
