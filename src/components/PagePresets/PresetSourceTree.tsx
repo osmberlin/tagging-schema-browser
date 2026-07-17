@@ -1020,11 +1020,11 @@ export function PresetSourceTree({
       : raw
   const host: HostPresetContext = {
     hostPreset: raw as RawPreset,
-    hostOriginalFields: Array.isArray(raw.fields)
-      ? (raw.fields as string[]).filter((f) => typeof f === 'string')
+    hostOriginalFields: Array.isArray(displayRaw.fields)
+      ? (displayRaw.fields as string[]).filter((f) => typeof f === 'string')
       : [],
-    hostOriginalMoreFields: Array.isArray(raw.moreFields)
-      ? (raw.moreFields as string[]).filter((f) => typeof f === 'string')
+    hostOriginalMoreFields: Array.isArray(displayRaw.moreFields)
+      ? (displayRaw.moreFields as string[]).filter((f) => typeof f === 'string')
       : [],
     hostPresetDenorm: preset,
     allPresets: presets ?? [],

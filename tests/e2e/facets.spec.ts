@@ -253,6 +253,9 @@ test('dist-expanded slash-parent fields collapse to preset ref in source tree', 
   await expect(page.getByRole('button', { name: /"\{traffic_sign\}"/ })).toBeVisible()
   await expect(page.getByText('data/presets/traffic_sign.json')).toBeVisible()
   await expect(page.getByText('data/fields/direction_vertex.json')).toBeVisible()
+  await page.getByRole('button', { name: /"\{traffic_sign\}"/ }).click()
+  await expect(page.getByText('data/fields/traffic_sign/direction.json')).toBeVisible()
+  await expect(page.getByText('/* no inherited fields */')).toHaveCount(0)
 })
 
 test('preset ref in moreFields inherits moreFields from parent preset', async ({ page }) => {
