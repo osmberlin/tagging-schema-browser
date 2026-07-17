@@ -7,18 +7,17 @@ description: >-
 
 # Apply schema override
 
-Use when a GitHub issue was opened from the Tagging Schema Browser with labels
-`cursor-override` and a kind-specific label (`missing-inheritance-override` or
-`risky-typecombo-override`).
+Use when a GitHub issue was opened from the Tagging Schema Browser with a title starting
+`[missing-inheritance]` or `[risky-typecombo]` (or umbrella `[schema-override]`).
 
 ## 1. Parse the issue
 
 Read the issue body and extract:
 
 - **Preset id** from `Preset: \`…\``
-- **Kind** from labels:
-  - `missing-inheritance-override` → `src/data/missing-inheritance-overrides.yaml`
-  - `risky-typecombo-override` → `src/data/risky-typecombo-overrides.yaml`
+- **Kind** from the issue title prefix:
+  - `[missing-inheritance]` → `src/data/missing-inheritance-overrides.yaml`
+  - `[risky-typecombo]` → `src/data/risky-typecombo-overrides.yaml`
 - **YAML snapshot** from the fenced ` ```yaml ` block under **Snapshot** (the `presets:` entry for the preset)
 
 For **stale** updates, the issue may also include an **Existing override (stale)** block — the snapshot replaces that stored entry.

@@ -1,11 +1,8 @@
 ---
 name: Risky typeCombo override
 about: Record intentional risky typeCombo on a preset with fixed tags
-title: ''
-labels:
-  - cursor-override
-  - risky-typecombo-override
+title: '[risky-typecombo] '
 assignees: ''
 ---
 
-<!-- The Tagging Schema Browser pre-fills title and body when you use "Create GitHub issue" on a preset detail page. -->
+<!-- Keep the [risky-typecombo] title prefix. The Tagging Schema Browser pre-fills the rest when you use "Create GitHub issue". -->

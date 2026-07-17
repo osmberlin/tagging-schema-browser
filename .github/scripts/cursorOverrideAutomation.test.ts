@@ -2,19 +2,23 @@ import { describe, expect, it } from 'vitest'
 import {
   buildCursorTriggerCommentBody,
   hasExistingCursorTrigger,
-  resolveActiveLabel,
+  resolveActiveKindFromTitle,
   resolveSourceBranch,
 } from '../../.github/scripts/cursorOverrideAutomation.ts'
 
 describe('cursorOverrideAutomation', () => {
-  it('resolves kind-specific label over umbrella label', () => {
-    expect(resolveActiveLabel(['cursor-override', 'missing-inheritance-override'])).toBe(
-      'missing-inheritance-override',
+  it('resolves kind-specific title prefix over umbrella prefix', () => {
+    expect(
+      resolveActiveKindFromTitle('[missing-inheritance] shop/trade — intentional omission'),
+    ).toBe('missing-inheritance')
+    expect(resolveActiveKindFromTitle('[risky-typecombo] highway/residential')).toBe(
+      'risky-typecombo',
     )
   })
 
-  it('falls back to cursor-override', () => {
-    expect(resolveActiveLabel(['cursor-override'])).toBe('cursor-override')
+  it('falls back to schema-override prefix', () => {
+    expect(resolveActiveKindFromTitle('[schema-override] custom title')).toBe('schema-override')
+    expect(resolveActiveKindFromTitle('missing-inheritance] no bracket')).toBeNull()
   })
 
   it('parses source branch from issue body', () => {
@@ -36,7 +40,7 @@ describe('cursorOverrideAutomation', () => {
       owner: 'osmberlin',
       repo: 'tagging-schema-browser',
       issueNumber: 138,
-      activeLabel: 'missing-inheritance-override',
+      activeKind: 'missing-inheritance',
       issueBody: '**Source branch:** `main`',
     })
 
@@ -44,5 +48,6 @@ describe('cursorOverrideAutomation', () => {
     expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
     expect(body).toContain('Closes #138')
     expect(body).toContain('schema-override')
+    expect(body).toContain('[missing-inheritance]')
   })
 })

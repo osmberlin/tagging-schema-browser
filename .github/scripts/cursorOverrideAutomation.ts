@@ -3,34 +3,36 @@ const GHA_ATTRIBUTION =
 
 export const CURSOR_TRIGGER_MARKER = '@cursor repo='
 
-export const SPECIFIC_LABELS = ['missing-inheritance-override', 'risky-typecombo-override'] as const
+/** Mandatory issue title prefixes — users may edit the title after the closing `]`. */
+export const OVERRIDE_TITLE_PREFIXES = {
+  'missing-inheritance': '[missing-inheritance]',
+  'risky-typecombo': '[risky-typecombo]',
+  'schema-override': '[schema-override]',
+} as const
 
-export type OverrideTriggerLabel = (typeof SPECIFIC_LABELS)[number] | 'cursor-override'
+export type OverrideTriggerKind = keyof typeof OVERRIDE_TITLE_PREFIXES
 
-export const LABEL_CONFIG = {
-  'missing-inheritance-override': {
+export const KIND_CONFIG = {
+  'missing-inheritance': {
     title: 'Missing inheritance override',
     skill: '.agents/skills/apply-schema-override/SKILL.md',
   },
-  'risky-typecombo-override': {
+  'risky-typecombo': {
     title: 'Risky typeCombo override',
     skill: '.agents/skills/apply-schema-override/SKILL.md',
   },
-  'cursor-override': {
+  'schema-override': {
     title: 'Schema override',
     skill: null,
   },
-} as const satisfies Record<OverrideTriggerLabel, { title: string; skill: string | null }>
+} as const satisfies Record<OverrideTriggerKind, { title: string; skill: string | null }>
 
-export const resolveActiveLabel = (issueLabels: string[]): OverrideTriggerLabel | null => {
-  for (const label of SPECIFIC_LABELS) {
-    if (issueLabels.includes(label)) {
-      return label
-    }
+export const resolveActiveKindFromTitle = (title: string): OverrideTriggerKind | null => {
+  const trimmed = title.trim()
+  for (const kind of ['missing-inheritance', 'risky-typecombo'] as const) {
+    if (trimmed.startsWith(OVERRIDE_TITLE_PREFIXES[kind])) return kind
   }
-  if (issueLabels.includes('cursor-override')) {
-    return 'cursor-override'
-  }
+  if (trimmed.startsWith(OVERRIDE_TITLE_PREFIXES['schema-override'])) return 'schema-override'
   return null
 }
 
@@ -44,7 +46,7 @@ export const resolveSourceBranch = (body: string) => {
 }
 
 export const resolveSkillInstruction = (
-  config: (typeof LABEL_CONFIG)[OverrideTriggerLabel],
+  config: (typeof KIND_CONFIG)[OverrideTriggerKind],
   issueBody: string,
 ) => {
   if (config.skill) {
@@ -60,36 +62,31 @@ export const buildCursorTriggerCommentBody = ({
   owner,
   repo,
   issueNumber,
-  activeLabel,
+  activeKind,
   issueBody,
 }: {
   owner: string
   repo: string
   issueNumber: number
-  activeLabel: OverrideTriggerLabel
+  activeKind: OverrideTriggerKind
   issueBody: string
 }) => {
-  const config = LABEL_CONFIG[activeLabel]
+  const config = KIND_CONFIG[activeKind]
   const branch = resolveSourceBranch(issueBody)
   const skillInstruction = resolveSkillInstruction(config, issueBody)
 
   return `${GHA_ATTRIBUTION}@cursor repo=${owner}/${repo} branch=${branch}
 
-**${config.title}** #${issueNumber} (\`${activeLabel}\`). Read the issue body. ${skillInstruction} Open a PR with \`Closes #${issueNumber}\` and add the \`schema-override\` label. Prefix comments and PR description with \`**[Cursor Agent]**\`.`
+**${config.title}** #${issueNumber} (\`${OVERRIDE_TITLE_PREFIXES[activeKind]}\`). Read the issue body. ${skillInstruction} Open a PR with \`Closes #${issueNumber}\` and add the \`schema-override\` label. Prefix comments and PR description with \`**[Cursor Agent]**\`.`
 }
-
-type IssueLabel = string | { name: string }
 
 type IssuesEvent = {
   issue: {
     number: number
+    title: string
     body: string | null
-    labels: IssueLabel[]
   }
 }
-
-const getIssueLabels = (labels: IssueLabel[]) =>
-  labels.map((label) => (typeof label === 'string' ? label : label.name))
 
 const githubApi = async <T>(token: string, path: string, init?: RequestInit): Promise<T> => {
   const extraHeaders =
@@ -132,11 +129,10 @@ export const runCursorOverrideAutomation = async ({
   }
 
   const issue = event.issue
-  const issueLabels = getIssueLabels(issue.labels)
-  const activeLabel = resolveActiveLabel(issueLabels)
+  const activeKind = resolveActiveKindFromTitle(issue.title)
 
-  if (!activeLabel) {
-    console.log('No Cursor override trigger label found on issue; skipping.')
+  if (!activeKind) {
+    console.log('No Cursor override title prefix found on issue; skipping.')
     return
   }
 
@@ -154,7 +150,7 @@ export const runCursorOverrideAutomation = async ({
     owner,
     repo,
     issueNumber: issue.number,
-    activeLabel,
+    activeKind,
     issueBody: issue.body ?? '',
   })
 

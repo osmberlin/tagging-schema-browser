@@ -12,29 +12,29 @@ export type SchemaOverrideKind = 'missing-inheritance' | 'risky-typecombo'
 const KIND_CONFIG = {
   'missing-inheritance': {
     template: 'missing-inheritance-override.md',
-    labels: ['cursor-override', 'missing-inheritance-override'],
+    titlePrefix: '[missing-inheritance]',
+    defaultTitleSuffix: '— intentional missing inheritance',
     overrideFile: 'src/data/missing-inheritance-overrides.yaml',
     skillPath: '.agents/skills/apply-schema-override/SKILL.md',
-    titlePrefix: 'Overrides: mark',
-    titleSuffix: 'missing inheritance as intentional',
+    prTitleSuffix: 'missing inheritance as intentional',
   },
   'risky-typecombo': {
     template: 'risky-typecombo-override.md',
-    labels: ['cursor-override', 'risky-typecombo-override'],
+    titlePrefix: '[risky-typecombo]',
+    defaultTitleSuffix: '— intentional risky typeCombo',
     overrideFile: 'src/data/risky-typecombo-overrides.yaml',
     skillPath: '.agents/skills/apply-schema-override/SKILL.md',
-    titlePrefix: 'Overrides: mark',
-    titleSuffix: 'risky typeCombo as intentional',
+    prTitleSuffix: 'risky typeCombo as intentional',
   },
 } as const satisfies Record<
   SchemaOverrideKind,
   {
     template: string
-    labels: string[]
+    titlePrefix: string
+    defaultTitleSuffix: string
     overrideFile: string
     skillPath: string
-    titlePrefix: string
-    titleSuffix: string
+    prTitleSuffix: string
   }
 >
 
@@ -64,7 +64,7 @@ function agentInstructions(config: (typeof KIND_CONFIG)[SchemaOverrideKind]): st
     `1. Follow [\`${config.skillPath}\`](${GITHUB_REPO_URL}/blob/main/${config.skillPath}).`,
     `2. **Commit 1:** Parse the YAML snapshot under **Snapshot** below and merge into \`${config.overrideFile}\` under \`presets:\` (preserve sort order).`,
     '3. **Commit 2 (if needed):** Run `bun run check`. Remove or fix any *other* stale override entries in a separate commit so validation passes.',
-    `4. Open a PR (1–2 commits) titled like \`[skip netlify] ${config.titlePrefix} {presetId} ${config.titleSuffix}\` with \`Closes #N\` in the body and add the \`schema-override\` label.`,
+    `4. Open a PR (1–2 commits) titled like \`[skip netlify] Overrides: mark {presetId} ${config.prTitleSuffix}\` with \`Closes #N\` in the body and add the \`schema-override\` label.`,
     '',
   ].join('\n')
 }
@@ -113,18 +113,22 @@ export function buildSchemaOverrideIssueBody({
     '```',
     '',
     staleSection,
-    `Submit with labels \`${config.labels.join('`, `')}\` to trigger a Cursor cloud agent via GitHub Actions.`,
+    `Submit with issue title starting \`${config.titlePrefix}\` (you may edit the rest of the title) to trigger a Cursor cloud agent via GitHub Actions.`,
   ]
     .filter((section) => section.length > 0)
     .join('\n')
+}
+
+export function buildSchemaOverrideIssueTitle(kind: SchemaOverrideKind, presetId: string): string {
+  const config = KIND_CONFIG[kind]
+  return `${config.titlePrefix} ${presetId} ${config.defaultTitleSuffix}`
 }
 
 export function buildSchemaOverrideIssueUrl(input: BuildSchemaOverrideIssueUrlInput): string {
   const config = KIND_CONFIG[input.kind]
   const params = new URLSearchParams()
   params.set('template', config.template)
-  params.set('title', `${config.titlePrefix} ${input.presetId} ${config.titleSuffix}`)
-  params.set('labels', config.labels.join(','))
+  params.set('title', buildSchemaOverrideIssueTitle(input.kind, input.presetId))
   params.set('body', buildSchemaOverrideIssueBody(input))
   return `${GITHUB_REPO_URL}/issues/new?${params.toString()}`
 }

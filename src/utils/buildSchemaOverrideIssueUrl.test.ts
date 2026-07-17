@@ -15,7 +15,7 @@ const sampleInheritance = {
 }
 
 describe('buildSchemaOverrideIssueUrl', () => {
-  it('builds a GitHub new-issue URL with template, title, labels, and body', () => {
+  it('builds a GitHub new-issue URL with template, title prefix, and body', () => {
     const url = buildSchemaOverrideIssueUrl({
       kind: 'missing-inheritance',
       presetId: 'man_made/crane/untyped_crane',
@@ -30,13 +30,14 @@ describe('buildSchemaOverrideIssueUrl', () => {
     )
     expect(parsed.searchParams.get('template')).toBe('missing-inheritance-override.md')
     expect(parsed.searchParams.get('title')).toBe(
-      'Overrides: mark man_made/crane/untyped_crane missing inheritance as intentional',
+      '[missing-inheritance] man_made/crane/untyped_crane — intentional missing inheritance',
     )
-    expect(parsed.searchParams.get('labels')).toBe('cursor-override,missing-inheritance-override')
+    expect(parsed.searchParams.get('labels')).toBeNull()
     const body = parsed.searchParams.get('body') ?? ''
     expect(body).toContain('man_made/crane/untyped_crane')
     expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
     expect(body).toContain('schema-override')
+    expect(body).toContain('[missing-inheritance]')
     expect(body).toContain('Commit 2')
     expect(body).toContain('```yaml')
   })
@@ -86,7 +87,10 @@ describe('buildSchemaOverrideIssueUrl', () => {
 
     const parsed = new URL(url)
     expect(parsed.searchParams.get('template')).toBe('risky-typecombo-override.md')
-    expect(parsed.searchParams.get('labels')).toBe('cursor-override,risky-typecombo-override')
+    expect(parsed.searchParams.get('title')).toBe(
+      '[risky-typecombo] highway/residential — intentional risky typeCombo',
+    )
+    expect(parsed.searchParams.get('labels')).toBeNull()
     const body = parsed.searchParams.get('body') ?? ''
     expect(body).toContain('risky-typecombo-overrides.yaml')
     expect(body).toContain('- traffic_calming')
