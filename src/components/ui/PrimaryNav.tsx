@@ -84,6 +84,7 @@ type NavItem = {
   }) => Record<string, unknown>
   title?: string
   children?: React.ReactNode
+  customIcon?: React.ReactNode
 }
 
 const springTransition = { type: 'spring' as const, stiffness: 500, damping: 35, bounce: 0 }
