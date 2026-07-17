@@ -124,3 +124,17 @@ export function formatRiskyTypeComboOverrideYaml(
   }
   return `${lines.join('\n')}\n`
 }
+
+/** Format a stored override entry for issue bodies (stale removal / diff). */
+export function formatRiskyTypeComboOverrideYamlFromStored(
+  presetId: string,
+  override: RiskyTypeComboOverride,
+): string {
+  return formatRiskyTypeComboOverrideYaml(presetId, {
+    fields: override.fieldIds.map((fieldId) => ({
+      fieldId,
+      fieldKey: fieldId,
+      listKey: 'fields' as const,
+    })),
+  })
+}

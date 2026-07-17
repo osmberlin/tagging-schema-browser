@@ -194,3 +194,17 @@ export function formatMissingInheritanceOverrideYaml(
 
   return `${lines.join('\n')}\n`
 }
+
+/** Format a stored override entry for issue bodies (stale removal / diff). */
+export function formatMissingInheritanceOverrideYamlFromStored(
+  presetId: string,
+  override: MissingInheritanceOverride,
+): string {
+  const current: MissingFieldInheritance = {}
+  for (const fieldListKey of ['fields', 'moreFields'] as const) {
+    const section = override[fieldListKey]
+    if (!section) continue
+    current[fieldListKey] = { ...section, explicitPresetRefs: [] }
+  }
+  return formatMissingInheritanceOverrideYaml(presetId, current)
+}

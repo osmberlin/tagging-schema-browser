@@ -59,6 +59,23 @@ describe('buildSchemaOverrideIssueUrl', () => {
     expect(body).toContain('parentId: old')
   })
 
+  it('builds stale-removal issue body when live detection is gone', () => {
+    const body = buildSchemaOverrideIssueBody({
+      kind: 'missing-inheritance',
+      presetId: 'tourism/information/terminal',
+      snapshotYaml: '',
+      pageUrl: 'https://example.com/preset/tourism/information/terminal',
+      dataUrl: '/test-schema',
+      existingOverrideYaml:
+        '  tourism/information/terminal:\n    fields:\n      parentId: tourism/information',
+      removeStaleOnly: true,
+    })
+
+    expect(body).toContain('## Remove stale override')
+    expect(body).toContain('remove a stale schema override entry')
+    expect(body).not.toContain('## Snapshot')
+  })
+
   it('builds missing-inheritance URL from live detection', () => {
     const url = buildMissingInheritanceOverrideIssueUrl({
       presetId: 'man_made/crane/untyped_crane',
