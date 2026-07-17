@@ -6,6 +6,7 @@ import { MissingInheritancePanel } from '@/components/PagePresets/MissingInherit
 import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetIconMismatchPanel } from '@/components/PagePresets/PresetIconMismatchPanel'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
+import { RiskyTypeComboPanel } from '@/components/PagePresets/RiskyTypeComboPanel'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { AreaIcon } from '@/components/ui/areaIcons'
@@ -195,6 +196,8 @@ function PresetDetailContent({
       />
 
       <MissingInheritancePanel preset={preset} dataUrl={dataUrl} />
+
+      <RiskyTypeComboPanel preset={preset} dataUrl={dataUrl} />
 
       <DetailDisclosure
         title="Translation"

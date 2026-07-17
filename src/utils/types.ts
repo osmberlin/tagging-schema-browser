@@ -2,6 +2,7 @@ import type {
   MissingFieldInheritance,
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
+import type { RiskyTypeCombo, RiskyTypeComboStatus } from '@/components/PagePresets/riskyTypeCombo'
 import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 import type { PresetIconMismatchRef, PresetIconMismatchRow } from '@/utils/iconMismatch'
 import type { PrerequisiteTag } from '@/utils/prerequisiteTag'
@@ -95,6 +96,9 @@ export type DenormalizedPreset = {
   /** Slash-parent field lists omitted deliberately on an explicit `fields` / `moreFields` array. */
   missingFieldInheritance: MissingFieldInheritance | null
   missingInheritanceStatus: MissingInheritanceStatus
+  /** typeCombo fields that can write `=yes` on presets with fixed tags. */
+  riskyTypeCombo: RiskyTypeCombo | null
+  riskyTypeComboStatus: RiskyTypeComboStatus
   searchable?: boolean
   /** Authored under `data/presets/@templates/` or tagged with `@template`. */
   isTemplate: boolean

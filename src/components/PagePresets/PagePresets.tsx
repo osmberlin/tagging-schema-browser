@@ -5,7 +5,11 @@ import { DownloadButton } from '@/components/ui/DownloadButton'
 import { Input } from '@/components/ui/Input'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { SchemaIssueAction, SchemaIssueAlert } from '@/components/ui/SchemaIssue'
-import { BrokenPresetIconsAlert, MissingInheritanceAlerts } from '@/components/ui/SchemaIssueAlerts'
+import {
+  BrokenPresetIconsAlert,
+  MissingInheritanceAlerts,
+  RiskyTypeComboAlerts,
+} from '@/components/ui/SchemaIssueAlerts'
 import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
 import { useBrokenPresetIconBannerCount } from '@/hooks/useBrokenPresetIconCount'
 import { useSchema } from '@/hooks/useSchema'
@@ -35,6 +39,14 @@ export function PagePresets() {
   )
   const staleMissingInheritanceCount = useMemo(
     () => presets.filter((preset) => preset.missingInheritanceStatus === 'stale').length,
+    [presets],
+  )
+  const unreviewedRiskyTypeComboCount = useMemo(
+    () => presets.filter((preset) => preset.riskyTypeComboStatus === 'unreviewed').length,
+    [presets],
+  )
+  const staleRiskyTypeComboCount = useMemo(
+    () => presets.filter((preset) => preset.riskyTypeComboStatus === 'stale').length,
     [presets],
   )
   const activeIssueFilter = activePresetIssueFilter(searchState)
@@ -67,6 +79,7 @@ export function PagePresets() {
     hasIcon: 'icons',
     iconMismatch: 'icons',
     missingInheritance: 'fields',
+    riskyTypeCombo: 'fields',
   }
 
   const activePills = [
@@ -149,6 +162,12 @@ export function PagePresets() {
       facet: 'missingInheritance',
       label: `Field inheritance: ${value}`,
       onRemove: () => removeValue('missingInheritance', value),
+    })),
+    ...searchState.riskyTypeCombo.map((value) => ({
+      key: `riskyTypeCombo-${value}`,
+      facet: 'riskyTypeCombo',
+      label: `Field type safety: ${value}`,
+      onRemove: () => removeValue('riskyTypeCombo', value),
     })),
     ...searchState.iconName.map((value) => ({
       key: `iconName-${value}`,
@@ -291,6 +310,16 @@ export function PagePresets() {
           onShowStale={() => setSearchState({ missingInheritance: ['stale'], page: 1 })}
           showUnreviewed={!searchState.missingInheritance.includes('unreviewed')}
           showStale={!searchState.missingInheritance.includes('stale')}
+        />
+      ) : null}
+      {showPresetIssueAlert(activeIssueFilter, 'riskyTypeCombo') ? (
+        <RiskyTypeComboAlerts
+          unreviewedCount={unreviewedRiskyTypeComboCount}
+          staleCount={staleRiskyTypeComboCount}
+          onShowUnreviewed={() => setSearchState({ riskyTypeCombo: ['unreviewed'], page: 1 })}
+          onShowStale={() => setSearchState({ riskyTypeCombo: ['stale'], page: 1 })}
+          showUnreviewed={!searchState.riskyTypeCombo.includes('unreviewed')}
+          showStale={!searchState.riskyTypeCombo.includes('stale')}
         />
       ) : null}
       <PresetTable />

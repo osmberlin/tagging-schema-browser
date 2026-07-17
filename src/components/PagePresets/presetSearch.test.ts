@@ -30,6 +30,8 @@ function preset(
     iconMismatch: false,
     missingFieldInheritance: null,
     missingInheritanceStatus: 'none',
+    riskyTypeCombo: null,
+    riskyTypeComboStatus: 'none',
     isTemplate: false,
     ...overrides,
   }

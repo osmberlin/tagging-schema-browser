@@ -20,7 +20,9 @@ function preset(id: string, overrides: Partial<DenormalizedPreset> = {}): Denorm
     hasIcon: false,
     iconMismatch: false,
     missingFieldInheritance: null,
-    missingInheritanceStatus: 'ok',
+    missingInheritanceStatus: 'none',
+    riskyTypeCombo: null,
+    riskyTypeComboStatus: 'none',
     isTemplate: false,
     ...overrides,
   }

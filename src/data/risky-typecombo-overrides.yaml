@@ -1,0 +1,9 @@
+# Intentional typeCombo fields on presets with fixed feature tags.
+#
+# Add an entry when a typeCombo field is deliberately kept even though it can
+# write `key=yes` in iD. Record `fieldIds` as a snapshot — CI fails when live
+# detection no longer matches (stale override).
+#
+# CI validates against the published npm release dist (see validate-risky-typecombo-overrides).
+version: 1
+presets: {}

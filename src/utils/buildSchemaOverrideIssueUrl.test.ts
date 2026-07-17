@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildMissingInheritanceOverrideIssueUrl,
+  buildRiskyTypeComboOverrideIssueUrl,
   buildSchemaOverrideIssueBody,
   buildSchemaOverrideIssueUrl,
 } from './buildSchemaOverrideIssueUrl'
@@ -65,5 +66,29 @@ describe('buildSchemaOverrideIssueUrl', () => {
     const body = new URL(url).searchParams.get('body') ?? ''
     expect(body).toContain('parentId: man_made/crane')
     expect(body).toContain('- crane/type')
+  })
+
+  it('builds risky-typecombo URL from live detection', () => {
+    const url = buildRiskyTypeComboOverrideIssueUrl({
+      presetId: 'highway/residential',
+      riskyTypeCombo: {
+        fields: [
+          {
+            fieldId: 'traffic_calming',
+            fieldKey: 'traffic_calming',
+            listKey: 'moreFields',
+          },
+        ],
+      },
+      pageUrl: 'https://example.com/preset/highway/residential',
+      dataUrl: '/test-schema',
+    })
+
+    const parsed = new URL(url)
+    expect(parsed.searchParams.get('template')).toBe('risky-typecombo-override.md')
+    expect(parsed.searchParams.get('labels')).toBe('cursor-override,risky-typecombo-override')
+    const body = parsed.searchParams.get('body') ?? ''
+    expect(body).toContain('risky-typecombo-overrides.yaml')
+    expect(body).toContain('- traffic_calming')
   })
 })

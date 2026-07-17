@@ -1,5 +1,10 @@
 import type { MissingInheritanceOverride } from '@/components/PagePresets/missingFieldInheritance'
 import { formatMissingInheritanceOverrideYaml } from '@/components/PagePresets/missingFieldInheritance'
+import type {
+  RiskyTypeCombo,
+  RiskyTypeComboOverride,
+} from '@/components/PagePresets/riskyTypeCombo'
+import { formatRiskyTypeComboOverrideYaml } from '@/components/PagePresets/riskyTypeCombo'
 import { GITHUB_REPO_URL } from '@/utils/constants'
 
 export type SchemaOverrideKind = 'missing-inheritance' | 'risky-typecombo'
@@ -160,6 +165,38 @@ export function buildMissingInheritanceOverrideIssueUrl({
                   explicitPresetRefs: [],
                 }
               : undefined,
+          })
+        : undefined,
+  })
+}
+
+export function buildRiskyTypeComboOverrideIssueUrl({
+  presetId,
+  riskyTypeCombo,
+  pageUrl,
+  dataUrl,
+  existingOverride,
+}: {
+  presetId: string
+  riskyTypeCombo: RiskyTypeCombo
+  pageUrl: string
+  dataUrl: string
+  existingOverride?: RiskyTypeComboOverride
+}): string {
+  return buildSchemaOverrideIssueUrl({
+    kind: 'risky-typecombo',
+    presetId,
+    snapshotYaml: formatRiskyTypeComboOverrideYaml(presetId, riskyTypeCombo),
+    pageUrl,
+    dataUrl,
+    existingOverrideYaml:
+      existingOverride !== undefined
+        ? formatRiskyTypeComboOverrideYaml(presetId, {
+            fields: existingOverride.fieldIds.map((fieldId) => ({
+              fieldId,
+              fieldKey: fieldId,
+              listKey: 'fields' as const,
+            })),
           })
         : undefined,
   })

@@ -31,6 +31,7 @@ export const presetSearchSchema = z.object({
   hasIcon: stringArray,
   iconMismatch: stringArray,
   missingInheritance: stringArray,
+  riskyTypeCombo: stringArray,
 })
 
 export type SearchState = z.infer<typeof presetSearchSchema>
@@ -89,6 +90,7 @@ export function filtersFromState(state: SearchState): Record<string, string[]> {
   if (nonEmpty(state.iconMismatch).length) f.iconMismatch = nonEmpty(state.iconMismatch)
   if (nonEmpty(state.missingInheritance).length)
     f.missingInheritanceFacet = nonEmpty(state.missingInheritance)
+  if (nonEmpty(state.riskyTypeCombo).length) f.riskyTypeComboFacet = nonEmpty(state.riskyTypeCombo)
   if (state.template !== 'both') f.template = [state.template]
   if (state.searchable !== 'both') f.searchable = [state.searchable]
   return f
