@@ -4,7 +4,13 @@ name: Schema override auto-merge
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened, labeled, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to retry auto-merge for (must have schema-override label)
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -14,17 +20,33 @@ jobs:
   auto-merge:
     runs-on: ubuntu-latest
     if: >-
-      (
-        github.event.pull_request.user.login == 'cursor[bot]' ||
-        github.event.pull_request.user.login == 'cursoragent'
-      ) &&
+      github.event_name == 'workflow_dispatch' ||
       contains(github.event.pull_request.labels.*.name, 'schema-override')
     steps:
+      - name: Resolve PR number
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            pr_number="${{ github.event.inputs.pr_number }}"
+          else
+            pr_number="${{ github.event.pull_request.number }}"
+          fi
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+          labels=$(gh pr view "$pr_number" --repo "${{ github.repository }}" --json labels --jq '[.labels[].name] | join(",")')
+          if ! echo "$labels" | grep -q 'schema-override'; then
+            echo "PR #$pr_number is missing schema-override label; exiting."
+            exit 1
+          fi
+          draft=$(gh pr view "$pr_number" --repo "${{ github.repository }}" --json isDraft --jq '.isDraft')
+          echo "draft=$draft" >> "$GITHUB_OUTPUT"
+
       - name: Fetch changed files
         id: files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           files=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename' | sort -u)
           echo "Changed files:"
@@ -46,18 +68,33 @@ jobs:
       - name: Comment when manual review is required
         if: >-
           steps.files.outputs.eligible != 'true' &&
-          contains(fromJSON('["opened", "labeled", "reopened"]'), github.event.action)
+          (
+            github.event_name == 'workflow_dispatch' ||
+            contains(fromJSON('["opened", "labeled", "reopened"]'), github.event.action)
+          )
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
-          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge skipped** — this PR must only change `src/data/*-overrides.yaml` and carry the `schema-override` label.'
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override auto-merge skipped** — this PR must only change `src/data/*-overrides.yaml` and carry the `schema-override` label.'
+
+      - name: Mark draft PR ready for review
+        if: >-
+          steps.files.outputs.eligible == 'true' &&
+          steps.pr.outputs.draft == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          gh pr ready "$PR_NUMBER" --repo "${{ github.repository }}"
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override** — marked draft PR ready for review so auto-merge can proceed after CI.'
 
       - name: Wait for CI, then rebase-merge
         if: steps.files.outputs.eligible == 'true'
         uses: pascalgn/automerge-action@v0.16.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PULL_REQUEST: ${{ steps.pr.outputs.number }}
           MERGE_METHOD: rebase
           MERGE_COMMIT_MESSAGE: pull-request-title
           MERGE_DELETE_BRANCH: true
@@ -68,9 +105,12 @@ jobs:
       - name: Comment when auto-merge is queued
         if: >-
           steps.files.outputs.eligible == 'true' &&
-          contains(fromJSON('["opened", "labeled", "reopened"]'), github.event.action)
+          (
+            github.event_name == 'workflow_dispatch' ||
+            contains(fromJSON('["opened", "labeled", "reopened", "ready_for_review"]'), github.event.action)
+          )
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
-          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge enabled** — this PR will rebase-merge once required checks pass (YAML-only override change; typically 1–2 commits).'
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override auto-merge enabled** — this PR will rebase-merge once required checks pass (YAML-only override change; typically 1–2 commits).'

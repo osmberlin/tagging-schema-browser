@@ -68,7 +68,7 @@ export const buildCursorTriggerCommentBody = ({
   const branch = resolveSourceBranch(issueBody)
   const skillInstruction = resolveSkillInstruction(config)
 
-  return `${GHA_ATTRIBUTION}@cursoragent look into this issue. **${config.title}** #${issueNumber} (\`${OVERRIDE_TITLE_PREFIXES[activeKind]}\`). Read the issue body. ${skillInstruction} Open a PR with \`Closes #${issueNumber}\` and add the \`schema-override\` label. Prefix comments and PR description with \`**[Cursor Agent]**\`. Work in \`${owner}/${repo}\` on branch \`${branch}\`.`
+  return `${GHA_ATTRIBUTION}@cursoragent look into this issue. **${config.title}** #${issueNumber} (\`${OVERRIDE_TITLE_PREFIXES[activeKind]}\`). Read the issue body. ${skillInstruction} Open a PR ready for review (not draft) with \`Closes #${issueNumber}\` and add the \`schema-override\` label. Prefix comments and PR description with \`**[Cursor Agent]**\`. Work in \`${owner}/${repo}\` on branch \`${branch}\`.`
 }
 
 type IssuesEvent = {
