@@ -52,6 +52,42 @@ export function MissingInheritanceAlerts({
   )
 }
 
+export function RiskyTypeComboAlerts({
+  unreviewedCount,
+  staleCount,
+  onShowUnreviewed,
+  onShowStale,
+  showUnreviewed = true,
+  showStale = true,
+}: {
+  unreviewedCount: number
+  staleCount: number
+  onShowUnreviewed: () => void
+  onShowStale: () => void
+  showUnreviewed?: boolean
+  showStale?: boolean
+}) {
+  return (
+    <>
+      {showUnreviewed && unreviewedCount > 0 ? (
+        <SchemaIssueAlert variant="warning" title="Risky typeCombo">
+          <strong>{unreviewedCount}</strong>{' '}
+          {unreviewedCount === 1 ? 'preset exposes' : 'presets expose'} a property{' '}
+          <code>typeCombo</code> field that can add <code>=yes</code> when left empty —{' '}
+          <SchemaIssueAction onClick={onShowUnreviewed}>show affected presets</SchemaIssueAction>.
+        </SchemaIssueAlert>
+      ) : null}
+      {showStale && staleCount > 0 ? (
+        <SchemaIssueAlert variant="error" title="Stale typeCombo override">
+          <strong>{staleCount}</strong> risky typeCombo{' '}
+          {staleCount === 1 ? 'override is' : 'overrides are'} stale —{' '}
+          <SchemaIssueAction onClick={onShowStale}>show stale overrides</SchemaIssueAction>.
+        </SchemaIssueAlert>
+      ) : null}
+    </>
+  )
+}
+
 export function FieldIconMismatchAlert({
   count,
   onShowMismatch,

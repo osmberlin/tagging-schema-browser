@@ -18,7 +18,7 @@ Read the issue body and extract:
 - **Preset id** from `Preset: \`…\``
 - **Kind** from labels:
   - `missing-inheritance-override` → `src/data/missing-inheritance-overrides.yaml`
-  - `risky-typecombo-override` → `src/data/risky-typecombo-overrides.yaml` (when present)
+  - `risky-typecombo-override` → `src/data/risky-typecombo-overrides.yaml`
 - **YAML snapshot** from the fenced ` ```yaml ` block under **Snapshot** (the `presets:` entry for the preset)
 
 For **stale** updates, the issue may also include an **Existing override (stale)** block — the snapshot replaces that stored entry.
@@ -57,7 +57,7 @@ Do not mix unrelated stale cleanup into commit 1. Aim for **one or two commits p
 bun run check
 ```
 
-This runs `validate-inheritance-overrides` against the published release schema. All stale entries must be resolved before opening the PR.
+This runs `validate-inheritance-overrides` and `validate-risky-typecombo-overrides` against the published release schema. All stale entries must be resolved before opening the PR.
 
 ## 5. Open a pull request
 

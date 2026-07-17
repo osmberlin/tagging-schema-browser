@@ -85,6 +85,18 @@ test('preset detail shows missing inheritance panel', async ({ page }) => {
   )
 })
 
+test('preset detail shows risky typeCombo panel', async ({ page }) => {
+  await page.goto('/preset/highway/residential?dataUrl=/test-schema')
+
+  await page.getByRole('button', { name: 'Risky typeCombo' }).click()
+  await expect(page.getByTestId('risky-typecombo-panel')).toBeVisible()
+  await expect(page.getByText(/Risky typeCombo \(unreviewed\)/i)).toBeVisible()
+  await expect(page.getByTestId('risky-typecombo-override-snippet')).toContainText(
+    'traffic_calming',
+  )
+  await expect(page.getByTestId('risky-typecombo-create-issue')).toBeVisible()
+})
+
 test('missing option icons are discoverable on icons page', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/icons?dataUrl=/test-schema&i_usage=options&i_hasSvg=missing')

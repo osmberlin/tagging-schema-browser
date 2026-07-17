@@ -4,7 +4,12 @@ import {
 } from '@/components/PagePresets/missingFieldInheritance'
 import { resolvePresetFieldList } from '@/components/PagePresets/presetFieldInheritance'
 import { nameRefFromRaw } from '@/components/PagePresets/presetLabelInheritance'
+import {
+  detectRiskyTypeCombo,
+  resolveRiskyTypeComboStatus,
+} from '@/components/PagePresets/riskyTypeCombo'
 import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
+import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
 import { annotatePresetIconMismatches } from '@/utils/iconMismatch'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import { isTemplatePreset } from '@/utils/presetTemplate'
@@ -169,6 +174,11 @@ export function denormalize(
       missingFieldInheritance,
       missingInheritanceOverrides.presets[id],
     )
+    const riskyTypeCombo = detectRiskyTypeCombo(r, resolvedFields, resolvedMore, fields)
+    const riskyTypeComboStatus = resolveRiskyTypeComboStatus(
+      riskyTypeCombo,
+      riskyTypeComboOverrides.presets[id],
+    )
 
     result.push({
       id,
@@ -192,6 +202,8 @@ export function denormalize(
       iconMismatch: false,
       missingFieldInheritance,
       missingInheritanceStatus,
+      riskyTypeCombo,
+      riskyTypeComboStatus,
       searchable: r.searchable !== false,
       isTemplate: isTemplatePreset({ id, tags }),
     })

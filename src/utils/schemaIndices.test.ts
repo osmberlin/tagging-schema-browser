@@ -35,6 +35,8 @@ function stubPreset(
     iconMismatch: false,
     missingFieldInheritance: null,
     missingInheritanceStatus: 'none',
+    riskyTypeCombo: null,
+    riskyTypeComboStatus: 'none',
     isTemplate: false,
   }
 }

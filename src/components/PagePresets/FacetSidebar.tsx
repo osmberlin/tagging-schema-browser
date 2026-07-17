@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { stableFacetBuckets } from '@/components/PagePresets/facetOrder'
 import { missingInheritanceFacetLabels } from '@/components/PagePresets/MissingInheritancePanel'
+import { riskyTypeComboFacetLabels } from '@/components/PagePresets/RiskyTypeComboPanel'
 import type { SearchState } from '@/components/PagePresets/useSearchState'
 import type { SchemaArea } from '@/components/ui/areaIcons'
 import { SidebarSection } from '@/components/ui/Sidebar'
@@ -216,6 +217,14 @@ export function FacetSidebar() {
         selected={state.missingInheritance}
         onToggle={(k) => toggle('missingInheritance')(k)}
         formatLabel={(key) => missingInheritanceFacetLabels[key] ?? key}
+      />
+      <FacetGroup
+        title="Field type safety"
+        area="fields"
+        buckets={stableFacetBuckets('riskyTypeCombo', agg.riskyTypeCombo?.buckets ?? [])}
+        selected={state.riskyTypeCombo}
+        onToggle={(k) => toggle('riskyTypeCombo')(k)}
+        formatLabel={(key) => riskyTypeComboFacetLabels[key] ?? key}
       />
       <FacetGroup
         title="Has icon"

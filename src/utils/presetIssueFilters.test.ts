@@ -18,6 +18,7 @@ const emptySearch = {
   hasIcon: [] as string[],
   iconMismatch: [] as string[],
   missingInheritance: [] as string[],
+  riskyTypeCombo: [] as string[],
 }
 
 describe('presetIssueFilters', () => {
