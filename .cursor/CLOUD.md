@@ -57,10 +57,10 @@ When creating or posting on GitHub (`gh pr create`, `gh issue comment`, etc.):
 Start **every** PR description, issue body, and comment with:
 
 ```
-Written by :robot_face: <model-name>:
+Written by :robot: <model-name>:
 ```
 
-Use **your actual model name** (the one shown in Cursor), not a generic label. Example: `Written by :robot_face: Cursor Composer 2.5:`
+Use **your actual model name** (the one shown in Cursor), not a generic label. Example: `Written by :robot: Cursor Composer 2.5:`
 
 No exceptions.
 
@@ -77,7 +77,7 @@ Then the PR summary (what changed, test plan). `Closes` auto-closes the issue on
 **Example PR body** (model name is illustrative — use yours):
 
 ```
-Written by :robot_face: Cursor Composer 2.5:
+Written by :robot: Cursor Composer 2.5:
 
 Closes #42
 

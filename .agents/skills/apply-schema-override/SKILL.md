@@ -61,7 +61,7 @@ This runs `validate-inheritance-overrides` and `validate-risky-typecombo-overrid
 ## 5. Open a pull request
 
 - **Title:** `[skip netlify] Overrides: mark {presetId} missing inheritance as intentional` (adjust wording for typeCombo or stale removal when applicable)
-- **Body:** Start with `Written by :robot_face: <model-name>:` then `Closes #<issue-number>` on the next line, then a short user-facing summary of what was recorded and why (intentional omission or stale cleanup).
+- **Body:** Start with `Written by :robot: <model-name>:` then `Closes #<issue-number>` on the next line, then a short user-facing summary of what was recorded and why (intentional omission or stale cleanup).
 - **Label:** `schema-override` (required for auto-merge)
 - Only touch the relevant `src/data/*-overrides.yaml` file.
 - Keep the branch to **1–2 commits** (issue change, then optional stale cleanup).
@@ -72,4 +72,4 @@ CI must pass. The `schema-override-auto-merge` workflow **rebase-merges** eligib
 
 ## Attribution
 
-Prefix agent comments and PR descriptions with `**[Cursor Agent]**` when interacting on GitHub (in addition to the `Written by :robot_face:` line in PR bodies per AGENTS.md).
+Prefix agent comments and PR descriptions with `**[Cursor Agent]**` when interacting on GitHub (in addition to the `Written by :robot:` line in PR bodies per AGENTS.md).
