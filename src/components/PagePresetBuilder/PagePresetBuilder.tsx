@@ -90,7 +90,10 @@ function builderPreviewPreset(
     iconMismatch: false,
     missingFieldInheritance,
     missingInheritanceStatus: missingFieldInheritance ? 'unreviewed' : 'none',
+    riskyTypeCombo: null,
+    riskyTypeComboStatus: 'none',
     searchable: state.searchable,
+    isTemplate: false,
   }
 }
 
@@ -157,15 +160,11 @@ export function PagePresetBuilder() {
     markEditing,
     defaults,
   } = usePresetBuilderForm()
-  const { rawPresets, fields, presets, data, dataUrl } = useSchema()
+  const { rawPresets, fields, dataUrl } = useSchema()
   const [newFieldOpen, setNewFieldOpen] = useState(false)
   const [newFieldTarget, setNewFieldTarget] = useState<'fields' | 'moreFields'>('fields')
 
-  const { fields: schemaFields, types: fieldTypes } = useFieldSearch(
-    fields,
-    presets,
-    data?.fieldTranslations ?? {},
-  )
+  const { fields: schemaFields, types: fieldTypes } = useFieldSearch()
 
   const draftFieldIds = useMemo(
     () => new Set(Object.keys(committedState.draftFields)),
@@ -188,6 +187,7 @@ export function PagePresetBuilder() {
         moreCount: 0,
         presets: [],
         iconMismatchCount: 0,
+        optionIconNames: [],
       }))
     return [...schemaFields, ...draftEntries]
   }, [schemaFields, committedState.draftFields])
@@ -519,7 +519,9 @@ export function PagePresetBuilder() {
               />
             )}
           </form.Field>
-          {previewPreset ? <MissingInheritancePanel preset={previewPreset} /> : null}
+          {previewPreset ? (
+            <MissingInheritancePanel preset={previewPreset} dataUrl={dataUrl ?? ''} />
+          ) : null}
         </div>
       </BuilderSectionDisclosure>
 
