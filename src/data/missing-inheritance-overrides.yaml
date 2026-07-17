@@ -80,6 +80,10 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
   power/plant/source/solar/photovoltaic:
     fields:
       parentId: power/plant/source/solar
