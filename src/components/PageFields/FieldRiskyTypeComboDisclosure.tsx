@@ -23,7 +23,7 @@ export function FieldRiskyTypeComboDisclosure({
   const flaggedUsages = usages.filter((usage) => usage.flagged)
   const unreviewedCount = flaggedUsages.filter((usage) => usage.status === 'unreviewed').length
   const disclosureId = `field-risky-typecombo:${fieldId}`
-  useAutoOpenFocusedIssue(disclosureId, 'riskyTypeCombo', applies && unreviewedCount > 0)
+  useAutoOpenFocusedIssue(disclosureId, 'riskyTypeCombo', applies && flaggedUsages.length > 0)
 
   if (!applies) return null
 
