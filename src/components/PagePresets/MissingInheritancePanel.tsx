@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type {
   FieldListKey,
   MissingFieldInheritance,
@@ -7,10 +7,11 @@ import type {
 } from '@/components/PagePresets/missingFieldInheritance'
 import { formatMissingInheritanceOverrideYaml } from '@/components/PagePresets/missingFieldInheritance'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
+import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
-import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
+import { buildMissingInheritanceOverrideIssueUrl } from '@/utils/schemaOverrideIssue'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -70,28 +71,33 @@ function FieldListSection({
   )
 }
 
-function OverridesYamlLink() {
-  return (
-    <a
-      href={MISSING_INHERITANCE_OVERRIDES_EDIT_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={schemaIssueStyles.externalLink}
-    >
-      missing-inheritance-overrides.yaml
-    </a>
-  )
-}
-
-function OverrideSnippet({
+function OverrideActions({
   presetId,
   missingFieldInheritance,
+  dataUrl,
+  missingInheritanceStatus,
 }: {
   presetId: string
   missingFieldInheritance: MissingFieldInheritance
+  dataUrl: string
+  missingInheritanceStatus: 'unreviewed' | 'stale'
 }) {
   const snippet = formatMissingInheritanceOverrideYaml(presetId, missingFieldInheritance)
   const [copied, setCopied] = useState(false)
+
+  const issueUrl = useMemo(() => {
+    if (typeof window === 'undefined') return ''
+    return buildMissingInheritanceOverrideIssueUrl({
+      presetId,
+      missingFieldInheritance,
+      pageUrl: window.location.href,
+      dataUrl,
+      storedOverride:
+        missingInheritanceStatus === 'stale'
+          ? missingInheritanceOverrides.presets[presetId]
+          : undefined,
+    })
+  }, [dataUrl, missingFieldInheritance, missingInheritanceStatus, presetId])
 
   const onCopy = useCallback(async () => {
     try {
@@ -106,23 +112,32 @@ function OverrideSnippet({
   return (
     <div className="mt-3 space-y-3">
       <ol className="list-decimal space-y-1.5 ps-5 text-sm text-slate-300">
-        <li>Copy the YAML snippet below.</li>
         <li>
-          Paste it under <code>presets:</code> in <OverridesYamlLink /> (keep two-space indent). CI
-          validates overrides against the published release schema.
+          Open a pre-filled GitHub issue — a Cursor agent will add the YAML snapshot to the override
+          file and open a PR.
+        </li>
+        <li>
+          Or copy the YAML snippet below if you prefer to edit{' '}
+          <code>missing-inheritance-overrides.yaml</code> manually.
         </li>
       </ol>
-      <div className="flex items-center justify-between gap-3">
-        <p className="mb-0 min-w-0 flex-1 text-sm text-slate-400">Snippet for {presetId}:</p>
-        <div className="not-prose shrink-0">
-          <button
-            type="button"
-            onClick={onCopy}
-            className="rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-100 shadow-sm transition hover:bg-slate-700"
-          >
-            {copied ? 'Copied' : 'Copy snippet'}
-          </button>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={issueUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-md border border-sky-600 bg-sky-900/40 px-2.5 py-1 text-xs font-medium text-sky-100 shadow-sm transition hover:bg-sky-800/60"
+          data-testid="missing-inheritance-create-issue"
+        >
+          Create GitHub issue
+        </a>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-100 shadow-sm transition hover:bg-slate-700"
+        >
+          {copied ? 'Copied' : 'Copy snippet'}
+        </button>
       </div>
       <pre
         className="overflow-x-auto rounded-md border border-slate-600 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-100"
@@ -134,7 +149,13 @@ function OverrideSnippet({
   )
 }
 
-export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset }) {
+export function MissingInheritancePanel({
+  preset,
+  dataUrl,
+}: {
+  preset: DenormalizedPreset
+  dataUrl: string
+}) {
   const { missingFieldInheritance, missingInheritanceStatus } = preset
   const disclosureId = `preset-missing-inheritance:${preset.id}`
   useAutoOpenFocusedIssue(disclosureId, 'missingInheritance', missingInheritanceStatus !== 'none')
@@ -144,7 +165,7 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
   const parentId =
     missingFieldInheritance?.fields?.parentId ?? missingFieldInheritance?.moreFields?.parentId
 
-  const showOverrideSnippet =
+  const showOverrideActions =
     missingFieldInheritance &&
     (missingInheritanceStatus === 'unreviewed' || missingInheritanceStatus === 'stale')
 
@@ -164,28 +185,34 @@ export function MissingInheritancePanel({ preset }: { preset: DenormalizedPreset
         ) : missingInheritanceStatus === 'stale' ? (
           <p>
             This preset no longer has missing slash-parent field inheritance, but an override entry
-            still exists in <OverridesYamlLink />.
+            still exists in <code>missing-inheritance-overrides.yaml</code>.
           </p>
         ) : null}
         {missingInheritanceStatus === 'stale' && missingFieldInheritance ? (
           <p className="mt-2">
-            The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update
-            the snapshot or remove the entry.
+            The reviewed override no longer matches live detection — open an issue to update the
+            snapshot or remove the entry.
           </p>
         ) : null}
         {missingInheritanceStatus === 'stale' && !missingFieldInheritance ? (
           <p className="mt-2">
-            Remove the stale entry from <OverridesYamlLink />.
+            Open an issue to remove the stale entry from{' '}
+            <code>missing-inheritance-overrides.yaml</code>.
           </p>
         ) : null}
         {missingInheritanceStatus === 'unreviewed' ? (
           <p className="mt-2">
             If this omission is deliberate, record the current <code>missedFieldIds</code> snapshot
-            in <OverridesYamlLink />:
+            as an intentional override:
           </p>
         ) : null}
-        {showOverrideSnippet ? (
-          <OverrideSnippet presetId={preset.id} missingFieldInheritance={missingFieldInheritance} />
+        {showOverrideActions ? (
+          <OverrideActions
+            presetId={preset.id}
+            missingFieldInheritance={missingFieldInheritance}
+            dataUrl={dataUrl}
+            missingInheritanceStatus={missingInheritanceStatus}
+          />
         ) : null}
         <div className="mt-4 space-y-4">
           {missingFieldInheritance?.fields ? (

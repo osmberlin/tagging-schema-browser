@@ -1,0 +1,93 @@
+# Auto-merge schema override PRs from Cursor agents after CI passes.
+# Policy: mechanical YAML snapshot + validate-inheritance-overrides in bun run check.
+name: Schema override auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: >-
+      (
+        github.event.pull_request.user.login == 'cursor[bot]' ||
+        github.event.pull_request.user.login == 'cursoragent' ||
+        github.event.pull_request.user.login == 'cursor'
+      )
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check schema-override label
+        id: label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          labels=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name' | tr '\n' ' ')
+          if echo " $labels " | grep -q ' schema-override '; then
+            echo "has_label=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_label=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping auto-merge: PR is missing label schema-override."
+          fi
+
+      - name: Verify only override YAML files changed
+        id: paths
+        if: steps.label.outputs.has_label == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mapfile -t changed < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "No changed files."
+            exit 0
+          fi
+          for file in "${changed[@]}"; do
+            case "$file" in
+              src/data/*-overrides.yaml) ;;
+              *)
+                echo "eligible=false" >> "$GITHUB_OUTPUT"
+                echo "Disallowed path in PR: $file"
+                exit 0
+                ;;
+            esac
+          done
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+          echo "Override-only PR (${#changed[@]} file(s))."
+
+      - name: Comment when auto-merge is skipped
+        if: steps.label.outputs.has_label != 'true' || steps.paths.outputs.eligible != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge skipped** — needs label `schema-override` and changes limited to `src/data/*-overrides.yaml`. See [.github/CURSOR_OVERRIDE_AUTOMATION.md](https://github.com/osmberlin/tagging-schema-browser/blob/main/.github/CURSOR_OVERRIDE_AUTOMATION.md).'
+
+      - name: Wait for CI, then squash-merge
+        if: steps.label.outputs.has_label == 'true' && steps.paths.outputs.eligible == 'true'
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
+          MERGE_COMMIT_MESSAGE: pull-request-title-and-description
+          MERGE_DELETE_BRANCH: true
+          MERGE_LABELS: ''
+          MERGE_REQUIRED_APPROVALS: 0
+          MERGE_FORKS: false
+
+      - name: Comment when auto-merge is queued
+        if: steps.label.outputs.has_label == 'true' && steps.paths.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge enabled** — this PR will squash-merge once required checks pass (override YAML only).'

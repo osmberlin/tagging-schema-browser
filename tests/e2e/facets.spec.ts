@@ -78,6 +78,11 @@ test('preset detail shows missing inheritance panel', async ({ page }) => {
     'parentId: man_made/crane',
   )
   await expect(page.getByRole('button', { name: 'Copy snippet' })).toBeVisible()
+  await expect(page.getByTestId('missing-inheritance-create-issue')).toBeVisible()
+  await expect(page.getByTestId('missing-inheritance-create-issue')).toHaveAttribute(
+    'href',
+    /github\.com\/osmberlin\/tagging-schema-browser\/issues\/new/,
+  )
 })
 
 test('missing option icons are discoverable on icons page', async ({ page }) => {
