@@ -131,21 +131,30 @@ export function ReferenceDropdown() {
         ? 'release'
         : 'interim'
 
-  const triggerLabel =
-    previewPrNumber !== null
-      ? `PR #${previewPrNumber}`
-      : reference === 'release'
-        ? `Release${releaseVersion ? ` ${releaseVersion}` : ''}`
-        : `Unreleased${unreleasedAge ? ` · ${unreleasedAge}` : ''}`
+  const triggerText = (() => {
+    if (previewPrNumber !== null) {
+      if (releaseCompare) {
+        return `PR #${previewPrNumber} · vs Release${releaseVersion ? ` ${releaseVersion}` : ''}`
+      }
+      return `PR #${previewPrNumber}`
+    }
+    if (reference === 'release') {
+      return `Release${releaseVersion ? ` ${releaseVersion}` : ''}`
+    }
+    const parts = ['Unreleased']
+    if (unreleasedAge) parts.push(unreleasedAge)
+    if (buildLabel) parts.push(buildLabel)
+    return parts.join(' · ')
+  })()
 
-  const triggerDetail =
-    previewPrNumber !== null && releaseCompare
-      ? `vs Release${releaseVersion ? ` ${releaseVersion}` : ''}`
-      : previewPrNumber !== null
-        ? 'PR preview'
+  const triggerTitle =
+    previewPrNumber !== null && !releaseCompare
+      ? 'PR preview'
+      : previewPrNumber !== null && releaseCompare
+        ? `Comparing PR #${previewPrNumber} against release`
         : reference === 'release'
-          ? (buildLabel ?? 'Published npm')
-          : (buildLabel ?? 'Latest main')
+          ? (buildLabel ?? 'Published npm release')
+          : (buildLabel ?? 'Latest id-tagging-schema main')
 
   const openPrPreview = (prNumber: number) => {
     setOpen(false)
@@ -191,19 +200,12 @@ export function ReferenceDropdown() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        title="Switch schema version or open a PR preview"
+        title={triggerTitle}
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex max-w-[11rem] items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-left transition hover:bg-slate-200/80"
+        className="inline-flex max-w-[14rem] shrink-0 items-center gap-0.5 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-900 transition hover:bg-slate-200/80"
       >
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[11px] leading-tight font-medium text-slate-900">
-            {triggerLabel}
-          </span>
-          <span className="block truncate text-[10px] leading-tight text-slate-500">
-            {triggerDetail}
-          </span>
-        </span>
-        <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+        <span className="min-w-0 truncate">{triggerText}</span>
+        <ChevronDownIcon className="h-3 w-3 shrink-0 text-slate-400" />
       </button>
 
       {open ? (
