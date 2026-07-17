@@ -1,13 +1,16 @@
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import type {
   FieldListKey,
   MissingFieldInheritance,
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
+import {
+  SchemaOverrideCreateIssueAction,
+  usePresetDetailPageUrl,
+} from '@/components/PagePresets/SchemaOverrideCreateIssueAction'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
-import { externalActionPillClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { buildMissingInheritanceOverrideIssueUrl } from '@/utils/buildSchemaOverrideIssueUrl'
 import type { DenormalizedPreset } from '@/utils/types'
@@ -90,20 +93,10 @@ function CreateIssueAction({
   })
 
   return (
-    <div className="not-prose mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-      <a
-        href={issueUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={externalActionPillClass('border border-mauve-200 bg-mauve-50/80')}
-        data-testid="missing-inheritance-create-issue"
-      >
-        Create GitHub issue ↗
-      </a>
-      <p className="text-sm text-slate-400">
-        Pre-filled issue → Cursor agent opens a PR → CI validates the override.
-      </p>
-    </div>
+    <SchemaOverrideCreateIssueAction
+      issueUrl={issueUrl}
+      testId="missing-inheritance-create-issue"
+    />
   )
 }
 
@@ -114,11 +107,7 @@ export function MissingInheritancePanel({
   preset: DenormalizedPreset
   dataUrl: string
 }) {
-  const location = useLocation()
-  const pageUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}${location.pathname}${location.searchStr}`
-      : ''
+  const pageUrl = usePresetDetailPageUrl()
   const { missingFieldInheritance, missingInheritanceStatus } = preset
   const disclosureId = `preset-missing-inheritance:${preset.id}`
   useAutoOpenFocusedIssue(disclosureId, 'missingInheritance', missingInheritanceStatus !== 'none')
