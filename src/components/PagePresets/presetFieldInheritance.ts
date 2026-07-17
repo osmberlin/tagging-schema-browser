@@ -48,6 +48,39 @@ function listUsesPresetRefs(list: string[] | undefined): boolean {
   )
 }
 
+function fieldListsMatch(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((item, index) => item === right[index])
+}
+
+/**
+ * Collapse dist-expanded slash-parent field prefixes back to `{ancestor}` refs for
+ * source-tree display (e.g. `traffic_sign/variable_message` shows `{traffic_sign}`).
+ */
+export function displayPresetFieldList(
+  presetId: string,
+  fieldListKey: 'fields' | 'moreFields',
+  list: string[] | undefined,
+  rawPresets: RawPresets,
+): string[] {
+  if (!Array.isArray(list)) return []
+  if (listUsesPresetRefs(list)) return list
+
+  const parts = presetId.split('/')
+  for (let depth = parts.length - 1; depth > 0; depth--) {
+    const ancestorId = parts.slice(0, depth).join('/')
+    const ancestorFields = rawPresets[ancestorId]?.[fieldListKey]
+    if (!Array.isArray(ancestorFields) || ancestorFields.length === 0) continue
+    if (list.length < ancestorFields.length) continue
+
+    const prefix = list.slice(0, ancestorFields.length)
+    if (!fieldListsMatch(prefix, ancestorFields)) continue
+
+    return [`{${ancestorId}}`, ...list.slice(ancestorFields.length)]
+  }
+
+  return list
+}
+
 /** Indices of fields expanded from ancestor `{preset}` blocks in v7 dist output. */
 function getDistInheritedFieldIndices(
   presetId: string,

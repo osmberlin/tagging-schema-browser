@@ -246,6 +246,15 @@ test('preset ref in fields shows inherited fields not parent metadata', async ({
   await expect(page.getByText('"geometry"')).toHaveCount(1)
 })
 
+test('dist-expanded slash-parent fields collapse to preset ref in source tree', async ({
+  page,
+}) => {
+  await page.goto('/preset/traffic_sign/variable_message?dataUrl=/test-schema')
+  await expect(page.getByRole('button', { name: /"\{traffic_sign\}"/ })).toBeVisible()
+  await expect(page.getByText('data/presets/traffic_sign.json')).toBeVisible()
+  await expect(page.getByText('data/fields/direction_vertex.json')).toBeVisible()
+})
+
 test('preset ref in moreFields inherits moreFields from parent preset', async ({ page }) => {
   await page.goto('/preset/amenity/clinic/abortion?dataUrl=/test-schema')
   await page
