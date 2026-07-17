@@ -32,20 +32,20 @@ function CreateIssueAction({
   riskyTypeCombo,
   dataUrl,
   pageUrl,
-  includeStaleOverride,
+  storedOverride,
 }: {
   presetId: string
-  riskyTypeCombo: RiskyTypeCombo
+  riskyTypeCombo?: RiskyTypeCombo | null
   dataUrl: string
   pageUrl: string
-  includeStaleOverride: boolean
+  storedOverride?: (typeof riskyTypeComboOverrides.presets)[string]
 }) {
   const issueUrl = buildRiskyTypeComboOverrideIssueUrl({
     presetId,
     riskyTypeCombo,
     pageUrl,
     dataUrl,
-    existingOverride: includeStaleOverride ? riskyTypeComboOverrides.presets[presetId] : undefined,
+    existingOverride: storedOverride,
   })
 
   return (
@@ -108,8 +108,11 @@ export function RiskyTypeComboPanel({
 
   if (riskyTypeComboStatus === 'none') return null
 
+  const storedOverride = riskyTypeComboOverrides.presets[preset.id]
+
   const showCreateIssue =
-    riskyTypeCombo && (riskyTypeComboStatus === 'unreviewed' || riskyTypeComboStatus === 'stale')
+    (riskyTypeComboStatus === 'unreviewed' && riskyTypeCombo) ||
+    (riskyTypeComboStatus === 'stale' && (riskyTypeCombo || storedOverride))
 
   return (
     <SchemaIssueDisclosure
@@ -142,7 +145,7 @@ export function RiskyTypeComboPanel({
             riskyTypeCombo={riskyTypeCombo}
             dataUrl={dataUrl}
             pageUrl={pageUrl}
-            includeStaleOverride={riskyTypeComboStatus === 'stale'}
+            storedOverride={storedOverride}
           />
         ) : null}
         {riskyTypeCombo ? <FieldSection riskyTypeCombo={riskyTypeCombo} /> : null}

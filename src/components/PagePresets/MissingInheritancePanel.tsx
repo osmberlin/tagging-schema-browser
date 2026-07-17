@@ -73,22 +73,20 @@ function CreateIssueAction({
   missingFieldInheritance,
   dataUrl,
   pageUrl,
-  includeStaleOverride,
+  storedOverride,
 }: {
   presetId: string
-  missingFieldInheritance: MissingFieldInheritance
+  missingFieldInheritance?: MissingFieldInheritance | null
   dataUrl: string
   pageUrl: string
-  includeStaleOverride: boolean
+  storedOverride?: (typeof missingInheritanceOverrides.presets)[string]
 }) {
   const issueUrl = buildMissingInheritanceOverrideIssueUrl({
     presetId,
     missingFieldInheritance,
     pageUrl,
     dataUrl,
-    existingOverride: includeStaleOverride
-      ? missingInheritanceOverrides.presets[presetId]
-      : undefined,
+    existingOverride: storedOverride,
   })
 
   return (
@@ -130,9 +128,11 @@ export function MissingInheritancePanel({
   const parentId =
     missingFieldInheritance?.fields?.parentId ?? missingFieldInheritance?.moreFields?.parentId
 
+  const storedOverride = missingInheritanceOverrides.presets[preset.id]
+
   const showCreateIssue =
-    missingFieldInheritance &&
-    (missingInheritanceStatus === 'unreviewed' || missingInheritanceStatus === 'stale')
+    (missingInheritanceStatus === 'unreviewed' && missingFieldInheritance) ||
+    (missingInheritanceStatus === 'stale' && (missingFieldInheritance || storedOverride))
 
   return (
     <SchemaIssueDisclosure
@@ -170,7 +170,7 @@ export function MissingInheritancePanel({
             missingFieldInheritance={missingFieldInheritance}
             dataUrl={dataUrl}
             pageUrl={pageUrl}
-            includeStaleOverride={missingInheritanceStatus === 'stale'}
+            storedOverride={storedOverride}
           />
         ) : null}
         <div className="mt-6 space-y-4">
