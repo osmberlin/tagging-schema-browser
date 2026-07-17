@@ -1,11 +1,9 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { useCallback, useState } from 'react'
 import type {
   FieldListKey,
   MissingFieldInheritance,
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
-import { formatMissingInheritanceOverrideYaml } from '@/components/PagePresets/missingFieldInheritance'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
@@ -13,7 +11,6 @@ import { externalActionPillClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { buildMissingInheritanceOverrideIssueUrl } from '@/utils/buildSchemaOverrideIssueUrl'
-import { MISSING_INHERITANCE_OVERRIDES_EDIT_URL } from '@/utils/constants'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -73,20 +70,7 @@ function FieldListSection({
   )
 }
 
-function OverridesYamlLink() {
-  return (
-    <a
-      href={MISSING_INHERITANCE_OVERRIDES_EDIT_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={schemaIssueStyles.externalLink}
-    >
-      missing-inheritance-overrides.yaml
-    </a>
-  )
-}
-
-function OverrideSnippet({
+function CreateIssueAction({
   presetId,
   missingFieldInheritance,
   dataUrl,
@@ -99,8 +83,6 @@ function OverrideSnippet({
   pageUrl: string
   includeStaleOverride: boolean
 }) {
-  const snippet = formatMissingInheritanceOverrideYaml(presetId, missingFieldInheritance)
-  const [copied, setCopied] = useState(false)
   const issueUrl = buildMissingInheritanceOverrideIssueUrl({
     presetId,
     missingFieldInheritance,
@@ -111,50 +93,20 @@ function OverrideSnippet({
       : undefined,
   })
 
-  const onCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(snippet)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setCopied(false)
-    }
-  }, [snippet])
-
   return (
-    <div className="mt-3 space-y-3">
-      <p className="text-sm text-slate-300">
-        Open a pre-filled GitHub issue to record this snapshot. A Cursor agent will open a PR; CI
-        validates overrides against the published release schema.
-      </p>
-      <div className="not-prose flex flex-wrap items-center gap-2">
-        <a
-          href={issueUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={externalActionPillClass('border border-mauve-200 bg-mauve-50/80')}
-          data-testid="missing-inheritance-create-issue"
-        >
-          Create GitHub issue ↗
-        </a>
-        <button
-          type="button"
-          onClick={onCopy}
-          className="rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-100 shadow-sm transition hover:bg-slate-700"
-        >
-          {copied ? 'Copied' : 'Copy snippet'}
-        </button>
-      </div>
-      <p className="text-sm text-slate-400">
-        Fallback: paste the snippet under <code>presets:</code> in <OverridesYamlLink />.
-      </p>
-      <p className="text-sm text-slate-400">Snippet for {presetId}:</p>
-      <pre
-        className="overflow-x-auto rounded-md border border-slate-600 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-100"
-        data-testid="missing-inheritance-override-snippet"
+    <div className="not-prose mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+      <a
+        href={issueUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={externalActionPillClass('border border-mauve-200 bg-mauve-50/80')}
+        data-testid="missing-inheritance-create-issue"
       >
-        {snippet}
-      </pre>
+        Create GitHub issue ↗
+      </a>
+      <p className="text-sm text-slate-400">
+        Pre-filled issue → Cursor agent opens a PR → CI validates the override.
+      </p>
     </div>
   )
 }
@@ -180,7 +132,7 @@ export function MissingInheritancePanel({
   const parentId =
     missingFieldInheritance?.fields?.parentId ?? missingFieldInheritance?.moreFields?.parentId
 
-  const showOverrideSnippet =
+  const showCreateIssue =
     missingFieldInheritance &&
     (missingInheritanceStatus === 'unreviewed' || missingInheritanceStatus === 'stale')
 
@@ -199,29 +151,23 @@ export function MissingInheritancePanel({
           </p>
         ) : missingInheritanceStatus === 'stale' ? (
           <p>
-            This preset no longer has missing slash-parent field inheritance, but an override entry
-            still exists in <OverridesYamlLink />.
+            This preset no longer has missing slash-parent field inheritance, but a reviewed
+            override entry still exists.
           </p>
         ) : null}
         {missingInheritanceStatus === 'stale' && missingFieldInheritance ? (
-          <p className="mt-2">
-            The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update
-            the snapshot or remove the entry.
-          </p>
+          <p className="mt-2">The stored override no longer matches the current schema.</p>
         ) : null}
         {missingInheritanceStatus === 'stale' && !missingFieldInheritance ? (
-          <p className="mt-2">
-            Remove the stale entry from <OverridesYamlLink />.
-          </p>
+          <p className="mt-2">Open an issue to remove the stale override.</p>
         ) : null}
         {missingInheritanceStatus === 'unreviewed' ? (
           <p className="mt-2">
-            If this omission is deliberate, record the current <code>missedFieldIds</code> snapshot
-            via GitHub issue or manual edit in <OverridesYamlLink />.
+            If this omission is deliberate, record the current <code>missedFieldIds</code> snapshot.
           </p>
         ) : null}
-        {showOverrideSnippet ? (
-          <OverrideSnippet
+        {showCreateIssue ? (
+          <CreateIssueAction
             presetId={preset.id}
             missingFieldInheritance={missingFieldInheritance}
             dataUrl={dataUrl}
