@@ -130,6 +130,8 @@ export type SchemaIndices = {
   /** Fields page list + sidebar facets — built once to avoid duplicate scans on /fields. */
   fieldCatalog: FieldViewModel[]
   fieldTypes: string[]
+  /** Per field id: preset usages with risky typeCombo flag (field detail). */
+  fieldRiskyPresetUsages: Map<string, FieldRiskyTypeComboUsage[]>
 }
 
 export type SchemaData = {
@@ -173,6 +175,15 @@ export type IconViewModel = IconRegistryEntry & {
   optionUsages: OptionIconUsageRef[]
 }
 
+export type FieldRiskyTypeComboUsage = {
+  presetId: string
+  presetName: string
+  listKey: 'fields' | 'moreFields'
+  /** This preset usage is flagged by risky typeCombo detection. */
+  flagged: boolean
+  status: RiskyTypeComboStatus
+}
+
 export type FieldViewModel = {
   id: string
   key: string
@@ -187,4 +198,6 @@ export type FieldViewModel = {
   /** Option ↔ child-preset icon mismatches involving this field. */
   iconMismatchCount: number
   optionIconNames: string[]
+  /** Presets where this field is flagged as unreviewed risky typeCombo. */
+  riskyUsageCount: number
 }

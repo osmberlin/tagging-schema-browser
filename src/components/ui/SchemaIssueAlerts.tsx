@@ -114,3 +114,21 @@ export function FieldIconMismatchAlert({
     </SchemaIssueAlert>
   )
 }
+
+export function FieldRiskyTypeComboAlert({
+  count,
+  onShowRisky,
+}: {
+  count: number
+  onShowRisky: () => void
+}) {
+  if (count <= 0) return null
+
+  return (
+    <SchemaIssueAlert variant="warning" title="Risky typeCombo">
+      <strong>{count}</strong> {count === 1 ? 'typeCombo field looks' : 'typeCombo fields look'}{' '}
+      like a property, not a type selector —{' '}
+      <SchemaIssueAction onClick={onShowRisky}>show fields</SchemaIssueAction>.
+    </SchemaIssueAlert>
+  )
+}

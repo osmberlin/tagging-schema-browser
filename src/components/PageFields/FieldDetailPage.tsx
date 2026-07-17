@@ -1,5 +1,6 @@
 import { useParams } from '@tanstack/react-router'
 import { FieldOptionIconsTable } from '@/components/PageFields/FieldOptionIconsTable'
+import { FieldRiskyTypeComboDisclosure } from '@/components/PageFields/FieldRiskyTypeComboDisclosure'
 import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
@@ -20,8 +21,12 @@ import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
 import { cn } from '@/utils/tw'
-import type { FieldOptionMismatchRow } from '@/utils/types'
-import type { DenormalizedPreset, RawFieldTranslation } from '@/utils/types'
+import type {
+  DenormalizedPreset,
+  FieldOptionMismatchRow,
+  FieldRiskyTypeComboUsage,
+  RawFieldTranslation,
+} from '@/utils/types'
 
 type RelatedItem = { id: string; name: string }
 
@@ -81,6 +86,7 @@ export function FieldDetailPage() {
       morePresets={morePresets}
       dataUrl={dataUrl ?? ''}
       optionRows={data.indices.fieldOptionMismatchRows.get(fieldId) ?? []}
+      riskyPresetUsages={data.indices.fieldRiskyPresetUsages.get(fieldId) ?? []}
     />
   )
 }
@@ -93,6 +99,7 @@ function FieldDetailContent({
   morePresets,
   dataUrl,
   optionRows,
+  riskyPresetUsages,
 }: {
   fieldId: string
   raw: Record<string, unknown>
@@ -101,6 +108,7 @@ function FieldDetailContent({
   morePresets: DenormalizedPreset[]
   dataUrl: string
   optionRows: FieldOptionMismatchRow[]
+  riskyPresetUsages: FieldRiskyTypeComboUsage[]
 }) {
   const setPreset = useSetPreset()
   const { loading: localeLoading, error: localeError, locale, fieldLocaleMap } = useLocale()
@@ -197,6 +205,12 @@ function FieldDetailContent({
           </div>
         </div>
       </header>
+
+      <FieldRiskyTypeComboDisclosure
+        fieldId={fieldId}
+        fieldType={type}
+        usages={riskyPresetUsages}
+      />
 
       {mismatchCount > 0 ? (
         <SchemaIssueDisclosure

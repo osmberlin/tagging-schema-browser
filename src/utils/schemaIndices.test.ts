@@ -8,6 +8,7 @@ import {
 import {
   buildChildPresetIndex,
   buildFieldPresetIndex,
+  buildFieldRiskyPresetUsages,
   buildSchemaIndices,
   childPresetLookupKey,
 } from '@/utils/schemaIndices'
@@ -134,6 +135,80 @@ describe('schemaIndices', () => {
     for (const field of indices.fieldCatalog) {
       expect(field.iconMismatchCount).toBe(mismatchCounts.get(field.id) ?? 0)
     }
+  })
+
+  it('buildFieldRiskyPresetUsages records flagged preset usages per field', () => {
+    const presets = [
+      {
+        ...stubPreset('highway/residential', ['name'], ['traffic_calming']),
+        riskyTypeCombo: {
+          fields: [
+            {
+              fieldId: 'traffic_calming',
+              fieldKey: 'traffic_calming',
+              listKey: 'moreFields' as const,
+            },
+          ],
+        },
+        riskyTypeComboStatus: 'unreviewed' as const,
+      },
+      stubPreset('highway/primary', ['highway'], []),
+    ]
+    const { primary, more } = buildFieldPresetIndex(presets)
+    const usages = buildFieldRiskyPresetUsages(primary, more)
+
+    expect(usages.get('traffic_calming')).toEqual([
+      {
+        presetId: 'highway/residential',
+        presetName: 'highway/residential',
+        listKey: 'moreFields',
+        flagged: true,
+        status: 'unreviewed',
+      },
+    ])
+    expect(usages.get('highway')).toEqual([
+      {
+        presetId: 'highway/primary',
+        presetName: 'highway/primary',
+        listKey: 'fields',
+        flagged: false,
+        status: 'none',
+      },
+    ])
+  })
+
+  it('field catalog includes risky usage counts from precomputed index', () => {
+    const presets = [
+      {
+        ...stubPreset('highway/residential', ['name'], ['traffic_calming']),
+        riskyTypeCombo: {
+          fields: [
+            {
+              fieldId: 'traffic_calming',
+              fieldKey: 'traffic_calming',
+              listKey: 'moreFields' as const,
+            },
+          ],
+        },
+        riskyTypeComboStatus: 'unreviewed' as const,
+      },
+    ]
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      traffic_calming: { key: 'traffic_calming', type: 'typeCombo' },
+    }
+    const fieldTranslations = {
+      name: { label: 'Name' },
+      traffic_calming: { label: 'Traffic calming' },
+    }
+
+    const indices = buildSchemaIndices(presets, fields, fieldTranslations)
+    expect(indices.fieldCatalog.find((field) => field.id === 'traffic_calming')).toMatchObject({
+      riskyUsageCount: 1,
+    })
+    expect(indices.fieldCatalog.find((field) => field.id === 'name')).toMatchObject({
+      riskyUsageCount: 0,
+    })
   })
 
   it('precomputed icon mismatch rows match runtime helpers', () => {
