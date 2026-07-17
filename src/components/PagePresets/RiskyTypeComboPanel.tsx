@@ -1,9 +1,12 @@
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import type { RiskyTypeCombo, RiskyTypeComboStatus } from '@/components/PagePresets/riskyTypeCombo'
+import {
+  SchemaOverrideCreateIssueAction,
+  usePresetDetailPageUrl,
+} from '@/components/PagePresets/SchemaOverrideCreateIssueAction'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
-import { externalActionPillClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { buildRiskyTypeComboOverrideIssueUrl } from '@/utils/buildSchemaOverrideIssueUrl'
 import type { DenormalizedPreset } from '@/utils/types'
@@ -49,20 +52,7 @@ function CreateIssueAction({
   })
 
   return (
-    <div className="not-prose mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-      <a
-        href={issueUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={externalActionPillClass('border border-mauve-200 bg-mauve-50/80')}
-        data-testid="risky-typecombo-create-issue"
-      >
-        Create GitHub issue ↗
-      </a>
-      <p className="text-sm text-slate-400">
-        Pre-filled issue → Cursor agent opens a PR → CI validates the override.
-      </p>
-    </div>
+    <SchemaOverrideCreateIssueAction issueUrl={issueUrl} testId="risky-typecombo-create-issue" />
   )
 }
 
@@ -97,11 +87,7 @@ export function RiskyTypeComboPanel({
   preset: DenormalizedPreset
   dataUrl: string
 }) {
-  const location = useLocation()
-  const pageUrl =
-    typeof window !== 'undefined'
-      ? `${window.location.origin}${location.pathname}${location.searchStr}`
-      : ''
+  const pageUrl = usePresetDetailPageUrl()
   const { riskyTypeCombo, riskyTypeComboStatus } = preset
   const disclosureId = `preset-risky-typecombo:${preset.id}`
   useAutoOpenFocusedIssue(disclosureId, 'riskyTypeCombo', riskyTypeComboStatus !== 'none')
