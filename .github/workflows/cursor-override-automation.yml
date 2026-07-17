@@ -1,5 +1,5 @@
 # Triggers a Cursor cloud agent when a schema override issue is opened.
-# Issue title must start with [missing-inheritance], [risky-typecombo], or [schema-override].
+# Issue title must start with [missing-inheritance] or [risky-typecombo].
 # See .agents/skills/apply-schema-override/SKILL.md
 name: Cursor override automation
 
@@ -22,14 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Workflow file check (push validation only)
-        run: echo "Cursor override automation runs on issues whose title starts with [missing-inheritance], [risky-typecombo], or [schema-override]."
+        run: echo "Cursor override automation runs on issues whose title starts with [missing-inheritance] or [risky-typecombo]."
 
   post-cursor-trigger:
     if: |
       github.event_name == 'issues' && (
         startsWith(github.event.issue.title, '[missing-inheritance]') ||
-        startsWith(github.event.issue.title, '[risky-typecombo]') ||
-        startsWith(github.event.issue.title, '[schema-override]')
+        startsWith(github.event.issue.title, '[risky-typecombo]')
       )
     runs-on: ubuntu-latest
     steps:

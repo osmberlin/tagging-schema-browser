@@ -16,8 +16,7 @@ describe('cursorOverrideAutomation', () => {
     )
   })
 
-  it('falls back to schema-override prefix', () => {
-    expect(resolveActiveKindFromTitle('[schema-override] custom title')).toBe('schema-override')
+  it('returns null without a known prefix', () => {
     expect(resolveActiveKindFromTitle('missing-inheritance] no bracket')).toBeNull()
   })
 

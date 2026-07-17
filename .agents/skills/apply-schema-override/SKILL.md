@@ -8,7 +8,7 @@ description: >-
 # Apply schema override
 
 Use when a GitHub issue was opened from the Tagging Schema Browser with a title starting
-`[missing-inheritance]` or `[risky-typecombo]` (or umbrella `[schema-override]`).
+`[missing-inheritance]` or `[risky-typecombo]`.
 
 ## 1. Parse the issue
 
