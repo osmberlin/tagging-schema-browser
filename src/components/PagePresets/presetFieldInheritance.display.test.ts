@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   displayPresetFieldList,
   getInheritedFieldItems,
+  getPresetRefFieldInheritanceBreakdown,
 } from '@/components/PagePresets/presetFieldInheritance'
 import type { RawFields, RawPresets } from '@/utils/types'
 
@@ -105,5 +106,57 @@ describe('displayPresetFieldList', () => {
     )
 
     expect(inherited).toEqual(['traffic_sign/direction'])
+  })
+
+  it('explains omitted fields when expanding a preset ref', () => {
+    const rawPresets: RawPresets = {
+      traffic_sign: {
+        tags: { traffic_sign: '*' },
+        geometry: ['point', 'vertex'],
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point'],
+      },
+      'traffic_sign/variable_message': {
+        tags: { traffic_sign: 'variable_message' },
+        geometry: ['point', 'vertex'],
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point', 'direction_vertex'],
+      },
+    }
+    const fields: RawFields = {
+      traffic_sign: { key: 'traffic_sign', type: 'typeCombo' },
+      'traffic_sign/direction': { key: 'traffic_sign:direction', type: 'radio' },
+      direction_point: { key: 'direction', type: 'number' },
+      direction_vertex: { key: 'direction', type: 'radio' },
+    }
+    const hostPreset = rawPresets['traffic_sign/variable_message']!
+    const displayFields = displayPresetFieldList(
+      'traffic_sign/variable_message',
+      'fields',
+      hostPreset.fields as string[],
+      rawPresets,
+    )
+
+    expect(
+      getPresetRefFieldInheritanceBreakdown(
+        hostPreset,
+        '{traffic_sign}',
+        'fields',
+        displayFields,
+        [],
+        rawPresets,
+        fields,
+      ),
+    ).toEqual([
+      {
+        applied: false,
+        fieldId: 'traffic_sign',
+        reason: 'preset tag fixes traffic_sign=variable_message',
+      },
+      { applied: true, fieldId: 'traffic_sign/direction' },
+      {
+        applied: false,
+        fieldId: 'direction_point',
+        reason: 'direction_vertex listed explicitly (same tag key)',
+      },
+    ])
   })
 })
