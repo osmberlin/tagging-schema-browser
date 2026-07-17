@@ -5,7 +5,7 @@ import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
   displayPresetFieldList,
-  getInheritedFieldItems,
+  getPresetRefFieldInheritanceBreakdown,
   presetIdFromRef,
 } from '@/components/PagePresets/presetFieldInheritance'
 import {
@@ -519,6 +519,49 @@ function RefDisclosure({
   )
 }
 
+/** Field from a preset ref that is not inherited, with reason. */
+function OmittedInheritedFieldLine({
+  fieldId,
+  reason,
+  level,
+  dataUrl,
+  trailingComma,
+  host,
+}: {
+  fieldId: string
+  reason: string
+  level: number
+  dataUrl: string
+  trailingComma?: boolean
+  host: HostPresetContext
+}) {
+  const refInfo = refInFieldList(fieldId, host.rawPresets)
+  if (!refInfo) return null
+
+  return (
+    <JsonLine level={level} trailingComma={trailingComma}>
+      <span className="text-slate-400 line-through">"{fieldId}"</span>
+      <code className="truncate text-[10px] text-slate-300">{refInfo.repoPath}</code>
+      <span className="text-[10px] text-amber-700" title={reason}>
+        {'/* omitted: '}
+        {reason}
+        {' */'}
+      </span>
+      <SourceActionGroup>
+        <GithubLink href={githubFileUrl(dataUrl, refInfo.repoPath)} />
+        <SourceAreaLink
+          area="fields"
+          to="/field/$"
+          params={{ _splat: refInfo.id }}
+          search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+          label="Field"
+          title={`Open field "${refInfo.id}"`}
+        />
+      </SourceActionGroup>
+    </JsonLine>
+  )
+}
+
 /** Inherited field ids when a preset ref is expanded inside fields or moreFields. */
 function PresetRefInheritedFields({
   presetRef,
@@ -536,7 +579,7 @@ function PresetRefInheritedFields({
   host: HostPresetContext
 }) {
   const { fields: allFields, rawPresets } = useSchema()
-  const inheritedItems = getInheritedFieldItems(
+  const breakdown = getPresetRefFieldInheritanceBreakdown(
     host.hostPreset,
     presetRef,
     fieldListKey,
@@ -546,27 +589,45 @@ function PresetRefInheritedFields({
     allFields,
   )
 
-  if (inheritedItems.length === 0) {
+  if (breakdown.length === 0) {
     return (
       <JsonLine level={level} trailingComma={trailingComma}>
-        <span className="text-slate-400 italic">{'/* no inherited fields */'}</span>
+        <span className="text-slate-400 italic">{'/* no fields on referenced preset */'}</span>
       </JsonLine>
     )
   }
 
   return (
     <>
-      {inheritedItems.map((item) => (
-        <JsonNode
-          key={`${fieldListKey}-${item}`}
-          value={item}
-          level={level}
-          parentKey={fieldListKey}
-          dataUrl={dataUrl}
-          trailingComma={item !== inheritedItems[inheritedItems.length - 1] ? true : trailingComma}
-          host={host}
-        />
-      ))}
+      {breakdown.map((entry, index) => {
+        const entryTrailingComma = index < breakdown.length - 1 ? true : trailingComma
+
+        if (entry.applied) {
+          return (
+            <JsonNode
+              key={`${fieldListKey}-${entry.fieldId}`}
+              value={entry.fieldId}
+              level={level}
+              parentKey={fieldListKey}
+              dataUrl={dataUrl}
+              trailingComma={entryTrailingComma}
+              host={host}
+            />
+          )
+        }
+
+        return (
+          <OmittedInheritedFieldLine
+            key={`${fieldListKey}-${entry.fieldId}-omitted`}
+            fieldId={entry.fieldId}
+            reason={entry.reason}
+            level={level}
+            dataUrl={dataUrl}
+            trailingComma={entryTrailingComma}
+            host={host}
+          />
+        )
+      })}
     </>
   )
 }

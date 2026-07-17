@@ -21,25 +21,120 @@ export function shouldInheritField(
   hostOriginalMoreFields: string[],
   allFields: RawFields,
 ): boolean {
+  return (
+    explainShouldNotInheritField(
+      hostPreset,
+      fieldId,
+      hostOriginalFields,
+      hostOriginalMoreFields,
+      allFields,
+    ) === null
+  )
+}
+
+/** Human-readable reason a referenced field is not inherited, or null when it applies. */
+export function explainShouldNotInheritField(
+  hostPreset: RawPreset,
+  fieldId: string,
+  hostOriginalFields: string[],
+  hostOriginalMoreFields: string[],
+  allFields: RawFields,
+): string | null {
   const key = fieldKey(fieldId, allFields)
   const tags = hostPreset.tags ?? {}
 
   for (const tagKey of Object.keys(tags)) {
     if (tagKey === key) {
       const tagValue = tags[tagKey]
-      if (tagValue && GENERIC_TAG_VALUES.has(tagValue)) return true
-      const type = allFields[fieldId]?.type
-      if (type && INHERITABLE_TYPES.has(type)) continue
-      return false
+      if (tagValue && GENERIC_TAG_VALUES.has(tagValue)) {
+        const type = allFields[fieldId]?.type
+        if (type && INHERITABLE_TYPES.has(type)) continue
+      }
+      if (tagValue !== undefined && tagValue !== null && String(tagValue).length > 0) {
+        return `preset tag fixes ${tagKey}=${tagValue}`
+      }
     }
   }
 
   for (const hostFieldId of [...hostOriginalFields, ...hostOriginalMoreFields]) {
     if (presetIdFromRef(hostFieldId)) continue
-    if (fieldKey(hostFieldId, allFields) === key) return false
+    if (fieldKey(hostFieldId, allFields) === key) {
+      return `${hostFieldId} listed explicitly (same tag key)`
+    }
   }
 
-  return true
+  return null
+}
+
+export type PresetRefFieldInheritanceEntry =
+  | { applied: true; fieldId: string }
+  | { applied: false; fieldId: string; reason: string }
+
+function collectReferencedPresetFieldIds(
+  preset: RawPreset,
+  fieldListKey: 'fields' | 'moreFields',
+  rawPresets: RawPresets,
+  seenPresetRefs: Set<string>,
+): string[] {
+  const list = preset[fieldListKey]
+  if (!Array.isArray(list)) return []
+
+  const fieldIds: string[] = []
+
+  for (const item of list) {
+    if (typeof item !== 'string') continue
+
+    const nestedPresetId = presetIdFromRef(item)
+    if (nestedPresetId) {
+      if (seenPresetRefs.has(nestedPresetId)) continue
+      const nested = rawPresets[nestedPresetId]
+      if (!nested) continue
+
+      seenPresetRefs.add(nestedPresetId)
+      fieldIds.push(
+        ...collectReferencedPresetFieldIds(nested, fieldListKey, rawPresets, seenPresetRefs),
+      )
+      seenPresetRefs.delete(nestedPresetId)
+      continue
+    }
+
+    fieldIds.push(item)
+  }
+
+  return fieldIds
+}
+
+/**
+ * Applied vs omitted fields when a `{preset}` ref is expanded in the source tree.
+ * Omitted entries include a short reason (fixed tag, explicit field with same key, …).
+ */
+export function getPresetRefFieldInheritanceBreakdown(
+  hostPreset: RawPreset,
+  presetRef: string,
+  fieldListKey: 'fields' | 'moreFields',
+  hostOriginalFields: string[],
+  hostOriginalMoreFields: string[],
+  rawPresets: RawPresets,
+  allFields: RawFields,
+): PresetRefFieldInheritanceEntry[] {
+  const presetId = presetIdFromRef(presetRef)
+  if (!presetId) return []
+
+  const source = rawPresets[presetId]
+  if (!source) return []
+
+  return collectReferencedPresetFieldIds(source, fieldListKey, rawPresets, new Set()).map(
+    (fieldId) => {
+      const reason = explainShouldNotInheritField(
+        hostPreset,
+        fieldId,
+        hostOriginalFields,
+        hostOriginalMoreFields,
+        allFields,
+      )
+      return reason ? { applied: false, fieldId, reason } : { applied: true, fieldId }
+    },
+  )
 }
 
 function listUsesPresetRefs(list: string[] | undefined): boolean {
