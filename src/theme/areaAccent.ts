@@ -234,6 +234,7 @@ const areaChipHoverClass: Record<SchemaArea, string> = {
   fields: 'hover:bg-emerald-100 hover:text-emerald-800 hover:ring-emerald-200',
   translations: 'hover:bg-yellow-100 hover:text-yellow-800 hover:ring-yellow-200',
   presetSwitch: 'hover:bg-amber-100 hover:text-amber-800 hover:ring-amber-200',
+  presetMatch: 'hover:bg-amber-100 hover:text-amber-800 hover:ring-amber-200',
 }
 
 const areaChipHoverInLinkClass: Record<SchemaArea, string> = {
@@ -242,6 +243,7 @@ const areaChipHoverInLinkClass: Record<SchemaArea, string> = {
   fields: 'group-hover:bg-emerald-100 group-hover:text-emerald-800 group-hover:ring-emerald-200',
   translations: 'group-hover:bg-yellow-100 group-hover:text-yellow-800 group-hover:ring-yellow-200',
   presetSwitch: 'group-hover:bg-amber-100 group-hover:text-amber-800 group-hover:ring-amber-200',
+  presetMatch: 'group-hover:bg-amber-100 group-hover:text-amber-800 group-hover:ring-amber-200',
 }
 
 export function areaNavClass(area: SchemaArea, active: boolean): string {
