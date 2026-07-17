@@ -1,7 +1,11 @@
 const GHA_ATTRIBUTION =
   '> **GitHub Actions (automation)** — This comment only starts the Cursor cloud agent. It is not written by the issue author.\n\n'
 
-export const CURSOR_TRIGGER_MARKER = '@cursor repo='
+/** GitHub cloud agents listen for @cursoragent with natural language (not @cursor or repo= options). */
+export const CURSOR_TRIGGER_MARKER = '@cursoragent look into this issue'
+
+/** Older automation comments that never triggered an agent — do not treat as satisfied. */
+export const LEGACY_BROKEN_TRIGGER_MARKERS = ['@cursor repo=', '@cursoragent repo='] as const
 
 /** Mandatory issue title prefixes — users may edit the title after the closing `]`. */
 export const OVERRIDE_TITLE_PREFIXES = {
@@ -33,6 +37,11 @@ export const resolveActiveKindFromTitle = (title: string): OverrideTriggerKind |
 export const hasExistingCursorTrigger = (comments: { body?: string | null }[]) =>
   comments.some((comment) => comment.body?.includes(CURSOR_TRIGGER_MARKER))
 
+export const hasLegacyBrokenCursorTrigger = (comments: { body?: string | null }[]) =>
+  comments.some((comment) =>
+    LEGACY_BROKEN_TRIGGER_MARKERS.some((marker) => comment.body?.includes(marker)),
+  )
+
 export const resolveSourceBranch = (body: string) => {
   const quoted = body.match(/\*\*Source branch:\*\*\s*`([^`]+)`/)
   if (quoted) return quoted[1]
@@ -59,9 +68,7 @@ export const buildCursorTriggerCommentBody = ({
   const branch = resolveSourceBranch(issueBody)
   const skillInstruction = resolveSkillInstruction(config)
 
-  return `${GHA_ATTRIBUTION}@cursor repo=${owner}/${repo} branch=${branch}
-
-**${config.title}** #${issueNumber} (\`${OVERRIDE_TITLE_PREFIXES[activeKind]}\`). Read the issue body. ${skillInstruction} Open a PR with \`Closes #${issueNumber}\` and add the \`schema-override\` label. Prefix comments and PR description with \`**[Cursor Agent]**\`.`
+  return `${GHA_ATTRIBUTION}@cursoragent look into this issue. **${config.title}** #${issueNumber} (\`${OVERRIDE_TITLE_PREFIXES[activeKind]}\`). Read the issue body. ${skillInstruction} Open a PR with \`Closes #${issueNumber}\` and add the \`schema-override\` label. Prefix comments and PR description with \`**[Cursor Agent]**\`. Work in \`${owner}/${repo}\` on branch \`${branch}\`.`
 }
 
 type IssuesEvent = {
@@ -126,8 +133,14 @@ export const runCursorOverrideAutomation = async ({
   )
 
   if (hasExistingCursorTrigger(comments)) {
-    console.log('Cursor trigger already exists (@cursor comment); skipping.')
+    console.log('Cursor trigger already exists (@cursoragent comment); skipping.')
     return
+  }
+
+  if (hasLegacyBrokenCursorTrigger(comments)) {
+    console.log(
+      'Replacing legacy @cursor / @cursoragent repo= trigger with @cursoragent look into this issue.',
+    )
   }
 
   const body = buildCursorTriggerCommentBody({
@@ -146,9 +159,15 @@ export const runCursorOverrideAutomation = async ({
 }
 
 const runFromGitHubActions = async () => {
-  const token = process.env.GITHUB_TOKEN
+  const token = process.env.CURSOR_TRIGGER_GITHUB_TOKEN ?? process.env.GITHUB_TOKEN
   if (!token) {
-    throw new Error('GITHUB_TOKEN is required')
+    throw new Error('GITHUB_TOKEN or CURSOR_TRIGGER_GITHUB_TOKEN is required')
+  }
+
+  if (!process.env.CURSOR_TRIGGER_GITHUB_TOKEN) {
+    console.warn(
+      'CURSOR_TRIGGER_GITHUB_TOKEN is not set; posting as github-actions may not trigger Cursor (use a PAT from a human user).',
+    )
   }
 
   const eventPath = process.env.GITHUB_EVENT_PATH
