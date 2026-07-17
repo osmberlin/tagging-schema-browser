@@ -20,7 +20,18 @@ interface PrPreviewHistoryStore {
 
 function pruneEntries(entries: PrPreviewHistoryEntry[], now = Date.now()): PrPreviewHistoryEntry[] {
   const cutoff = now - HISTORY_TTL_MS
-  return entries.filter((entry) => entry.openedAt >= cutoff).slice(0, HISTORY_MAX_ENTRIES)
+  return entries.filter((entry) => entry.openedAt >= cutoff)
+}
+
+/** Stable menu order: higher PR numbers first (typically newer on the same repo). */
+export function sortPrPreviewHistory(entries: PrPreviewHistoryEntry[]): PrPreviewHistoryEntry[] {
+  return [...entries].sort((a, b) => b.prNumber - a.prNumber)
+}
+
+function capByRecency(entries: PrPreviewHistoryEntry[]): PrPreviewHistoryEntry[] {
+  return [...entries]
+    .sort((a, b) => b.openedAt - a.openedAt || b.prNumber - a.prNumber)
+    .slice(0, HISTORY_MAX_ENTRIES)
 }
 
 const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
@@ -31,11 +42,10 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
       actions: {
         recordOpen: (prNumber) => {
           const now = Date.now()
-          const without = pruneEntries(get().entries, now).filter(
-            (entry) => entry.prNumber !== prNumber,
-          )
+          const pruned = pruneEntries(get().entries, now)
+          const without = pruned.filter((entry) => entry.prNumber !== prNumber)
           set({
-            entries: [{ prNumber, openedAt: now }, ...without].slice(0, HISTORY_MAX_ENTRIES),
+            entries: capByRecency([...without, { prNumber, openedAt: now }]),
             lastUsedPrNumber: prNumber,
           })
         },
@@ -65,7 +75,8 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
   ),
 )
 
-export const usePrPreviewHistory = () => usePrPreviewHistoryStore((state) => state.entries)
+export const usePrPreviewHistory = () =>
+  usePrPreviewHistoryStore((state) => sortPrPreviewHistory(state.entries))
 
 export const useLastUsedPrNumber = () => usePrPreviewHistoryStore((state) => state.lastUsedPrNumber)
 
