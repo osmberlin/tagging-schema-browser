@@ -9,6 +9,7 @@ import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-
 import { useDeferredSearchQuery } from '@/hooks/useDeferredSearchQuery'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
+import { activeFieldIssueFilter, showFieldIssueAlert } from '@/utils/fieldIssueFilters'
 import { exportFields } from '@/utils/pageExports'
 import { FieldCard } from './FieldCard'
 import { applyFieldFacets, useFieldFacetState } from './useFieldFacetState'
@@ -51,17 +52,12 @@ export function PageFields() {
   const riskyTypeComboFieldCount = fields.filter(
     (field) => field.type === 'typeCombo' && field.riskyUsageCount > 0,
   ).length
+  const activeIssueFilter = activeFieldIssueFilter(facetState)
   const { setActiveIssueFocus } = useSchemaIssueDisclosureActions()
 
   useEffect(() => {
-    if (facetState.f_iconMismatch === 'mismatch') {
-      setActiveIssueFocus('iconMismatch')
-    } else if (facetState.f_riskyTypeCombo === 'risky') {
-      setActiveIssueFocus('riskyTypeCombo')
-    } else {
-      setActiveIssueFocus(null)
-    }
-  }, [facetState.f_iconMismatch, facetState.f_riskyTypeCombo, setActiveIssueFocus])
+    setActiveIssueFocus(activeIssueFilter)
+  }, [activeIssueFilter, setActiveIssueFocus])
 
   const exportData = useMemo(() => exportFields(filtered), [filtered])
 
@@ -130,16 +126,20 @@ export function PageFields() {
           </button>
         </div>
       ) : null}
-      {facetState.f_iconMismatch !== 'mismatch' ? (
+      {showFieldIssueAlert(activeIssueFilter, 'iconMismatch') ? (
         <FieldIconMismatchAlert
           count={mismatchFieldCount}
-          onShowMismatch={() => setFacetState({ f_iconMismatch: 'mismatch' })}
+          onShowMismatch={() =>
+            setFacetState({ f_iconMismatch: 'mismatch', f_riskyTypeCombo: 'all' })
+          }
         />
       ) : null}
-      {facetState.f_riskyTypeCombo !== 'risky' ? (
+      {showFieldIssueAlert(activeIssueFilter, 'riskyTypeCombo') ? (
         <FieldRiskyTypeComboAlert
           count={riskyTypeComboFieldCount}
-          onShowRisky={() => setFacetState({ f_riskyTypeCombo: 'risky', f_type: 'typeCombo' })}
+          onShowRisky={() =>
+            setFacetState({ f_riskyTypeCombo: 'risky', f_type: 'typeCombo', f_iconMismatch: 'all' })
+          }
         />
       ) : null}
       {filtered.length > 0 ? (
