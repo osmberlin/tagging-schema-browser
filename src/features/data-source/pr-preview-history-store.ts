@@ -12,7 +12,8 @@ export type PrPreviewHistoryEntry = {
 
 interface PrPreviewHistoryStore {
   entries: PrPreviewHistoryEntry[]
-  lastUsedPrNumber: number | null
+  currentPrNumber: number | null
+  previousPrNumber: number | null
   actions: {
     recordOpen: (prNumber: number) => void
     pruneExpired: () => void
@@ -43,32 +44,51 @@ function entriesEqual(a: PrPreviewHistoryEntry[], b: PrPreviewHistoryEntry[]): b
   return true
 }
 
+function pointerStillInHistory(
+  prNumber: number | null,
+  entries: PrPreviewHistoryEntry[],
+): number | null {
+  if (prNumber === null) return null
+  return entries.some((entry) => entry.prNumber === prNumber) ? prNumber : null
+}
+
 const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
   persist(
     (set, get) => ({
       entries: [],
-      lastUsedPrNumber: null,
+      currentPrNumber: null,
+      previousPrNumber: null,
       actions: {
         recordOpen: (prNumber) => {
           const now = Date.now()
           const pruned = pruneEntries(get().entries, now)
           const without = pruned.filter((entry) => entry.prNumber !== prNumber)
+          const current = get().currentPrNumber
+          const previousPrNumber =
+            current !== null && current !== prNumber ? current : get().previousPrNumber
+
           set({
             entries: capByRecency([...without, { prNumber, openedAt: now }]),
-            lastUsedPrNumber: prNumber,
+            currentPrNumber: prNumber,
+            previousPrNumber,
           })
         },
         pruneExpired: () => {
-          const current = get().entries
-          const pruned = pruneEntries(current)
-          const lastUsed = get().lastUsedPrNumber
-          const lastStillPresent =
-            lastUsed !== null && pruned.some((entry) => entry.prNumber === lastUsed)
-          const nextLastUsed = lastStillPresent ? lastUsed : null
-          if (entriesEqual(current, pruned) && nextLastUsed === lastUsed) return
+          const currentEntries = get().entries
+          const pruned = pruneEntries(currentEntries)
+          const nextCurrent = pointerStillInHistory(get().currentPrNumber, pruned)
+          const nextPrevious = pointerStillInHistory(get().previousPrNumber, pruned)
+          if (
+            entriesEqual(currentEntries, pruned) &&
+            nextCurrent === get().currentPrNumber &&
+            nextPrevious === get().previousPrNumber
+          ) {
+            return
+          }
           set({
             entries: pruned,
-            lastUsedPrNumber: nextLastUsed,
+            currentPrNumber: nextCurrent,
+            previousPrNumber: nextPrevious,
           })
         },
       },
@@ -77,9 +97,23 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
       name: 'tagging-schema-browser-pr-preview-history',
       partialize: (state) => ({
         entries: state.entries,
-        lastUsedPrNumber: state.lastUsedPrNumber,
+        currentPrNumber: state.currentPrNumber,
+        previousPrNumber: state.previousPrNumber,
       }),
-      version: 1,
+      version: 2,
+      migrate: (persisted) => {
+        const state = persisted as {
+          entries?: PrPreviewHistoryEntry[]
+          lastUsedPrNumber?: number | null
+          currentPrNumber?: number | null
+          previousPrNumber?: number | null
+        }
+        return {
+          entries: state.entries ?? [],
+          currentPrNumber: state.currentPrNumber ?? state.lastUsedPrNumber ?? null,
+          previousPrNumber: state.previousPrNumber ?? null,
+        }
+      },
       onRehydrateStorage: () => (state) => {
         state?.actions.pruneExpired()
       },
@@ -90,7 +124,9 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
 export const usePrPreviewHistory = () =>
   usePrPreviewHistoryStore(useShallow((state) => sortPrPreviewHistory(state.entries)))
 
-export const useLastUsedPrNumber = () => usePrPreviewHistoryStore((state) => state.lastUsedPrNumber)
+export const usePreviousPrNumber = () => usePrPreviewHistoryStore((state) => state.previousPrNumber)
+
+export const useCurrentPrNumber = () => usePrPreviewHistoryStore((state) => state.currentPrNumber)
 
 export const usePrPreviewHistoryActions = () => usePrPreviewHistoryStore((state) => state.actions)
 

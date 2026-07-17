@@ -1,7 +1,8 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useEffect, useId, useRef, useState } from 'react'
 import {
-  useLastUsedPrNumber,
+  useCurrentPrNumber,
+  usePreviousPrNumber,
   usePrPreviewHistory,
   usePrPreviewHistoryActions,
 } from '@/features/data-source/pr-preview-history-store'
@@ -67,17 +68,17 @@ function usePrunePrPreviewHistoryOnMount() {
  */
 function useRecordDeepLinkedPrPreview(dataUrl: string) {
   const { recordOpen } = usePrPreviewHistoryActions()
-  const lastUsedPrNumber = useLastUsedPrNumber()
+  const currentPrNumber = useCurrentPrNumber()
 
   useEffect(
     function recordDeepLinkedPrPreview() {
       if (!isPrPreviewDataUrl(dataUrl)) return
       const prNumber = prNumberFromDataUrl(dataUrl)
       if (prNumber === null) return
-      if (prNumber === lastUsedPrNumber) return
+      if (prNumber === currentPrNumber) return
       recordOpen(prNumber)
     },
-    [dataUrl, lastUsedPrNumber, recordOpen],
+    [dataUrl, currentPrNumber, recordOpen],
   )
 }
 
@@ -97,7 +98,7 @@ export function ReferenceDropdown() {
   const { isComparing, compareMode, releaseVersion, unreleasedUpdatedAt } = useComparison()
   const { schemaBuild } = useSchema()
   const history = usePrPreviewHistory()
-  const lastUsedPrNumber = useLastUsedPrNumber()
+  const previousPrNumber = usePreviousPrNumber()
   const [prInput, setPrInput] = useState('')
 
   usePrunePrPreviewHistoryOnMount()
@@ -320,7 +321,8 @@ export function ReferenceDropdown() {
               <MenuSectionLabel>Compare recent PRs</MenuSectionLabel>
               {history.map((entry) => {
                 const choice: ReferenceChoice = `pr:${entry.prNumber}`
-                const isLastUsed = entry.prNumber === lastUsedPrNumber
+                const isPreviousSelection =
+                  entry.prNumber === previousPrNumber && entry.prNumber !== previewPrNumber
                 const isActive = previewPrNumber === entry.prNumber
                 return (
                   <button
@@ -332,7 +334,7 @@ export function ReferenceDropdown() {
                     className={menuItemClass(isActive)}
                   >
                     <span className="relative min-w-0 flex-1 pl-3">
-                      {isLastUsed ? (
+                      {isPreviousSelection ? (
                         <span
                           aria-hidden="true"
                           className={cn(
