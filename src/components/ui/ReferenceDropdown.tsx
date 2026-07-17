@@ -140,7 +140,9 @@ export function ReferenceDropdown() {
   const comparePreviewLabel =
     previewPrNumber !== null ? `PR #${previewPrNumber} vs unreleased` : 'Preview vs unreleased'
   const compareReleaseLabel =
-    previewPrNumber !== null ? `Release vs PR #${previewPrNumber}` : `Release vs preview`
+    previewPrNumber !== null
+      ? `PR #${previewPrNumber} vs ${releaseLabel.toLowerCase()}`
+      : `Preview vs ${releaseLabel.toLowerCase()}`
 
   const currentChoice: ReferenceChoice = isComparing
     ? compareMode === 'release'
@@ -154,8 +156,8 @@ export function ReferenceDropdown() {
     if (isComparing) {
       if (compareMode === 'release') {
         return previewPrNumber !== null
-          ? `${releaseLabel} · vs PR #${previewPrNumber}`
-          : `${releaseLabel} · vs preview`
+          ? `PR #${previewPrNumber} · vs ${releaseLabel.toLowerCase()}`
+          : `Preview · vs ${releaseLabel.toLowerCase()}`
       }
       if (previewPrNumber !== null) {
         return `PR #${previewPrNumber} · vs unreleased`
@@ -175,8 +177,8 @@ export function ReferenceDropdown() {
     if (isComparing) {
       if (compareMode === 'release') {
         return previewPrNumber !== null
-          ? `Comparing published release against PR #${previewPrNumber}`
-          : 'Comparing published release against a custom preview'
+          ? `Comparing PR #${previewPrNumber} against ${releaseLabel.toLowerCase()}`
+          : `Comparing a custom preview against ${releaseLabel.toLowerCase()}`
       }
       return previewPrNumber !== null
         ? `Comparing PR #${previewPrNumber} against unreleased main`

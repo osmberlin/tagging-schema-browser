@@ -119,7 +119,7 @@ test('comparison banner exits preview when showing release', async ({ page }) =>
 test('schema version dropdown preserves dataUrl when switching compare mode', async ({ page }) => {
   test.setTimeout(60_000)
   await page.goto('/?dataUrl=/test-schema')
-  await chooseMenuItem(page, 'Release vs preview')
+  await chooseMenuItem(page, 'vs release')
   await expect(page).toHaveURL(/dataUrl=/)
   await expect(page).toHaveURL(/reference=release/, { timeout: 30_000 })
 })
