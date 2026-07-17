@@ -33,6 +33,10 @@ describe('buildSchemaOverrideIssueUrl', () => {
     )
     expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
+    expect(body).toContain('## About this request')
+    expect(body).toContain('Tagging Schema Browser')
+    expect(body).toContain('No manual YAML editing')
+    expect(body).not.toContain('> **You**')
     expect(body).toContain('man_made/crane/untyped_crane')
     expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
     expect(body).toContain('schema-override')
