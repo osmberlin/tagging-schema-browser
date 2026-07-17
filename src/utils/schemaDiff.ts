@@ -159,6 +159,12 @@ function diffFieldTranslations(
   return diffs
 }
 
+function fieldKeyValues(field: RawField): string[] {
+  if (field.keys?.length) return [...field.keys]
+  if (field.key) return [field.key]
+  return []
+}
+
 function diffFieldDefinition(
   baseline: RawField,
   current: RawField,
@@ -172,9 +178,8 @@ function diffFieldDefinition(
   }
 
   scalar('Type', baseline.type, current.type)
-  scalar('Key', baseline.key ?? baseline.keys?.join(', '), current.key ?? current.keys?.join(', '))
 
-  const keys = diffUnorderedListDimension('Keys', baseline.keys ?? [], current.keys ?? [])
+  const keys = diffUnorderedListDimension('Keys', fieldKeyValues(baseline), fieldKeyValues(current))
   if (keys) diffs.push(keys)
 
   const geometry = diffOrderedListDimension(
