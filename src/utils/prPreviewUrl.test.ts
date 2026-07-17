@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isPrPreviewDataUrl, prPreviewDataUrl } from './prPreviewUrl'
+import { isPrPreviewDataUrl, prNumberFromDataUrl, prPreviewDataUrl } from './prPreviewUrl'
 
 describe('isPrPreviewDataUrl', () => {
   it('recognizes Netlify PR preview dist URLs', () => {
@@ -18,5 +18,19 @@ describe('isPrPreviewDataUrl', () => {
     )
     expect(isPrPreviewDataUrl('https://example.com/dist/')).toBe(false)
     expect(isPrPreviewDataUrl('')).toBe(false)
+  })
+})
+
+describe('prNumberFromDataUrl', () => {
+  it('extracts PR number from Netlify preview URLs', () => {
+    expect(prNumberFromDataUrl(prPreviewDataUrl(2477))).toBe(2477)
+    expect(prNumberFromDataUrl('https://pr-42--ideditor-presets-preview.netlify.app/dist/')).toBe(
+      42,
+    )
+  })
+
+  it('returns null for non-preview URLs', () => {
+    expect(prNumberFromDataUrl('https://example.com/dist/')).toBeNull()
+    expect(prNumberFromDataUrl('')).toBeNull()
   })
 })

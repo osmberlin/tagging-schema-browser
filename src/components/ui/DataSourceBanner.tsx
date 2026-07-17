@@ -34,13 +34,13 @@ export function DataSourceBanner() {
   const showUnreleased = () => {
     void navigate({
       to: '.',
-      search: (prev) => ({ ...prev, dataUrl: undefined, reference: undefined }),
+      search: (prev) => ({ ...prev, reference: undefined }),
     })
   }
   const showRelease = () => {
     void navigate({
       to: '.',
-      search: (prev) => ({ ...prev, dataUrl: undefined, reference: 'release' }),
+      search: (prev) => ({ ...prev, reference: 'release' }),
     })
   }
   const changeCountFromResult = changeCount

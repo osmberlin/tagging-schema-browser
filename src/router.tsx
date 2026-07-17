@@ -157,7 +157,7 @@ function RootContent() {
   const location = useLocation()
 
   // URL `reference=release` wins; otherwise fall back to persisted preference (default unreleased).
-  const reference = resolveSchemaReference(urlReference, persistedReference)
+  const reference = resolveSchemaReference(urlReference, persistedReference, dataUrl)
 
   useEffect(
     function syncPersistedReferenceFromUrl() {
