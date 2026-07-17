@@ -199,7 +199,8 @@ export function ReferenceDropdown() {
       search: (prev) => ({
         ...prev,
         dataUrl: prPreviewDataUrl(prNumber),
-        reference: undefined,
+        // When already comparing, only swap the PR preview; keep the active baseline.
+        reference: isComparing ? prev.reference : undefined,
       }),
     })
   }
@@ -329,7 +330,7 @@ export function ReferenceDropdown() {
                     key={entry.prNumber}
                     type="button"
                     role="menuitem"
-                    title={`Compare PR #${entry.prNumber} against unreleased main`}
+                    title={`Use PR #${entry.prNumber} as the compare preview`}
                     onClick={() => navigateToChoice(choice)}
                     className={menuItemClass(isActive)}
                   >
@@ -344,9 +345,6 @@ export function ReferenceDropdown() {
                         />
                       ) : null}
                       <span className="block truncate">PR #{entry.prNumber}</span>
-                      <span className="block truncate text-[10px] font-normal opacity-80">
-                        vs unreleased
-                      </span>
                     </span>
                   </button>
                 )
@@ -358,7 +356,7 @@ export function ReferenceDropdown() {
           <MenuSectionLabel>Compare PR preview</MenuSectionLabel>
           <form className="px-1 pb-1" onSubmit={submitPrInput}>
             <label className="sr-only" htmlFor="reference-dropdown-pr-input">
-              GitHub PR number to compare against unreleased main
+              GitHub PR number to use as the compare preview
             </label>
             <div className="flex items-center gap-1">
               <span className="shrink-0 pl-1 text-[10px] text-slate-400">PR #</span>
