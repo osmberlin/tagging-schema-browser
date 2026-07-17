@@ -317,7 +317,7 @@ export function ReferenceDropdown() {
           {history.length > 0 ? (
             <>
               <div className="my-1 border-t border-slate-100" aria-hidden="true" />
-              <MenuSectionLabel>Recent PR previews</MenuSectionLabel>
+              <MenuSectionLabel>Compare recent PRs</MenuSectionLabel>
               {history.map((entry) => {
                 const choice: ReferenceChoice = `pr:${entry.prNumber}`
                 const isLastUsed = entry.prNumber === lastUsedPrNumber
@@ -327,6 +327,7 @@ export function ReferenceDropdown() {
                     key={entry.prNumber}
                     type="button"
                     role="menuitem"
+                    title={`Compare PR #${entry.prNumber} against unreleased main`}
                     onClick={() => navigateToChoice(choice)}
                     className={menuItemClass(isActive)}
                   >
@@ -341,6 +342,9 @@ export function ReferenceDropdown() {
                         />
                       ) : null}
                       <span className="block truncate">PR #{entry.prNumber}</span>
+                      <span className="block truncate text-[10px] font-normal opacity-80">
+                        vs unreleased
+                      </span>
                     </span>
                   </button>
                 )
@@ -349,9 +353,10 @@ export function ReferenceDropdown() {
           ) : null}
 
           <div className="my-1 border-t border-slate-100" aria-hidden="true" />
+          <MenuSectionLabel>Compare PR preview</MenuSectionLabel>
           <form className="px-1 pb-1" onSubmit={submitPrInput}>
             <label className="sr-only" htmlFor="reference-dropdown-pr-input">
-              GitHub PR number
+              GitHub PR number to compare against unreleased main
             </label>
             <div className="flex items-center gap-1">
               <span className="shrink-0 pl-1 text-[10px] text-slate-400">PR #</span>
@@ -370,7 +375,7 @@ export function ReferenceDropdown() {
                 disabled={!prInput.trim()}
                 className="shrink-0 rounded-md bg-slate-900 px-2 py-1 text-[10px] font-medium text-white transition enabled:hover:bg-slate-800 disabled:opacity-40"
               >
-                Open
+                Compare
               </button>
             </div>
           </form>
