@@ -15,7 +15,11 @@ describe('sortPrPreviewHistory', () => {
 
 describe('pr-preview-history-store', () => {
   beforeEach(() => {
-    prPreviewHistoryStore.setState({ entries: [], lastUsedPrNumber: null })
+    prPreviewHistoryStore.setState({
+      entries: [],
+      currentPrNumber: null,
+      previousPrNumber: null,
+    })
   })
 
   it('records PR opens without reordering the list', () => {
@@ -28,7 +32,22 @@ describe('pr-preview-history-store', () => {
         .entries.map((e) => e.prNumber)
         .sort((a, b) => b - a),
     ).toEqual([200, 100])
-    expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBe(200)
+    expect(prPreviewHistoryStore.getState().currentPrNumber).toBe(200)
+    expect(prPreviewHistoryStore.getState().previousPrNumber).toBe(100)
+  })
+
+  it('tracks the PR before the current one when switching', () => {
+    const { recordOpen } = prPreviewHistoryStore.getState().actions
+    recordOpen(1991)
+    expect(prPreviewHistoryStore.getState().previousPrNumber).toBeNull()
+
+    recordOpen(2309)
+    expect(prPreviewHistoryStore.getState().currentPrNumber).toBe(2309)
+    expect(prPreviewHistoryStore.getState().previousPrNumber).toBe(1991)
+
+    recordOpen(1991)
+    expect(prPreviewHistoryStore.getState().currentPrNumber).toBe(1991)
+    expect(prPreviewHistoryStore.getState().previousPrNumber).toBe(2309)
   })
 
   it('keeps list position when re-opening a PR', () => {
@@ -43,7 +62,8 @@ describe('pr-preview-history-store', () => {
       (e) => e.prNumber,
     )
     expect(orderAfter).toEqual(orderBefore)
-    expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBe(1991)
+    expect(prPreviewHistoryStore.getState().currentPrNumber).toBe(1991)
+    expect(prPreviewHistoryStore.getState().previousPrNumber).toBe(2309)
   })
 
   it('prunes entries older than 60 days', () => {
@@ -53,11 +73,13 @@ describe('pr-preview-history-store', () => {
         { prNumber: 1, openedAt: Date.now() - sixtyOneDaysMs },
         { prNumber: 2, openedAt: Date.now() },
       ],
-      lastUsedPrNumber: 1,
+      currentPrNumber: 1,
+      previousPrNumber: 1,
     })
     prPreviewHistoryStore.getState().actions.pruneExpired()
     expect(prPreviewHistoryStore.getState().entries.map((e) => e.prNumber)).toEqual([2])
-    expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBeNull()
+    expect(prPreviewHistoryStore.getState().currentPrNumber).toBeNull()
+    expect(prPreviewHistoryStore.getState().previousPrNumber).toBeNull()
   })
 
   it('caps history at 20 entries by least recently opened', () => {
