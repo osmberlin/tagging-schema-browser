@@ -21,34 +21,55 @@ Read the issue body and extract:
   - `risky-typecombo-override` → `src/data/risky-typecombo-overrides.yaml` (when present)
 - **YAML snapshot** from the fenced ` ```yaml ` block under **Snapshot** (the `presets:` entry for the preset)
 
-For **stale** updates, the issue may also include an **Existing override (stale)** block — replace that preset entry with the new snapshot.
+For **stale** updates, the issue may also include an **Existing override (stale)** block — the snapshot replaces that stored entry.
 
-## 2. Merge into the override file
+## 2. Commit 1 — apply the issue snapshot
+
+Make one commit for the issue’s primary change:
 
 - Open the target file under `src/data/`.
 - Ensure top-level `version: 1` and `presets:` exist.
-- Insert or replace the preset entry with the snapshot from the issue (two-space indent under `presets:`).
+- Insert or replace the issue’s preset entry with the snapshot (two-space indent under `presets:`).
 - Keep preset keys sorted alphabetically when practical.
-- Do not change unrelated preset entries.
+- Do not change unrelated preset entries in this commit.
 
-## 3. Validate
+**Commit message example:** `Overrides: mark {presetId} missing inheritance as intentional`
+
+If the issue is only about removing a stale entry (override exists but live detection is gone), this commit may delete that preset key instead of adding a snapshot.
+
+## 3. Commit 2 — clean other stale overrides (if any)
+
+Run `bun run validate-inheritance-overrides` (or `bun run check`). If validation reports **other** stale preset ids in the same file, fix them in a **second commit**:
+
+- Remove override entries that are stale because live detection no longer applies.
+- Update entries that are stale because the snapshot drifted only when they are **not** the issue’s target preset (the issue preset was handled in commit 1).
+
+Do not mix unrelated stale cleanup into commit 1. Aim for **one or two commits per PR**:
+
+1. Apply / update / remove the issue’s preset.
+2. (Optional) Remove or fix any remaining stale entries so validation passes.
+
+**Commit message example:** `Overrides: remove stale entries for {presetA}, {presetB}`
+
+## 4. Validate
 
 ```bash
 bun run check
 ```
 
-This runs `validate-inheritance-overrides` against the published release schema. Fix any stale or unknown-preset errors before opening the PR.
+This runs `validate-inheritance-overrides` against the published release schema. All stale entries must be resolved before opening the PR.
 
-## 4. Open a pull request
+## 5. Open a pull request
 
-- **Title:** `[skip netlify] Overrides: mark {presetId} missing inheritance as intentional` (adjust wording for typeCombo when applicable; `[skip netlify]` skips Netlify deploy previews — also skipped automatically when the PR only touches override YAML)
-- **Body:** Start with `Written by :robot_face: <model-name>:` then `Closes #<issue-number>` on the next line, then a short user-facing summary of what was recorded and why (intentional omission).
+- **Title:** `[skip netlify] Overrides: mark {presetId} missing inheritance as intentional` (adjust wording for typeCombo or stale removal when applicable)
+- **Body:** Start with `Written by :robot_face: <model-name>:` then `Closes #<issue-number>` on the next line, then a short user-facing summary of what was recorded and why (intentional omission or stale cleanup).
 - **Label:** `schema-override` (required for auto-merge)
 - Only touch the relevant `src/data/*-overrides.yaml` file.
+- Keep the branch to **1–2 commits** (issue change, then optional stale cleanup).
 
-## 5. Auto-merge
+## 6. Auto-merge
 
-CI must pass. The `schema-override-auto-merge` workflow squash-merges eligible PRs from Cursor agents so each override lands as a single commit on `main`. Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
+CI must pass. The `schema-override-auto-merge` workflow **rebase-merges** eligible PRs from Cursor agents so each commit lands on `main` with a clear message (typically one apply commit, optionally one stale-cleanup commit). Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
 
 ## Attribution
 

@@ -57,9 +57,9 @@ function agentInstructions(config: (typeof KIND_CONFIG)[SchemaOverrideKind]): st
     '## Agent instructions',
     '',
     `1. Follow [\`${config.skillPath}\`](${GITHUB_REPO_URL}/blob/main/${config.skillPath}).`,
-    `2. Parse the YAML snapshot under **Snapshot** below and merge into \`${config.overrideFile}\` under \`presets:\` (preserve sort order).`,
-    '3. Run `bun run check` (includes override validation).',
-    `4. Open a PR titled like \`${config.titlePrefix} {presetId} ${config.titleSuffix}\` with \`Closes #N\` in the body and add the \`schema-override\` label.`,
+    `2. **Commit 1:** Parse the YAML snapshot under **Snapshot** below and merge into \`${config.overrideFile}\` under \`presets:\` (preserve sort order).`,
+    '3. **Commit 2 (if needed):** Run `bun run check`. Remove or fix any *other* stale override entries in a separate commit so validation passes.',
+    `4. Open a PR (1–2 commits) titled like \`[skip netlify] ${config.titlePrefix} {presetId} ${config.titleSuffix}\` with \`Closes #N\` in the body and add the \`schema-override\` label.`,
     '',
   ].join('\n')
 }
