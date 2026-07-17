@@ -194,7 +194,7 @@ function PresetDetailContent({
         childRefs={indices.childIconMismatchRefsByPresetId.get(preset.id) ?? []}
       />
 
-      <MissingInheritancePanel preset={preset} />
+      <MissingInheritancePanel preset={preset} dataUrl={dataUrl} />
 
       <DetailDisclosure
         title="Translation"

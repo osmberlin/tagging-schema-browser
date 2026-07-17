@@ -1,0 +1,72 @@
+# Auto-merge schema override PRs from Cursor agents after CI passes.
+# Squash merge keeps one clean commit per override on main.
+name: Schema override auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: >-
+      (
+        github.event.pull_request.user.login == 'cursor[bot]' ||
+        github.event.pull_request.user.login == 'cursoragent'
+      ) &&
+      contains(github.event.pull_request.labels.*.name, 'schema-override')
+    steps:
+      - name: Fetch changed files
+        id: files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename' | sort -u)
+          echo "Changed files:"
+          echo "$files"
+          invalid=$(echo "$files" | grep -vE '^src/data/.*-overrides\.yaml$' || true)
+          if [ -n "$invalid" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping auto-merge: PR touches files outside src/data/*-overrides.yaml"
+            echo "$invalid"
+            exit 0
+          fi
+          if [ -z "$files" ]; then
+            echo "eligible=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping auto-merge: no files changed"
+            exit 0
+          fi
+          echo "eligible=true" >> "$GITHUB_OUTPUT"
+
+      - name: Comment when manual review is required
+        if: steps.files.outputs.eligible != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge skipped** — this PR must only change `src/data/*-overrides.yaml` and carry the `schema-override` label.'
+
+      - name: Wait for CI, then squash-merge
+        if: steps.files.outputs.eligible == 'true'
+        uses: pascalgn/automerge-action@v0.16.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGE_METHOD: squash
+          MERGE_COMMIT_MESSAGE: pull-request-title
+          MERGE_DELETE_BRANCH: true
+          MERGE_LABELS: schema-override
+          MERGE_REQUIRED_APPROVALS: 0
+          MERGE_FORKS: false
+
+      - name: Comment when auto-merge is queued
+        if: steps.files.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge enabled** — this PR will squash-merge once required checks pass (YAML-only override change).'
