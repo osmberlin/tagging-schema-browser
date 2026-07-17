@@ -11,7 +11,7 @@ import { DataSourceBanner } from '@/components/ui/DataSourceBanner'
 import { Kbd } from '@/components/ui/Kbd'
 import { LanguagePicker } from '@/components/ui/LanguagePicker'
 import { PrimaryNav } from '@/components/ui/PrimaryNav'
-import { ReferenceToggle } from '@/components/ui/ReferenceToggle'
+import { ReferenceDropdown } from '@/components/ui/ReferenceDropdown'
 import { SchemaLoadIndicator } from '@/components/ui/SchemaLoadIndicator'
 import { ShortcutsDialog } from '@/components/ui/ShortcutsDialog'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -211,7 +211,7 @@ export function SidebarLayout({
                 >
                   Tagging Schema <span className={brandAccent.wordmark}>Browser</span>
                 </Link>
-                <ReferenceToggle />
+                <ReferenceDropdown />
               </div>
             </div>
           </div>

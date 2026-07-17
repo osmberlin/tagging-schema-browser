@@ -39,7 +39,7 @@ export function useComparison() {
   const rawDataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? '' })
   const urlReference = useSearch({ strict: false, select: (s) => s.reference })
   const persistedReference = useReference()
-  const reference = resolveSchemaReference(urlReference, persistedReference)
+  const reference = resolveSchemaReference(urlReference, persistedReference, rawDataUrl)
   const activeDataUrl = resolveActiveDataUrl(rawDataUrl, reference)
 
   const { data: currentSchema, loading: schemaLoading, error: schemaError } = useSchema()

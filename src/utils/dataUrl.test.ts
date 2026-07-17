@@ -21,6 +21,17 @@ describe('resolveSchemaReference', () => {
     expect(resolveSchemaReference(undefined, 'interim')).toBe('interim')
     expect(resolveSchemaReference(undefined, 'release')).toBe('release')
   })
+
+  it('defaults custom preview dataUrl to interim without explicit URL reference', () => {
+    const preview = 'https://pr-2477--ideditor-presets-preview.netlify.app/dist/'
+    expect(resolveSchemaReference(undefined, 'release', preview)).toBe('interim')
+    expect(resolveSchemaReference(undefined, 'interim', preview)).toBe('interim')
+  })
+
+  it('keeps explicit URL reference with custom preview dataUrl', () => {
+    const preview = 'https://pr-2477--ideditor-presets-preview.netlify.app/dist/'
+    expect(resolveSchemaReference('release', 'interim', preview)).toBe('release')
+  })
 })
 
 describe('resolveActiveDataUrl', () => {

@@ -27,13 +27,20 @@ export function dataUrlForReference(reference: SchemaReference): string {
   return reference === 'interim' ? INTERIM_DATA_URL : RELEASE_DATA_URL
 }
 
-/** URL `reference=release` wins; otherwise use persisted preference (default interim). */
+/**
+ * URL `reference=release` wins; otherwise use persisted preference (default interim).
+ * Custom preview `dataUrl` without an explicit URL reference defaults to interim so PR
+ * previews compare against unreleased main, not the persisted release preference.
+ */
 export function resolveSchemaReference(
   urlReference: SchemaReference | undefined,
   persistedReference: SchemaReference,
+  dataUrl = '',
 ): SchemaReference {
   if (urlReference === 'release') return 'release'
   if (urlReference === 'interim') return 'interim'
+  const trimmed = dataUrl.trim()
+  if (trimmed && !isCanonicalDataUrl(trimmed)) return 'interim'
   return persistedReference
 }
 

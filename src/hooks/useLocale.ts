@@ -18,7 +18,7 @@ export function useLocale() {
   const urlReference = useSearch({ strict: false, select: (s) => s.reference })
   const persistedReference = useReference()
 
-  const reference = resolveSchemaReference(urlReference, persistedReference)
+  const reference = resolveSchemaReference(urlReference, persistedReference, dataUrlParam)
   const dataUrl = resolveActiveDataUrl(dataUrlParam, reference)
   const translationsAvailable = isReleaseDataUrl(dataUrl)
 
