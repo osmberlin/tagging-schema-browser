@@ -36,6 +36,7 @@ describe('buildSchemaOverrideIssueUrl', () => {
     expect(body).toContain('man_made/crane/untyped_crane')
     expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
     expect(body).toContain('schema-override')
+    expect(body).toContain('Commit 2')
     expect(body).toContain('```yaml')
   })
 

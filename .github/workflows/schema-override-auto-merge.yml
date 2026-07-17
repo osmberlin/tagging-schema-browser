@@ -1,5 +1,5 @@
 # Auto-merge schema override PRs from Cursor agents after CI passes.
-# Squash merge keeps one clean commit per override on main.
+# Rebase merge preserves 1–2 commits per PR (apply snapshot, optional stale cleanup).
 name: Schema override auto-merge
 
 on:
@@ -51,12 +51,12 @@ jobs:
         run: |
           gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge skipped** — this PR must only change `src/data/*-overrides.yaml` and carry the `schema-override` label.'
 
-      - name: Wait for CI, then squash-merge
+      - name: Wait for CI, then rebase-merge
         if: steps.files.outputs.eligible == 'true'
         uses: pascalgn/automerge-action@v0.16.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_METHOD: squash
+          MERGE_METHOD: rebase
           MERGE_COMMIT_MESSAGE: pull-request-title
           MERGE_DELETE_BRANCH: true
           MERGE_LABELS: schema-override
@@ -69,4 +69,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge enabled** — this PR will squash-merge once required checks pass (YAML-only override change).'
+          gh pr comment "$PR_NUMBER" --body '🤖 **Schema override auto-merge enabled** — this PR will rebase-merge once required checks pass (YAML-only override change; typically 1–2 commits).'
