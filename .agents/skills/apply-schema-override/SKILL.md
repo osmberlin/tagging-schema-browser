@@ -41,14 +41,14 @@ This runs `validate-inheritance-overrides` against the published release schema.
 
 ## 4. Open a pull request
 
-- **Title:** `Overrides: mark {presetId} missing inheritance as intentional` (adjust wording for typeCombo when applicable)
+- **Title:** `[skip netlify] Overrides: mark {presetId} missing inheritance as intentional` (adjust wording for typeCombo when applicable; `[skip netlify]` skips Netlify deploy previews — also skipped automatically when the PR only touches override YAML)
 - **Body:** Start with `Written by :robot_face: <model-name>:` then `Closes #<issue-number>` on the next line, then a short user-facing summary of what was recorded and why (intentional omission).
 - **Label:** `schema-override` (required for auto-merge)
 - Only touch the relevant `src/data/*-overrides.yaml` file.
 
 ## 5. Auto-merge
 
-CI must pass. The `schema-override-auto-merge` workflow squash-merges eligible PRs from Cursor agents so each override lands as a single commit on `main`.
+CI must pass. The `schema-override-auto-merge` workflow squash-merges eligible PRs from Cursor agents so each override lands as a single commit on `main`. Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
 
 ## Attribution
 

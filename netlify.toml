@@ -1,4 +1,7 @@
-# Skip Netlify deploy previews for Dependabot PRs (deps-only; no UI/schema change).
-# Production deploys (GitHub Pages) are unaffected — this applies to deploy-preview only.
+# Skip Netlify deploy previews when a PR does not need a UI preview:
+# - Dependabot bumps (deps-only)
+# - Commits tagged [skip netlify]
+# - Schema override PRs that only touch src/data/*-overrides.yaml
+# Production deploys (GitHub Pages) are unaffected — deploy-preview only.
 [context.deploy-preview]
-ignore = "bash -c 'git log -1 --pretty=%ae | grep -qi dependabot || git log -1 --pretty=%B | grep -qi \"\\[skip netlify\\]\"'"
+ignore = "bash scripts/netlify-deploy-preview-ignore.sh"
