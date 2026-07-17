@@ -36,6 +36,13 @@ const ISSUE_VARIANTS: Record<Exclude<MissingInheritanceStatus, 'none'>, SchemaIs
   stale: 'error',
 }
 
+const LIST_STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
+  none: 'Inherits from slash parent',
+  unreviewed: 'Unreviewed',
+  intentional: 'Intentional omission',
+  stale: 'Override stale',
+}
+
 function FieldListSection({
   fieldListKey,
   section,
@@ -51,7 +58,7 @@ function FieldListSection({
     <div className="not-prose space-y-2">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
-        <span className="text-xs text-slate-400">{STATUS_LABELS[listStatus]}</span>
+        <span className="text-xs text-slate-400">{LIST_STATUS_LABELS[listStatus]}</span>
       </div>
       <p className="text-sm text-slate-300">
         Expected slash-parent source:{' '}
@@ -158,9 +165,10 @@ export function MissingInheritancePanel({
         ) : null}
         {missingInheritanceStatus === 'unreviewed' ? (
           <p className="mt-2">
-            If this omission is deliberate, record the current <code>missedFieldIds</code> snapshot.
-            <code>fields</code> and <code>moreFields</code> are independent — you may document one
-            list without the other when only that list omits slash-parent inheritance.
+            If this omission is deliberate, record the current <code>missedFieldIds</code> snapshot
+            for each list below. <code>fields</code> and <code>moreFields</code> are reviewed
+            separately — you may document one list now and leave the other unreviewed until it is
+            reviewed too.
           </p>
         ) : null}
         {showCreateIssue ? (
