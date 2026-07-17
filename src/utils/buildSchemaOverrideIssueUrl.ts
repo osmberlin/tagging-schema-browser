@@ -45,11 +45,19 @@ export type BuildSchemaOverrideIssueUrlInput = {
   existingOverrideYaml?: string
 }
 
-function attributionBanner(): string {
+function introSection(config: (typeof KIND_CONFIG)[SchemaOverrideKind]): string {
   return [
-    '> **You** — submitted from the Tagging Schema Browser (see links below).',
-    '> **Tagging Schema Browser** — generated this issue body with the YAML snapshot.',
-    '> **Cursor agent** — will merge the snapshot into the override file via PR.',
+    '## About this request',
+    '',
+    'Opened from the **Tagging Schema Browser** to record an intentional schema override.',
+    '',
+    `**When you submit** (keep the \`${config.titlePrefix}\` title prefix; you may edit the rest of the title):`,
+    '',
+    '1. GitHub Actions starts a Cursor cloud agent.',
+    `2. The agent opens a PR that merges the **Snapshot** below into \`${config.overrideFile}\`.`,
+    '3. CI validates the change; PRs labeled `schema-override` can auto-merge when green.',
+    '',
+    'Review the preset links and snapshot below, then submit the issue. No manual YAML editing is required.',
     '',
   ].join('\n')
 }
@@ -91,7 +99,7 @@ export function buildSchemaOverrideIssueBody({
       : ''
 
   return [
-    attributionBanner(),
+    introSection(config),
     '**Source branch:** `main`',
     '',
     `Preset: \`${presetId}\``,
@@ -101,8 +109,6 @@ export function buildSchemaOverrideIssueBody({
     agentInstructions(config),
     '## Snapshot',
     '',
-    'Paste this block verbatim under `presets:` in the override file:',
-    '',
     '```yaml',
     'version: 1',
     'presets:',
@@ -110,7 +116,6 @@ export function buildSchemaOverrideIssueBody({
     '```',
     '',
     staleSection,
-    `Submit with issue title starting \`${config.titlePrefix}\` (you may edit the rest of the title) to trigger a Cursor cloud agent via GitHub Actions.`,
   ]
     .filter((section) => section.length > 0)
     .join('\n')
