@@ -36,4 +36,12 @@ describe('pr-preview-history-store', () => {
     expect(prPreviewHistoryStore.getState().entries.map((e) => e.prNumber)).toEqual([2])
     expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBeNull()
   })
+
+  it('caps history at 20 entries', () => {
+    const { recordOpen } = prPreviewHistoryStore.getState().actions
+    for (let i = 1; i <= 25; i++) recordOpen(i)
+    expect(prPreviewHistoryStore.getState().entries).toHaveLength(20)
+    expect(prPreviewHistoryStore.getState().entries[0]?.prNumber).toBe(25)
+    expect(prPreviewHistoryStore.getState().entries.at(-1)?.prNumber).toBe(6)
+  })
 })

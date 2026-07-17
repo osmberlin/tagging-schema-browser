@@ -1,6 +1,6 @@
 import type { Transition } from 'motion/react'
 
-/** Matches PrimaryNav / ReferenceToggle spring feel. */
+/** Matches PrimaryNav spring feel. */
 export const loadingCardSpring: Transition = {
   type: 'spring',
   stiffness: 500,

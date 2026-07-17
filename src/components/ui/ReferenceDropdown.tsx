@@ -5,10 +5,11 @@ import {
   usePrPreviewHistory,
   usePrPreviewHistoryActions,
 } from '@/features/data-source/pr-preview-history-store'
-import { useReference, useReferenceActions } from '@/features/data-source/reference-store'
+import { useReference } from '@/features/data-source/reference-store'
+import { useCommitSchemaReference } from '@/hooks/useCommitSchemaReference'
 import { useComparison } from '@/hooks/useComparison'
 import { useSchema } from '@/hooks/useSchema'
-import { isReleaseCompareMode, referenceSearchParam, resolveSchemaReference } from '@/utils/dataUrl'
+import { isCanonicalDataUrl, isReleaseCompareMode, resolveSchemaReference } from '@/utils/dataUrl'
 import { isPrPreviewDataUrl, prNumberFromDataUrl, prPreviewDataUrl } from '@/utils/prPreviewUrl'
 import { formatSchemaBuildLabel } from '@/utils/schemaBuildVersion'
 import { formatUnreleasedUpdatedAt } from '@/utils/schemaVersion'
@@ -35,9 +36,9 @@ function menuItemClass(active: boolean) {
   )
 }
 
-/** Record PR preview opens and prune expired history entries. */
-function usePrPreviewHistorySync(dataUrl: string) {
-  const { recordOpen, pruneExpired } = usePrPreviewHistoryActions()
+/** Prune expired PR history once on mount (localStorage is an external system). */
+function usePrunePrPreviewHistoryOnMount() {
+  const { pruneExpired } = usePrPreviewHistoryActions()
 
   useEffect(
     function prunePrPreviewHistoryOnMount() {
@@ -45,15 +46,25 @@ function usePrPreviewHistorySync(dataUrl: string) {
     },
     [pruneExpired],
   )
+}
+
+/**
+ * Record deep-linked PR previews (no user gesture). Event-driven opens call
+ * `recordOpen` from the navigation handler instead.
+ */
+function useRecordDeepLinkedPrPreview(dataUrl: string) {
+  const { recordOpen } = usePrPreviewHistoryActions()
+  const lastUsedPrNumber = useLastUsedPrNumber()
 
   useEffect(
-    function recordActivePrPreview() {
+    function recordDeepLinkedPrPreview() {
       if (!isPrPreviewDataUrl(dataUrl)) return
       const prNumber = prNumberFromDataUrl(dataUrl)
       if (prNumber === null) return
+      if (prNumber === lastUsedPrNumber) return
       recordOpen(prNumber)
     },
-    [dataUrl, recordOpen],
+    [dataUrl, lastUsedPrNumber, recordOpen],
   )
 }
 
@@ -62,40 +73,51 @@ function usePrPreviewHistorySync(dataUrl: string) {
  */
 export function ReferenceDropdown() {
   const navigate = useNavigate()
+  const commitSchemaReference = useCommitSchemaReference()
+  const { recordOpen } = usePrPreviewHistoryActions()
   const menuId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
   const dataUrl = useSearch({ strict: false, select: (s) => s.dataUrl ?? '' })
   const urlReference = useSearch({ strict: false, select: (s) => s.reference })
   const persistedReference = useReference()
-  const { setReference: setPersistedReference } = useReferenceActions()
   const { releaseVersion, unreleasedUpdatedAt } = useComparison()
   const { schemaBuild } = useSchema()
   const history = usePrPreviewHistory()
   const lastUsedPrNumber = useLastUsedPrNumber()
   const [prInput, setPrInput] = useState('')
 
-  usePrPreviewHistorySync(dataUrl)
+  usePrunePrPreviewHistoryOnMount()
+  useRecordDeepLinkedPrPreview(dataUrl)
 
   useEffect(
-    function closeReferenceDropdownOnOutsideClick() {
+    function closeReferenceDropdownOnOutsidePointerOrEscape() {
       if (!open) return
+
       const onPointerDown = (event: PointerEvent) => {
         if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
       }
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') setOpen(false)
+      }
+
       document.addEventListener('pointerdown', onPointerDown)
-      return () => document.removeEventListener('pointerdown', onPointerDown)
+      document.addEventListener('keydown', onKeyDown)
+      return function removeReferenceDropdownDismissListeners() {
+        document.removeEventListener('pointerdown', onPointerDown)
+        document.removeEventListener('keydown', onKeyDown)
+      }
     },
     [open],
   )
 
   const trimmedDataUrl = dataUrl.trim()
+  const hasCustomDataUrl = trimmedDataUrl.length > 0 && !isCanonicalDataUrl(trimmedDataUrl)
   const reference = resolveSchemaReference(urlReference, persistedReference, trimmedDataUrl)
   const releaseCompare = isReleaseCompareMode(trimmedDataUrl, reference)
-  const activePrNumber =
-    trimmedDataUrl && isPrPreviewDataUrl(trimmedDataUrl) && !releaseCompare
-      ? prNumberFromDataUrl(trimmedDataUrl)
-      : null
+  const previewPrNumber = isPrPreviewDataUrl(trimmedDataUrl)
+    ? prNumberFromDataUrl(trimmedDataUrl)
+    : null
 
   const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
   const buildLabel = schemaBuild
@@ -103,74 +125,62 @@ export function ReferenceDropdown() {
     : null
 
   const currentChoice: ReferenceChoice =
-    activePrNumber !== null
-      ? `pr:${activePrNumber}`
+    previewPrNumber !== null && !releaseCompare
+      ? `pr:${previewPrNumber}`
       : reference === 'release'
         ? 'release'
         : 'interim'
 
   const triggerLabel =
-    activePrNumber !== null
-      ? `PR #${activePrNumber}`
+    previewPrNumber !== null
+      ? `PR #${previewPrNumber}`
       : reference === 'release'
         ? `Release${releaseVersion ? ` ${releaseVersion}` : ''}`
         : `Unreleased${unreleasedAge ? ` · ${unreleasedAge}` : ''}`
 
   const triggerDetail =
-    activePrNumber !== null
-      ? 'PR preview'
-      : reference === 'release'
-        ? (buildLabel ?? 'Published npm')
-        : (buildLabel ?? 'Latest main')
+    previewPrNumber !== null && releaseCompare
+      ? `vs Release${releaseVersion ? ` ${releaseVersion}` : ''}`
+      : previewPrNumber !== null
+        ? 'PR preview'
+        : reference === 'release'
+          ? (buildLabel ?? 'Published npm')
+          : (buildLabel ?? 'Latest main')
+
+  const openPrPreview = (prNumber: number) => {
+    setOpen(false)
+    recordOpen(prNumber)
+    void navigate({
+      to: '.',
+      search: (prev) => ({
+        ...prev,
+        dataUrl: prPreviewDataUrl(prNumber),
+        reference: undefined,
+      }),
+    })
+  }
 
   const navigateToChoice = (choice: ReferenceChoice) => {
     setOpen(false)
 
-    queueMicrotask(() => {
-      if (choice === 'interim') {
-        setPersistedReference('interim')
-        void navigate({
-          to: '.',
-          search: (prev) => ({
-            ...prev,
-            reference: referenceSearchParam('interim'),
-            dataUrl: undefined,
-          }),
-        })
-        return
-      }
+    if (choice === 'interim' || choice === 'release') {
+      // With a custom preview loaded, only switch the comparison baseline
+      // (same as DataSourceBanner). Without one, leave preview mode entirely.
+      commitSchemaReference(choice, { clearDataUrl: !hasCustomDataUrl })
+      return
+    }
 
-      if (choice === 'release') {
-        setPersistedReference('release')
-        void navigate({
-          to: '.',
-          search: (prev) => ({
-            ...prev,
-            reference: referenceSearchParam('release'),
-            dataUrl: undefined,
-          }),
-        })
-        return
-      }
-
-      const prNumber = Number.parseInt(choice.slice(3), 10)
-      if (!Number.isFinite(prNumber) || prNumber <= 0) return
-      void navigate({
-        to: '.',
-        search: (prev) => ({
-          ...prev,
-          dataUrl: prPreviewDataUrl(prNumber),
-          reference: undefined,
-        }),
-      })
-    })
+    const prNumber = Number.parseInt(choice.slice(3), 10)
+    if (!Number.isFinite(prNumber) || prNumber <= 0) return
+    openPrPreview(prNumber)
   }
 
-  const submitPrInput = () => {
+  const submitPrInput = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     const prNumber = Number.parseInt(prInput.trim(), 10)
     if (!Number.isFinite(prNumber) || prNumber <= 0) return
     setPrInput('')
-    navigateToChoice(`pr:${prNumber}`)
+    openPrPreview(prNumber)
   }
 
   return (
@@ -182,7 +192,7 @@ export function ReferenceDropdown() {
         aria-expanded={open}
         aria-controls={menuId}
         title="Switch schema version or open a PR preview"
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((value) => !value)}
         className="inline-flex max-w-[11rem] items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-left transition hover:bg-slate-200/80"
       >
         <span className="min-w-0 flex-1">
@@ -213,7 +223,11 @@ export function ReferenceDropdown() {
               <span className="block truncate">
                 Unreleased{unreleasedAge ? ` · ${unreleasedAge}` : ''}
               </span>
-              {buildLabel && currentChoice !== 'interim' ? (
+              {hasCustomDataUrl ? (
+                <span className="block truncate text-[10px] font-normal opacity-80">
+                  Compare baseline
+                </span>
+              ) : buildLabel && currentChoice !== 'interim' ? (
                 <span className="block truncate text-[10px] font-normal opacity-80">
                   {buildLabel}
                 </span>
@@ -231,6 +245,11 @@ export function ReferenceDropdown() {
               <span className="block truncate">
                 Release{releaseVersion ? ` ${releaseVersion}` : ''}
               </span>
+              {hasCustomDataUrl ? (
+                <span className="block truncate text-[10px] font-normal opacity-80">
+                  Compare baseline
+                </span>
+              ) : null}
             </span>
           </button>
 
@@ -243,13 +262,15 @@ export function ReferenceDropdown() {
               {history.map((entry) => {
                 const choice: ReferenceChoice = `pr:${entry.prNumber}`
                 const isLastUsed = entry.prNumber === lastUsedPrNumber
+                const isActive =
+                  previewPrNumber === entry.prNumber && (currentChoice === choice || releaseCompare)
                 return (
                   <button
                     key={entry.prNumber}
                     type="button"
                     role="menuitem"
                     onClick={() => navigateToChoice(choice)}
-                    className={menuItemClass(currentChoice === choice)}
+                    className={menuItemClass(isActive)}
                   >
                     <span className="relative min-w-0 flex-1 pl-3">
                       {isLastUsed ? (
@@ -257,7 +278,7 @@ export function ReferenceDropdown() {
                           aria-hidden="true"
                           className={cn(
                             'absolute top-1/2 left-0 h-1.5 w-1.5 -translate-y-1/2 rounded-full',
-                            currentChoice === choice ? 'bg-white' : 'bg-violet-500',
+                            isActive ? 'bg-white' : 'bg-violet-500',
                           )}
                         />
                       ) : null}
@@ -270,13 +291,7 @@ export function ReferenceDropdown() {
           ) : null}
 
           <div className="my-1 border-t border-slate-100" aria-hidden="true" />
-          <form
-            className="px-1 pb-1"
-            onSubmit={(event) => {
-              event.preventDefault()
-              submitPrInput()
-            }}
-          >
+          <form className="px-1 pb-1" onSubmit={submitPrInput}>
             <label className="sr-only" htmlFor="reference-dropdown-pr-input">
               GitHub PR number
             </label>
