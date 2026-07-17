@@ -223,8 +223,15 @@ export function diffPresetWithSchema(
   presetId: string,
   baseline: SchemaData,
   current: SchemaData,
+  release: DenormalizedPreset,
+  currentPreset: DenormalizedPreset,
 ): DiffEntry[] {
-  return diffRawPresetById(presetId, baseline, current)
+  const denormalized = diffPreset(release, currentPreset)
+  const denormalizedLabels = new Set(denormalized.map((d) => d.label))
+  const rawOnly = diffRawPresetById(presetId, baseline, current).filter(
+    (d) => !denormalizedLabels.has(d.label),
+  )
+  return [...denormalized, ...rawOnly]
 }
 
 /** Compare preset datasets keyed by id. Prefer schema-aware diffs when both sides are loaded. */
@@ -250,7 +257,7 @@ export function comparePresets(
       continue
     }
     const diffs = useSchema
-      ? diffPresetWithSchema(p.id, options!.baseline!, options!.current!)
+      ? diffPresetWithSchema(p.id, options!.baseline!, options!.current!, r, p)
       : diffPreset(r, p)
     if (diffs.length > 0) {
       statusById.set(p.id, 'modified')
