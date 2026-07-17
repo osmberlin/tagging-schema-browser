@@ -44,7 +44,9 @@ jobs:
           echo "eligible=true" >> "$GITHUB_OUTPUT"
 
       - name: Comment when manual review is required
-        if: steps.files.outputs.eligible != 'true'
+        if: >-
+          steps.files.outputs.eligible != 'true' &&
+          contains(fromJSON('["opened", "labeled", "reopened"]'), github.event.action)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -64,7 +66,9 @@ jobs:
           MERGE_FORKS: false
 
       - name: Comment when auto-merge is queued
-        if: steps.files.outputs.eligible == 'true'
+        if: >-
+          steps.files.outputs.eligible == 'true' &&
+          contains(fromJSON('["opened", "labeled", "reopened"]'), github.event.action)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}

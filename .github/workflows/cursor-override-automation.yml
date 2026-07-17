@@ -5,7 +5,7 @@ name: Cursor override automation
 
 on:
   issues:
-    types: [opened]
+    types: [opened, edited, reopened]
   push:
     branches:
       - main
