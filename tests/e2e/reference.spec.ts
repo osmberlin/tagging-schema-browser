@@ -144,3 +144,16 @@ test('schema version dropdown opens PR preview from input', async ({ page }) => 
   await expect(page).toHaveURL(/dataUrl=.*pr-2477/, { timeout: 30_000 })
   await expect(page).not.toHaveURL(/reference=release/)
 })
+
+test('PR preview input keeps the active compare baseline', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.goto('/?dataUrl=/test-schema&reference=release')
+  await page.evaluate(() => {
+    document.querySelector<HTMLButtonElement>('[aria-label="Schema version"]')?.click()
+  })
+  await expect(page.getByRole('menu')).toBeVisible()
+  await page.getByPlaceholder('2477').fill('2309')
+  await page.locator('#reference-dropdown-pr-input').press('Enter')
+  await expect(page).toHaveURL(/dataUrl=.*pr-2309/, { timeout: 30_000 })
+  await expect(page).toHaveURL(/reference=release/, { timeout: 30_000 })
+})
