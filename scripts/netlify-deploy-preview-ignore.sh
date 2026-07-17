@@ -17,15 +17,11 @@ only_override_yaml_paths() {
 
 changed_files_in_pr() {
   git fetch origin main:refs/remotes/origin/main 2>/dev/null || true
-  local merge_base
-  merge_base=$(git merge-base HEAD origin/main 2>/dev/null || true)
-  if [ -n "$merge_base" ]; then
-    git diff --name-only "$merge_base" HEAD
-    return
+  if git rev-parse origin/main >/dev/null 2>&1; then
+    git diff --name-only origin/main...HEAD
+    return 0
   fi
-  if git rev-parse HEAD^ >/dev/null 2>&1; then
-    git diff --name-only HEAD^ HEAD
-  fi
+  return 1
 }
 
 # Dependabot deps-only PRs
