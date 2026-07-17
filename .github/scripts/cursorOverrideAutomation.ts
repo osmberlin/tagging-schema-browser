@@ -7,7 +7,6 @@ export const CURSOR_TRIGGER_MARKER = '@cursor repo='
 export const OVERRIDE_TITLE_PREFIXES = {
   'missing-inheritance': '[missing-inheritance]',
   'risky-typecombo': '[risky-typecombo]',
-  'schema-override': '[schema-override]',
 } as const
 
 export type OverrideTriggerKind = keyof typeof OVERRIDE_TITLE_PREFIXES
@@ -21,18 +20,13 @@ export const KIND_CONFIG = {
     title: 'Risky typeCombo override',
     skill: '.agents/skills/apply-schema-override/SKILL.md',
   },
-  'schema-override': {
-    title: 'Schema override',
-    skill: null,
-  },
-} as const satisfies Record<OverrideTriggerKind, { title: string; skill: string | null }>
+} as const satisfies Record<OverrideTriggerKind, { title: string; skill: string }>
 
 export const resolveActiveKindFromTitle = (title: string): OverrideTriggerKind | null => {
   const trimmed = title.trim()
   for (const kind of ['missing-inheritance', 'risky-typecombo'] as const) {
     if (trimmed.startsWith(OVERRIDE_TITLE_PREFIXES[kind])) return kind
   }
-  if (trimmed.startsWith(OVERRIDE_TITLE_PREFIXES['schema-override'])) return 'schema-override'
   return null
 }
 
@@ -45,18 +39,8 @@ export const resolveSourceBranch = (body: string) => {
   return 'main'
 }
 
-export const resolveSkillInstruction = (
-  config: (typeof KIND_CONFIG)[OverrideTriggerKind],
-  issueBody: string,
-) => {
-  if (config.skill) {
-    return `Follow \`${config.skill}\`.`
-  }
-  const skillMatch = issueBody.match(/\.agents\/skills\/[^\s`]+\/SKILL\.md/)
-  return skillMatch
-    ? `Follow \`${skillMatch[0]}\`.`
-    : 'Read the **issue body** for the agent skill path and instructions.'
-}
+export const resolveSkillInstruction = (config: (typeof KIND_CONFIG)[OverrideTriggerKind]) =>
+  `Follow \`${config.skill}\`.`
 
 export const buildCursorTriggerCommentBody = ({
   owner,
@@ -73,7 +57,7 @@ export const buildCursorTriggerCommentBody = ({
 }) => {
   const config = KIND_CONFIG[activeKind]
   const branch = resolveSourceBranch(issueBody)
-  const skillInstruction = resolveSkillInstruction(config, issueBody)
+  const skillInstruction = resolveSkillInstruction(config)
 
   return `${GHA_ATTRIBUTION}@cursor repo=${owner}/${repo} branch=${branch}
 
