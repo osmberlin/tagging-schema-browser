@@ -254,7 +254,8 @@ describe('missingFieldInheritance', () => {
       parentId: tourism/information
       missedFieldIds:
         - address
-        - building_area_yes`)
+        - building_area_yes
+`)
 
     const parsed = Bun.YAML.parse(
       `version: 1\npresets:\n${formatMissingInheritanceOverrideYaml('tourism/information/terminal', current)}`,

@@ -192,5 +192,5 @@ export function formatMissingInheritanceOverrideYaml(
     }
   }
 
-  return lines.join('\n')
+  return `${lines.join('\n')}\n`
 }

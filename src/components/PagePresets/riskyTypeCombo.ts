@@ -122,5 +122,5 @@ export function formatRiskyTypeComboOverrideYaml(
   for (const fieldId of override.fieldIds) {
     lines.push(`      - ${fieldId}`)
   }
-  return lines.join('\n')
+  return `${lines.join('\n')}\n`
 }
