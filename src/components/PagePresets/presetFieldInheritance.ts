@@ -49,6 +49,7 @@ export function explainShouldNotInheritField(
       if (tagValue && GENERIC_TAG_VALUES.has(tagValue)) {
         const type = allFields[fieldId]?.type
         if (type && INHERITABLE_TYPES.has(type)) continue
+        return null
       }
       if (tagValue !== undefined && tagValue !== null && String(tagValue).length > 0) {
         return `preset tag fixes ${tagKey}=${tagValue}`

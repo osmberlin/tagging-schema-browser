@@ -108,6 +108,42 @@ describe('displayPresetFieldList', () => {
     expect(inherited).toEqual(['traffic_sign/direction'])
   })
 
+  it('still inherits typeCombo fields when the preset tag is generic', () => {
+    const rawPresets: RawPresets = {
+      shop: {
+        tags: { shop: '*' },
+        geometry: ['point'],
+        fields: ['name', 'shop'],
+      },
+      'shop/convenience': {
+        tags: { shop: 'convenience' },
+        geometry: ['point'],
+        fields: ['{shop}'],
+      },
+      'shop/yes': {
+        tags: { shop: 'yes' },
+        geometry: ['point'],
+        fields: ['{shop}'],
+      },
+    }
+    const fields: RawFields = {
+      name: { key: 'name', type: 'text' },
+      shop: { key: 'shop', type: 'typeCombo' },
+    }
+
+    expect(
+      getInheritedFieldItems(
+        rawPresets['shop/yes']!,
+        '{shop}',
+        'fields',
+        ['{shop}'],
+        [],
+        rawPresets,
+        fields,
+      ),
+    ).toEqual(['name', 'shop'])
+  })
+
   it('explains omitted fields when expanding a preset ref', () => {
     const rawPresets: RawPresets = {
       traffic_sign: {
