@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useShallow } from 'zustand/shallow'
 
 const HISTORY_TTL_MS = 60 * 24 * 60 * 60 * 1000
 const HISTORY_MAX_ENTRIES = 20
@@ -34,6 +35,14 @@ function capByRecency(entries: PrPreviewHistoryEntry[]): PrPreviewHistoryEntry[]
     .slice(0, HISTORY_MAX_ENTRIES)
 }
 
+function entriesEqual(a: PrPreviewHistoryEntry[], b: PrPreviewHistoryEntry[]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].prNumber !== b[i].prNumber || a[i].openedAt !== b[i].openedAt) return false
+  }
+  return true
+}
+
 const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
   persist(
     (set, get) => ({
@@ -50,13 +59,16 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
           })
         },
         pruneExpired: () => {
-          const pruned = pruneEntries(get().entries)
+          const current = get().entries
+          const pruned = pruneEntries(current)
           const lastUsed = get().lastUsedPrNumber
           const lastStillPresent =
             lastUsed !== null && pruned.some((entry) => entry.prNumber === lastUsed)
+          const nextLastUsed = lastStillPresent ? lastUsed : null
+          if (entriesEqual(current, pruned) && nextLastUsed === lastUsed) return
           set({
             entries: pruned,
-            lastUsedPrNumber: lastStillPresent ? lastUsed : null,
+            lastUsedPrNumber: nextLastUsed,
           })
         },
       },
@@ -76,7 +88,7 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
 )
 
 export const usePrPreviewHistory = () =>
-  usePrPreviewHistoryStore((state) => sortPrPreviewHistory(state.entries))
+  usePrPreviewHistoryStore(useShallow((state) => sortPrPreviewHistory(state.entries)))
 
 export const useLastUsedPrNumber = () => usePrPreviewHistoryStore((state) => state.lastUsedPrNumber)
 
