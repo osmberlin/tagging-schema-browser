@@ -5,9 +5,7 @@ import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { externalActionPillClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
-import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { buildRiskyTypeComboOverrideIssueUrl } from '@/utils/buildSchemaOverrideIssueUrl'
-import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const STATUS_LABELS: Record<RiskyTypeComboStatus, string> = {
@@ -70,9 +68,9 @@ function CreateIssueAction({
 
 function FieldSection({ riskyTypeCombo }: { riskyTypeCombo: RiskyTypeCombo }) {
   return (
-    <div className={cn('not-prose space-y-2 px-3 py-3', schemaIssueStyles.disclosureBodyInset)}>
+    <div className="not-prose mt-6 space-y-2">
       <h3 className="text-sm font-semibold text-slate-100">Flagged fields</h3>
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {riskyTypeCombo.fields.map((field) => (
           <li key={field.fieldId} className="text-sm text-slate-300">
             <Link
