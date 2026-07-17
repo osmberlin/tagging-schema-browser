@@ -33,16 +33,14 @@ describe('buildSchemaOverrideIssueUrl', () => {
     )
     expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
-    expect(body).toContain('## About this request')
     expect(body).toContain('Tagging Schema Browser')
-    expect(body).toContain('No manual YAML editing')
+    expect(body).toContain('apply-schema-override/SKILL.md')
     expect(body).not.toContain('> **You**')
     expect(body).toContain('man_made/crane/untyped_crane')
     expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
-    expect(body).toContain('schema-override')
     expect(body).toContain('[missing-inheritance]')
-    expect(body).toContain('Commit 2')
     expect(body).toContain('```yaml')
+    expect(url.length).toBeLessThanOrEqual(7500)
   })
 
   it('includes stale override section when provided', () => {
@@ -55,8 +53,8 @@ describe('buildSchemaOverrideIssueUrl', () => {
       existingOverrideYaml: '  man_made/silo:\n    fields:\n      parentId: old',
     })
 
-    expect(body).toContain('## Existing override (stale)')
-    expect(body).toContain('parentId: old')
+    expect(body).toContain('## Snapshot')
+    expect(body).not.toContain('parentId: old')
   })
 
   it('builds stale-removal issue body when live detection is gone', () => {
@@ -72,7 +70,7 @@ describe('buildSchemaOverrideIssueUrl', () => {
     })
 
     expect(body).toContain('## Remove stale override')
-    expect(body).toContain('remove a stale schema override entry')
+    expect(body).toContain('Remove stale override')
     expect(body).not.toContain('## Snapshot')
   })
 
@@ -111,7 +109,7 @@ describe('buildSchemaOverrideIssueUrl', () => {
     )
     expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
-    expect(body).toContain('risky-typecombo-overrides.yaml')
+    expect(body).toContain('apply-schema-override/SKILL.md')
     expect(body).toContain('- traffic_calming')
   })
 })

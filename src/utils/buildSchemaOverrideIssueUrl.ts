@@ -18,6 +18,9 @@ import { GITHUB_REPO_URL } from '@/utils/constants'
 
 export type SchemaOverrideKind = 'missing-inheritance' | 'risky-typecombo'
 
+/** Conservative limit for `issues/new?…` query strings in common browsers. */
+export const SCHEMA_OVERRIDE_ISSUE_URL_MAX_LENGTH = 7500
+
 const KIND_CONFIG = {
   'missing-inheritance': {
     titlePrefix: '[missing-inheritance]',
@@ -25,8 +28,6 @@ const KIND_CONFIG = {
     removeStaleTitleSuffix: '— remove stale override',
     overrideFile: 'src/data/missing-inheritance-overrides.yaml',
     skillPath: '.agents/skills/apply-schema-override/SKILL.md',
-    prTitleSuffix: 'missing inheritance as intentional',
-    removeStalePrTitleSuffix: 'remove stale missing inheritance override',
   },
   'risky-typecombo': {
     titlePrefix: '[risky-typecombo]',
@@ -34,8 +35,6 @@ const KIND_CONFIG = {
     removeStaleTitleSuffix: '— remove stale override',
     overrideFile: 'src/data/risky-typecombo-overrides.yaml',
     skillPath: '.agents/skills/apply-schema-override/SKILL.md',
-    prTitleSuffix: 'risky typeCombo as intentional',
-    removeStalePrTitleSuffix: 'remove stale risky typeCombo override',
   },
 } as const satisfies Record<
   SchemaOverrideKind,
@@ -45,8 +44,6 @@ const KIND_CONFIG = {
     removeStaleTitleSuffix: string
     overrideFile: string
     skillPath: string
-    prTitleSuffix: string
-    removeStalePrTitleSuffix: string
   }
 >
 
@@ -56,7 +53,7 @@ export type BuildSchemaOverrideIssueUrlInput = {
   snapshotYaml: string
   pageUrl: string
   dataUrl: string
-  /** When updating a stale override, include the stored snapshot for diff context. */
+  /** Stored override YAML — included for stale removal issues only. */
   existingOverrideYaml?: string
   /** Live detection is gone; issue should remove the stored override entry. */
   removeStaleOnly?: boolean
@@ -66,70 +63,17 @@ function introSection(
   config: (typeof KIND_CONFIG)[SchemaOverrideKind],
   removeStaleOnly: boolean,
 ): string {
-  const purpose = removeStaleOnly
-    ? 'remove a stale schema override entry'
-    : 'record an intentional schema override'
-
+  const action = removeStaleOnly ? 'Remove stale override' : 'Record intentional override'
   return [
-    '## About this request',
-    '',
-    `Opened from the **Tagging Schema Browser** to ${purpose}.`,
-    '',
-    `**When you submit** (keep the \`${config.titlePrefix}\` title prefix; you may edit the rest of the title):`,
-    '',
-    '1. GitHub Actions starts a Cursor cloud agent.',
-    removeStaleOnly
-      ? `2. The agent opens a PR that deletes the stale preset entry from \`${config.overrideFile}\`.`
-      : `2. The agent opens a PR that merges the **Snapshot** below into \`${config.overrideFile}\`.`,
-    '3. CI validates the change; PRs labeled `schema-override` can auto-merge when green.',
-    '',
-    'Review the preset links and details below, then submit the issue. No manual YAML editing is required.',
+    `${action} from the Tagging Schema Browser.`,
+    `Keep the \`${config.titlePrefix}\` title prefix. Submit to start a Cursor agent PR (\`${config.skillPath}\`).`,
     '',
   ].join('\n')
 }
 
-function agentInstructions(
-  config: (typeof KIND_CONFIG)[SchemaOverrideKind],
-  removeStaleOnly: boolean,
-): string {
-  const applyStep = removeStaleOnly
-    ? `2. **Commit 1:** Delete the \`${'{presetId}'}\` preset key from \`${config.overrideFile}\` (see **Remove stale override** below).`
-    : `2. **Commit 1:** Parse the YAML snapshot under **Snapshot** below and merge into \`${config.overrideFile}\` under \`presets:\` (preserve sort order).`
-
-  const prTitleSuffix = removeStaleOnly ? config.removeStalePrTitleSuffix : config.prTitleSuffix
-
-  return [
-    '## Agent instructions',
-    '',
-    `1. Follow [\`${config.skillPath}\`](${GITHUB_REPO_URL}/blob/main/${config.skillPath}).`,
-    applyStep,
-    '3. **Commit 2 (if needed):** Run `bun run check`. Remove or fix any *other* stale override entries in a separate commit so validation passes.',
-    `4. Open a PR (1–2 commits) titled like \`[skip netlify] Overrides: mark {presetId} ${prTitleSuffix}\` with \`Closes #N\` in the body and add the \`schema-override\` label.`,
-    '',
-  ].join('\n')
-}
-
-function removalSection(presetId: string, existingOverrideYaml: string): string {
+function removalSection(existingOverrideYaml: string): string {
   return [
     '## Remove stale override',
-    '',
-    'Live detection no longer applies. Delete this preset entry:',
-    '',
-    '```yaml',
-    'presets:',
-    existingOverrideYaml,
-    '```',
-    '',
-    `Remove the \`${presetId}\` key from the override file.`,
-    '',
-  ].join('\n')
-}
-
-function staleDiffSection(existingOverrideYaml: string): string {
-  return [
-    '## Existing override (stale)',
-    '',
-    'The stored override no longer matches live detection. Replace with the snapshot below.',
     '',
     '```yaml',
     'presets:',
@@ -148,7 +92,6 @@ export function buildSchemaOverrideIssueBody({
   existingOverrideYaml,
   removeStaleOnly = false,
 }: BuildSchemaOverrideIssueUrlInput): string {
-  const config = KIND_CONFIG[kind]
   const snapshotSection =
     !removeStaleOnly && snapshotYaml.trim().length > 0
       ? ['## Snapshot', '', '```yaml', 'version: 1', 'presets:', snapshotYaml, '```', ''].join('\n')
@@ -156,20 +99,17 @@ export function buildSchemaOverrideIssueBody({
 
   const staleSection =
     removeStaleOnly && existingOverrideYaml && existingOverrideYaml.trim().length > 0
-      ? removalSection(presetId, existingOverrideYaml)
-      : !removeStaleOnly && existingOverrideYaml && existingOverrideYaml.trim().length > 0
-        ? staleDiffSection(existingOverrideYaml)
-        : ''
+      ? removalSection(existingOverrideYaml)
+      : ''
 
   return [
-    introSection(config, removeStaleOnly),
+    introSection(KIND_CONFIG[kind], removeStaleOnly),
     '**Source branch:** `main`',
     '',
     `Preset: \`${presetId}\``,
     `Schema: ${dataUrl}`,
     `Browser: ${pageUrl}`,
     '',
-    agentInstructions(config, removeStaleOnly),
     snapshotSection,
     staleSection,
   ]
@@ -194,7 +134,13 @@ export function buildSchemaOverrideIssueUrl(input: BuildSchemaOverrideIssueUrlIn
     buildSchemaOverrideIssueTitle(input.kind, input.presetId, input.removeStaleOnly),
   )
   params.set('body', buildSchemaOverrideIssueBody(input))
-  return `${GITHUB_REPO_URL}/issues/new?${params.toString()}`
+  const url = `${GITHUB_REPO_URL}/issues/new?${params.toString()}`
+  if (url.length > SCHEMA_OVERRIDE_ISSUE_URL_MAX_LENGTH) {
+    throw new Error(
+      `Schema override issue URL exceeds ${SCHEMA_OVERRIDE_ISSUE_URL_MAX_LENGTH} characters (${url.length}).`,
+    )
+  }
+  return url
 }
 
 export function buildMissingInheritanceOverrideIssueUrl({
@@ -226,8 +172,7 @@ export function buildMissingInheritanceOverrideIssueUrl({
     pageUrl,
     dataUrl,
     removeStaleOnly,
-    existingOverrideYaml:
-      removeStaleOnly || missingFieldInheritance ? storedOverrideYaml : undefined,
+    existingOverrideYaml: removeStaleOnly ? storedOverrideYaml : undefined,
   })
 }
 
@@ -258,6 +203,6 @@ export function buildRiskyTypeComboOverrideIssueUrl({
     pageUrl,
     dataUrl,
     removeStaleOnly,
-    existingOverrideYaml: removeStaleOnly || riskyTypeCombo ? storedOverrideYaml : undefined,
+    existingOverrideYaml: removeStaleOnly ? storedOverrideYaml : undefined,
   })
 }
