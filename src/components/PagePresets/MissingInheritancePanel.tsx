@@ -9,9 +9,7 @@ import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
 import { externalActionPillClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
-import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { buildMissingInheritanceOverrideIssueUrl } from '@/utils/buildSchemaOverrideIssueUrl'
-import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
@@ -42,7 +40,7 @@ function FieldListSection({
 }) {
   const title = fieldListKey === 'fields' ? 'Primary fields' : 'More fields'
   return (
-    <div className={cn('not-prose space-y-2 px-3 py-3', schemaIssueStyles.disclosureBodyInset)}>
+    <div className="not-prose space-y-2">
       <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
       <p className="text-sm text-slate-300">
         Expected slash-parent source:{' '}
@@ -175,7 +173,7 @@ export function MissingInheritancePanel({
             includeStaleOverride={missingInheritanceStatus === 'stale'}
           />
         ) : null}
-        <div className="mt-4 space-y-4">
+        <div className="mt-6 space-y-4">
           {missingFieldInheritance?.fields ? (
             <FieldListSection fieldListKey="fields" section={missingFieldInheritance.fields} />
           ) : null}
