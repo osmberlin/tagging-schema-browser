@@ -97,6 +97,24 @@ export function FieldFacetSidebar() {
         </ul>
       </SidebarSection>
 
+      <SidebarSection title="Field type safety">
+        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
+          <FacetButton
+            active={state.f_riskyTypeCombo === 'all'}
+            label="All typeCombo fields"
+            count={meta.typeCounts.get('typeCombo') ?? 0}
+            onClick={() => setState({ f_riskyTypeCombo: 'all' })}
+          />
+          <FacetButton
+            active={state.f_riskyTypeCombo === 'risky'}
+            label="Risky property usage"
+            labelArea="presets"
+            count={meta.riskyTypeComboCount}
+            onClick={() => setState({ f_riskyTypeCombo: 'risky', f_type: 'typeCombo' })}
+          />
+        </ul>
+      </SidebarSection>
+
       <SidebarSection title="Type">
         <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
           <FacetButton

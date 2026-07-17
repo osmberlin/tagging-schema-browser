@@ -5,6 +5,7 @@ export type FieldFacetFilterState = {
   f_type: string
   f_usage: 'all' | 'used' | 'unused'
   f_iconMismatch: 'all' | 'mismatch'
+  f_riskyTypeCombo: 'all' | 'risky'
   f_sort: 'name' | 'label' | 'usage_desc' | 'usage_asc'
   f_optionIcon: string
 }
@@ -24,6 +25,10 @@ export function applyFieldFacets(
 
   if (state.f_iconMismatch === 'mismatch') {
     filtered = filtered.filter((field) => field.iconMismatchCount > 0)
+  }
+
+  if (state.f_riskyTypeCombo === 'risky') {
+    filtered = filtered.filter((field) => field.type === 'typeCombo' && field.riskyUsageCount > 0)
   }
 
   if (state.f_optionIcon) {

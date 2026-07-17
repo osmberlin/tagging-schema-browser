@@ -3,7 +3,7 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
-import { FieldIconMismatchAlert } from '@/components/ui/SchemaIssueAlerts'
+import { FieldIconMismatchAlert, FieldRiskyTypeComboAlert } from '@/components/ui/SchemaIssueAlerts'
 import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
 import { useDeferredSearchQuery } from '@/hooks/useDeferredSearchQuery'
@@ -22,7 +22,8 @@ export function PageFields() {
   const { data, loading, dataUrl } = useSchema()
   const [facetState, setFacetState] = useFieldFacetState()
   const { fields } = useFieldSearch()
-  const { f_q, f_type, f_usage, f_iconMismatch, f_sort, f_optionIcon } = facetState
+  const { f_q, f_type, f_usage, f_iconMismatch, f_riskyTypeCombo, f_sort, f_optionIcon } =
+    facetState
   const { deferredQuery, isSearchPending } = useDeferredSearchQuery(f_q)
   const filtered = useMemo(() => {
     if (!data) return []
@@ -31,16 +32,36 @@ export function PageFields() {
       f_type,
       f_usage,
       f_iconMismatch,
+      f_riskyTypeCombo,
       f_sort,
       f_optionIcon,
     })
-  }, [data, fields, deferredQuery, f_type, f_usage, f_iconMismatch, f_sort, f_optionIcon])
+  }, [
+    data,
+    fields,
+    deferredQuery,
+    f_type,
+    f_usage,
+    f_iconMismatch,
+    f_riskyTypeCombo,
+    f_sort,
+    f_optionIcon,
+  ])
   const mismatchFieldCount = fields.filter((field) => field.iconMismatchCount > 0).length
+  const riskyTypeComboFieldCount = fields.filter(
+    (field) => field.type === 'typeCombo' && field.riskyUsageCount > 0,
+  ).length
   const { setActiveIssueFocus } = useSchemaIssueDisclosureActions()
 
   useEffect(() => {
-    setActiveIssueFocus(facetState.f_iconMismatch === 'mismatch' ? 'iconMismatch' : null)
-  }, [facetState.f_iconMismatch, setActiveIssueFocus])
+    if (facetState.f_iconMismatch === 'mismatch') {
+      setActiveIssueFocus('iconMismatch')
+    } else if (facetState.f_riskyTypeCombo === 'risky') {
+      setActiveIssueFocus('riskyTypeCombo')
+    } else {
+      setActiveIssueFocus(null)
+    }
+  }, [facetState.f_iconMismatch, facetState.f_riskyTypeCombo, setActiveIssueFocus])
 
   const exportData = useMemo(() => exportFields(filtered), [filtered])
 
@@ -113,6 +134,12 @@ export function PageFields() {
         <FieldIconMismatchAlert
           count={mismatchFieldCount}
           onShowMismatch={() => setFacetState({ f_iconMismatch: 'mismatch' })}
+        />
+      ) : null}
+      {facetState.f_riskyTypeCombo !== 'risky' ? (
+        <FieldRiskyTypeComboAlert
+          count={riskyTypeComboFieldCount}
+          onShowRisky={() => setFacetState({ f_riskyTypeCombo: 'risky', f_type: 'typeCombo' })}
         />
       ) : null}
       {filtered.length > 0 ? (

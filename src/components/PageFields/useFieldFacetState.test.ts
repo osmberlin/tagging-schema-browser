@@ -18,6 +18,7 @@ describe('applyFieldFacets f_optionIcon', () => {
         presets: [],
         iconMismatchCount: 0,
         optionIconNames: ['maki-park'],
+        riskyUsageCount: 0,
       },
       {
         id: 'unused',
@@ -32,6 +33,7 @@ describe('applyFieldFacets f_optionIcon', () => {
         presets: [],
         iconMismatchCount: 0,
         optionIconNames: ['maki-park'],
+        riskyUsageCount: 0,
       },
       {
         id: 'other',
@@ -46,6 +48,7 @@ describe('applyFieldFacets f_optionIcon', () => {
         presets: [],
         iconMismatchCount: 0,
         optionIconNames: ['maki-tree'],
+        riskyUsageCount: 0,
       },
     ]
 
@@ -54,10 +57,58 @@ describe('applyFieldFacets f_optionIcon', () => {
       f_type: 'all',
       f_usage: 'all',
       f_iconMismatch: 'all',
+      f_riskyTypeCombo: 'all',
       f_sort: 'name',
       f_optionIcon: 'maki-park',
     })
 
     expect(filtered.map((field) => field.id)).toEqual(['used'])
+  })
+
+  it('filters typeCombo fields with risky preset usages', () => {
+    const fields: FieldViewModel[] = [
+      {
+        id: 'traffic_calming',
+        key: 'traffic_calming',
+        type: 'typeCombo',
+        label: 'Traffic calming',
+        geometry: [],
+        universal: false,
+        usageCount: 2,
+        primaryCount: 0,
+        moreCount: 2,
+        presets: [],
+        iconMismatchCount: 0,
+        optionIconNames: [],
+        riskyUsageCount: 1,
+      },
+      {
+        id: 'highway',
+        key: 'highway',
+        type: 'typeCombo',
+        label: 'Highway',
+        geometry: [],
+        universal: false,
+        usageCount: 5,
+        primaryCount: 5,
+        moreCount: 0,
+        presets: [],
+        iconMismatchCount: 0,
+        optionIconNames: [],
+        riskyUsageCount: 0,
+      },
+    ]
+
+    const filtered = applyFieldFacets(fields, {
+      f_q: '',
+      f_type: 'all',
+      f_usage: 'all',
+      f_iconMismatch: 'all',
+      f_riskyTypeCombo: 'risky',
+      f_sort: 'name',
+      f_optionIcon: '',
+    })
+
+    expect(filtered.map((field) => field.id)).toEqual(['traffic_calming'])
   })
 })

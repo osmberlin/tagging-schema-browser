@@ -11,6 +11,7 @@ import { isOptionIconMismatch, type PresetIconMismatchRef } from '@/utils/iconMi
 import type {
   DenormalizedPreset,
   FieldOptionMismatchRow,
+  FieldRiskyTypeComboUsage,
   FieldTranslations,
   FieldViewModel,
   PresetIconMismatchRow,
@@ -72,6 +73,51 @@ export function buildFieldPresetIndex(presets: DenormalizedPreset[]): {
   }
 
   return { primary, more }
+}
+
+export function buildFieldRiskyPresetUsages(
+  primary: Map<string, DenormalizedPreset[]>,
+  more: Map<string, DenormalizedPreset[]>,
+): Map<string, FieldRiskyTypeComboUsage[]> {
+  const index = new Map<string, FieldRiskyTypeComboUsage[]>()
+
+  const append = (
+    fieldId: string,
+    preset: DenormalizedPreset,
+    listKey: 'fields' | 'moreFields',
+  ) => {
+    const flagged =
+      preset.riskyTypeCombo?.fields.some((field) => field.fieldId === fieldId) ?? false
+    const entry: FieldRiskyTypeComboUsage = {
+      presetId: preset.id,
+      presetName: preset.name,
+      listKey,
+      flagged,
+      status: flagged ? preset.riskyTypeComboStatus : 'none',
+    }
+    const list = index.get(fieldId) ?? []
+    list.push(entry)
+    index.set(fieldId, list)
+  }
+
+  for (const [fieldId, presets] of primary) {
+    for (const preset of presets) append(fieldId, preset, 'fields')
+  }
+  for (const [fieldId, presets] of more) {
+    for (const preset of presets) append(fieldId, preset, 'moreFields')
+  }
+
+  for (const [fieldId, list] of index) {
+    list.sort((a, b) => a.presetId.localeCompare(b.presetId))
+    index.set(fieldId, list)
+  }
+
+  return index
+}
+
+function riskyUsageCountForField(usages: FieldRiskyTypeComboUsage[] | undefined): number {
+  if (!usages) return 0
+  return usages.filter((usage) => usage.flagged && usage.status === 'unreviewed').length
 }
 
 function buildOptionRowsForField(
@@ -232,6 +278,7 @@ export function buildFieldCatalog(
   presetsByPrimaryField: Map<string, DenormalizedPreset[]>,
   presetsByMoreField: Map<string, DenormalizedPreset[]>,
   fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>,
+  fieldRiskyPresetUsages: Map<string, FieldRiskyTypeComboUsage[]>,
 ): { fieldCatalog: FieldViewModel[]; fieldTypes: string[] } {
   const mismatchCounts = buildFieldMismatchCounts(fieldOptionMismatchRows)
 
@@ -255,6 +302,7 @@ export function buildFieldCatalog(
       presets: Array.from(presetsById.values()),
       iconMismatchCount: mismatchCounts.get(id) ?? 0,
       optionIconNames: listFieldOptionIconNames(id, raw, fields, fieldTranslations),
+      riskyUsageCount: riskyUsageCountForField(fieldRiskyPresetUsages.get(id)),
     }
   })
 
@@ -279,12 +327,14 @@ export function buildSchemaIndices(
   )
   const { parentIconMismatchRowsByPresetId, childIconMismatchRefsByPresetId } =
     buildPresetIconMismatchIndices(presets, fields, fieldTranslations, childPresetIndex)
+  const fieldRiskyPresetUsages = buildFieldRiskyPresetUsages(primary, more)
   const { fieldCatalog, fieldTypes } = buildFieldCatalog(
     fields,
     fieldTranslations,
     primary,
     more,
     fieldOptionMismatchRows,
+    fieldRiskyPresetUsages,
   )
   return {
     childPresetIndex,
@@ -298,5 +348,6 @@ export function buildSchemaIndices(
     optionIconUsagesByIcon: collectOptionIconUsages(fields, presets, fieldTranslations),
     fieldCatalog,
     fieldTypes,
+    fieldRiskyPresetUsages,
   }
 }

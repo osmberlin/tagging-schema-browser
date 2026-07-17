@@ -87,6 +87,27 @@ test('preset detail shows risky typeCombo panel', async ({ page }) => {
   await expect(page.getByTestId('risky-typecombo-create-issue')).toBeVisible()
 })
 
+test('fields list shows risky typeCombo banner and filter', async ({ page }) => {
+  await loadTestSchema(page)
+  await page.goto('/fields?dataUrl=/test-schema')
+
+  await expect(page.getByText(/typeCombo field(s)? look(s)? like a property/i)).toBeVisible()
+  await page.getByRole('button', { name: 'show fields' }).click()
+  await expect(page).toHaveURL(/f_riskyTypeCombo=risky/)
+  await expect(page.locator('[data-field="traffic_calming"]')).toBeVisible()
+})
+
+test('field detail shows risky typeCombo usage panel', async ({ page }) => {
+  await loadTestSchema(page)
+  await page.goto('/field/traffic_calming?dataUrl=/test-schema')
+
+  await page.getByRole('button', { name: 'Risky typeCombo usage' }).click()
+  const panel = page.getByTestId('field-risky-typecombo-panel')
+  await expect(panel).toBeVisible()
+  await expect(panel.getByRole('link', { name: 'highway/residential' })).toBeVisible()
+  await expect(panel.getByText(/Risky \(unreviewed\)/i)).toBeVisible()
+})
+
 test('missing option icons are discoverable on icons page', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/icons?dataUrl=/test-schema&i_usage=options&i_hasSvg=missing')

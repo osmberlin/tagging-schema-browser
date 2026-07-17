@@ -44,6 +44,7 @@ function minimalSchema(overrides: Partial<SchemaData> = {}): SchemaData {
       optionIconUsagesByIcon: new Map(),
       fieldCatalog: [],
       fieldTypes: [],
+      fieldRiskyPresetUsages: new Map(),
     },
     rawPresets: {},
     categories: {},
