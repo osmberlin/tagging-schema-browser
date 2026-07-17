@@ -1,7 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { useCallback, useState } from 'react'
 import type { RiskyTypeCombo, RiskyTypeComboStatus } from '@/components/PagePresets/riskyTypeCombo'
-import { formatRiskyTypeComboOverrideYaml } from '@/components/PagePresets/riskyTypeCombo'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
 import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
@@ -9,7 +7,6 @@ import { externalActionPillClass } from '@/theme/externalAccent'
 import type { SchemaIssueVariant } from '@/theme/schemaIssue'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
 import { buildRiskyTypeComboOverrideIssueUrl } from '@/utils/buildSchemaOverrideIssueUrl'
-import { RISKY_TYPECOMBO_OVERRIDES_EDIT_URL } from '@/utils/constants'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -32,20 +29,7 @@ const ISSUE_VARIANTS: Record<Exclude<RiskyTypeComboStatus, 'none'>, SchemaIssueV
   stale: 'error',
 }
 
-function OverridesYamlLink() {
-  return (
-    <a
-      href={RISKY_TYPECOMBO_OVERRIDES_EDIT_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={schemaIssueStyles.externalLink}
-    >
-      risky-typecombo-overrides.yaml
-    </a>
-  )
-}
-
-function OverrideSnippet({
+function CreateIssueAction({
   presetId,
   riskyTypeCombo,
   dataUrl,
@@ -58,8 +42,6 @@ function OverrideSnippet({
   pageUrl: string
   includeStaleOverride: boolean
 }) {
-  const snippet = formatRiskyTypeComboOverrideYaml(presetId, riskyTypeCombo)
-  const [copied, setCopied] = useState(false)
   const issueUrl = buildRiskyTypeComboOverrideIssueUrl({
     presetId,
     riskyTypeCombo,
@@ -68,50 +50,20 @@ function OverrideSnippet({
     existingOverride: includeStaleOverride ? riskyTypeComboOverrides.presets[presetId] : undefined,
   })
 
-  const onCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(snippet)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setCopied(false)
-    }
-  }, [snippet])
-
   return (
-    <div className="mt-3 space-y-3">
-      <p className="text-sm text-slate-300">
-        Open a pre-filled GitHub issue to record this snapshot. A Cursor agent will open a PR; CI
-        validates overrides against the published release schema.
-      </p>
-      <div className="not-prose flex flex-wrap items-center gap-2">
-        <a
-          href={issueUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={externalActionPillClass('border border-mauve-200 bg-mauve-50/80')}
-          data-testid="risky-typecombo-create-issue"
-        >
-          Create GitHub issue ↗
-        </a>
-        <button
-          type="button"
-          onClick={onCopy}
-          className="rounded-md border border-slate-600 bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-100 shadow-sm transition hover:bg-slate-700"
-        >
-          {copied ? 'Copied' : 'Copy snippet'}
-        </button>
-      </div>
-      <p className="text-sm text-slate-400">
-        Fallback: paste the snippet under <code>presets:</code> in <OverridesYamlLink />.
-      </p>
-      <p className="text-sm text-slate-400">Snippet for {presetId}:</p>
-      <pre
-        className="overflow-x-auto rounded-md border border-slate-600 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-100"
-        data-testid="risky-typecombo-override-snippet"
+    <div className="not-prose mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+      <a
+        href={issueUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={externalActionPillClass('border border-mauve-200 bg-mauve-50/80')}
+        data-testid="risky-typecombo-create-issue"
       >
-        {snippet}
-      </pre>
+        Create GitHub issue ↗
+      </a>
+      <p className="text-sm text-slate-400">
+        Pre-filled issue → Cursor agent opens a PR → CI validates the override.
+      </p>
     </div>
   )
 }
@@ -158,7 +110,7 @@ export function RiskyTypeComboPanel({
 
   if (riskyTypeComboStatus === 'none') return null
 
-  const showOverrideSnippet =
+  const showCreateIssue =
     riskyTypeCombo && (riskyTypeComboStatus === 'unreviewed' || riskyTypeComboStatus === 'stale')
 
   return (
@@ -175,24 +127,19 @@ export function RiskyTypeComboPanel({
           <code>=yes</code> tags.
         </p>
         {riskyTypeComboStatus === 'stale' && !riskyTypeCombo ? (
-          <p className="mt-2">
-            Remove the stale entry from <OverridesYamlLink />.
-          </p>
+          <p className="mt-2">Open an issue to remove the stale override.</p>
         ) : null}
         {riskyTypeComboStatus === 'stale' && riskyTypeCombo ? (
-          <p className="mt-2">
-            The reviewed override in <OverridesYamlLink /> no longer matches — re-check and update
-            the snapshot or remove the entry.
-          </p>
+          <p className="mt-2">The stored override no longer matches the current schema.</p>
         ) : null}
         {riskyTypeComboStatus === 'unreviewed' ? (
           <p className="mt-2">
             If keeping <code>typeCombo</code> is deliberate, record the current{' '}
-            <code>fieldIds</code> snapshot via GitHub issue or manual edit in <OverridesYamlLink />.
+            <code>fieldIds</code> snapshot.
           </p>
         ) : null}
-        {showOverrideSnippet ? (
-          <OverrideSnippet
+        {showCreateIssue ? (
+          <CreateIssueAction
             presetId={preset.id}
             riskyTypeCombo={riskyTypeCombo}
             dataUrl={dataUrl}

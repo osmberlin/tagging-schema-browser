@@ -71,13 +71,6 @@ test('preset detail shows missing inheritance panel', async ({ page }) => {
   await expect(page.getByText(/Missing parent fields \(unreviewed\)/i)).toBeVisible()
   await expect(page.getByText('crane/type', { exact: true })).toBeVisible()
   await expect(page.getByRole('link', { name: 'man_made/crane' })).toBeVisible()
-  await expect(page.getByTestId('missing-inheritance-override-snippet')).toContainText(
-    'man_made/crane/untyped_crane:',
-  )
-  await expect(page.getByTestId('missing-inheritance-override-snippet')).toContainText(
-    'parentId: man_made/crane',
-  )
-  await expect(page.getByRole('button', { name: 'Copy snippet' })).toBeVisible()
   await expect(page.getByTestId('missing-inheritance-create-issue')).toBeVisible()
   await expect(page.getByTestId('missing-inheritance-create-issue')).toHaveAttribute(
     'href',
@@ -91,9 +84,6 @@ test('preset detail shows risky typeCombo panel', async ({ page }) => {
   await page.getByRole('button', { name: 'Risky typeCombo' }).click()
   await expect(page.getByTestId('risky-typecombo-panel')).toBeVisible()
   await expect(page.getByText(/Risky typeCombo \(unreviewed\)/i)).toBeVisible()
-  await expect(page.getByTestId('risky-typecombo-override-snippet')).toContainText(
-    'traffic_calming',
-  )
   await expect(page.getByTestId('risky-typecombo-create-issue')).toBeVisible()
 })
 
