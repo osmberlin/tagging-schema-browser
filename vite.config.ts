@@ -34,5 +34,6 @@ export default defineConfig({
   },
   build: {
     target: browserslistToEsbuild(),
+    sourcemap: true,
   },
 })
