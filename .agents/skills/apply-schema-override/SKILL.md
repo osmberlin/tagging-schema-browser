@@ -63,6 +63,7 @@ This runs `validate-inheritance-overrides` and `validate-risky-typecombo-overrid
 - **Title:** `[skip netlify] Overrides: mark {presetId} missing inheritance as intentional` (adjust wording for typeCombo or stale removal when applicable)
 - **Body:** Start with `Written by :robot: <model-name>:` then `Closes #<issue-number>` on the next line, then a short user-facing summary of what was recorded and why (intentional omission or stale cleanup).
 - **Label:** `schema-override` (required for auto-merge)
+- **Ready for review:** open the PR **not** as a draft (`gh pr create` without `--draft`). If GitHub still opens a draft, run `gh pr ready` before finishing.
 - Only touch the relevant `src/data/*-overrides.yaml` file.
 - Keep the branch to **1–2 commits** (issue change, then optional stale cleanup).
 

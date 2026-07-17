@@ -65,6 +65,7 @@ describe('cursorOverrideAutomation', () => {
     expect(body).not.toContain('repo=osmberlin/tagging-schema-browser')
     expect(body).toContain('Work in `osmberlin/tagging-schema-browser` on branch `main`')
     expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
+    expect(body).toContain('Open a PR ready for review (not draft)')
     expect(body).toContain('Closes #138')
     expect(body).toContain('schema-override')
     expect(body).toContain('[missing-inheritance]')
