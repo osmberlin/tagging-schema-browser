@@ -133,3 +133,15 @@ presets:
       parentId: barrier
       missedFieldIds:
         - level
+  education/college:
+    fields:
+      parentId: education
+      missedFieldIds:
+        - building_area
+    moreFields:
+      parentId: education
+      missedFieldIds:
+        - branch_brand
+        - brand
+        - building/levels_building
+        - height_building
