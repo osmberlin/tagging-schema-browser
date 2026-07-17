@@ -1,11 +1,8 @@
 ---
 name: Missing inheritance override
 about: Record intentional missing slash-parent field inheritance
-title: ''
-labels:
-  - cursor-override
-  - missing-inheritance-override
+title: '[missing-inheritance] '
 assignees: ''
 ---
 
-<!-- The Tagging Schema Browser pre-fills title and body when you use "Create GitHub issue" on a preset detail page. -->
+<!-- Keep the [missing-inheritance] title prefix. The Tagging Schema Browser pre-fills the rest when you use "Create GitHub issue". -->
