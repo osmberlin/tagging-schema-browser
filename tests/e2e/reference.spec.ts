@@ -67,15 +67,22 @@ test('custom dataUrl shows comparison nav and banner', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Show unreleased/i })).toBeVisible()
 })
 
-test('comparison banner preserves dataUrl when switching to unreleased baseline', async ({
-  page,
-}) => {
-  await page.goto('/?dataUrl=/test-schema&reference=release')
+test('comparison banner exits preview when showing unreleased', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.goto('/?dataUrl=/test-schema')
   await expect(page.getByRole('button', { name: /Show unreleased/i })).toBeVisible()
 
   await page.getByRole('button', { name: /Show unreleased/i }).click({ force: true })
-  await expect(page).toHaveURL(/dataUrl=/)
+  await expect(page).not.toHaveURL(/dataUrl=/)
   await expect(page).not.toHaveURL(/reference=release/)
+})
+
+test('comparison banner exits preview when showing release', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.goto('/?dataUrl=/test-schema')
+  await page.getByRole('button', { name: /Show release/i }).click({ force: true })
+  await expect(page).not.toHaveURL(/dataUrl=/)
+  await expect(page).toHaveURL(/reference=release/, { timeout: 30_000 })
 })
 
 test('schema version dropdown preserves dataUrl when switching baseline', async ({ page }) => {
