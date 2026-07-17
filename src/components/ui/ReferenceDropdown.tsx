@@ -173,8 +173,8 @@ export function ReferenceDropdown() {
     setOpen(false)
 
     if (choice === 'interim' || choice === 'release') {
-      // With a custom preview loaded, only switch the comparison baseline
-      // (same as DataSourceBanner). Without one, leave preview mode entirely.
+      // Dropdown switches comparison baseline while preview stays loaded.
+      // To exit compare view entirely, use the violet banner "Show …" buttons.
       commitSchemaReference(choice, { clearDataUrl: !hasCustomDataUrl })
       return
     }

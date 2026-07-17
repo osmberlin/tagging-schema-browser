@@ -1,17 +1,18 @@
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { useCommitSchemaReference } from '@/hooks/useCommitSchemaReference'
 import { useComparison } from '@/hooks/useComparison'
 import { useSchema } from '@/hooks/useSchema'
 import { externalLinkClass } from '@/theme/externalAccent'
 import { formatSchemaBuildLabel } from '@/utils/schemaBuildVersion'
 import { formatUnreleasedUpdatedAt } from '@/utils/schemaVersion'
+import { cn } from '@/utils/tw'
 
 /**
- * Full-width strip under the header, shown only on a custom/PR build — the
- * app-wide violet signal that you're looking at non-release data. The release
- * / unreleased toggle is under the logo (see SidebarLayout). Left: which build +
- * how many changes; right: buttons back to unreleased or release.
+ * Violet strip under the header while a PR/custom build is in comparison mode.
+ * "Show …" buttons exit compare view and browse canonical unreleased or release.
+ * To switch comparison baseline without leaving preview, use the schema version dropdown.
  */
 export function DataSourceBanner() {
   const {
@@ -26,24 +27,17 @@ export function DataSourceBanner() {
     loading,
   } = useComparison()
   const { schemaBuild } = useSchema()
-  const navigate = useNavigate()
+  const commitSchemaReference = useCommitSchemaReference()
   const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
 
   if (!isComparing) return null
 
   const showUnreleased = () => {
-    void navigate({
-      to: '.',
-      search: (prev) => ({ ...prev, reference: undefined }),
-    })
+    commitSchemaReference('interim', { clearDataUrl: true })
   }
   const showRelease = () => {
-    void navigate({
-      to: '.',
-      search: (prev) => ({ ...prev, reference: 'release' }),
-    })
+    commitSchemaReference('release', { clearDataUrl: true })
   }
-  const changeCountFromResult = changeCount
 
   const versionLabel =
     compareMode === 'release'
@@ -59,6 +53,19 @@ export function DataSourceBanner() {
     compareMode === 'release' && compareLabel !== 'unreleased'
       ? 'comparing to PR preview…'
       : 'comparing to unreleased…'
+
+  const unreleasedButtonClass = cn(
+    'rounded-md px-2.5 py-1 font-medium transition',
+    compareMode === 'preview'
+      ? 'bg-violet-600 text-white hover:bg-violet-700'
+      : 'text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100',
+  )
+  const releaseButtonClass = cn(
+    'rounded-md px-2.5 py-1 font-medium transition',
+    compareMode === 'release'
+      ? 'bg-violet-600 text-white hover:bg-violet-700'
+      : 'text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100',
+  )
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-violet-100 bg-violet-50 px-4 py-1.5 text-xs text-violet-700 sm:px-6 lg:px-8">
@@ -76,7 +83,7 @@ export function DataSourceBanner() {
             </a>
           </Tooltip>
         </span>
-        {changeCountFromResult != null ? (
+        {changeCount != null ? (
           <>
             <span className="text-violet-300">·</span>
             <Link
@@ -89,8 +96,7 @@ export function DataSourceBanner() {
               })}
               className="font-medium hover:underline"
             >
-              {changeCountFromResult} change{changeCountFromResult === 1 ? '' : 's'} vs{' '}
-              {compareTarget}
+              {changeCount} change{changeCount === 1 ? '' : 's'} vs {compareTarget}
             </Link>
           </>
         ) : loading ? (
@@ -101,20 +107,24 @@ export function DataSourceBanner() {
         ) : null}
       </span>
       <span className="flex shrink-0 flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={showUnreleased}
-          className="rounded-md bg-violet-600 px-2.5 py-1 font-medium text-white transition hover:bg-violet-700"
+        <Tooltip
+          content="Stop comparing and browse unreleased main"
+          placement="bottom"
+          openDelay={400}
         >
-          Show unreleased{unreleasedAge ? ` · ${unreleasedAge}` : ''}
-        </button>
-        <button
-          type="button"
-          onClick={showRelease}
-          className="rounded-md px-2.5 py-1 font-medium text-violet-700 ring-1 ring-violet-200 transition hover:bg-violet-100"
+          <button type="button" onClick={showUnreleased} className={unreleasedButtonClass}>
+            Show unreleased{unreleasedAge ? ` · ${unreleasedAge}` : ''}
+          </button>
+        </Tooltip>
+        <Tooltip
+          content="Stop comparing and browse the published release"
+          placement="bottom"
+          openDelay={400}
         >
-          Show release{releaseVersion ? ` ${releaseVersion}` : ''}
-        </button>
+          <button type="button" onClick={showRelease} className={releaseButtonClass}>
+            Show release{releaseVersion ? ` ${releaseVersion}` : ''}
+          </button>
+        </Tooltip>
       </span>
     </div>
   )
