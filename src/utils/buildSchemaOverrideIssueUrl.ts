@@ -11,7 +11,6 @@ export type SchemaOverrideKind = 'missing-inheritance' | 'risky-typecombo'
 
 const KIND_CONFIG = {
   'missing-inheritance': {
-    template: 'missing-inheritance-override.md',
     titlePrefix: '[missing-inheritance]',
     defaultTitleSuffix: '— intentional missing inheritance',
     overrideFile: 'src/data/missing-inheritance-overrides.yaml',
@@ -19,7 +18,6 @@ const KIND_CONFIG = {
     prTitleSuffix: 'missing inheritance as intentional',
   },
   'risky-typecombo': {
-    template: 'risky-typecombo-override.md',
     titlePrefix: '[risky-typecombo]',
     defaultTitleSuffix: '— intentional risky typeCombo',
     overrideFile: 'src/data/risky-typecombo-overrides.yaml',
@@ -29,7 +27,6 @@ const KIND_CONFIG = {
 } as const satisfies Record<
   SchemaOverrideKind,
   {
-    template: string
     titlePrefix: string
     defaultTitleSuffix: string
     overrideFile: string
@@ -125,9 +122,7 @@ export function buildSchemaOverrideIssueTitle(kind: SchemaOverrideKind, presetId
 }
 
 export function buildSchemaOverrideIssueUrl(input: BuildSchemaOverrideIssueUrlInput): string {
-  const config = KIND_CONFIG[input.kind]
   const params = new URLSearchParams()
-  params.set('template', config.template)
   params.set('title', buildSchemaOverrideIssueTitle(input.kind, input.presetId))
   params.set('body', buildSchemaOverrideIssueBody(input))
   return `${GITHUB_REPO_URL}/issues/new?${params.toString()}`
