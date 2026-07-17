@@ -19,6 +19,37 @@ async function chooseMenuItem(page: import('@playwright/test').Page, label: stri
   }, label)
 }
 
+/** Choose a "Browse without compare" item while the comparing menu is open. */
+async function chooseBrowseWithoutCompare(
+  page: import('@playwright/test').Page,
+  target: 'unreleased' | 'release',
+) {
+  await page.evaluate(() => {
+    document.querySelector<HTMLButtonElement>('[aria-label="Schema version"]')?.click()
+  })
+  await expect(page.getByRole('menu')).toBeVisible()
+  await page.evaluate((browseTarget) => {
+    const menu = document.querySelector('[role="menu"]')
+    if (!menu) throw new Error('Schema version menu not found')
+    const labels = [...menu.querySelectorAll<HTMLDivElement>('div.uppercase')]
+    const browseLabel = labels.find((el) => el.textContent === 'Browse without compare')
+    if (!browseLabel) throw new Error('Browse without compare section not found')
+    const items = [...menu.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')]
+    const startIndex = items.findIndex(
+      (item) => browseLabel.compareDocumentPosition(item) & Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    const browseItems = startIndex === -1 ? [] : items.slice(startIndex)
+    const item = browseItems.find((el) => {
+      const text = el.textContent ?? ''
+      return browseTarget === 'unreleased'
+        ? text.startsWith('Unreleased')
+        : text.startsWith('Release') && !text.includes(' vs ')
+    })
+    if (!item) throw new Error(`Browse menu item not found: ${browseTarget}`)
+    item.click()
+  }, target)
+}
+
 test('unreleased is the default reference', async ({ page }) => {
   await page.goto('/')
   const trigger = schemaVersionButton(page)
@@ -85,11 +116,19 @@ test('comparison banner exits preview when showing release', async ({ page }) =>
   await expect(page).toHaveURL(/reference=release/, { timeout: 30_000 })
 })
 
-test('schema version dropdown preserves dataUrl when switching baseline', async ({ page }) => {
+test('schema version dropdown preserves dataUrl when switching compare mode', async ({ page }) => {
   test.setTimeout(60_000)
   await page.goto('/?dataUrl=/test-schema')
-  await chooseMenuItem(page, 'Release')
+  await chooseMenuItem(page, 'Release vs preview')
   await expect(page).toHaveURL(/dataUrl=/)
+  await expect(page).toHaveURL(/reference=release/, { timeout: 30_000 })
+})
+
+test('schema version dropdown exits compare when browsing release', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.goto('/?dataUrl=/test-schema')
+  await chooseBrowseWithoutCompare(page, 'release')
+  await expect(page).not.toHaveURL(/dataUrl=/)
   await expect(page).toHaveURL(/reference=release/, { timeout: 30_000 })
 })
 

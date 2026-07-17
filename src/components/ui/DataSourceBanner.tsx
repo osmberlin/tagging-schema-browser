@@ -12,7 +12,7 @@ import { cn } from '@/utils/tw'
 /**
  * Violet strip under the header while a PR/custom build is in comparison mode.
  * "Show …" buttons exit compare view and browse canonical unreleased or release.
- * To switch comparison baseline without leaving preview, use the schema version dropdown.
+ * The schema version dropdown also has explicit "Comparing" vs "Browse without compare" sections.
  */
 export function DataSourceBanner() {
   const {
