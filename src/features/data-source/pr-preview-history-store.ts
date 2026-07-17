@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 const HISTORY_TTL_MS = 60 * 24 * 60 * 60 * 1000
+const HISTORY_MAX_ENTRIES = 20
 
 export type PrPreviewHistoryEntry = {
   prNumber: number
@@ -19,7 +20,7 @@ interface PrPreviewHistoryStore {
 
 function pruneEntries(entries: PrPreviewHistoryEntry[], now = Date.now()): PrPreviewHistoryEntry[] {
   const cutoff = now - HISTORY_TTL_MS
-  return entries.filter((entry) => entry.openedAt >= cutoff)
+  return entries.filter((entry) => entry.openedAt >= cutoff).slice(0, HISTORY_MAX_ENTRIES)
 }
 
 const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
@@ -34,7 +35,7 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
             (entry) => entry.prNumber !== prNumber,
           )
           set({
-            entries: [{ prNumber, openedAt: now }, ...without],
+            entries: [{ prNumber, openedAt: now }, ...without].slice(0, HISTORY_MAX_ENTRIES),
             lastUsedPrNumber: prNumber,
           })
         },
@@ -57,6 +58,9 @@ const usePrPreviewHistoryStore = create<PrPreviewHistoryStore>()(
         lastUsedPrNumber: state.lastUsedPrNumber,
       }),
       version: 1,
+      onRehydrateStorage: () => (state) => {
+        state?.actions.pruneExpired()
+      },
     },
   ),
 )
