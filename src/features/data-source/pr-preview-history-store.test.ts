@@ -1,26 +1,49 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { prPreviewHistoryStore } from './pr-preview-history-store'
+import { prPreviewHistoryStore, sortPrPreviewHistory } from './pr-preview-history-store'
+
+describe('sortPrPreviewHistory', () => {
+  it('orders by PR number descending', () => {
+    expect(
+      sortPrPreviewHistory([
+        { prNumber: 100, openedAt: 1 },
+        { prNumber: 2309, openedAt: 2 },
+        { prNumber: 1991, openedAt: 3 },
+      ]).map((e) => e.prNumber),
+    ).toEqual([2309, 1991, 100])
+  })
+})
 
 describe('pr-preview-history-store', () => {
   beforeEach(() => {
     prPreviewHistoryStore.setState({ entries: [], lastUsedPrNumber: null })
   })
 
-  it('records PR opens with most recent first', () => {
+  it('records PR opens without reordering the list', () => {
     const { recordOpen } = prPreviewHistoryStore.getState().actions
     recordOpen(100)
     recordOpen(200)
-    expect(prPreviewHistoryStore.getState().entries.map((e) => e.prNumber)).toEqual([200, 100])
+    expect(
+      prPreviewHistoryStore
+        .getState()
+        .entries.map((e) => e.prNumber)
+        .sort((a, b) => b - a),
+    ).toEqual([200, 100])
     expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBe(200)
   })
 
-  it('moves an existing PR to the front on re-open', () => {
+  it('keeps list position when re-opening a PR', () => {
     const { recordOpen } = prPreviewHistoryStore.getState().actions
-    recordOpen(100)
-    recordOpen(200)
-    recordOpen(100)
-    expect(prPreviewHistoryStore.getState().entries.map((e) => e.prNumber)).toEqual([100, 200])
-    expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBe(100)
+    recordOpen(1991)
+    recordOpen(2309)
+    const orderBefore = sortPrPreviewHistory(prPreviewHistoryStore.getState().entries).map(
+      (e) => e.prNumber,
+    )
+    recordOpen(1991)
+    const orderAfter = sortPrPreviewHistory(prPreviewHistoryStore.getState().entries).map(
+      (e) => e.prNumber,
+    )
+    expect(orderAfter).toEqual(orderBefore)
+    expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBe(1991)
   })
 
   it('prunes entries older than 60 days', () => {
@@ -37,11 +60,15 @@ describe('pr-preview-history-store', () => {
     expect(prPreviewHistoryStore.getState().lastUsedPrNumber).toBeNull()
   })
 
-  it('caps history at 20 entries', () => {
+  it('caps history at 20 entries by least recently opened', () => {
     const { recordOpen } = prPreviewHistoryStore.getState().actions
     for (let i = 1; i <= 25; i++) recordOpen(i)
-    expect(prPreviewHistoryStore.getState().entries).toHaveLength(20)
-    expect(prPreviewHistoryStore.getState().entries[0]?.prNumber).toBe(25)
-    expect(prPreviewHistoryStore.getState().entries.at(-1)?.prNumber).toBe(6)
+    const numbers = sortPrPreviewHistory(prPreviewHistoryStore.getState().entries).map(
+      (e) => e.prNumber,
+    )
+    expect(numbers).toHaveLength(20)
+    expect(numbers).toEqual([
+      25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6,
+    ])
   })
 })
