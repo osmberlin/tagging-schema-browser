@@ -15,7 +15,7 @@ const sampleInheritance = {
 }
 
 describe('buildSchemaOverrideIssueUrl', () => {
-  it('builds a GitHub new-issue URL with template, title prefix, and body', () => {
+  it('builds a GitHub new-issue URL with title prefix and body', () => {
     const url = buildSchemaOverrideIssueUrl({
       kind: 'missing-inheritance',
       presetId: 'man_made/crane/untyped_crane',
@@ -28,11 +28,10 @@ describe('buildSchemaOverrideIssueUrl', () => {
     expect(parsed.origin + parsed.pathname).toBe(
       'https://github.com/osmberlin/tagging-schema-browser/issues/new',
     )
-    expect(parsed.searchParams.get('template')).toBe('missing-inheritance-override.md')
     expect(parsed.searchParams.get('title')).toBe(
       '[missing-inheritance] man_made/crane/untyped_crane — intentional missing inheritance',
     )
-    expect(parsed.searchParams.get('labels')).toBeNull()
+    expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
     expect(body).toContain('man_made/crane/untyped_crane')
     expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
@@ -86,11 +85,10 @@ describe('buildSchemaOverrideIssueUrl', () => {
     })
 
     const parsed = new URL(url)
-    expect(parsed.searchParams.get('template')).toBe('risky-typecombo-override.md')
     expect(parsed.searchParams.get('title')).toBe(
       '[risky-typecombo] highway/residential — intentional risky typeCombo',
     )
-    expect(parsed.searchParams.get('labels')).toBeNull()
+    expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
     expect(body).toContain('risky-typecombo-overrides.yaml')
     expect(body).toContain('- traffic_calming')
