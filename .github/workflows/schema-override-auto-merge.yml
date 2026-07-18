@@ -89,7 +89,39 @@ jobs:
           gh pr ready "$PR_NUMBER" --repo "${{ github.repository }}"
           gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override** — marked draft PR ready for review so auto-merge can proceed after CI.'
 
+      - uses: actions/checkout@v7
+        if: steps.files.outputs.eligible == 'true'
+        with:
+          fetch-depth: 0
+          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+
+      - name: Setup Bun
+        if: steps.files.outputs.eligible == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Rebase onto main and resolve override conflicts
+        id: rebase
+        if: steps.files.outputs.eligible == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: bun run .github/scripts/rebaseSchemaOverridePr.ts
+
+      - name: Comment when conflicts were resolved
+        if: >-
+          steps.files.outputs.eligible == 'true' &&
+          steps.rebase.outputs.reason == 'rebased'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override** — rebased onto `main` and merged parallel YAML override entries automatically. CI will rerun, then auto-merge will continue.'
+
       - name: Wait for CI, then rebase-merge
+        id: automerge
         if: steps.files.outputs.eligible == 'true'
         uses: pascalgn/automerge-action@v0.16.4
         env:
@@ -101,10 +133,12 @@ jobs:
           MERGE_LABELS: schema-override
           MERGE_REQUIRED_APPROVALS: 0
           MERGE_FORKS: false
+          MERGE_ERROR_FAIL: true
 
       - name: Comment when auto-merge is queued
         if: >-
           steps.files.outputs.eligible == 'true' &&
+          steps.automerge.outcome == 'success' &&
           (
             github.event_name == 'workflow_dispatch' ||
             contains(fromJSON('["opened", "labeled", "reopened", "ready_for_review"]'), github.event.action)
@@ -114,3 +148,13 @@ jobs:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override auto-merge enabled** — this PR will rebase-merge once required checks pass (YAML-only override change; typically 1–2 commits).'
+
+      - name: Comment when auto-merge fails
+        if: >-
+          steps.files.outputs.eligible == 'true' &&
+          steps.automerge.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override auto-merge failed** — CI may still be running, merge conflicts may remain, or checks are red. Re-run **Schema override auto-merge** from Actions after fixing, or resolve conflicts manually.'
