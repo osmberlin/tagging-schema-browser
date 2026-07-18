@@ -1,0 +1,33 @@
+# Re-post @cursoragent triggers on open schema override issues (stage 1 restart).
+name: Restart schema override triggers
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_numbers:
+        description: Comma-separated issue numbers (empty = all open override issues without an open PR)
+        required: false
+        type: string
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  restart-triggers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Re-post Cursor agent triggers on override issues
+        run: bun run .github/scripts/cursorOverrideAutomation.ts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CURSOR_TRIGGER_GITHUB_TOKEN: ${{ secrets.CURSOR_TRIGGER_GITHUB_TOKEN }}
+          RESTART_SCHEMA_OVERRIDE_ISSUES: 'true'
+          ISSUE_NUMBERS: ${{ github.event.inputs.issue_numbers }}
