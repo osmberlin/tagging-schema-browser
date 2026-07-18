@@ -80,6 +80,20 @@ presets:
       parentId: leisure
       missedFieldIds:
         - name
+  highway/footway/access_aisle:
+    fields:
+      parentId: highway/footway
+      missedFieldIds:
+        - name
+        - tunnel/name
+    moreFields:
+      parentId: highway/footway
+      missedFieldIds:
+        - bridge/name
+        - bridge/ref
+        - informal
+        - not/name
+        - oneway
   highway/toll_gantry:
     fields:
       parentId: highway
