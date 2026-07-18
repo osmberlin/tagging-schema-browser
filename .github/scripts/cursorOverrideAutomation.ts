@@ -1,11 +1,12 @@
 const GHA_ATTRIBUTION =
-  '> **GitHub Actions (automation)** — This comment only starts the Cursor cloud agent. It is not written by the issue author.\n\n'
+  '> **GitHub Actions (automation)** — Started a Cursor cloud agent via API. It is not written by the issue author.\n\n'
 
-/** GitHub cloud agents listen for @cursoragent with natural language (not @cursor or repo= options). */
-export const CURSOR_TRIGGER_MARKER = '@cursoragent look into this issue'
+export const CURSOR_AGENTS_API_URL = 'https://api.cursor.com/v0/agents'
 
-/** Older automation comments that never triggered an agent — do not treat as satisfied. */
-export const LEGACY_BROKEN_TRIGGER_MARKERS = ['@cursor repo=', '@cursoragent repo='] as const
+/** Issue comments with this marker mean stage-one already launched an agent. */
+export const AGENT_LAUNCHED_MARKER = '**[Cursor Agent API]**'
+
+export const ENQUEUED_LABEL = 'schema-override-agent-enqueued'
 
 /** Mandatory issue title prefixes — users may edit the title after the closing `]`. */
 export const OVERRIDE_TITLE_PREFIXES = {
@@ -34,13 +35,8 @@ export const resolveActiveKindFromTitle = (title: string): OverrideTriggerKind |
   return null
 }
 
-export const hasExistingCursorTrigger = (comments: { body?: string | null }[]) =>
-  comments.some((comment) => comment.body?.includes(CURSOR_TRIGGER_MARKER))
-
-export const hasLegacyBrokenCursorTrigger = (comments: { body?: string | null }[]) =>
-  comments.some((comment) =>
-    LEGACY_BROKEN_TRIGGER_MARKERS.some((marker) => comment.body?.includes(marker)),
-  )
+export const hasExistingAgentLaunch = (comments: { body?: string | null }[]) =>
+  comments.some((comment) => comment.body?.includes(AGENT_LAUNCHED_MARKER))
 
 export const resolveSourceBranch = (body: string) => {
   const quoted = body.match(/\*\*Source branch:\*\*\s*`([^`]+)`/)
@@ -48,27 +44,59 @@ export const resolveSourceBranch = (body: string) => {
   return 'main'
 }
 
-export const resolveSkillInstruction = (config: (typeof KIND_CONFIG)[OverrideTriggerKind]) =>
-  `Follow \`${config.skill}\`.`
-
-export const buildCursorTriggerCommentBody = ({
+export const buildAgentPrompt = ({
   owner,
   repo,
   issueNumber,
+  issueTitle,
   activeKind,
   issueBody,
 }: {
   owner: string
   repo: string
   issueNumber: number
+  issueTitle: string
   activeKind: OverrideTriggerKind
   issueBody: string
 }) => {
-  const config = KIND_CONFIG[activeKind]
   const branch = resolveSourceBranch(issueBody)
-  const skillInstruction = resolveSkillInstruction(config)
 
-  return `${GHA_ATTRIBUTION}@cursoragent look into this issue. **${config.title}** #${issueNumber} (\`${OVERRIDE_TITLE_PREFIXES[activeKind]}\`). Read the issue body. ${skillInstruction} Open a PR ready for review (not draft) with \`Closes #${issueNumber}\` and add the \`schema-override\` label. Prefix comments and PR description with \`**[Cursor Agent]**\`. Work in \`${owner}/${repo}\` on branch \`${branch}\`.`
+  return [
+    `Apply the schema override described in GitHub issue #${issueNumber} for ${owner}/${repo}.`,
+    '',
+    `Issue title: ${issueTitle}`,
+    `Kind: ${OVERRIDE_TITLE_PREFIXES[activeKind]}`,
+    `Base branch: ${branch}`,
+    '',
+    'Follow the skill at `.agents/skills/apply-schema-override/SKILL.md` in the repository.',
+    '',
+    'Requirements:',
+    `- Read the issue body below for the YAML snapshot and preset id.`,
+    `- Open a PR ready for review (not draft) with \`Closes #${issueNumber}\` on its own line.`,
+    `- Add the \`schema-override\` label to the PR.`,
+    `- Prefix the PR description with \`**[Cursor Agent]**\` and include \`Written by :robot: <model-name>:\`.`,
+    `- Only change the relevant \`src/data/*-overrides.yaml\` file.`,
+    `- Run \`bun run check\` before opening the PR.`,
+    '',
+    '---',
+    'Issue body:',
+    issueBody.trim() || '(empty)',
+  ].join('\n')
+}
+
+export const buildAgentLaunchedCommentBody = ({
+  issueNumber,
+  agentUrl,
+}: {
+  issueNumber: number
+  agentUrl: string
+}) => `${GHA_ATTRIBUTION}${AGENT_LAUNCHED_MARKER} Agent for #${issueNumber}: ${agentUrl}`
+
+type CursorAgentLaunchResponse = {
+  id: string
+  target?: {
+    url?: string
+  }
 }
 
 type IssuesEvent = {
@@ -76,6 +104,7 @@ type IssuesEvent = {
     number: number
     title: string
     body: string | null
+    labels?: { name: string }[]
   }
 }
 
@@ -105,14 +134,90 @@ const githubApi = async <T>(token: string, path: string, init?: RequestInit): Pr
   return response.json() as Promise<T>
 }
 
+const cursorApi = async <T>(apiKey: string, path: string, init?: RequestInit): Promise<T> => {
+  const extraHeaders =
+    init?.headers &&
+    typeof init.headers === 'object' &&
+    !Array.isArray(init.headers) &&
+    !(init.headers instanceof Headers)
+      ? init.headers
+      : {}
+
+  const response = await fetch(`${CURSOR_AGENTS_API_URL}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+      ...extraHeaders,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Cursor API ${response.status}: ${await response.text()}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
+export const launchCursorAgent = async ({
+  apiKey,
+  owner,
+  repo,
+  issueNumber,
+  issueTitle,
+  activeKind,
+  issueBody,
+}: {
+  apiKey: string
+  owner: string
+  repo: string
+  issueNumber: number
+  issueTitle: string
+  activeKind: OverrideTriggerKind
+  issueBody: string
+}) => {
+  const branch = resolveSourceBranch(issueBody)
+  const prompt = buildAgentPrompt({
+    owner,
+    repo,
+    issueNumber,
+    issueTitle,
+    activeKind,
+    issueBody,
+  })
+
+  return cursorApi<CursorAgentLaunchResponse>(apiKey, '', {
+    method: 'POST',
+    body: JSON.stringify({
+      prompt: { text: prompt },
+      model: 'default',
+      source: {
+        repository: `https://github.com/${owner}/${repo}`,
+        ref: branch,
+      },
+      target: {
+        autoCreatePr: true,
+        branchName: `cursor/schema-override-${issueNumber}`,
+      },
+    }),
+  })
+}
+
+const resolveAgentUrl = (agent: CursorAgentLaunchResponse) =>
+  agent.target?.url ?? `https://cursor.com/agents?id=${agent.id}`
+
 export const runCursorOverrideAutomation = async ({
-  token,
+  githubToken,
+  cursorApiKey,
   repository,
   event,
+  forceRestart = false,
 }: {
-  token: string
+  githubToken: string
+  cursorApiKey: string
   repository: string
   event: IssuesEvent
+  forceRestart?: boolean
 }) => {
   const [owner, repo] = repository.split('/')
   if (!owner || !repo) {
@@ -127,34 +232,51 @@ export const runCursorOverrideAutomation = async ({
     return
   }
 
-  const comments = await githubApi<{ body?: string | null }[]>(
-    token,
-    `/repos/${owner}/${repo}/issues/${issue.number}/comments?per_page=100`,
-  )
-
-  if (hasExistingCursorTrigger(comments)) {
-    console.log('Cursor trigger already exists (@cursoragent comment); skipping.')
+  const hasPr = await hasOpenOverridePullRequest({
+    token: githubToken,
+    repository,
+    issueNumber: issue.number,
+  })
+  if (hasPr) {
+    console.log(`Issue #${issue.number} already has an open PR; skipping.`)
     return
   }
 
-  if (hasLegacyBrokenCursorTrigger(comments)) {
-    console.log(
-      'Replacing legacy @cursor / @cursoragent repo= trigger with @cursoragent look into this issue.',
-    )
+  const comments = await githubApi<{ body?: string | null }[]>(
+    githubToken,
+    `/repos/${owner}/${repo}/issues/${issue.number}/comments?per_page=100`,
+  )
+
+  if (!forceRestart && hasExistingAgentLaunch(comments)) {
+    console.log('Cursor agent already launched for this issue; skipping.')
+    return
   }
 
-  const body = buildCursorTriggerCommentBody({
+  const agent = await launchCursorAgent({
+    apiKey: cursorApiKey,
     owner,
     repo,
     issueNumber: issue.number,
+    issueTitle: issue.title,
     activeKind,
     issueBody: issue.body ?? '',
   })
 
-  await githubApi(token, `/repos/${owner}/${repo}/issues/${issue.number}/comments`, {
+  const agentUrl = resolveAgentUrl(agent)
+  console.log(`Launched Cursor agent ${agent.id} for issue #${issue.number}: ${agentUrl}`)
+
+  await githubApi(githubToken, `/repos/${owner}/${repo}/issues/${issue.number}/comments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ body }),
+    body: JSON.stringify({
+      body: buildAgentLaunchedCommentBody({ issueNumber: issue.number, agentUrl }),
+    }),
+  })
+
+  await githubApi(githubToken, `/repos/${owner}/${repo}/issues/${issue.number}/labels`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ labels: [ENQUEUED_LABEL] }),
   })
 }
 
@@ -208,7 +330,7 @@ export const hasOpenOverridePullRequest = async ({
   issueNumber: number
 }) => {
   const [owner, repo] = repository.split('/')
-  const pulls = await githubApi<{ number: number; state: string }[]>(
+  const pulls = await githubApi<{ number: number }[]>(
     token,
     `/repos/${owner}/${repo}/pulls?state=open&per_page=100`,
   )
@@ -230,41 +352,38 @@ export const hasOpenOverridePullRequest = async ({
 }
 
 export const restartSchemaOverrideIssues = async ({
-  token,
+  githubToken,
+  cursorApiKey,
   repository,
   issueNumbers,
 }: {
-  token: string
+  githubToken: string
+  cursorApiKey: string
   repository: string
   issueNumbers?: number[]
 }) => {
-  const issues = await listOpenOverrideIssues({ token, repository, issueNumbers })
+  const issues = await listOpenOverrideIssues({ token: githubToken, repository, issueNumbers })
 
   for (const issue of issues) {
-    const hasPr = await hasOpenOverridePullRequest({ token, repository, issueNumber: issue.number })
-    if (hasPr) {
-      console.log(`Issue #${issue.number} already has an open PR; skipping.`)
-      continue
-    }
-
     await runCursorOverrideAutomation({
-      token,
+      githubToken,
+      cursorApiKey,
       repository,
       event: { issue },
+      forceRestart: true,
     })
   }
 }
 
 const runFromGitHubActions = async () => {
-  const token = process.env.CURSOR_TRIGGER_GITHUB_TOKEN || process.env.GITHUB_TOKEN
-  if (!token) {
-    throw new Error('GITHUB_TOKEN or CURSOR_TRIGGER_GITHUB_TOKEN is required')
+  const githubToken = process.env.GITHUB_TOKEN
+  if (!githubToken) {
+    throw new Error('GITHUB_TOKEN is required')
   }
 
-  if (!process.env.CURSOR_TRIGGER_GITHUB_TOKEN) {
-    console.warn(
-      'CURSOR_TRIGGER_GITHUB_TOKEN is not set; posting as github-actions may not trigger Cursor (use a PAT from a human user).',
-    )
+  const cursorApiKey = process.env.CURSOR_API_KEY
+  if (!cursorApiKey) {
+    throw new Error('CURSOR_API_KEY is required')
   }
 
   const repository = process.env.GITHUB_REPOSITORY
@@ -277,7 +396,8 @@ const runFromGitHubActions = async () => {
       .map((value) => Number.parseInt(value.trim(), 10))
       .filter((value) => Number.isFinite(value))
     await restartSchemaOverrideIssues({
-      token,
+      githubToken,
+      cursorApiKey,
       repository,
       issueNumbers: issueNumbers && issueNumbers.length > 0 ? issueNumbers : undefined,
     })
@@ -291,7 +411,7 @@ const runFromGitHubActions = async () => {
 
   const event = (await Bun.file(eventPath).json()) as IssuesEvent
 
-  await runCursorOverrideAutomation({ token, repository, event })
+  await runCursorOverrideAutomation({ githubToken, cursorApiKey, repository, event })
 }
 
 if (import.meta.main) {
