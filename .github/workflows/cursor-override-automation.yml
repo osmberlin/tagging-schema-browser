@@ -42,6 +42,7 @@ jobs:
       - name: Start Cursor agent via issue comment
         run: bun run .github/scripts/cursorOverrideAutomation.ts
         env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
           # PAT from a human user — github-actions bot comments are ignored by Cursor.
           CURSOR_TRIGGER_GITHUB_TOKEN: ${{ secrets.CURSOR_TRIGGER_GITHUB_TOKEN }}

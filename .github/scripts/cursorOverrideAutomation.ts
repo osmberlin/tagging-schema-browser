@@ -256,7 +256,7 @@ export const restartSchemaOverrideIssues = async ({
 }
 
 const runFromGitHubActions = async () => {
-  const token = process.env.CURSOR_TRIGGER_GITHUB_TOKEN ?? process.env.GITHUB_TOKEN
+  const token = process.env.CURSOR_TRIGGER_GITHUB_TOKEN || process.env.GITHUB_TOKEN
   if (!token) {
     throw new Error('GITHUB_TOKEN or CURSOR_TRIGGER_GITHUB_TOKEN is required')
   }
