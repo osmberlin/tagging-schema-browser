@@ -75,6 +75,11 @@ presets:
       parentId: man_made
       missedFieldIds:
         - material
+  man_made/reservoir_covered:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
   man_made/silo:
     fields:
       parentId: man_made
