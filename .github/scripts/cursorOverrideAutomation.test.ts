@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  buildCursorTriggerCommentBody,
-  hasExistingCursorTrigger,
-  hasLegacyBrokenCursorTrigger,
+  AGENT_LAUNCHED_MARKER,
+  buildAgentLaunchedCommentBody,
+  buildAgentPrompt,
+  hasExistingAgentLaunch,
   listOpenOverrideIssues,
   resolveActiveKindFromTitle,
   resolveSourceBranch,
@@ -28,49 +29,43 @@ describe('cursorOverrideAutomation', () => {
     expect(resolveSourceBranch('no branch here')).toBe('main')
   })
 
-  it('skips when a working trigger comment already exists', () => {
+  it('skips when an agent was already launched for the issue', () => {
     expect(
-      hasExistingCursorTrigger([
-        { body: '@cursoragent look into this issue. Apply override for #138.' },
+      hasExistingAgentLaunch([
+        { body: `${AGENT_LAUNCHED_MARKER} Agent for #138: https://cursor.com/agents?id=bc_abc` },
       ]),
     ).toBe(true)
-    expect(hasExistingCursorTrigger([{ body: 'hello' }])).toBe(false)
+    expect(hasExistingAgentLaunch([{ body: 'hello' }])).toBe(false)
   })
 
-  it('detects legacy broken trigger comments', () => {
-    expect(
-      hasLegacyBrokenCursorTrigger([
-        { body: '@cursor repo=osmberlin/tagging-schema-browser branch=main' },
-      ]),
-    ).toBe(true)
-    expect(
-      hasLegacyBrokenCursorTrigger([
-        { body: '@cursoragent repo=osmberlin/tagging-schema-browser branch=main' },
-      ]),
-    ).toBe(true)
-    expect(hasLegacyBrokenCursorTrigger([{ body: '@cursoragent look into this issue' }])).toBe(
-      false,
-    )
-  })
-
-  it('builds trigger comment with @cursoragent natural language and skill', () => {
-    const body = buildCursorTriggerCommentBody({
+  it('builds agent prompt with skill, issue body, and PR requirements', () => {
+    const prompt = buildAgentPrompt({
       owner: 'osmberlin',
       repo: 'tagging-schema-browser',
       issueNumber: 138,
+      issueTitle: '[missing-inheritance] shop/trade',
       activeKind: 'missing-inheritance',
-      issueBody: '**Source branch:** `main`',
+      issueBody: '**Source branch:** `main`\nPreset: `shop/trade`',
     })
 
-    expect(body).toContain('@cursoragent look into this issue')
-    expect(body).not.toContain('@cursor repo=')
-    expect(body).not.toContain('repo=osmberlin/tagging-schema-browser')
-    expect(body).toContain('Work in `osmberlin/tagging-schema-browser` on branch `main`')
-    expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
-    expect(body).toContain('Open a PR ready for review (not draft)')
-    expect(body).toContain('Closes #138')
-    expect(body).toContain('schema-override')
-    expect(body).toContain('[missing-inheritance]')
+    expect(prompt).toContain('issue #138')
+    expect(prompt).toContain('.agents/skills/apply-schema-override/SKILL.md')
+    expect(prompt).toContain('Closes #138')
+    expect(prompt).toContain('schema-override')
+    expect(prompt).toContain('ready for review (not draft)')
+    expect(prompt).toContain('Preset: `shop/trade`')
+    expect(prompt).toContain('Base branch: main')
+    expect(prompt).not.toContain('@cursoragent')
+  })
+
+  it('builds launched comment with agent URL', () => {
+    const body = buildAgentLaunchedCommentBody({
+      issueNumber: 138,
+      agentUrl: 'https://cursor.com/agents?id=bc_abc',
+    })
+
+    expect(body).toContain(AGENT_LAUNCHED_MARKER)
+    expect(body).toContain('https://cursor.com/agents?id=bc_abc')
   })
 
   it('lists open override issues without pull_request sidecar', async () => {
@@ -94,7 +89,7 @@ describe('cursorOverrideAutomation', () => {
     fetchMock.mockRestore()
   })
 
-  it('restarts triggers for override issues without open PRs', async () => {
+  it('restarts agents via Cloud Agents API for override issues without open PRs', async () => {
     const requestUrl = (input: RequestInfo | URL) => {
       if (typeof input === 'string') return input
       if (input instanceof URL) return input.href
@@ -107,7 +102,9 @@ describe('cursorOverrideAutomation', () => {
 
       if (url.includes('/issues?state=open')) {
         return new Response(
-          JSON.stringify([{ number: 151, title: '[missing-inheritance] foo', body: '' }]),
+          JSON.stringify([
+            { number: 151, title: '[missing-inheritance] foo', body: 'Preset: `x`' },
+          ]),
           { status: 200 },
         )
       }
@@ -117,11 +114,16 @@ describe('cursorOverrideAutomation', () => {
       }
 
       if (url.includes('/issues/151/comments') && method === 'GET') {
+        return new Response(JSON.stringify([]), { status: 200 })
+      }
+
+      if (url === 'https://api.cursor.com/v0/agents' && method === 'POST') {
         return new Response(
-          JSON.stringify([{ body: '@cursor repo=osmberlin/tagging-schema-browser' }]),
-          {
-            status: 200,
-          },
+          JSON.stringify({
+            id: 'bc_test',
+            target: { url: 'https://cursor.com/agents?id=bc_test' },
+          }),
+          { status: 200 },
         )
       }
 
@@ -129,22 +131,29 @@ describe('cursorOverrideAutomation', () => {
         return new Response(JSON.stringify({ id: 1 }), { status: 201 })
       }
 
+      if (url.includes('/issues/151/labels') && method === 'POST') {
+        return new Response(JSON.stringify([]), { status: 200 })
+      }
+
       throw new Error(`Unexpected fetch: ${method} ${url}`)
     })
 
     await restartSchemaOverrideIssues({
-      token: 'token',
+      githubToken: 'gh-token',
+      cursorApiKey: 'cursor-key',
       repository: 'osmberlin/tagging-schema-browser',
     })
 
-    const postCall = fetchMock.mock.calls.find(
-      ([url, init]) => requestUrl(url).includes('/issues/151/comments') && init?.method === 'POST',
+    const launchCall = fetchMock.mock.calls.find(
+      ([url, init]) => url === 'https://api.cursor.com/v0/agents' && init?.method === 'POST',
     )
-    expect(postCall).toBeTruthy()
-    const requestBody = postCall?.[1]?.body
+    expect(launchCall).toBeTruthy()
+    const requestBody = launchCall?.[1]?.body
     expect(typeof requestBody).toBe('string')
-    const body = JSON.parse(requestBody as string)
-    expect(body.body).toContain('@cursoragent look into this issue')
+    const payload = JSON.parse(requestBody as string)
+    expect(payload.prompt.text).toContain('issue #151')
+    expect(payload.target.autoCreatePr).toBe(true)
+    expect(payload.source.repository).toBe('https://github.com/osmberlin/tagging-schema-browser')
 
     fetchMock.mockRestore()
   })
