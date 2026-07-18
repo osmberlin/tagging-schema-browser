@@ -32,6 +32,7 @@ jobs:
       - name: Re-post Cursor agent triggers on override issues
         run: bun run .github/scripts/cursorOverrideAutomation.ts
         env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
           CURSOR_TRIGGER_GITHUB_TOKEN: ${{ secrets.CURSOR_TRIGGER_GITHUB_TOKEN }}
           RESTART_SCHEMA_OVERRIDE_ISSUES: 'true'
