@@ -1,35 +1,33 @@
-# Triggers a Cursor cloud agent when a schema override issue is opened.
+# Launch a Cursor cloud agent when a schema override issue is opened.
 # Issue title must start with [missing-inheritance] or [risky-typecombo].
+# Manual batch restart: Actions → Cursor override automation → Run workflow.
 # See .agents/skills/apply-schema-override/SKILL.md
 name: Cursor override automation
 
 on:
   issues:
-    types: [opened, edited, reopened]
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/cursor-override-automation.yml'
-      - '.github/scripts/cursorOverrideAutomation.ts'
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_numbers:
+        description: Comma-separated issue numbers (empty = all open override issues without an open PR)
+        required: false
+        type: string
 
 permissions:
   issues: write
   pull-requests: read
 
 jobs:
-  validate-workflow-on-push:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Workflow file check (push validation only)
-        run: echo "Cursor override automation runs on issues whose title starts with [missing-inheritance] or [risky-typecombo]."
-
-  launch-cursor-agent:
+  launch-agent:
     if: |
-      github.event_name == 'issues' && (
-        startsWith(github.event.issue.title, '[missing-inheritance]') ||
-        startsWith(github.event.issue.title, '[risky-typecombo]')
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issues' &&
+        (
+          startsWith(github.event.issue.title, '[missing-inheritance]') ||
+          startsWith(github.event.issue.title, '[risky-typecombo]')
+        )
       )
     runs-on: ubuntu-latest
     steps:
@@ -46,15 +44,5 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-
-  issue-noop:
-    if: |
-      github.event_name == 'issues' && !(
-        startsWith(github.event.issue.title, '[missing-inheritance]') ||
-        startsWith(github.event.issue.title, '[risky-typecombo]') ||
-        startsWith(github.event.issue.title, '[schema-override]')
-      )
-    runs-on: ubuntu-latest
-    steps:
-      - name: No-op for other issue events
-        run: echo "Issue event ignored (not a Cursor override trigger)."
+          RESTART_SCHEMA_OVERRIDE_ISSUES: ${{ github.event_name == 'workflow_dispatch' }}
+          ISSUE_NUMBERS: ${{ github.event.inputs.issue_numbers }}

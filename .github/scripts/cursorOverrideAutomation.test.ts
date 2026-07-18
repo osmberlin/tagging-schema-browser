@@ -3,7 +3,8 @@ import {
   AGENT_LAUNCHED_MARKER,
   buildAgentLaunchedCommentBody,
   buildAgentPrompt,
-  hasExistingAgentLaunch,
+  ENQUEUED_LABEL,
+  hasEnqueuedLabel,
   listOpenOverrideIssues,
   resolveActiveKindFromTitle,
   resolveSourceBranch,
@@ -29,13 +30,9 @@ describe('cursorOverrideAutomation', () => {
     expect(resolveSourceBranch('no branch here')).toBe('main')
   })
 
-  it('skips when an agent was already launched for the issue', () => {
-    expect(
-      hasExistingAgentLaunch([
-        { body: `${AGENT_LAUNCHED_MARKER} Agent for #138: https://cursor.com/agents?id=bc_abc` },
-      ]),
-    ).toBe(true)
-    expect(hasExistingAgentLaunch([{ body: 'hello' }])).toBe(false)
+  it('skips when the enqueued label is already on the issue', () => {
+    expect(hasEnqueuedLabel([{ name: ENQUEUED_LABEL }])).toBe(true)
+    expect(hasEnqueuedLabel([{ name: 'bug' }])).toBe(false)
   })
 
   it('builds agent prompt with skill, issue body, and PR requirements', () => {
@@ -103,7 +100,7 @@ describe('cursorOverrideAutomation', () => {
       if (url.includes('/issues?state=open')) {
         return new Response(
           JSON.stringify([
-            { number: 151, title: '[missing-inheritance] foo', body: 'Preset: `x`' },
+            { number: 151, title: '[missing-inheritance] foo', body: 'Preset: `x`', labels: [] },
           ]),
           { status: 200 },
         )
@@ -113,8 +110,8 @@ describe('cursorOverrideAutomation', () => {
         return new Response(JSON.stringify([]), { status: 200 })
       }
 
-      if (url.includes('/issues/151/comments') && method === 'GET') {
-        return new Response(JSON.stringify([]), { status: 200 })
+      if (url.includes('/issues/151/comments') && method === 'POST') {
+        return new Response(JSON.stringify({ id: 1 }), { status: 201 })
       }
 
       if (url === 'https://api.cursor.com/v0/agents' && method === 'POST') {
@@ -125,10 +122,6 @@ describe('cursorOverrideAutomation', () => {
           }),
           { status: 200 },
         )
-      }
-
-      if (url.includes('/issues/151/comments') && method === 'POST') {
-        return new Response(JSON.stringify({ id: 1 }), { status: 201 })
       }
 
       if (url.includes('/issues/151/labels') && method === 'POST') {

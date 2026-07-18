@@ -34,11 +34,10 @@ describe('buildSchemaOverrideIssueUrl', () => {
     expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
     expect(body).toContain('Tagging Schema Browser')
-    expect(body).toContain('apply-schema-override/SKILL.md')
+    expect(body).toContain('enqueue a Cursor cloud agent')
     expect(body).not.toContain('> **You**')
+    expect(body).not.toContain('apply-schema-override/SKILL.md')
     expect(body).toContain('man_made/crane/untyped_crane')
-    expect(body).toContain('.agents/skills/apply-schema-override/SKILL.md')
-    expect(body).toContain('[missing-inheritance]')
     expect(body).toContain('```yaml')
     expect(url.length).toBeLessThanOrEqual(7500)
   })
@@ -109,7 +108,7 @@ describe('buildSchemaOverrideIssueUrl', () => {
     )
     expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
-    expect(body).toContain('apply-schema-override/SKILL.md')
+    expect(body).toContain('enqueue a Cursor cloud agent')
     expect(body).toContain('- traffic_calming')
   })
 })

@@ -3,9 +3,10 @@ const GHA_ATTRIBUTION =
 
 export const CURSOR_AGENTS_API_URL = 'https://api.cursor.com/v0/agents'
 
-/** Issue comments with this marker mean stage-one already launched an agent. */
+/** Posted on the issue after a successful Cloud Agents API launch. */
 export const AGENT_LAUNCHED_MARKER = '**[Cursor Agent API]**'
 
+/** Applied when stage-one enqueues an agent; used for deduplication. */
 export const ENQUEUED_LABEL = 'schema-override-agent-enqueued'
 
 /** Mandatory issue title prefixes — users may edit the title after the closing `]`. */
@@ -35,8 +36,8 @@ export const resolveActiveKindFromTitle = (title: string): OverrideTriggerKind |
   return null
 }
 
-export const hasExistingAgentLaunch = (comments: { body?: string | null }[]) =>
-  comments.some((comment) => comment.body?.includes(AGENT_LAUNCHED_MARKER))
+export const hasEnqueuedLabel = (labels: { name: string }[]) =>
+  labels.some((label) => label.name === ENQUEUED_LABEL)
 
 export const resolveSourceBranch = (body: string) => {
   const quoted = body.match(/\*\*Source branch:\*\*\s*`([^`]+)`/)
@@ -242,13 +243,17 @@ export const runCursorOverrideAutomation = async ({
     return
   }
 
-  const comments = await githubApi<{ body?: string | null }[]>(
-    githubToken,
-    `/repos/${owner}/${repo}/issues/${issue.number}/comments?per_page=100`,
-  )
+  const labels =
+    issue.labels ??
+    (
+      await githubApi<{ labels: { name: string }[] }>(
+        githubToken,
+        `/repos/${owner}/${repo}/issues/${issue.number}`,
+      )
+    ).labels
 
-  if (!forceRestart && hasExistingAgentLaunch(comments)) {
-    console.log('Cursor agent already launched for this issue; skipping.')
+  if (!forceRestart && hasEnqueuedLabel(labels)) {
+    console.log(`Issue #${issue.number} already has ${ENQUEUED_LABEL}; skipping.`)
     return
   }
 
