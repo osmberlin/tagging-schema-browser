@@ -150,3 +150,8 @@ presets:
       parentId: waterway
       missedFieldIds:
         - name
+  historic/castle:
+    fields:
+      parentId: historic
+      missedFieldIds:
+        - inscription
