@@ -44,6 +44,11 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
+  man_made/carpet_hanger:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
   aerialway/pylon:
     fields:
       parentId: aerialway
