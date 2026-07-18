@@ -54,6 +54,11 @@ presets:
       parentId: type/route
       missedFieldIds:
         - network/type
+  type/route/bus:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
   amenity/shelter/lean_to:
     fields:
       parentId: amenity/shelter
