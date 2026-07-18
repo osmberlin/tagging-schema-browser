@@ -158,6 +158,103 @@ export const runCursorOverrideAutomation = async ({
   })
 }
 
+type GitHubIssue = {
+  number: number
+  title: string
+  body: string | null
+  pull_request?: unknown
+}
+
+export const listOpenOverrideIssues = async ({
+  token,
+  repository,
+  issueNumbers,
+}: {
+  token: string
+  repository: string
+  issueNumbers?: number[]
+}) => {
+  const [owner, repo] = repository.split('/')
+  if (!owner || !repo) {
+    throw new Error(`Invalid GITHUB_REPOSITORY: ${repository}`)
+  }
+
+  if (issueNumbers && issueNumbers.length > 0) {
+    const issues = await Promise.all(
+      issueNumbers.map((number) =>
+        githubApi<GitHubIssue>(token, `/repos/${owner}/${repo}/issues/${number}`),
+      ),
+    )
+    return issues.filter((issue) => resolveActiveKindFromTitle(issue.title))
+  }
+
+  const issues = await githubApi<GitHubIssue[]>(
+    token,
+    `/repos/${owner}/${repo}/issues?state=open&per_page=100`,
+  )
+
+  return issues
+    .filter((issue) => !issue.pull_request)
+    .filter((issue) => resolveActiveKindFromTitle(issue.title))
+}
+
+export const hasOpenOverridePullRequest = async ({
+  token,
+  repository,
+  issueNumber,
+}: {
+  token: string
+  repository: string
+  issueNumber: number
+}) => {
+  const [owner, repo] = repository.split('/')
+  const pulls = await githubApi<{ number: number; state: string }[]>(
+    token,
+    `/repos/${owner}/${repo}/pulls?state=open&per_page=100`,
+  )
+
+  for (const pull of pulls) {
+    const body = await githubApi<{ body: string | null }>(
+      token,
+      `/repos/${owner}/${repo}/pulls/${pull.number}`,
+    )
+    if (
+      body.body?.includes(`Closes #${issueNumber}`) ||
+      body.body?.includes(`closes #${issueNumber}`)
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+export const restartSchemaOverrideIssues = async ({
+  token,
+  repository,
+  issueNumbers,
+}: {
+  token: string
+  repository: string
+  issueNumbers?: number[]
+}) => {
+  const issues = await listOpenOverrideIssues({ token, repository, issueNumbers })
+
+  for (const issue of issues) {
+    const hasPr = await hasOpenOverridePullRequest({ token, repository, issueNumber: issue.number })
+    if (hasPr) {
+      console.log(`Issue #${issue.number} already has an open PR; skipping.`)
+      continue
+    }
+
+    await runCursorOverrideAutomation({
+      token,
+      repository,
+      event: { issue },
+    })
+  }
+}
+
 const runFromGitHubActions = async () => {
   const token = process.env.CURSOR_TRIGGER_GITHUB_TOKEN ?? process.env.GITHUB_TOKEN
   if (!token) {
@@ -170,14 +267,26 @@ const runFromGitHubActions = async () => {
     )
   }
 
-  const eventPath = process.env.GITHUB_EVENT_PATH
-  if (!eventPath) {
-    throw new Error('GITHUB_EVENT_PATH is required')
-  }
-
   const repository = process.env.GITHUB_REPOSITORY
   if (!repository) {
     throw new Error('GITHUB_REPOSITORY is required')
+  }
+
+  if (process.env.RESTART_SCHEMA_OVERRIDE_ISSUES === 'true') {
+    const issueNumbers = process.env.ISSUE_NUMBERS?.split(',')
+      .map((value) => Number.parseInt(value.trim(), 10))
+      .filter((value) => Number.isFinite(value))
+    await restartSchemaOverrideIssues({
+      token,
+      repository,
+      issueNumbers: issueNumbers && issueNumbers.length > 0 ? issueNumbers : undefined,
+    })
+    return
+  }
+
+  const eventPath = process.env.GITHUB_EVENT_PATH
+  if (!eventPath) {
+    throw new Error('GITHUB_EVENT_PATH is required')
   }
 
   const event = (await Bun.file(eventPath).json()) as IssuesEvent
