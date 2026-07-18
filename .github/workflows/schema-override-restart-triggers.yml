@@ -8,6 +8,11 @@ on:
         description: Comma-separated issue numbers (empty = all open override issues without an open PR)
         required: false
         type: string
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/triggers/restart-schema-override-triggers'
 
 permissions:
   issues: write
