@@ -96,6 +96,11 @@ presets:
       parentId: historic
       missedFieldIds:
         - inscription
+  historic/city_gate:
+    fields:
+      parentId: historic
+      missedFieldIds:
+        - inscription
   historic/memorial/blue_plaque-GB-IE:
     fields:
       parentId: historic/memorial
