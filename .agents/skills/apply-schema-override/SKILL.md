@@ -73,7 +73,7 @@ This runs `validate-inheritance-overrides` and `validate-risky-typecombo-overrid
 
 ## 6. Auto-merge
 
-CI must pass. The `schema-override-auto-merge` workflow rebases onto `main`, auto-resolves additive conflicts in `src/data/*-overrides.yaml` when parallel override PRs land, then **rebase-merges** eligible PRs from Cursor agents so each commit lands on `main` with a clear message (typically one apply commit, optionally one stale-cleanup commit). Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
+CI must pass. Only one `schema-override` PR is open at a time so parallel agents do not conflict on the same YAML file. When an override PR merges, **Cursor override automation** launches the next queued issue. The `schema-override-auto-merge` workflow updates the branch from `main`, then **rebase-merges** eligible PRs once checks pass (YAML-only override change; typically 1–2 commits). Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
 
 ## Attribution
 

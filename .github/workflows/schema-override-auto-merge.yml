@@ -16,6 +16,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: schema-override-auto-merge-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
@@ -89,36 +93,13 @@ jobs:
           gh pr ready "$PR_NUMBER" --repo "${{ github.repository }}"
           gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override** — marked draft PR ready for review so auto-merge can proceed after CI.'
 
-      - uses: actions/checkout@v7
+      - name: Update branch from main
         if: steps.files.outputs.eligible == 'true'
-        with:
-          fetch-depth: 0
-          ref: refs/pull/${{ steps.pr.outputs.number }}/head
-
-      - name: Setup Bun
-        if: steps.files.outputs.eligible == 'true'
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: package.json
-
-      - name: Rebase onto main and resolve override conflicts
-        id: rebase
-        if: steps.files.outputs.eligible == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ steps.pr.outputs.number }}
-        run: bun run .github/scripts/rebaseSchemaOverridePr.ts
-
-      - name: Comment when conflicts were resolved
-        if: >-
-          steps.files.outputs.eligible == 'true' &&
-          steps.rebase.outputs.reason == 'rebased'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override** — rebased onto `main` and merged parallel YAML override entries automatically. CI will rerun, then auto-merge will continue.'
+          gh pr update-branch "$PR_NUMBER" --repo "${{ github.repository }}" --rebase
 
       - name: Wait for CI, then rebase-merge
         id: automerge
@@ -157,4 +138,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
-          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override auto-merge failed** — CI may still be running, merge conflicts may remain, or checks are red. Re-run **Schema override auto-merge** from Actions after fixing, or resolve conflicts manually.'
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body '🤖 **Schema override auto-merge failed** — CI may still be running, the branch may be behind `main`, or checks are red. Re-run **Schema override auto-merge** from Actions after the current override PR has merged.'
