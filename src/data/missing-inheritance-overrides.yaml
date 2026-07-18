@@ -39,6 +39,10 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
   man_made/breakwater:
     fields:
       parentId: man_made
