@@ -243,14 +243,10 @@ export const runCursorOverrideAutomation = async ({
     return
   }
 
-  const labels =
-    issue.labels ??
-    (
-      await githubApi<{ labels: { name: string }[] }>(
-        githubToken,
-        `/repos/${owner}/${repo}/issues/${issue.number}`,
-      )
-    ).labels
+  const { labels } = await githubApi<{ labels: { name: string }[] }>(
+    githubToken,
+    `/repos/${owner}/${repo}/issues/${issue.number}`,
+  )
 
   if (!forceRestart && hasEnqueuedLabel(labels)) {
     console.log(`Issue #${issue.number} already has ${ENQUEUED_LABEL}; skipping.`)

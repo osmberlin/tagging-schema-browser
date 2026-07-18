@@ -110,6 +110,18 @@ describe('cursorOverrideAutomation', () => {
         return new Response(JSON.stringify([]), { status: 200 })
       }
 
+      if (url.includes('/issues/151') && method === 'GET' && !url.includes('/comments')) {
+        return new Response(
+          JSON.stringify({
+            number: 151,
+            title: '[missing-inheritance] foo',
+            body: 'Preset: `x`',
+            labels: [],
+          }),
+          { status: 200 },
+        )
+      }
+
       if (url.includes('/issues/151/comments') && method === 'POST') {
         return new Response(JSON.stringify({ id: 1 }), { status: 201 })
       }
