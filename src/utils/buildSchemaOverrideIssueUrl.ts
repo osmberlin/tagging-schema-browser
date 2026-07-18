@@ -27,14 +27,12 @@ const KIND_CONFIG = {
     defaultTitleSuffix: '— intentional missing inheritance',
     removeStaleTitleSuffix: '— remove stale override',
     overrideFile: 'src/data/missing-inheritance-overrides.yaml',
-    skillPath: '.agents/skills/apply-schema-override/SKILL.md',
   },
   'risky-typecombo': {
     titlePrefix: '[risky-typecombo]',
     defaultTitleSuffix: '— intentional risky typeCombo',
     removeStaleTitleSuffix: '— remove stale override',
     overrideFile: 'src/data/risky-typecombo-overrides.yaml',
-    skillPath: '.agents/skills/apply-schema-override/SKILL.md',
   },
 } as const satisfies Record<
   SchemaOverrideKind,
@@ -43,7 +41,6 @@ const KIND_CONFIG = {
     defaultTitleSuffix: string
     removeStaleTitleSuffix: string
     overrideFile: string
-    skillPath: string
   }
 >
 
@@ -66,7 +63,7 @@ function introSection(
   const action = removeStaleOnly ? 'Remove stale override' : 'Record intentional override'
   return [
     `${action} from the Tagging Schema Browser.`,
-    `Keep the \`${config.titlePrefix}\` title prefix. Submit to start a Cursor agent PR (\`${config.skillPath}\`).`,
+    `Keep the \`${config.titlePrefix}\` title prefix. Submit to enqueue a Cursor cloud agent that opens a PR for this override.`,
     '',
   ].join('\n')
 }

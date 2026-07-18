@@ -11,8 +11,8 @@ Use when a GitHub issue was opened from the Tagging Schema Browser with a title 
 `[missing-inheritance]` or `[risky-typecombo]`.
 
 GitHub Actions launches a Cursor cloud agent via the Cloud Agents API when the issue is
-opened (see `.github/workflows/cursor-override-automation.yml`). The issue body is passed
-in the agent prompt — you do not need a working `@cursoragent` comment on the issue.
+opened (see `.github/workflows/cursor-override-automation.yml`). The issue body is included
+in the agent prompt.
 
 ## 1. Parse the issue
 
