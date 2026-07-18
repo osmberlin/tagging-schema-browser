@@ -147,6 +147,12 @@ presets:
       parentId: barrier
       missedFieldIds:
         - level
+  building/construction:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - building/levels
+        - height
   education/college:
     fields:
       parentId: education
