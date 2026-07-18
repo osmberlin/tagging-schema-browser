@@ -18,12 +18,98 @@
 #         - building_area_yes
 version: 1
 presets:
-  tourism/information/terminal:
+  aerialway/pylon:
     fields:
-      parentId: tourism/information
+      parentId: aerialway
       missedFieldIds:
-        - address
-        - building_area_yes
+        - name
+  amenity/shelter/lean_to:
+    fields:
+      parentId: amenity/shelter
+      missedFieldIds:
+        - bench
+        - bin
+  barrier/jersey_barrier:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/swing_gate:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  building/construction:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - building/levels
+        - height
+  education/college:
+    fields:
+      parentId: education
+      missedFieldIds:
+        - building_area
+    moreFields:
+      parentId: education
+      missedFieldIds:
+        - branch_brand
+        - brand
+        - building/levels_building
+        - height_building
+  highway/footway/access_aisle:
+    fields:
+      parentId: highway/footway
+      missedFieldIds:
+        - name
+        - tunnel/name
+    moreFields:
+      parentId: highway/footway
+      missedFieldIds:
+        - bridge/name
+        - bridge/ref
+        - informal
+        - not/name
+        - oneway
+  highway/speed_camera:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/stop:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/street_lamp:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/toll_gantry:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  historic/castle:
+    fields:
+      parentId: historic
+      missedFieldIds:
+        - inscription
+  historic/memorial/blue_plaque-GB-IE:
+    fields:
+      parentId: historic/memorial
+      missedFieldIds:
+        - material
+    moreFields:
+      parentId: historic/memorial
+      missedFieldIds:
+        - gnis/feature_id-US
+  leisure/fitness_station:
+    fields:
+      parentId: leisure
+      missedFieldIds:
+        - name
   man_made/adit:
     moreFields:
       parentId: man_made
@@ -58,59 +144,9 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
-  aerialway/pylon:
-    fields:
-      parentId: aerialway
-      missedFieldIds:
-        - name
-  type/route/aerialway:
-    fields:
-      parentId: type/route
-      missedFieldIds:
-        - network/type
-  type/route/bus:
-    fields:
-      parentId: type/route
-      missedFieldIds:
-        - network/type
-  amenity/shelter/lean_to:
-    fields:
-      parentId: amenity/shelter
-      missedFieldIds:
-        - bench
-        - bin
-  barrier/jersey_barrier:
-    moreFields:
-      parentId: barrier
-      missedFieldIds:
-        - level
   man_made/manhole:
     fields:
       parentId: man_made
-      missedFieldIds:
-        - name
-  leisure/fitness_station:
-    fields:
-      parentId: leisure
-      missedFieldIds:
-        - name
-  highway/footway/access_aisle:
-    fields:
-      parentId: highway/footway
-      missedFieldIds:
-        - name
-        - tunnel/name
-    moreFields:
-      parentId: highway/footway
-      missedFieldIds:
-        - bridge/name
-        - bridge/ref
-        - informal
-        - not/name
-        - oneway
-  highway/toll_gantry:
-    fields:
-      parentId: highway
       missedFieldIds:
         - name
   man_made/petroleum_well:
@@ -132,39 +168,9 @@ presets:
       parentId: man_made
       missedFieldIds:
         - material
-  power/plant/source/solar/photovoltaic:
-    fields:
-      parentId: power/plant/source/solar
-      missedFieldIds:
-        - plant/output
-  highway/speed_camera:
-    fields:
-      parentId: highway
-      missedFieldIds:
-        - name
-  highway/stop:
-    fields:
-      parentId: highway
-      missedFieldIds:
-        - name
   man_made/storage_tank:
     fields:
       parentId: man_made
-      missedFieldIds:
-        - name
-  natural/water/stream:
-    fields:
-      parentId: natural/water
-      missedFieldIds:
-        - name
-  man_made/surveillance:
-    fields:
-      parentId: man_made
-      missedFieldIds:
-        - name
-  highway/street_lamp:
-    fields:
-      parentId: highway
       missedFieldIds:
         - name
   man_made/street_cabinet:
@@ -176,6 +182,11 @@ presets:
       parentId: man_made
       missedFieldIds:
         - material
+  man_made/surveillance:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
   man_made/video_wall:
     fields:
       parentId: man_made
@@ -185,36 +196,34 @@ presets:
       parentId: man_made
       missedFieldIds:
         - material
-  barrier/swing_gate:
-    moreFields:
-      parentId: barrier
-      missedFieldIds:
-        - level
-  building/construction:
+  natural/water/stream:
     fields:
-      parentId: building
+      parentId: natural/water
       missedFieldIds:
-        - building/levels
-        - height
-  education/college:
+        - name
+  power/plant/source/solar/photovoltaic:
     fields:
-      parentId: education
+      parentId: power/plant/source/solar
       missedFieldIds:
-        - building_area
-    moreFields:
-      parentId: education
+        - plant/output
+  tourism/information/terminal:
+    fields:
+      parentId: tourism/information
       missedFieldIds:
-        - branch_brand
-        - brand
-        - building/levels_building
-        - height_building
+        - address
+        - building_area_yes
+  type/route/aerialway:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/bus:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
   waterway/ditch:
     fields:
       parentId: waterway
       missedFieldIds:
         - name
-  historic/castle:
-    fields:
-      parentId: historic
-      missedFieldIds:
-        - inscription
