@@ -145,3 +145,8 @@ presets:
         - brand
         - building/levels_building
         - height_building
+  waterway/ditch:
+    fields:
+      parentId: waterway
+      missedFieldIds:
+        - name
