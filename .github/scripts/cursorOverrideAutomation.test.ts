@@ -5,10 +5,10 @@ import {
   buildAgentPrompt,
   ENQUEUED_LABEL,
   hasEnqueuedLabel,
+  launchNextSchemaOverrideIssue,
   listOpenOverrideIssues,
   resolveActiveKindFromTitle,
   resolveSourceBranch,
-  restartSchemaOverrideIssues,
 } from '../../.github/scripts/cursorOverrideAutomation.ts'
 
 describe('cursorOverrideAutomation', () => {
@@ -143,7 +143,7 @@ describe('cursorOverrideAutomation', () => {
       throw new Error(`Unexpected fetch: ${method} ${url}`)
     })
 
-    await restartSchemaOverrideIssues({
+    await launchNextSchemaOverrideIssue({
       githubToken: 'gh-token',
       cursorApiKey: 'cursor-key',
       repository: 'osmberlin/tagging-schema-browser',
@@ -160,6 +160,35 @@ describe('cursorOverrideAutomation', () => {
     expect(payload.target.autoCreatePr).toBe(true)
     expect(payload.source.repository).toBe('https://github.com/osmberlin/tagging-schema-browser')
 
+    fetchMock.mockRestore()
+  })
+
+  it('does not launch when another schema-override PR is already open', async () => {
+    const requestUrl = (input: RequestInfo | URL) => {
+      if (typeof input === 'string') return input
+      if (input instanceof URL) return input.href
+      return input.url
+    }
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = requestUrl(input)
+
+      if (url.includes('/issues?state=open&labels=schema-override')) {
+        return new Response(JSON.stringify([{ number: 42, pull_request: {} }]), { status: 200 })
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+
+    await launchNextSchemaOverrideIssue({
+      githubToken: 'gh-token',
+      cursorApiKey: 'cursor-key',
+      repository: 'osmberlin/tagging-schema-browser',
+    })
+
+    expect(fetchMock.mock.calls.some(([url]) => requestUrl(url).includes('api.cursor.com'))).toBe(
+      false,
+    )
     fetchMock.mockRestore()
   })
 })

@@ -243,6 +243,17 @@ export const runCursorOverrideAutomation = async ({
     return
   }
 
+  const openSchemaOverridePrs = await listOpenSchemaOverridePullRequests({
+    token: githubToken,
+    repository,
+  })
+  if (openSchemaOverridePrs.length > 0) {
+    console.log(
+      `Schema override PR #${openSchemaOverridePrs[0]?.number} is open; queueing issue #${issue.number}.`,
+    )
+    return
+  }
+
   const { labels } = await githubApi<{ labels: { name: string }[] }>(
     githubToken,
     `/repos/${owner}/${repo}/issues/${issue.number}`,
@@ -321,6 +332,26 @@ export const listOpenOverrideIssues = async ({
     .filter((issue) => resolveActiveKindFromTitle(issue.title))
 }
 
+export const listOpenSchemaOverridePullRequests = async ({
+  token,
+  repository,
+}: {
+  token: string
+  repository: string
+}) => {
+  const [owner, repo] = repository.split('/')
+  if (!owner || !repo) {
+    throw new Error(`Invalid GITHUB_REPOSITORY: ${repository}`)
+  }
+
+  const issues = await githubApi<GitHubIssue[]>(
+    token,
+    `/repos/${owner}/${repo}/issues?state=open&labels=schema-override&per_page=100`,
+  )
+
+  return issues.filter((issue) => issue.pull_request)
+}
+
 export const hasOpenOverridePullRequest = async ({
   token,
   repository,
@@ -352,6 +383,54 @@ export const hasOpenOverridePullRequest = async ({
   return false
 }
 
+export const launchNextSchemaOverrideIssue = async ({
+  githubToken,
+  cursorApiKey,
+  repository,
+  issueNumbers,
+}: {
+  githubToken: string
+  cursorApiKey: string
+  repository: string
+  issueNumbers?: number[]
+}) => {
+  const openSchemaOverridePrs = await listOpenSchemaOverridePullRequests({
+    token: githubToken,
+    repository,
+  })
+  if (openSchemaOverridePrs.length > 0) {
+    console.log(
+      `Schema override PR #${openSchemaOverridePrs[0]?.number} is still open; not launching the next issue.`,
+    )
+    return
+  }
+
+  const issues = await listOpenOverrideIssues({ token: githubToken, repository, issueNumbers })
+  const pendingIssues = issues
+    .filter((issue) => issue.number)
+    .sort((left, right) => left.number - right.number)
+
+  for (const issue of pendingIssues) {
+    const hasPr = await hasOpenOverridePullRequest({
+      token: githubToken,
+      repository,
+      issueNumber: issue.number,
+    })
+    if (hasPr) continue
+
+    await runCursorOverrideAutomation({
+      githubToken,
+      cursorApiKey,
+      repository,
+      event: { issue },
+      forceRestart: true,
+    })
+    return
+  }
+
+  console.log('No pending schema override issues to launch.')
+}
+
 export const restartSchemaOverrideIssues = async ({
   githubToken,
   cursorApiKey,
@@ -363,16 +442,19 @@ export const restartSchemaOverrideIssues = async ({
   repository: string
   issueNumbers?: number[]
 }) => {
-  const issues = await listOpenOverrideIssues({ token: githubToken, repository, issueNumbers })
+  await launchNextSchemaOverrideIssue({
+    githubToken,
+    cursorApiKey,
+    repository,
+    issueNumbers,
+  })
+}
 
-  for (const issue of issues) {
-    await runCursorOverrideAutomation({
-      githubToken,
-      cursorApiKey,
-      repository,
-      event: { issue },
-      forceRestart: true,
-    })
+type PullRequestClosedEvent = {
+  action: 'closed'
+  pull_request: {
+    merged: boolean
+    labels?: { name: string }[]
   }
 }
 
@@ -392,11 +474,14 @@ const runFromGitHubActions = async () => {
     throw new Error('GITHUB_REPOSITORY is required')
   }
 
-  if (process.env.RESTART_SCHEMA_OVERRIDE_ISSUES === 'true') {
+  if (
+    process.env.RESTART_SCHEMA_OVERRIDE_ISSUES === 'true' ||
+    process.env.LAUNCH_NEXT_SCHEMA_OVERRIDE === 'true'
+  ) {
     const issueNumbers = process.env.ISSUE_NUMBERS?.split(',')
       .map((value) => Number.parseInt(value.trim(), 10))
       .filter((value) => Number.isFinite(value))
-    await restartSchemaOverrideIssues({
+    await launchNextSchemaOverrideIssue({
       githubToken,
       cursorApiKey,
       repository,
@@ -410,9 +495,21 @@ const runFromGitHubActions = async () => {
     throw new Error('GITHUB_EVENT_PATH is required')
   }
 
-  const event = (await Bun.file(eventPath).json()) as IssuesEvent
+  const event = (await Bun.file(eventPath).json()) as IssuesEvent | PullRequestClosedEvent
 
-  await runCursorOverrideAutomation({ githubToken, cursorApiKey, repository, event })
+  if (
+    'pull_request' in event &&
+    event.action === 'closed' &&
+    event.pull_request.merged &&
+    event.pull_request.labels?.some((label) => label.name === 'schema-override')
+  ) {
+    await launchNextSchemaOverrideIssue({ githubToken, cursorApiKey, repository })
+    return
+  }
+
+  if ('issue' in event) {
+    await runCursorOverrideAutomation({ githubToken, cursorApiKey, repository, event })
+  }
 }
 
 if (import.meta.main) {
