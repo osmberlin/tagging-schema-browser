@@ -187,6 +187,16 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
+  man_made/tower/cooling:
+    fields:
+      parentId: man_made/tower
+      missedFieldIds:
+        - tower/construction
+    moreFields:
+      parentId: man_made/tower
+      missedFieldIds:
+        - architect
+        - gnis/feature_id-US
   man_made/video_wall:
     fields:
       parentId: man_made
