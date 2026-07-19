@@ -530,11 +530,6 @@ const runFromGitHubActions = async () => {
     throw new Error('GITHUB_TOKEN is required')
   }
 
-  const cursorApiKey = process.env.CURSOR_API_KEY
-  if (!cursorApiKey) {
-    throw new Error('CURSOR_API_KEY is required')
-  }
-
   const repository = process.env.GITHUB_REPOSITORY
   if (!repository) {
     throw new Error('GITHUB_REPOSITORY is required')
@@ -553,6 +548,11 @@ const runFromGitHubActions = async () => {
       pullRequestNumber,
     })
     return
+  }
+
+  const cursorApiKey = process.env.CURSOR_API_KEY
+  if (!cursorApiKey) {
+    throw new Error('CURSOR_API_KEY is required')
   }
 
   if (

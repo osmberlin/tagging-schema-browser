@@ -117,6 +117,10 @@ jobs:
           MERGE_FORKS: false
           MERGE_ERROR_FAIL: true
 
+      - name: Checkout repository
+        if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
+        uses: actions/checkout@v7
+
       - name: Setup Bun
         if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
         uses: oven-sh/setup-bun@v2
