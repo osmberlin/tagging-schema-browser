@@ -13,6 +13,7 @@ import {
 import { Suspense, lazy, useEffect } from 'react'
 import { z } from 'zod'
 import { PageAbout } from '@/components/PageAbout/PageAbout'
+import { AuditDetailPage, AuditsIndexRedirect } from '@/components/PageAudits/AuditPage'
 import { FieldDetailPage } from '@/components/PageFields/FieldDetailPage'
 import { FieldFacetSidebar } from '@/components/PageFields/FieldFacetSidebar'
 import { FieldSearchBar } from '@/components/PageFields/FieldSearchBar'
@@ -343,6 +344,25 @@ const fieldRoute = createRoute({
   component: FieldDetailPage,
 })
 
+const auditsIndexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/audits',
+  component: AuditsIndexRedirect,
+})
+
+const auditSearchSchema = z.object({
+  selected: z.string().catch(''),
+})
+
+const auditDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/audits/$',
+  head: documentTitleHead('Audit'),
+  validateSearch: auditSearchSchema,
+  search: { middlewares: [stripSearchParams({ selected: '' })] },
+  component: AuditDetailPage,
+})
+
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/about',
@@ -373,6 +393,8 @@ const routeTree = rootRoute.addChildren([
   comparisonRoute,
   presetRoute,
   fieldRoute,
+  auditsIndexRoute,
+  auditDetailRoute,
   aboutRoute,
   previewLoadingRoute,
   previewLoadingRefreshRoute,

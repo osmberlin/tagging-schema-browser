@@ -3,11 +3,12 @@ import {
   AGENT_LAUNCHED_MARKER,
   buildAgentLaunchedCommentBody,
   buildAgentPrompt,
+  buildBatchAgentPrompt,
   closeLinkedIssuesForPullRequest,
   ENQUEUED_LABEL,
   extractClosingIssueNumbers,
   hasEnqueuedLabel,
-  launchNextSchemaOverrideIssue,
+  launchBatchSchemaOverrideIssues,
   listOpenOverrideIssues,
   resolveActiveKindFromTitle,
   resolveSourceBranch,
@@ -55,6 +56,24 @@ describe('cursorOverrideAutomation', () => {
     expect(prompt).toContain('Preset: `shop/trade`')
     expect(prompt).toContain('Base branch: main')
     expect(prompt).not.toContain('@cursoragent')
+  })
+
+  it('builds batch agent prompt with closing keywords for every issue', () => {
+    const prompt = buildBatchAgentPrompt({
+      owner: 'osmberlin',
+      repo: 'tagging-schema-browser',
+      activeKind: 'missing-inheritance',
+      issues: [
+        { number: 12, title: '[missing-inheritance] a', body: 'Preset: `a`' },
+        { number: 34, title: '[missing-inheritance] b', body: 'Preset: `b`' },
+      ],
+    })
+
+    expect(prompt).toContain('Closes #12')
+    expect(prompt).toContain('Closes #34')
+    expect(prompt).toContain('Issue #12')
+    expect(prompt).toContain('Issue #34')
+    expect(prompt).toContain('single PR')
   })
 
   it('builds launched comment with agent URL', () => {
@@ -132,7 +151,7 @@ describe('cursorOverrideAutomation', () => {
     fetchMock.mockRestore()
   })
 
-  it('restarts agents via Cloud Agents API for override issues without open PRs', async () => {
+  it('launches a batch agent for all pending override issues of a kind', async () => {
     const requestUrl = (input: RequestInfo | URL) => {
       if (typeof input === 'string') return input
       if (input instanceof URL) return input.href
@@ -143,10 +162,15 @@ describe('cursorOverrideAutomation', () => {
       const url = requestUrl(input)
       const method = init?.method ?? 'GET'
 
+      if (url.includes('/issues?state=open&labels=schema-override')) {
+        return new Response(JSON.stringify([]), { status: 200 })
+      }
+
       if (url.includes('/issues?state=open')) {
         return new Response(
           JSON.stringify([
             { number: 151, title: '[missing-inheritance] foo', body: 'Preset: `x`', labels: [] },
+            { number: 152, title: '[missing-inheritance] bar', body: 'Preset: `y`', labels: [] },
           ]),
           { status: 200 },
         )
@@ -156,20 +180,20 @@ describe('cursorOverrideAutomation', () => {
         return new Response(JSON.stringify([]), { status: 200 })
       }
 
-      if (url.includes('/issues/151') && method === 'GET' && !url.includes('/comments')) {
-        return new Response(
-          JSON.stringify({
-            number: 151,
-            title: '[missing-inheritance] foo',
-            body: 'Preset: `x`',
-            labels: [],
-          }),
-          { status: 200 },
-        )
-      }
-
       if (url.includes('/issues/151/comments') && method === 'POST') {
         return new Response(JSON.stringify({ id: 1 }), { status: 201 })
+      }
+
+      if (url.includes('/issues/152/comments') && method === 'POST') {
+        return new Response(JSON.stringify({ id: 2 }), { status: 201 })
+      }
+
+      if (url.includes('/issues/151/labels') && method === 'POST') {
+        return new Response(JSON.stringify([]), { status: 200 })
+      }
+
+      if (url.includes('/issues/152/labels') && method === 'POST') {
+        return new Response(JSON.stringify([]), { status: 200 })
       }
 
       if (url === 'https://api.cursor.com/v0/agents' && method === 'POST') {
@@ -182,17 +206,14 @@ describe('cursorOverrideAutomation', () => {
         )
       }
 
-      if (url.includes('/issues/151/labels') && method === 'POST') {
-        return new Response(JSON.stringify([]), { status: 200 })
-      }
-
       throw new Error(`Unexpected fetch: ${method} ${url}`)
     })
 
-    await launchNextSchemaOverrideIssue({
+    await launchBatchSchemaOverrideIssues({
       githubToken: 'gh-token',
       cursorApiKey: 'cursor-key',
       repository: 'osmberlin/tagging-schema-browser',
+      activeKind: 'missing-inheritance',
     })
 
     const launchCall = fetchMock.mock.calls.find(
@@ -202,7 +223,8 @@ describe('cursorOverrideAutomation', () => {
     const requestBody = launchCall?.[1]?.body
     expect(typeof requestBody).toBe('string')
     const payload = JSON.parse(requestBody as string)
-    expect(payload.prompt.text).toContain('issue #151')
+    expect(payload.prompt.text).toContain('Closes #151')
+    expect(payload.prompt.text).toContain('Closes #152')
     expect(payload.target.autoCreatePr).toBe(true)
     expect(payload.source.repository).toBe('https://github.com/osmberlin/tagging-schema-browser')
 
@@ -226,10 +248,11 @@ describe('cursorOverrideAutomation', () => {
       throw new Error(`Unexpected fetch: ${url}`)
     })
 
-    await launchNextSchemaOverrideIssue({
+    await launchBatchSchemaOverrideIssues({
       githubToken: 'gh-token',
       cursorApiKey: 'cursor-key',
       repository: 'osmberlin/tagging-schema-browser',
+      activeKind: 'missing-inheritance',
     })
 
     expect(fetchMock.mock.calls.some(([url]) => requestUrl(url).includes('api.cursor.com'))).toBe(

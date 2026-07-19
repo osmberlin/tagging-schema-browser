@@ -1,6 +1,6 @@
 import { useParams } from '@tanstack/react-router'
 import { FieldOptionIconsTable } from '@/components/PageFields/FieldOptionIconsTable'
-import { FieldRiskyTypeComboDisclosure } from '@/components/PageFields/FieldRiskyTypeComboDisclosure'
+import { FieldRiskyTypeComboNotice } from '@/components/PageFields/FieldRiskyTypeComboDisclosure'
 import { FieldTranslationTable } from '@/components/PageFields/FieldTranslationTable'
 import { GeometryIcons } from '@/components/PagePresets/geometryIcons'
 import { LazyPresetSourceTree } from '@/components/PagePresets/LazyPresetSourceTree'
@@ -206,10 +206,11 @@ function FieldDetailContent({
         </div>
       </header>
 
-      <FieldRiskyTypeComboDisclosure
+      <FieldRiskyTypeComboNotice
         fieldId={fieldId}
         fieldType={type}
         usages={riskyPresetUsages}
+        dataUrl={dataUrl}
       />
 
       {mismatchCount > 0 ? (

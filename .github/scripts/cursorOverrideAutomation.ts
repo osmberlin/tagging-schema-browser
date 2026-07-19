@@ -99,6 +99,49 @@ export const buildAgentPrompt = ({
   ].join('\n')
 }
 
+export const buildBatchAgentPrompt = ({
+  owner,
+  repo,
+  activeKind,
+  issues,
+}: {
+  owner: string
+  repo: string
+  activeKind: OverrideTriggerKind
+  issues: { number: number; title: string; body: string }[]
+}) => {
+  const branches = [...new Set(issues.map((issue) => resolveSourceBranch(issue.body)))]
+  const baseBranch = branches.length === 1 ? branches[0] : 'main'
+  const closingLines = issues.map((issue) => `Closes #${issue.number}`).join('\n')
+
+  const issueSections = issues
+    .map(
+      (issue) => `### Issue #${issue.number}: ${issue.title}\n\n${issue.body.trim() || '(empty)'}`,
+    )
+    .join('\n\n---\n\n')
+
+  return [
+    `Apply schema overrides from ${issues.length} GitHub issue(s) for ${owner}/${repo} in a single PR.`,
+    '',
+    `Kind: ${OVERRIDE_TITLE_PREFIXES[activeKind]}`,
+    `Base branch: ${baseBranch}`,
+    '',
+    'Follow the skill at `.agents/skills/apply-schema-override/SKILL.md` in the repository.',
+    '',
+    'Requirements:',
+    '- Process every issue listed below (YAML snapshots and/or stale removals).',
+    `- Open one PR ready for review (not draft) with each closing keyword on its own line:`,
+    closingLines,
+    '- Add the `schema-override` label to the PR.',
+    '- Prefix the PR description with `**[Cursor Agent]**` and include `Written by :robot: <model-name>:`.',
+    '- Only change the relevant `src/data/*-overrides.yaml` file.',
+    '- Run `bun run check` before opening the PR.',
+    '',
+    '---',
+    issueSections,
+  ].join('\n')
+}
+
 export const buildAgentLaunchedCommentBody = ({
   issueNumber,
   agentUrl,
@@ -318,14 +361,22 @@ export const listOpenOverrideIssues = async ({
   token,
   repository,
   issueNumbers,
+  activeKind,
 }: {
   token: string
   repository: string
   issueNumbers?: number[]
+  activeKind?: OverrideTriggerKind
 }) => {
   const [owner, repo] = repository.split('/')
   if (!owner || !repo) {
     throw new Error(`Invalid GITHUB_REPOSITORY: ${repository}`)
+  }
+
+  const matchesKind = (issue: GitHubIssue) => {
+    const kind = resolveActiveKindFromTitle(issue.title)
+    if (!kind) return false
+    return activeKind ? kind === activeKind : true
   }
 
   if (issueNumbers && issueNumbers.length > 0) {
@@ -334,7 +385,7 @@ export const listOpenOverrideIssues = async ({
         githubApi<GitHubIssue>(token, `/repos/${owner}/${repo}/issues/${number}`),
       ),
     )
-    return issues.filter((issue) => resolveActiveKindFromTitle(issue.title))
+    return issues.filter(matchesKind)
   }
 
   const issues = await githubApi<GitHubIssue[]>(
@@ -342,9 +393,7 @@ export const listOpenOverrideIssues = async ({
     `/repos/${owner}/${repo}/issues?state=open&per_page=100`,
   )
 
-  return issues
-    .filter((issue) => !issue.pull_request)
-    .filter((issue) => resolveActiveKindFromTitle(issue.title))
+  return issues.filter((issue) => !issue.pull_request).filter(matchesKind)
 }
 
 export const listOpenSchemaOverridePullRequests = async ({
@@ -450,78 +499,95 @@ export const closeLinkedIssuesForPullRequest = async ({
   return closedIssueNumbers
 }
 
-export const launchNextSchemaOverrideIssue = async ({
+export const launchBatchSchemaOverrideIssues = async ({
   githubToken,
   cursorApiKey,
   repository,
-  issueNumbers,
+  activeKind,
 }: {
   githubToken: string
   cursorApiKey: string
   repository: string
-  issueNumbers?: number[]
+  activeKind: OverrideTriggerKind
 }) => {
+  const [owner, repo] = repository.split('/')
+  if (!owner || !repo) {
+    throw new Error(`Invalid GITHUB_REPOSITORY: ${repository}`)
+  }
+
   const openSchemaOverridePrs = await listOpenSchemaOverridePullRequests({
     token: githubToken,
     repository,
   })
   if (openSchemaOverridePrs.length > 0) {
     console.log(
-      `Schema override PR #${openSchemaOverridePrs[0]?.number} is still open; not launching the next issue.`,
+      `Schema override PR #${openSchemaOverridePrs[0]?.number} is still open; not launching a batch.`,
     )
     return
   }
 
-  const issues = await listOpenOverrideIssues({ token: githubToken, repository, issueNumbers })
-  const pendingIssues = issues
-    .filter((issue) => issue.number)
-    .sort((left, right) => left.number - right.number)
+  const issues = await listOpenOverrideIssues({ token: githubToken, repository, activeKind })
+  const pendingIssues: GitHubIssue[] = []
 
-  for (const issue of pendingIssues) {
+  for (const issue of issues.sort((left, right) => left.number - right.number)) {
     const hasPr = await hasOpenOverridePullRequest({
       token: githubToken,
       repository,
       issueNumber: issue.number,
     })
-    if (hasPr) continue
+    if (!hasPr) pendingIssues.push(issue)
+  }
 
-    await runCursorOverrideAutomation({
-      githubToken,
-      cursorApiKey,
-      repository,
-      event: { issue },
-      forceRestart: true,
-    })
+  if (pendingIssues.length === 0) {
+    console.log(`No pending ${OVERRIDE_TITLE_PREFIXES[activeKind]} issues to launch.`)
     return
   }
 
-  console.log('No pending schema override issues to launch.')
-}
-
-export const restartSchemaOverrideIssues = async ({
-  githubToken,
-  cursorApiKey,
-  repository,
-  issueNumbers,
-}: {
-  githubToken: string
-  cursorApiKey: string
-  repository: string
-  issueNumbers?: number[]
-}) => {
-  await launchNextSchemaOverrideIssue({
-    githubToken,
-    cursorApiKey,
-    repository,
-    issueNumbers,
+  const prompt = buildBatchAgentPrompt({
+    owner,
+    repo,
+    activeKind,
+    issues: pendingIssues.map((issue) => ({
+      number: issue.number,
+      title: issue.title,
+      body: issue.body ?? '',
+    })),
   })
-}
 
-type PullRequestClosedEvent = {
-  action: 'closed'
-  pull_request: {
-    merged: boolean
-    labels?: { name: string }[]
+  const branch = resolveSourceBranch(pendingIssues[0]?.body ?? '')
+  const agent = await cursorApi<CursorAgentLaunchResponse>(cursorApiKey, '', {
+    method: 'POST',
+    body: JSON.stringify({
+      prompt: { text: prompt },
+      model: 'default',
+      source: {
+        repository: `https://github.com/${owner}/${repo}`,
+        ref: branch,
+      },
+      target: {
+        autoCreatePr: true,
+        branchName: `cursor/schema-override-batch-${activeKind}`,
+      },
+    }),
+  })
+
+  const agentUrl = resolveAgentUrl(agent)
+  console.log(`Launched Cursor agent ${agent.id} for ${pendingIssues.length} issue(s): ${agentUrl}`)
+
+  for (const issue of pendingIssues) {
+    await githubApi(githubToken, `/repos/${owner}/${repo}/issues/${issue.number}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        body: buildAgentLaunchedCommentBody({ issueNumber: issue.number, agentUrl }),
+      }),
+    })
+
+    await githubApi(githubToken, `/repos/${owner}/${repo}/issues/${issue.number}/labels`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ labels: [ENQUEUED_LABEL] }),
+    })
   }
 }
 
@@ -536,62 +602,24 @@ const runFromGitHubActions = async () => {
     throw new Error('GITHUB_REPOSITORY is required')
   }
 
-  if (process.env.CLOSE_LINKED_ISSUES_FROM_PR) {
-    const pullRequestNumber = Number.parseInt(process.env.CLOSE_LINKED_ISSUES_FROM_PR, 10)
-    if (!Number.isFinite(pullRequestNumber)) {
-      throw new Error(
-        `Invalid CLOSE_LINKED_ISSUES_FROM_PR: ${process.env.CLOSE_LINKED_ISSUES_FROM_PR}`,
-      )
-    }
-    await closeLinkedIssuesForPullRequest({
-      token: githubToken,
-      repository,
-      pullRequestNumber,
-    })
-    return
-  }
-
   const cursorApiKey = process.env.CURSOR_API_KEY
   if (!cursorApiKey) {
     throw new Error('CURSOR_API_KEY is required')
   }
 
-  if (
-    process.env.RESTART_SCHEMA_OVERRIDE_ISSUES === 'true' ||
-    process.env.LAUNCH_NEXT_SCHEMA_OVERRIDE === 'true'
-  ) {
-    const issueNumbers = process.env.ISSUE_NUMBERS?.split(',')
-      .map((value) => Number.parseInt(value.trim(), 10))
-      .filter((value) => Number.isFinite(value))
-    await launchNextSchemaOverrideIssue({
-      githubToken,
-      cursorApiKey,
-      repository,
-      issueNumbers: issueNumbers && issueNumbers.length > 0 ? issueNumbers : undefined,
-    })
-    return
+  const batchKind = process.env.BATCH_OVERRIDE_KIND as OverrideTriggerKind | undefined
+  if (!batchKind || !(batchKind in OVERRIDE_TITLE_PREFIXES)) {
+    throw new Error(
+      `BATCH_OVERRIDE_KIND must be one of: ${Object.keys(OVERRIDE_TITLE_PREFIXES).join(', ')}`,
+    )
   }
 
-  const eventPath = process.env.GITHUB_EVENT_PATH
-  if (!eventPath) {
-    throw new Error('GITHUB_EVENT_PATH is required')
-  }
-
-  const event = (await Bun.file(eventPath).json()) as IssuesEvent | PullRequestClosedEvent
-
-  if (
-    'pull_request' in event &&
-    event.action === 'closed' &&
-    event.pull_request.merged &&
-    event.pull_request.labels?.some((label) => label.name === 'schema-override')
-  ) {
-    await launchNextSchemaOverrideIssue({ githubToken, cursorApiKey, repository })
-    return
-  }
-
-  if ('issue' in event) {
-    await runCursorOverrideAutomation({ githubToken, cursorApiKey, repository, event })
-  }
+  await launchBatchSchemaOverrideIssues({
+    githubToken,
+    cursorApiKey,
+    repository,
+    activeKind: batchKind,
+  })
 }
 
 if (import.meta.main) {

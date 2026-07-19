@@ -92,27 +92,7 @@ export function FieldFacetSidebar() {
             label="Option ↔ preset mismatch"
             labelArea="presets"
             count={meta.mismatchCount}
-            onClick={() => setState({ f_iconMismatch: 'mismatch', f_riskyTypeCombo: 'all' })}
-          />
-        </ul>
-      </SidebarSection>
-
-      <SidebarSection title="Field type safety">
-        <ul className="mt-1 space-y-1 border-l-2 border-slate-100">
-          <FacetButton
-            active={state.f_riskyTypeCombo === 'all' && state.f_type === 'typeCombo'}
-            label="All typeCombo fields"
-            count={meta.typeCounts.get('typeCombo') ?? 0}
-            onClick={() => setState({ f_riskyTypeCombo: 'all', f_type: 'typeCombo' })}
-          />
-          <FacetButton
-            active={state.f_riskyTypeCombo === 'risky'}
-            label="Risky property usage"
-            labelArea="presets"
-            count={meta.riskyTypeComboCount}
-            onClick={() =>
-              setState({ f_riskyTypeCombo: 'risky', f_type: 'typeCombo', f_iconMismatch: 'all' })
-            }
+            onClick={() => setState({ f_iconMismatch: 'mismatch' })}
           />
         </ul>
       </SidebarSection>

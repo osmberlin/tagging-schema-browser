@@ -1,17 +1,19 @@
-# Launch a Cursor cloud agent for schema override issues (manual only while batch audit PR merges).
-# Issue title must start with [missing-inheritance] or [risky-typecombo].
-# Auto-run on issue open / post-merge queue is paused until #213 lands.
-# Manual restart: Actions → Cursor override automation → Run workflow.
+# Manually launch a Cursor cloud agent to apply schema override issues in one PR.
+# Issue titles must start with [missing-inheritance] or [risky-typecombo].
+# Actions → Cursor override automation → Run workflow → pick the audit kind.
 # See .agents/skills/apply-schema-override/SKILL.md
 name: Cursor override automation
 
 on:
   workflow_dispatch:
     inputs:
-      issue_numbers:
-        description: Comma-separated issue numbers (empty = launch the next queued override issue)
-        required: false
-        type: string
+      kind:
+        description: Override kind (all open issues with this title prefix are processed in one PR)
+        required: true
+        type: choice
+        options:
+          - missing-inheritance
+          - risky-typecombo
 
 permissions:
   issues: write
@@ -34,5 +36,4 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          RESTART_SCHEMA_OVERRIDE_ISSUES: 'true'
-          ISSUE_NUMBERS: ${{ github.event.inputs.issue_numbers }}
+          BATCH_OVERRIDE_KIND: ${{ github.event.inputs.kind }}
