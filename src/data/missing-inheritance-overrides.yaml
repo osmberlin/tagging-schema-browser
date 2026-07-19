@@ -52,6 +52,11 @@ presets:
       parentId: barrier
       missedFieldIds:
         - level
+  barrier/wicket_gate:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
   building/construction:
     fields:
       parentId: building
