@@ -138,6 +138,7 @@ const githubApi = async <T>(token: string, path: string, init?: RequestInit): Pr
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${token}`,
       'X-GitHub-Api-Version': '2022-11-28',
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...extraHeaders,
     },
   })
