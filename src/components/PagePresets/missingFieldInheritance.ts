@@ -127,7 +127,24 @@ function overrideListMatches(
   )
 }
 
-/** Compare live missing inheritance with a reviewed override snapshot. */
+/** Compare one field list (`fields` or `moreFields`) with its override snapshot. */
+export function resolveMissingInheritanceListStatus(
+  current: MissingFieldListInheritance | undefined,
+  override: MissingInheritanceOverrideList | undefined,
+): MissingInheritanceStatus {
+  if (!current) {
+    return override ? 'stale' : 'none'
+  }
+  if (!override) return 'unreviewed'
+  return overrideListMatches(current, override) ? 'intentional' : 'stale'
+}
+
+/**
+ * Compare live missing inheritance with a reviewed override snapshot.
+ *
+ * `fields` and `moreFields` are independent: an override may document only one
+ * list when the other still inherits via `{parent}` or remains unreviewed.
+ */
 export function resolveMissingInheritanceStatus(
   current: MissingFieldInheritance | null,
   override: MissingInheritanceOverride | undefined,
@@ -137,17 +154,18 @@ export function resolveMissingInheritanceStatus(
   }
   if (!override) return 'unreviewed'
 
+  let hasUncoveredList = false
+
   for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const currentList = current[fieldListKey]
-    const overrideList = override[fieldListKey]
-    if (currentList) {
-      if (!overrideList || !overrideListMatches(currentList, overrideList)) return 'stale'
-    } else if (overrideList) {
-      return 'stale'
-    }
+    const listStatus = resolveMissingInheritanceListStatus(
+      current[fieldListKey],
+      override[fieldListKey],
+    )
+    if (listStatus === 'stale') return 'stale'
+    if (listStatus === 'unreviewed') hasUncoveredList = true
   }
 
-  return 'intentional'
+  return hasUncoveredList ? 'unreviewed' : 'intentional'
 }
 
 export function hasMissingFieldInheritance(status: MissingInheritanceStatus): boolean {
