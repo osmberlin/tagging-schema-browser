@@ -223,7 +223,7 @@ describe('missingFieldInheritance', () => {
     ).toBe('stale')
   })
 
-  it('allows partial overrides when only one field list is documented', () => {
+  it('stays unreviewed until every detected list has a matching override', () => {
     const current = {
       fields: {
         parentId: 'man_made',
@@ -244,10 +244,20 @@ describe('missingFieldInheritance', () => {
     }
 
     expect(resolveMissingInheritanceStatus(current, fieldsOnlyOverride)).toBe('unreviewed')
+    expect(resolveMissingInheritanceStatus(current, undefined)).toBe('unreviewed')
     expect(resolveMissingInheritanceListStatus(current.fields, fieldsOnlyOverride.fields)).toBe(
       'intentional',
     )
     expect(resolveMissingInheritanceListStatus(current.moreFields, undefined)).toBe('unreviewed')
+    expect(
+      resolveMissingInheritanceStatus(current, {
+        fields: fieldsOnlyOverride.fields,
+        moreFields: {
+          parentId: 'man_made',
+          missedFieldIds: ['material'],
+        },
+      }),
+    ).toBe('intentional')
   })
 
   it('marks orphaned override lists stale when live detection no longer applies', () => {

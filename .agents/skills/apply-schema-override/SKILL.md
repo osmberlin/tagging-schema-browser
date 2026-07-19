@@ -35,9 +35,10 @@ Make one commit for the issue’s primary change:
 - Insert or replace the issue’s preset entry with the snapshot (two-space indent under `presets:`).
 - Keep preset keys sorted alphabetically when practical.
 - Do not change unrelated preset entries in this commit.
-- `fields` and `moreFields` are independent override sections. Apply only the lists
-  present in the issue snapshot — do not add the other list unless the snapshot
-  includes it.
+- `fields` and `moreFields` are separate override sections (both are audited). Apply
+  only the lists present in the issue snapshot — do not add the other list unless the
+  snapshot includes it. A partial snapshot is valid; the preset stays unreviewed until
+  every detected list is documented.
 
 **Commit message example:** `Overrides: mark {presetId} missing inheritance as intentional`
 
