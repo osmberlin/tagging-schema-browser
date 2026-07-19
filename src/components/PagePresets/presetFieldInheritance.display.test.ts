@@ -413,10 +413,54 @@ describe('displayPresetFieldList', () => {
         'moreFields',
         rawPresets,
         fields,
+      ).filter((node) => node.kind === 'field' && !node.applied),
+    ).toEqual([
+      {
+        kind: 'field',
+        fieldId: 'internet_access',
+        applied: false,
+        omission: {
+          kind: 'duplicateInFields',
+          hostPresetId: 'office/coworking',
+          sourcePresetRef: '{@templates/internet_access}',
+          sourcePresetId: '@templates/internet_access',
+        },
+      },
+      {
+        kind: 'field',
+        fieldId: 'internet_access/fee',
+        applied: false,
+        omission: {
+          kind: 'duplicateInFields',
+          hostPresetId: 'office/coworking',
+          sourcePresetRef: '{@templates/internet_access}',
+          sourcePresetId: '@templates/internet_access',
+        },
+      },
+    ])
+
+    expect(
+      buildPresetRefFieldExpansion(
+        'office/coworking',
+        '{@templates/internet_access}',
+        'moreFields',
+        rawPresets,
+        fields,
       )
-        .filter((node) => node.kind === 'field')
+        .filter((node) => node.kind === 'field' && node.applied)
         .map((node) => node.fieldId),
-    ).toEqual(['internet_access', 'internet_access/fee', 'internet_access/ssid'])
+    ).toEqual(['internet_access/ssid'])
+  })
+
+  it('formats duplicate-in-fields omission messages', () => {
+    expect(
+      formatFieldInheritanceOmission('internet_access', {
+        kind: 'duplicateInFields',
+        hostPresetId: 'office/coworking',
+        sourcePresetRef: '{@templates/internet_access}',
+        sourcePresetId: '@templates/internet_access',
+      }),
+    ).toBe('internet_access already in fields via {@templates/internet_access}')
   })
 
   it('collapses office/coworking dist fields to preset and template refs', () => {
