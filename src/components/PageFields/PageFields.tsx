@@ -4,6 +4,7 @@ import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { FieldIconMismatchAlert, FieldRiskyTypeComboAlert } from '@/components/ui/SchemaIssueAlerts'
+import { SortSelect } from '@/components/ui/SortSelect'
 import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
 import { useDeferredSearchQuery } from '@/hooks/useDeferredSearchQuery'
@@ -23,8 +24,7 @@ export function PageFields() {
   const { data, loading, dataUrl } = useSchema()
   const [facetState, setFacetState] = useFieldFacetState()
   const { fields } = useFieldSearch()
-  const { f_q, f_type, f_usage, f_iconMismatch, f_riskyTypeCombo, f_sort, f_optionIcon } =
-    facetState
+  const { f_q, f_type, f_usage, f_iconMismatch, f_sort, f_optionIcon } = facetState
   const { deferredQuery, isSearchPending } = useDeferredSearchQuery(f_q)
   const filtered = useMemo(() => {
     if (!data) return []
@@ -33,21 +33,10 @@ export function PageFields() {
       f_type,
       f_usage,
       f_iconMismatch,
-      f_riskyTypeCombo,
       f_sort,
       f_optionIcon,
     })
-  }, [
-    data,
-    fields,
-    deferredQuery,
-    f_type,
-    f_usage,
-    f_iconMismatch,
-    f_riskyTypeCombo,
-    f_sort,
-    f_optionIcon,
-  ])
+  }, [data, fields, deferredQuery, f_type, f_usage, f_iconMismatch, f_sort, f_optionIcon])
   const mismatchFieldCount = fields.filter((field) => field.iconMismatchCount > 0).length
   const riskyTypeComboFieldCount = fields.filter(
     (field) => field.type === 'typeCombo' && field.riskyUsageCount > 0,
@@ -87,23 +76,21 @@ export function PageFields() {
           </CountPill>
         </h1>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-500">
-            Sort
-            <select
-              value={facetState.f_sort}
-              onChange={(e) =>
-                setFacetState({
-                  f_sort: e.target.value as 'name' | 'label' | 'usage_desc' | 'usage_asc',
-                })
-              }
-              className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition ${areaAccent.fields.focus}`}
-            >
-              <option value="usage_desc">Usage (high to low)</option>
-              <option value="usage_asc">Usage (low to high)</option>
-              <option value="label">Label</option>
-              <option value="name">Id</option>
-            </select>
-          </label>
+          <SortSelect
+            value={facetState.f_sort}
+            onChange={(value) =>
+              setFacetState({
+                f_sort: value as 'name' | 'label' | 'usage_desc' | 'usage_asc',
+              })
+            }
+            aria-label="Sort fields"
+            area="fields"
+          >
+            <option value="usage_desc">Usage (high to low)</option>
+            <option value="usage_asc">Usage (low to high)</option>
+            <option value="label">Label</option>
+            <option value="name">Id</option>
+          </SortSelect>
           <DownloadButton
             filename="fields.json"
             data={exportData}
@@ -129,19 +116,10 @@ export function PageFields() {
       {showFieldIssueAlert(activeIssueFilter, 'iconMismatch') ? (
         <FieldIconMismatchAlert
           count={mismatchFieldCount}
-          onShowMismatch={() =>
-            setFacetState({ f_iconMismatch: 'mismatch', f_riskyTypeCombo: 'all' })
-          }
+          onShowMismatch={() => setFacetState({ f_iconMismatch: 'mismatch' })}
         />
       ) : null}
-      {showFieldIssueAlert(activeIssueFilter, 'riskyTypeCombo') ? (
-        <FieldRiskyTypeComboAlert
-          count={riskyTypeComboFieldCount}
-          onShowRisky={() =>
-            setFacetState({ f_riskyTypeCombo: 'risky', f_type: 'typeCombo', f_iconMismatch: 'all' })
-          }
-        />
-      ) : null}
+      <FieldRiskyTypeComboAlert count={riskyTypeComboFieldCount} dataUrl={dataUrl ?? ''} />
       {filtered.length > 0 ? (
         <VirtualizedGrid
           items={filtered}

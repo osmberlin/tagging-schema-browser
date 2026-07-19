@@ -13,6 +13,8 @@ import {
 import { Suspense, lazy, useEffect } from 'react'
 import { z } from 'zod'
 import { PageAbout } from '@/components/PageAbout/PageAbout'
+import { AuditDetailPage } from '@/components/PageAudits/AuditPage'
+import { AuditsIndexPage } from '@/components/PageAudits/AuditsIndexPage'
 import { FieldDetailPage } from '@/components/PageFields/FieldDetailPage'
 import { FieldFacetSidebar } from '@/components/PageFields/FieldFacetSidebar'
 import { FieldSearchBar } from '@/components/PageFields/FieldSearchBar'
@@ -343,6 +345,32 @@ const fieldRoute = createRoute({
   component: FieldDetailPage,
 })
 
+const auditsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/audits',
+  component: () => <Outlet />,
+})
+
+const auditsIndexRoute = createRoute({
+  getParentRoute: () => auditsRoute,
+  path: '/',
+  head: documentTitleHead('Audits'),
+  component: AuditsIndexPage,
+})
+
+const auditSearchSchema = z.object({
+  selected: z.string().catch(''),
+})
+
+const auditDetailRoute = createRoute({
+  getParentRoute: () => auditsRoute,
+  path: '/$slug',
+  head: documentTitleHead('Audit'),
+  validateSearch: auditSearchSchema,
+  search: { middlewares: [stripSearchParams({ selected: '' })] },
+  component: AuditDetailPage,
+})
+
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/about',
@@ -373,6 +401,7 @@ const routeTree = rootRoute.addChildren([
   comparisonRoute,
   presetRoute,
   fieldRoute,
+  auditsRoute.addChildren([auditsIndexRoute, auditDetailRoute]),
   aboutRoute,
   previewLoadingRoute,
   previewLoadingRefreshRoute,

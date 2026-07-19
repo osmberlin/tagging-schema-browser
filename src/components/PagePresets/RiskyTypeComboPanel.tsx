@@ -1,14 +1,7 @@
 import { Link } from '@tanstack/react-router'
+import { auditPageHref } from '@/components/PageAudits/auditPageHref'
 import type { RiskyTypeCombo, RiskyTypeComboStatus } from '@/components/PagePresets/riskyTypeCombo'
-import {
-  SchemaOverrideCreateIssueAction,
-  usePresetDetailPageUrl,
-} from '@/components/PagePresets/SchemaOverrideCreateIssueAction'
-import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
-import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
-import { useAutoOpenFocusedIssue } from '@/features/schema-issue/useAutoOpenFocusedIssue'
-import type { SchemaIssueVariant } from '@/theme/schemaIssue'
-import { buildRiskyTypeComboOverrideIssueUrl } from '@/utils/buildSchemaOverrideIssueUrl'
+import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const STATUS_LABELS: Record<RiskyTypeComboStatus, string> = {
@@ -18,131 +11,82 @@ const STATUS_LABELS: Record<RiskyTypeComboStatus, string> = {
   stale: 'Override snapshot stale',
 }
 
-const ISSUE_TITLES: Record<Exclude<RiskyTypeComboStatus, 'none'>, string> = {
-  unreviewed: 'Risky typeCombo',
-  intentional: 'Intentional typeCombo',
-  stale: 'Stale override',
-}
-
-const ISSUE_VARIANTS: Record<Exclude<RiskyTypeComboStatus, 'none'>, SchemaIssueVariant> = {
-  unreviewed: 'warning',
-  intentional: 'warning',
-  stale: 'error',
-}
-
-function CreateIssueAction({
-  presetId,
-  riskyTypeCombo,
-  dataUrl,
-  pageUrl,
-  storedOverride,
-}: {
-  presetId: string
-  riskyTypeCombo?: RiskyTypeCombo | null
-  dataUrl: string
-  pageUrl: string
-  storedOverride?: (typeof riskyTypeComboOverrides.presets)[string]
-}) {
-  const issueUrl = buildRiskyTypeComboOverrideIssueUrl({
-    presetId,
-    riskyTypeCombo,
-    pageUrl,
-    dataUrl,
-    existingOverride: storedOverride,
-  })
-
-  return (
-    <SchemaOverrideCreateIssueAction issueUrl={issueUrl} testId="risky-typecombo-create-issue" />
-  )
-}
-
 function FieldSection({ riskyTypeCombo }: { riskyTypeCombo: RiskyTypeCombo }) {
   return (
-    <div className="not-prose mt-6 space-y-2">
-      <h3 className="text-sm font-semibold text-slate-100">Flagged fields</h3>
-      <ul className="space-y-2">
-        {riskyTypeCombo.fields.map((field) => (
-          <li key={field.fieldId} className="text-sm text-slate-300">
-            <Link
-              to="/field/$"
-              params={{ _splat: field.fieldId }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-              className="font-mono text-sky-300 underline underline-offset-2"
-            >
-              {field.fieldId}
-            </Link>{' '}
-            (<code>{field.fieldKey}</code>, {field.listKey}) — leaving this <code>typeCombo</code>{' '}
-            empty in iD can write <code>{field.fieldKey}=yes</code>.
-          </li>
-        ))}
-      </ul>
-    </div>
+    <ul className="space-y-2 text-sm text-slate-700">
+      {riskyTypeCombo.fields.map((field) => (
+        <li key={field.fieldId}>
+          <Link
+            to="/field/$"
+            params={{ _splat: field.fieldId }}
+            search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+            className="font-mono text-sky-700 underline underline-offset-2"
+          >
+            {field.fieldId}
+          </Link>{' '}
+          (<code>{field.fieldKey}</code>, {field.listKey}) — leaving this <code>typeCombo</code>{' '}
+          empty in iD can write <code>{field.fieldKey}=yes</code>.
+        </li>
+      ))}
+    </ul>
   )
 }
 
 export function RiskyTypeComboPanel({
   preset,
-  dataUrl,
+  dataUrl = '',
+  reference,
 }: {
   preset: DenormalizedPreset
-  dataUrl: string
+  dataUrl?: string
+  reference?: 'release' | 'interim'
 }) {
-  const pageUrl = usePresetDetailPageUrl()
   const { riskyTypeCombo, riskyTypeComboStatus } = preset
-  const disclosureId = `preset-risky-typecombo:${preset.id}`
-  useAutoOpenFocusedIssue(disclosureId, 'riskyTypeCombo', riskyTypeComboStatus !== 'none')
 
   if (riskyTypeComboStatus === 'none') return null
 
-  const storedOverride = riskyTypeComboOverrides.presets[preset.id]
-
-  const showCreateIssue =
-    (riskyTypeComboStatus === 'unreviewed' && riskyTypeCombo) ||
-    (riskyTypeComboStatus === 'stale' && (riskyTypeCombo || storedOverride))
+  const needsAudit = riskyTypeComboStatus === 'unreviewed' || riskyTypeComboStatus === 'stale'
+  const auditHref = auditPageHref({
+    slug: 'risky-typecombo',
+    dataUrl,
+    reference,
+    selected: preset.id,
+  })
 
   return (
-    <SchemaIssueDisclosure
-      disclosureId={disclosureId}
-      variant={ISSUE_VARIANTS[riskyTypeComboStatus]}
-      title={ISSUE_TITLES[riskyTypeComboStatus]}
-      summary={STATUS_LABELS[riskyTypeComboStatus]}
+    <section
+      data-testid="risky-typecombo-panel"
+      className="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-4"
     >
-      <div data-testid="risky-typecombo-panel">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold text-amber-950">Risky typeCombo</h2>
+          <p className="mt-1 text-sm text-amber-900/80">{STATUS_LABELS[riskyTypeComboStatus]}</p>
+        </div>
+        {needsAudit ? (
+          <a
+            href={auditHref}
+            className={cn(
+              'inline-flex shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-medium text-amber-900 ring-1 ring-amber-200 ring-inset hover:bg-amber-100',
+            )}
+          >
+            Open audit →
+          </a>
+        ) : null}
+      </div>
+      <div className="mt-4 space-y-3 text-sm text-slate-700">
         <p>
           This preset exposes one or more <code>typeCombo</code> fields that behave like properties
           on a preset with fixed tags. In iD, opening the dropdown and backing out can silently add{' '}
           <code>=yes</code> tags.
         </p>
         {riskyTypeComboStatus === 'stale' && !riskyTypeCombo ? (
-          <p className="mt-2">Open an issue to remove the stale override.</p>
-        ) : null}
-        {riskyTypeComboStatus === 'stale' && riskyTypeCombo ? (
-          <p className="mt-2">The stored override no longer matches the current schema.</p>
-        ) : null}
-        {riskyTypeComboStatus === 'unreviewed' ? (
-          <p className="mt-2">
-            If keeping <code>typeCombo</code> is deliberate, record the current{' '}
-            <code>fieldIds</code> snapshot.
+          <p>
+            The stored override no longer matches the current schema — remove it on the audit page.
           </p>
-        ) : null}
-        {showCreateIssue ? (
-          <CreateIssueAction
-            presetId={preset.id}
-            riskyTypeCombo={riskyTypeCombo}
-            dataUrl={dataUrl}
-            pageUrl={pageUrl}
-            storedOverride={storedOverride}
-          />
         ) : null}
         {riskyTypeCombo ? <FieldSection riskyTypeCombo={riskyTypeCombo} /> : null}
       </div>
-    </SchemaIssueDisclosure>
+    </section>
   )
-}
-
-export const riskyTypeComboFacetLabels: Record<string, string> = {
-  none: 'No risky typeCombo',
-  unreviewed: 'Risky (unreviewed)',
-  intentional: 'Risky (intentional)',
-  stale: 'Override stale',
 }

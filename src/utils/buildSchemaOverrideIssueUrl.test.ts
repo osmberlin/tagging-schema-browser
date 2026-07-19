@@ -1,18 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildMissingInheritanceOverrideIssueUrl,
-  buildRiskyTypeComboOverrideIssueUrl,
   buildSchemaOverrideIssueBody,
   buildSchemaOverrideIssueUrl,
 } from './buildSchemaOverrideIssueUrl'
-
-const sampleInheritance = {
-  fields: {
-    parentId: 'man_made/crane',
-    missedFieldIds: ['crane/type'],
-    explicitPresetRefs: [] as string[],
-  },
-}
 
 describe('buildSchemaOverrideIssueUrl', () => {
   it('builds a GitHub new-issue URL with title prefix and body', () => {
@@ -34,7 +24,7 @@ describe('buildSchemaOverrideIssueUrl', () => {
     expect(parsed.searchParams.has('template')).toBe(false)
     const body = parsed.searchParams.get('body') ?? ''
     expect(body).toContain('Tagging Schema Browser')
-    expect(body).toContain('enqueue a Cursor cloud agent')
+    expect(body).toContain('Cursor override automation')
     expect(body).not.toContain('> **You**')
     expect(body).not.toContain('apply-schema-override/SKILL.md')
     expect(body).toContain('man_made/crane/untyped_crane')
@@ -71,44 +61,5 @@ describe('buildSchemaOverrideIssueUrl', () => {
     expect(body).toContain('## Remove stale override')
     expect(body).toContain('Remove stale override')
     expect(body).not.toContain('## Snapshot')
-  })
-
-  it('builds missing-inheritance URL from live detection', () => {
-    const url = buildMissingInheritanceOverrideIssueUrl({
-      presetId: 'man_made/crane/untyped_crane',
-      missingFieldInheritance: sampleInheritance,
-      pageUrl: 'https://example.com/preset/x',
-      dataUrl: '/test-schema',
-    })
-
-    const body = new URL(url).searchParams.get('body') ?? ''
-    expect(body).toContain('parentId: man_made/crane')
-    expect(body).toContain('- crane/type')
-  })
-
-  it('builds risky-typecombo URL from live detection', () => {
-    const url = buildRiskyTypeComboOverrideIssueUrl({
-      presetId: 'highway/residential',
-      riskyTypeCombo: {
-        fields: [
-          {
-            fieldId: 'traffic_calming',
-            fieldKey: 'traffic_calming',
-            listKey: 'moreFields',
-          },
-        ],
-      },
-      pageUrl: 'https://example.com/preset/highway/residential',
-      dataUrl: '/test-schema',
-    })
-
-    const parsed = new URL(url)
-    expect(parsed.searchParams.get('title')).toBe(
-      '[risky-typecombo] highway/residential — intentional risky typeCombo',
-    )
-    expect(parsed.searchParams.has('template')).toBe(false)
-    const body = parsed.searchParams.get('body') ?? ''
-    expect(body).toContain('enqueue a Cursor cloud agent')
-    expect(body).toContain('- traffic_calming')
   })
 })

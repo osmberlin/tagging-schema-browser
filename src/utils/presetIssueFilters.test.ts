@@ -17,8 +17,6 @@ const emptySearch = {
   categoryNames: [] as string[],
   hasIcon: [] as string[],
   iconMismatch: [] as string[],
-  missingInheritance: [] as string[],
-  riskyTypeCombo: [] as string[],
 }
 
 describe('presetIssueFilters', () => {
@@ -27,15 +25,12 @@ describe('presetIssueFilters', () => {
     expect(activePresetIssueFilter({ ...emptySearch, iconMismatch: ['mismatch'] })).toBe(
       'iconMismatch',
     )
-    expect(activePresetIssueFilter({ ...emptySearch, missingInheritance: ['unreviewed'] })).toBe(
-      'missingInheritance',
-    )
     expect(activePresetIssueFilter(emptySearch)).toBeNull()
   })
 
   it('shows only the active issue alert when a filter is selected', () => {
     expect(showPresetIssueAlert('brokenIcon', 'brokenIcon')).toBe(true)
     expect(showPresetIssueAlert('brokenIcon', 'iconMismatch')).toBe(false)
-    expect(showPresetIssueAlert(null, 'missingInheritance')).toBe(true)
+    expect(showPresetIssueAlert(null, 'iconMismatch')).toBe(true)
   })
 })

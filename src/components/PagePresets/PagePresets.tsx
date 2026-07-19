@@ -78,8 +78,6 @@ export function PagePresets() {
     iconPrefix: 'icons',
     hasIcon: 'icons',
     iconMismatch: 'icons',
-    missingInheritance: 'fields',
-    riskyTypeCombo: 'fields',
   }
 
   const activePills = [
@@ -156,18 +154,6 @@ export function PagePresets() {
       facet: 'iconMismatch',
       label: `Icon consistency: ${value}`,
       onRemove: () => removeValue('iconMismatch', value),
-    })),
-    ...searchState.missingInheritance.map((value) => ({
-      key: `missingInheritance-${value}`,
-      facet: 'missingInheritance',
-      label: `Field inheritance: ${value}`,
-      onRemove: () => removeValue('missingInheritance', value),
-    })),
-    ...searchState.riskyTypeCombo.map((value) => ({
-      key: `riskyTypeCombo-${value}`,
-      facet: 'riskyTypeCombo',
-      label: `Field type safety: ${value}`,
-      onRemove: () => removeValue('riskyTypeCombo', value),
     })),
     ...searchState.iconName.map((value) => ({
       key: `iconName-${value}`,
@@ -302,26 +288,16 @@ export function PagePresets() {
           .
         </SchemaIssueAlert>
       ) : null}
-      {showPresetIssueAlert(activeIssueFilter, 'missingInheritance') ? (
-        <MissingInheritanceAlerts
-          unreviewedCount={unreviewedMissingInheritanceCount}
-          staleCount={staleMissingInheritanceCount}
-          onShowUnreviewed={() => setSearchState({ missingInheritance: ['unreviewed'], page: 1 })}
-          onShowStale={() => setSearchState({ missingInheritance: ['stale'], page: 1 })}
-          showUnreviewed={!searchState.missingInheritance.includes('unreviewed')}
-          showStale={!searchState.missingInheritance.includes('stale')}
-        />
-      ) : null}
-      {showPresetIssueAlert(activeIssueFilter, 'riskyTypeCombo') ? (
-        <RiskyTypeComboAlerts
-          unreviewedCount={unreviewedRiskyTypeComboCount}
-          staleCount={staleRiskyTypeComboCount}
-          onShowUnreviewed={() => setSearchState({ riskyTypeCombo: ['unreviewed'], page: 1 })}
-          onShowStale={() => setSearchState({ riskyTypeCombo: ['stale'], page: 1 })}
-          showUnreviewed={!searchState.riskyTypeCombo.includes('unreviewed')}
-          showStale={!searchState.riskyTypeCombo.includes('stale')}
-        />
-      ) : null}
+      <MissingInheritanceAlerts
+        unreviewedCount={unreviewedMissingInheritanceCount}
+        staleCount={staleMissingInheritanceCount}
+        dataUrl={dataUrl ?? ''}
+      />
+      <RiskyTypeComboAlerts
+        unreviewedCount={unreviewedRiskyTypeComboCount}
+        staleCount={staleRiskyTypeComboCount}
+        dataUrl={dataUrl ?? ''}
+      />
       <PresetTable />
     </div>
   )
