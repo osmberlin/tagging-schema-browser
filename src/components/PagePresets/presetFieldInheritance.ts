@@ -486,6 +486,26 @@ function isDistExpandedFieldList(list: string[]): boolean {
   return list.length > 0 && list.every((item) => typeof item === 'string' && !presetIdFromRef(item))
 }
 
+function isSlashAncestor(ancestorId: string, presetId: string): boolean {
+  return presetId === ancestorId || presetId.startsWith(`${ancestorId}/`)
+}
+
+/** Whether dist collapse may map onto `candidateId` for host `excludePresetId`. */
+function isAllowedCollapseCandidate(
+  candidateId: string,
+  excludePresetId: string,
+  preferPresetIds: string[],
+  isExact: boolean,
+): boolean {
+  if (candidateId.startsWith('@templates/')) return true
+  if (preferPresetIds.includes(candidateId)) return true
+  if (isSlashAncestor(candidateId, excludePresetId)) return true
+  // Partial prefix collapse (e.g. amenity/coworking_space → {office/coworking}) — never exact
+  // match onto an unrelated preset with the same dist-expanded list (e.g. traffic_sign → highway/traffic_sign).
+  if (!isExact) return true
+  return false
+}
+
 /** Longest dist-expanded preset whose field list is a prefix of `list`. */
 function findDistExpandedPresetRefPrefix(
   list: string[],
@@ -513,11 +533,16 @@ function findDistExpandedPresetRefPrefix(
     const prefix = list.slice(0, candidateList.length)
     if (!fieldListsMatch(prefix, candidateList)) continue
 
+    const isExact = candidateList.length === list.length
+    if (!isAllowedCollapseCandidate(candidateId, excludePresetId, preferPresetIds, isExact)) {
+      continue
+    }
+
     matches.push({
       presetId: candidateId,
       prefixLength: candidateList.length,
       isTemplate: candidateId.startsWith('@templates/'),
-      isExact: candidateList.length === list.length,
+      isExact,
       isPreferred: preferPresetIds.includes(candidateId),
     })
   }
@@ -535,16 +560,6 @@ function findDistExpandedPresetRefPrefix(
   if (exactTemplateMatches.length === 1) {
     const match = exactTemplateMatches[0]
     return { presetId: match.presetId, prefixLength: match.prefixLength }
-  }
-
-  // Unambiguous whole-list match to another preset (never for @templates/* hosts — contact
-  // and olive_grove share the same dist-expanded contact fields).
-  if (!excludePresetId.startsWith('@templates/')) {
-    const exactNonTemplateMatches = matches.filter((match) => match.isExact && !match.isTemplate)
-    if (exactNonTemplateMatches.length === 1) {
-      const match = exactNonTemplateMatches[0]
-      return { presetId: match.presetId, prefixLength: match.prefixLength }
-    }
   }
 
   // Partial prefix only — never map one preset's full field list onto an unrelated preset.
