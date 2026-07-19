@@ -4,10 +4,11 @@ import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
+  buildPresetRefFieldExpansion,
   displayPresetFieldList,
   getAuthoredExplicitFieldIds,
-  getPresetRefFieldListEntries,
   presetIdFromRef,
+  type PresetRefFieldExpansionNode,
 } from '@/components/PagePresets/presetFieldInheritance'
 import {
   type KeySortMode,
@@ -427,7 +428,7 @@ function RefDisclosure({
   parentKey,
   host,
   inheritanceHost,
-  expandedPresetRefs,
+  expansionNodes,
   sortMode = 'alpha',
 }: {
   label: string
@@ -438,7 +439,7 @@ function RefDisclosure({
   parentKey?: string
   host: HostPresetContext
   inheritanceHost?: InheritanceHostContext
-  expandedPresetRefs?: ReadonlySet<string>
+  expansionNodes?: PresetRefFieldExpansionNode[]
   sortMode?: KeySortMode
 }) {
   const [open, setOpen] = useState(false)
@@ -509,18 +510,28 @@ function RefDisclosure({
       </JsonLine>
       {open ? (
         inheritPresetFields ? (
-          <PresetRefInheritedFields
-            presetRef={label}
-            fieldListKey={fieldListKey}
-            level={level + 1}
-            dataUrl={dataUrl}
-            trailingComma={trailingComma}
-            host={host}
-            inheritanceHost={
-              inheritanceHost ?? inheritanceHostFromPresetId(refInfo.id, rawPresets) ?? undefined
-            }
-            expandedPresetRefs={expandedPresetRefs}
-          />
+          expansionNodes ? (
+            <PresetRefExpansionTree
+              nodes={expansionNodes}
+              fieldListKey={fieldListKey}
+              level={level + 1}
+              dataUrl={dataUrl}
+              trailingComma={trailingComma}
+              host={host}
+            />
+          ) : (
+            <PresetRefInheritedFields
+              presetRef={label}
+              fieldListKey={fieldListKey}
+              level={level + 1}
+              dataUrl={dataUrl}
+              trailingComma={trailingComma}
+              host={host}
+              inheritanceHost={
+                inheritanceHost ?? inheritanceHostFromPresetId(refInfo.id, rawPresets) ?? undefined
+              }
+            />
+          )
         ) : expandedRaw ? (
           <>
             <JsonNode
@@ -593,6 +604,99 @@ function OmittedInheritedFieldLine({
   )
 }
 
+/** Render a pre-built preset-ref inheritance expansion tree. */
+function PresetRefExpansionTree({
+  nodes,
+  fieldListKey,
+  level,
+  dataUrl,
+  trailingComma,
+  host,
+}: {
+  nodes: PresetRefFieldExpansionNode[]
+  fieldListKey: 'fields' | 'moreFields'
+  level: number
+  dataUrl: string
+  trailingComma?: boolean
+  host: HostPresetContext
+}) {
+  if (nodes.length === 0) {
+    return (
+      <JsonLine level={level} trailingComma={trailingComma}>
+        <span className="text-slate-400 italic">{'/* no fields on referenced preset */'}</span>
+      </JsonLine>
+    )
+  }
+
+  return (
+    <>
+      {nodes.map((node, index) => {
+        const entryTrailingComma = index < nodes.length - 1 ? true : trailingComma
+
+        if (node.kind === 'presetRef') {
+          const refInfo = refInFieldList(node.presetRef, host.rawPresets)
+          if (!refInfo) return null
+
+          if (node.cyclic) {
+            return (
+              <JsonLine
+                key={`${fieldListKey}-${node.presetRef}-cyclic`}
+                level={level}
+                trailingComma={entryTrailingComma}
+              >
+                <span className="text-slate-400 line-through">"{node.presetRef}"</span>
+                <span className="text-[10px] text-amber-700">
+                  {'/* cyclic preset ref — already expanded above */'}
+                </span>
+              </JsonLine>
+            )
+          }
+
+          return (
+            <RefDisclosure
+              key={`${fieldListKey}-${node.presetRef}`}
+              label={node.presetRef}
+              refInfo={refInfo}
+              level={level}
+              dataUrl={dataUrl}
+              trailingComma={entryTrailingComma}
+              parentKey={fieldListKey}
+              host={host}
+              expansionNodes={node.children}
+            />
+          )
+        }
+
+        if (node.applied) {
+          return (
+            <JsonNode
+              key={`${fieldListKey}-${node.fieldId}`}
+              value={node.fieldId}
+              level={level}
+              parentKey={fieldListKey}
+              dataUrl={dataUrl}
+              trailingComma={entryTrailingComma}
+              host={host}
+            />
+          )
+        }
+
+        return (
+          <OmittedInheritedFieldLine
+            key={`${fieldListKey}-${node.fieldId}-omitted`}
+            fieldId={node.fieldId}
+            reason={node.reason ?? 'not inherited'}
+            level={level}
+            dataUrl={dataUrl}
+            trailingComma={entryTrailingComma}
+            host={host}
+          />
+        )
+      })}
+    </>
+  )
+}
+
 /** Inherited field ids when a preset ref is expanded inside fields or moreFields. */
 function PresetRefInheritedFields({
   presetRef,
@@ -602,7 +706,6 @@ function PresetRefInheritedFields({
   trailingComma,
   host,
   inheritanceHost,
-  expandedPresetRefs,
 }: {
   presetRef: string
   fieldListKey: 'fields' | 'moreFields'
@@ -611,7 +714,6 @@ function PresetRefInheritedFields({
   trailingComma?: boolean
   host: HostPresetContext
   inheritanceHost?: InheritanceHostContext
-  expandedPresetRefs?: ReadonlySet<string>
 }) {
   const { fields: allFields, rawPresets } = useSchema()
   const presetId = presetIdFromRef(presetRef)
@@ -626,89 +728,23 @@ function PresetRefInheritedFields({
     )
   }
 
-  if (presetId && expandedPresetRefs?.has(presetId)) {
-    return (
-      <JsonLine level={level} trailingComma={trailingComma}>
-        <span className="text-slate-400 italic">
-          {'/* cyclic preset ref — already expanded above */'}
-        </span>
-      </JsonLine>
-    )
-  }
-
-  const nextExpandedPresetRefs = presetId
-    ? new Set([...(expandedPresetRefs ?? []), presetId])
-    : expandedPresetRefs
-
-  const entries = getPresetRefFieldListEntries(
+  const nodes = buildPresetRefFieldExpansion(
     resolvedInheritanceHost.presetId,
-    resolvedInheritanceHost.preset,
     presetRef,
     fieldListKey,
     rawPresets,
     allFields,
   )
 
-  if (entries.length === 0) {
-    return (
-      <JsonLine level={level} trailingComma={trailingComma}>
-        <span className="text-slate-400 italic">{'/* no fields on referenced preset */'}</span>
-      </JsonLine>
-    )
-  }
-
   return (
-    <>
-      {entries.map((entry, index) => {
-        const entryTrailingComma = index < entries.length - 1 ? true : trailingComma
-
-        if (entry.kind === 'presetRef') {
-          const refInfo = refInFieldList(entry.presetRef, rawPresets)
-          if (!refInfo) return null
-
-          return (
-            <RefDisclosure
-              key={`${fieldListKey}-${entry.presetRef}`}
-              label={entry.presetRef}
-              refInfo={refInfo}
-              level={level}
-              dataUrl={dataUrl}
-              trailingComma={entryTrailingComma}
-              parentKey={fieldListKey}
-              host={host}
-              inheritanceHost={resolvedInheritanceHost}
-              expandedPresetRefs={nextExpandedPresetRefs}
-            />
-          )
-        }
-
-        if (entry.applied) {
-          return (
-            <JsonNode
-              key={`${fieldListKey}-${entry.fieldId}`}
-              value={entry.fieldId}
-              level={level}
-              parentKey={fieldListKey}
-              dataUrl={dataUrl}
-              trailingComma={entryTrailingComma}
-              host={host}
-            />
-          )
-        }
-
-        return (
-          <OmittedInheritedFieldLine
-            key={`${fieldListKey}-${entry.fieldId}-omitted`}
-            fieldId={entry.fieldId}
-            reason={entry.reason ?? 'not inherited'}
-            level={level}
-            dataUrl={dataUrl}
-            trailingComma={entryTrailingComma}
-            host={host}
-          />
-        )
-      })}
-    </>
+    <PresetRefExpansionTree
+      nodes={nodes}
+      fieldListKey={fieldListKey}
+      level={level}
+      dataUrl={dataUrl}
+      trailingComma={trailingComma}
+      host={host}
+    />
   )
 }
 

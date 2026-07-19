@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildPresetRefFieldExpansion,
   displayPresetFieldList,
   getInheritedFieldItems,
   getPresetRefFieldInheritanceBreakdown,
-  getPresetRefFieldListEntries,
 } from '@/components/PagePresets/presetFieldInheritance'
 import type { RawFields, RawPresets } from '@/utils/types'
 
@@ -468,17 +468,8 @@ describe('displayPresetFieldList', () => {
       internet_access: { key: 'internet_access', type: 'combo' },
       'internet_access/fee': { key: 'internet_access:fee', type: 'combo' },
     }
-    const hostPreset = rawPresets['office/coworking']!
-
     expect(
-      getPresetRefFieldListEntries(
-        'office/coworking',
-        hostPreset,
-        '{office}',
-        'fields',
-        rawPresets,
-        fields,
-      ),
+      buildPresetRefFieldExpansion('office/coworking', '{office}', 'fields', rawPresets, fields),
     ).toEqual([
       { kind: 'field', fieldId: 'name', applied: true },
       {
@@ -592,12 +583,9 @@ describe('displayPresetFieldList', () => {
       mobile: { key: 'mobile', type: 'tel' },
       wheelchair: { key: 'wheelchair', type: 'combo' },
     }
-    const hostPreset = rawPresets['office/coworking']!
-
     expect(
-      getPresetRefFieldListEntries(
+      buildPresetRefFieldExpansion(
         'office/coworking',
-        hostPreset,
         '{office}',
         'fields',
         rawPresets,
@@ -613,17 +601,116 @@ describe('displayPresetFieldList', () => {
     ])
 
     expect(
-      getPresetRefFieldListEntries(
+      buildPresetRefFieldExpansion(
         'amenity/coworking_space',
-        rawPresets['amenity/coworking_space']!,
         '{office/coworking}',
         'fields',
         rawPresets,
         fields,
       ),
     ).toEqual([
-      { kind: 'presetRef', presetRef: '{office}' },
-      { kind: 'presetRef', presetRef: '{@templates/internet_access}' },
+      {
+        kind: 'presetRef',
+        presetRef: '{office}',
+        presetId: 'office',
+        children: [
+          { kind: 'field', fieldId: 'name', applied: true },
+          {
+            kind: 'field',
+            fieldId: 'office',
+            applied: false,
+            reason: 'preset tag fixes office=coworking',
+          },
+          { kind: 'field', fieldId: 'address', applied: true },
+          { kind: 'field', fieldId: 'building_area_yes', applied: true },
+          { kind: 'field', fieldId: 'opening_hours', applied: true },
+          { kind: 'field', fieldId: 'phone', applied: true },
+          { kind: 'field', fieldId: 'website', applied: true },
+        ],
+      },
+      {
+        kind: 'presetRef',
+        presetRef: '{@templates/internet_access}',
+        presetId: '@templates/internet_access',
+        children: [
+          { kind: 'field', fieldId: 'internet_access', applied: true },
+          { kind: 'field', fieldId: 'internet_access/fee', applied: true },
+        ],
+      },
+    ])
+  })
+
+  it('marks cyclic preset refs in the expansion tree', () => {
+    const rawPresets: RawPresets = {
+      'preset/a': {
+        tags: { a: 'yes' },
+        geometry: ['point'],
+        fields: ['{preset/b}'],
+      },
+      'preset/b': {
+        tags: { b: 'yes' },
+        geometry: ['point'],
+        fields: ['{preset/a}'],
+      },
+    }
+
+    expect(
+      buildPresetRefFieldExpansion('preset/a', '{preset/b}', 'fields', rawPresets, {}),
+    ).toEqual([
+      {
+        kind: 'presetRef',
+        presetRef: '{preset/a}',
+        presetId: 'preset/a',
+        cyclic: true,
+        children: [],
+      },
+    ])
+  })
+
+  it('builds marina contact template expansion without cycles', () => {
+    const rawPresets: RawPresets = {
+      '@templates/contact': {
+        tags: { '@template': 'contact' },
+        geometry: ['point'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website'],
+      },
+      'landuse/olive_grove': {
+        tags: { landuse: 'orchard', trees: 'olive_trees' },
+        geometry: ['area'],
+        fields: ['name', 'operator'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website'],
+      },
+      'leisure/marina_no_facilities': {
+        tags: { 'seamark:harbour:category': 'marina_no_facilities' },
+        geometry: ['point', 'area'],
+        fields: ['name'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website', 'address', 'gnis/feature_id-US'],
+      },
+    }
+    const fields: RawFields = {
+      email: { key: 'email', type: 'email' },
+      fax: { key: 'fax', type: 'text' },
+      mobile: { key: 'mobile', type: 'tel' },
+      phone: { key: 'phone', type: 'tel' },
+      website: { key: 'website', type: 'url' },
+      address: { key: 'addr:full', type: 'text' },
+      'gnis/feature_id-US': { key: 'gnis:feature_id', type: 'text' },
+    }
+
+    expect(
+      buildPresetRefFieldExpansion(
+        'leisure/marina_no_facilities',
+        '{@templates/contact}',
+        'moreFields',
+        rawPresets,
+        fields,
+      ),
+    ).toEqual([
+      { kind: 'field', fieldId: 'email', applied: true },
+      { kind: 'field', fieldId: 'fax', applied: true },
+      { kind: 'field', fieldId: 'mobile', applied: true },
+      { kind: 'field', fieldId: 'phone', applied: true },
+      { kind: 'field', fieldId: 'website', applied: true },
     ])
   })
 

@@ -75,6 +75,122 @@ export type PresetRefFieldListEntry =
   | { kind: 'field'; fieldId: string; applied: boolean; reason?: string }
   | { kind: 'presetRef'; presetRef: string }
 
+/** Recursive expansion tree for a `{preset}` ref in the source preset panel. */
+export type PresetRefFieldExpansionNode =
+  | { kind: 'field'; fieldId: string; applied: boolean; reason?: string }
+  | {
+      kind: 'presetRef'
+      presetRef: string
+      presetId: string
+      cyclic?: boolean
+      children: PresetRefFieldExpansionNode[]
+    }
+
+/**
+ * Build the full inheritance expansion tree for a `{preset}` ref.
+ * Cycle detection happens here (not in React render).
+ */
+export function buildPresetRefFieldExpansion(
+  inheritanceHostPresetId: string,
+  presetRef: string,
+  fieldListKey: 'fields' | 'moreFields',
+  rawPresets: RawPresets,
+  allFields: RawFields,
+  expandedPresetIds: ReadonlySet<string> = new Set(),
+): PresetRefFieldExpansionNode[] {
+  const presetId = presetIdFromRef(presetRef)
+  if (!presetId) return []
+
+  const inheritanceHostPreset = rawPresets[inheritanceHostPresetId]
+  const referencedPreset = rawPresets[presetId]
+  if (!inheritanceHostPreset || !referencedPreset) return []
+
+  const displayList = getPresetRefDisplayFieldList(presetId, fieldListKey, rawPresets)
+  const authoredFields = getAuthoredExplicitFieldIds(inheritanceHostPresetId, 'fields', rawPresets)
+  const authoredMoreFields = getAuthoredExplicitFieldIds(
+    inheritanceHostPresetId,
+    'moreFields',
+    rawPresets,
+  )
+
+  const activeExpansion = new Set(expandedPresetIds)
+  activeExpansion.add(inheritanceHostPresetId)
+  activeExpansion.add(presetId)
+
+  const nodes: PresetRefFieldExpansionNode[] = []
+
+  for (const item of displayList) {
+    const nestedPresetId = presetIdFromRef(item)
+    if (nestedPresetId) {
+      if (activeExpansion.has(nestedPresetId)) {
+        nodes.push({
+          kind: 'presetRef',
+          presetRef: item,
+          presetId: nestedPresetId,
+          cyclic: true,
+          children: [],
+        })
+        continue
+      }
+
+      nodes.push({
+        kind: 'presetRef',
+        presetRef: item,
+        presetId: nestedPresetId,
+        children: buildPresetRefFieldExpansion(
+          presetId,
+          item,
+          fieldListKey,
+          rawPresets,
+          allFields,
+          activeExpansion,
+        ),
+      })
+      continue
+    }
+
+    const reason = explainShouldNotInheritField(
+      inheritanceHostPreset,
+      item,
+      authoredFields,
+      authoredMoreFields,
+      allFields,
+    )
+    nodes.push(
+      reason
+        ? { kind: 'field', fieldId: item, applied: false, reason }
+        : { kind: 'field', fieldId: item, applied: true },
+    )
+  }
+
+  return nodes
+}
+
+/**
+ * Immediate children when a `{preset}` ref is expanded (single level, no nesting).
+ * Prefer `buildPresetRefFieldExpansion` for the source tree.
+ */
+export function getPresetRefFieldListEntries(
+  inheritanceHostPresetId: string,
+  inheritanceHostPreset: RawPreset,
+  presetRef: string,
+  fieldListKey: 'fields' | 'moreFields',
+  rawPresets: RawPresets,
+  allFields: RawFields,
+): PresetRefFieldListEntry[] {
+  return buildPresetRefFieldExpansion(
+    inheritanceHostPresetId,
+    presetRef,
+    fieldListKey,
+    rawPresets,
+    allFields,
+  ).map((node) =>
+    node.kind === 'presetRef'
+      ? { kind: 'presetRef', presetRef: node.presetRef }
+      : { kind: 'field', fieldId: node.fieldId, applied: node.applied, reason: node.reason },
+  )
+}
+
 function collectReferencedPresetFieldIds(
   preset: RawPreset,
   fieldListKey: 'fields' | 'moreFields',
@@ -137,56 +253,7 @@ export function getAuthoredExplicitFieldIds(
 }
 
 /**
- * Immediate children when a `{preset}` ref is expanded in the source tree.
- * Nested `{preset}` refs are returned as entries (not flattened). Field entries
- * use the referenced preset as the inheritance host for `shouldInherit`.
- */
-export function getPresetRefFieldListEntries(
-  inheritanceHostPresetId: string,
-  inheritanceHostPreset: RawPreset,
-  presetRef: string,
-  fieldListKey: 'fields' | 'moreFields',
-  rawPresets: RawPresets,
-  allFields: RawFields,
-): PresetRefFieldListEntry[] {
-  const presetId = presetIdFromRef(presetRef)
-  if (!presetId) return []
-
-  const displayList = getPresetRefDisplayFieldList(presetId, fieldListKey, rawPresets)
-  const authoredFields = getAuthoredExplicitFieldIds(inheritanceHostPresetId, 'fields', rawPresets)
-  const authoredMoreFields = getAuthoredExplicitFieldIds(
-    inheritanceHostPresetId,
-    'moreFields',
-    rawPresets,
-  )
-  const entries: PresetRefFieldListEntry[] = []
-
-  for (const item of displayList) {
-    if (presetIdFromRef(item)) {
-      entries.push({ kind: 'presetRef', presetRef: item })
-      continue
-    }
-
-    const reason = explainShouldNotInheritField(
-      inheritanceHostPreset,
-      item,
-      authoredFields,
-      authoredMoreFields,
-      allFields,
-    )
-    entries.push(
-      reason
-        ? { kind: 'field', fieldId: item, applied: false, reason }
-        : { kind: 'field', fieldId: item, applied: true },
-    )
-  }
-
-  return entries
-}
-
-/**
  * Applied vs omitted fields when a `{preset}` ref is expanded (flat, all nested levels).
- * Prefer `getPresetRefFieldListEntries` for the source tree — it preserves nested refs.
  */
 export function getPresetRefFieldInheritanceBreakdown(
   inheritanceHostPresetId: string,
