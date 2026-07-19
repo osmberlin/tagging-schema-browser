@@ -290,11 +290,12 @@ test('dist-expanded slash-parent fields collapse to preset ref in source tree', 
       'omitted: traffic_sign/variable_message tag fixes traffic_sign=variable_message',
     ),
   ).toBeVisible()
+  await expect(page.getByText('data/fields/direction_point.json')).toBeVisible()
   await expect(
     page.getByText(
       'omitted: direction_point blocked by direction_vertex on traffic_sign/variable_message (fields, same tag key `direction`)',
     ),
-  ).toBeVisible()
+  ).toHaveCount(0)
 })
 
 test('preset ref in moreFields inherits moreFields from parent preset', async ({ page }) => {

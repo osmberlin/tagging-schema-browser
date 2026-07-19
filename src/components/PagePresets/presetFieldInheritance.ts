@@ -1,4 +1,4 @@
-import type { RawFields, RawPreset, RawPresets } from '@/utils/types'
+import type { RawField, RawFields, RawPreset, RawPresets } from '@/utils/types'
 
 const INHERITABLE_TYPES = new Set(['multiCombo', 'semiCombo', 'manyCombo', 'check'])
 const GENERIC_TAG_VALUES = new Set(['yes', '*'])
@@ -11,6 +11,25 @@ export function presetIdFromRef(ref: string): string | null {
 
 function fieldKey(fieldId: string, allFields: RawFields): string {
   return allFields[fieldId]?.key ?? fieldId
+}
+
+/** Geometry types where a field can appear on a preset (iD `field.matchGeometry`). */
+function effectiveFieldGeometries(field: RawField | undefined, presetGeometry: string[]): string[] {
+  if (!field?.geometry || field.geometry.length === 0) return [...presetGeometry]
+  if (presetGeometry.length === 0) return [...field.geometry]
+  return field.geometry.filter((geometry) => presetGeometry.includes(geometry))
+}
+
+/** Whether two fields can appear on the same feature geometry for this preset. */
+function fieldGeometriesOverlap(
+  left: RawField | undefined,
+  right: RawField | undefined,
+  presetGeometry: string[],
+): boolean {
+  const leftGeometries = effectiveFieldGeometries(left, presetGeometry)
+  const rightGeometries = effectiveFieldGeometries(right, presetGeometry)
+  if (leftGeometries.length === 0 || rightGeometries.length === 0) return true
+  return leftGeometries.some((geometry) => rightGeometries.includes(geometry))
 }
 
 /** Structured reason a field is not inherited (iD `Preset#shouldInherit`). */
@@ -113,14 +132,22 @@ export function getFieldInheritanceOmission(
   ] as const) {
     for (const hostFieldId of list) {
       if (presetIdFromRef(hostFieldId)) continue
-      if (fieldKey(hostFieldId, allFields) === key) {
-        return {
-          kind: 'explicitField',
-          hostPresetId,
-          fieldListKey,
-          blockingFieldId: hostFieldId,
-          tagKey: key,
-        }
+      if (fieldKey(hostFieldId, allFields) !== key) continue
+      if (
+        !fieldGeometriesOverlap(
+          allFields[hostFieldId],
+          allFields[fieldId],
+          hostPreset.geometry ?? [],
+        )
+      ) {
+        continue
+      }
+      return {
+        kind: 'explicitField',
+        hostPresetId,
+        fieldListKey,
+        blockingFieldId: hostFieldId,
+        tagKey: key,
       }
     }
   }

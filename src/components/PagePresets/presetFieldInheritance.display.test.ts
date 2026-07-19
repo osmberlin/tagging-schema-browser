@@ -128,8 +128,8 @@ describe('displayPresetFieldList', () => {
     const fields: RawFields = {
       traffic_sign: { key: 'traffic_sign', type: 'typeCombo' },
       'traffic_sign/direction': { key: 'traffic_sign:direction', type: 'radio' },
-      direction_point: { key: 'direction', type: 'number' },
-      direction_vertex: { key: 'direction', type: 'radio' },
+      direction_point: { key: 'direction', type: 'number', geometry: ['point'] },
+      direction_vertex: { key: 'direction', type: 'radio', geometry: ['vertex'] },
     }
 
     expect(
@@ -153,17 +153,51 @@ describe('displayPresetFieldList', () => {
         },
       },
       { kind: 'field', fieldId: 'traffic_sign/direction', applied: true },
+      { kind: 'field', fieldId: 'direction_point', applied: true },
+    ])
+  })
+
+  it('still blocks same-tag fields when their geometries overlap on the preset', () => {
+    const rawPresets: RawPresets = {
+      'highway/mini_roundabout': {
+        tags: { highway: 'mini_roundabout' },
+        geometry: ['vertex'],
+        fields: ['direction_clock'],
+        moreFields: ['direction_clock'],
+      },
+      'highway/turning_circle': {
+        tags: { highway: 'turning_circle' },
+        geometry: ['vertex'],
+        fields: ['direction_clock', 'direction_vertex'],
+      },
+    }
+    const fields: RawFields = {
+      direction_clock: { key: 'direction', type: 'combo', geometry: ['vertex'] },
+      direction_vertex: { key: 'direction', type: 'radio', geometry: ['vertex'] },
+    }
+
+    expect(
+      getPresetRefFieldInheritanceBreakdown(
+        'highway/turning_circle',
+        rawPresets['highway/turning_circle']!,
+        '{highway/mini_roundabout}',
+        'fields',
+        rawPresets,
+        fields,
+      ),
+    ).toEqual([
       {
-        kind: 'field',
-        fieldId: 'direction_point',
         applied: false,
+        fieldId: 'direction_clock',
         omission: {
           kind: 'explicitField',
-          hostPresetId: 'traffic_sign/variable_message',
+          hostPresetId: 'highway/turning_circle',
           fieldListKey: 'fields',
           blockingFieldId: 'direction_vertex',
           tagKey: 'direction',
         },
+        reason:
+          'direction_clock blocked by direction_vertex on highway/turning_circle (fields, same tag key `direction`)',
       },
     ])
   })
@@ -210,8 +244,8 @@ describe('displayPresetFieldList', () => {
     const fields: RawFields = {
       traffic_sign: { key: 'traffic_sign', type: 'typeCombo' },
       'traffic_sign/direction': { key: 'traffic_sign:direction', type: 'radio' },
-      direction_point: { key: 'direction', type: 'number' },
-      direction_vertex: { key: 'direction', type: 'radio' },
+      direction_point: { key: 'direction', type: 'number', geometry: ['point'] },
+      direction_vertex: { key: 'direction', type: 'radio', geometry: ['vertex'] },
     }
     const hostPreset = rawPresets['traffic_sign/variable_message']!
     const distFields = hostPreset.fields as string[]
@@ -235,7 +269,7 @@ describe('displayPresetFieldList', () => {
       fields,
     )
 
-    expect(inherited).toEqual(['traffic_sign/direction'])
+    expect(inherited).toEqual(['traffic_sign/direction', 'direction_point'])
   })
 
   it('still inherits typeCombo fields when the preset tag is generic', () => {
@@ -1043,8 +1077,8 @@ describe('displayPresetFieldList', () => {
     const fields: RawFields = {
       traffic_sign: { key: 'traffic_sign', type: 'typeCombo' },
       'traffic_sign/direction': { key: 'traffic_sign:direction', type: 'radio' },
-      direction_point: { key: 'direction', type: 'number' },
-      direction_vertex: { key: 'direction', type: 'radio' },
+      direction_point: { key: 'direction', type: 'number', geometry: ['point'] },
+      direction_vertex: { key: 'direction', type: 'radio', geometry: ['vertex'] },
     }
     const hostPreset = rawPresets['traffic_sign/variable_message']!
 
@@ -1070,19 +1104,7 @@ describe('displayPresetFieldList', () => {
         reason: 'traffic_sign/variable_message tag fixes traffic_sign=variable_message',
       },
       { applied: true, fieldId: 'traffic_sign/direction' },
-      {
-        applied: false,
-        fieldId: 'direction_point',
-        omission: {
-          kind: 'explicitField',
-          hostPresetId: 'traffic_sign/variable_message',
-          fieldListKey: 'fields',
-          blockingFieldId: 'direction_vertex',
-          tagKey: 'direction',
-        },
-        reason:
-          'direction_point blocked by direction_vertex on traffic_sign/variable_message (fields, same tag key `direction`)',
-      },
+      { applied: true, fieldId: 'direction_point' },
     ])
   })
 })
