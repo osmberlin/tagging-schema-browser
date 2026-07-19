@@ -523,10 +523,21 @@ function isAllowedCollapseCandidate(
   excludePresetId: string,
   preferPresetIds: string[],
   isExact: boolean,
+  partialMatches: Array<{ presetId: string; prefixLength: number }> = [],
+  exactPrefixLength = 0,
 ): boolean {
   if (candidateId.startsWith('@templates/')) return true
   if (preferPresetIds.includes(candidateId)) return true
   if (isSlashAncestor(candidateId, excludePresetId)) return true
+  if (
+    isExact &&
+    partialMatches.some(
+      (match) =>
+        match.prefixLength < exactPrefixLength && isSlashAncestor(match.presetId, candidateId),
+    )
+  ) {
+    return true
+  }
   // Partial prefix collapse (e.g. amenity/coworking_space → {office/coworking}) — never exact
   // match onto an unrelated preset with the same dist-expanded list (e.g. traffic_sign → highway/traffic_sign).
   if (!isExact) return true
@@ -541,13 +552,15 @@ function findDistExpandedPresetRefPrefix(
   excludePresetId: string,
   preferPresetIds: string[] = [],
 ): { presetId: string; prefixLength: number } | null {
-  const matches: Array<{
+  type Match = {
     presetId: string
     prefixLength: number
     isTemplate: boolean
     isExact: boolean
     isPreferred: boolean
-  }> = []
+  }
+
+  const candidates: Match[] = []
 
   for (const [candidateId, candidate] of Object.entries(rawPresets)) {
     if (candidateId === excludePresetId) continue
@@ -560,19 +573,31 @@ function findDistExpandedPresetRefPrefix(
     const prefix = list.slice(0, candidateList.length)
     if (!fieldListsMatch(prefix, candidateList)) continue
 
-    const isExact = candidateList.length === list.length
-    if (!isAllowedCollapseCandidate(candidateId, excludePresetId, preferPresetIds, isExact)) {
-      continue
-    }
-
-    matches.push({
+    candidates.push({
       presetId: candidateId,
       prefixLength: candidateList.length,
       isTemplate: candidateId.startsWith('@templates/'),
-      isExact,
+      isExact: candidateList.length === list.length,
       isPreferred: preferPresetIds.includes(candidateId),
     })
   }
+
+  const allowedPartials = candidates.filter(
+    (candidate) =>
+      !candidate.isExact &&
+      isAllowedCollapseCandidate(candidate.presetId, excludePresetId, preferPresetIds, false),
+  )
+
+  const matches = candidates.filter((candidate) =>
+    isAllowedCollapseCandidate(
+      candidate.presetId,
+      excludePresetId,
+      preferPresetIds,
+      candidate.isExact,
+      allowedPartials,
+      candidate.prefixLength,
+    ),
+  )
 
   if (matches.length === 0) return null
 
@@ -600,6 +625,20 @@ function findDistExpandedPresetRefPrefix(
 
   const partialMatches = matches.filter((match) => !match.isExact)
   if (partialMatches.length === 0) return null
+
+  const exactExtensionMatches = matches.filter(
+    (match) =>
+      match.isExact &&
+      partialMatches.some(
+        (partial) =>
+          partial.prefixLength < match.prefixLength &&
+          isSlashAncestor(partial.presetId, match.presetId),
+      ),
+  )
+  if (exactExtensionMatches.length === 1) {
+    const match = exactExtensionMatches[0]!
+    return { presetId: match.presetId, prefixLength: match.prefixLength }
+  }
 
   const maxLength = Math.max(...partialMatches.map((match) => match.prefixLength))
   const longest = partialMatches.filter((match) => match.prefixLength === maxLength)
@@ -785,23 +824,34 @@ export function getInheritedFieldItems(
   hostOriginalMoreFields: string[],
   rawPresets: Record<string, RawPreset>,
   allFields: RawFields,
+  resolvingPresetRefs: ReadonlySet<string> = new Set(),
 ): string[] {
   const presetId = presetIdFromRef(presetRef)
   if (!presetId) return []
+  if (resolvingPresetRefs.has(presetId)) return []
 
   const source = rawPresets[presetId]
   if (!source) return []
 
-  return resolvePresetFieldList(presetId, source, fieldListKey, rawPresets, allFields).filter(
-    (fieldId) =>
-      shouldInheritField(
-        hostPresetId,
-        hostPreset,
-        fieldId,
-        hostOriginalFields,
-        hostOriginalMoreFields,
-        allFields,
-      ),
+  const activeResolving = new Set(resolvingPresetRefs)
+  activeResolving.add(hostPresetId)
+
+  return resolvePresetFieldList(
+    presetId,
+    source,
+    fieldListKey,
+    rawPresets,
+    allFields,
+    activeResolving,
+  ).filter((fieldId) =>
+    shouldInheritField(
+      hostPresetId,
+      hostPreset,
+      fieldId,
+      hostOriginalFields,
+      hostOriginalMoreFields,
+      allFields,
+    ),
   )
 }
 
@@ -815,6 +865,7 @@ export function resolvePresetFieldList(
   fieldListKey: 'fields' | 'moreFields',
   rawPresets: RawPresets,
   allFields: RawFields,
+  resolvingPresetRefs: ReadonlySet<string> = new Set(),
 ): string[] {
   const list = preset[fieldListKey]
   if (!Array.isArray(list)) {
@@ -829,6 +880,7 @@ export function resolvePresetFieldList(
           fieldListKey,
           rawPresets,
           allFields,
+          resolvingPresetRefs,
         )
         const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
         const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
@@ -869,6 +921,12 @@ export function resolvePresetFieldList(
     if (typeof item !== 'string') continue
 
     if (presetIdFromRef(item)) {
+      const refPresetId = presetIdFromRef(item)
+      if (!refPresetId || resolvingPresetRefs.has(refPresetId)) continue
+
+      const activeResolving = new Set(resolvingPresetRefs)
+      activeResolving.add(presetId)
+
       resolved.push(
         ...getInheritedFieldItems(
           presetId,
@@ -879,6 +937,7 @@ export function resolvePresetFieldList(
           hostOriginalMoreFields,
           rawPresets,
           allFields,
+          activeResolving,
         ),
       )
       continue

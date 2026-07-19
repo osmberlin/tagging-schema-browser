@@ -1125,8 +1125,8 @@ function JsonObjectEntry({
 export function PresetSourceTree({
   presetId,
   raw,
-  preset,
-  presets,
+  preset: _preset,
+  presets: _presets,
   sourceKind = 'preset',
 }: PresetSourceTreeProps) {
   const { dataUrl, rawPresets } = useSchema()
