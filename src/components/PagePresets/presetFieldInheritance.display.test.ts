@@ -373,6 +373,52 @@ describe('displayPresetFieldList', () => {
     ).toEqual(['{@templates/contact}'])
   })
 
+  it('expands template refs using the surrounding fields or moreFields list', () => {
+    const rawPresets: RawPresets = {
+      '@templates/internet_access': {
+        tags: { '@template': 'internet_access' },
+        geometry: ['point'],
+        fields: ['internet_access', 'internet_access/fee'],
+        moreFields: ['internet_access', 'internet_access/fee', 'internet_access/ssid'],
+      },
+      'office/coworking': {
+        tags: { office: 'coworking' },
+        geometry: ['point', 'area'],
+        fields: ['{office}', '{@templates/internet_access}'],
+        moreFields: ['{@templates/internet_access}'],
+      },
+    }
+    const fields: RawFields = {
+      internet_access: { key: 'internet_access', type: 'combo' },
+      'internet_access/fee': { key: 'internet_access:fee', type: 'combo' },
+      'internet_access/ssid': { key: 'internet_access:ssid', type: 'text' },
+    }
+
+    expect(
+      buildPresetRefFieldExpansion(
+        'office/coworking',
+        '{@templates/internet_access}',
+        'fields',
+        rawPresets,
+        fields,
+      )
+        .filter((node) => node.kind === 'field')
+        .map((node) => node.fieldId),
+    ).toEqual(['internet_access', 'internet_access/fee'])
+
+    expect(
+      buildPresetRefFieldExpansion(
+        'office/coworking',
+        '{@templates/internet_access}',
+        'moreFields',
+        rawPresets,
+        fields,
+      )
+        .filter((node) => node.kind === 'field')
+        .map((node) => node.fieldId),
+    ).toEqual(['internet_access', 'internet_access/fee', 'internet_access/ssid'])
+  })
+
   it('collapses office/coworking dist fields to preset and template refs', () => {
     const rawPresets: RawPresets = {
       office: {
