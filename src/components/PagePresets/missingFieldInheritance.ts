@@ -96,7 +96,14 @@ export function detectMissingFieldInheritance(
     const missedFieldIds = parentResolved
       .filter((fieldId) => !childSet.has(fieldId))
       .filter((fieldId) =>
-        shouldInheritField(preset, fieldId, hostOriginalFields, hostOriginalMoreFields, allFields),
+        shouldInheritField(
+          presetId,
+          preset,
+          fieldId,
+          hostOriginalFields,
+          hostOriginalMoreFields,
+          allFields,
+        ),
       )
     if (missedFieldIds.length === 0) continue
 

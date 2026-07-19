@@ -271,7 +271,7 @@ test('preset ref in fields shows inherited fields not parent metadata', async ({
   await expect(page.getByText('data/fields/name.json')).toBeVisible()
   await expect(page.getByText('data/fields/operator.json')).toBeVisible()
   await expect(
-    page.getByText('omitted: preset tag fixes healthcare:speciality=abortion'),
+    page.getByText('omitted: amenity/clinic/abortion tag fixes healthcare:speciality=abortion'),
   ).toBeVisible()
   await expect(page.getByText('"geometry"')).toHaveCount(1)
 })
@@ -286,10 +286,14 @@ test('dist-expanded slash-parent fields collapse to preset ref in source tree', 
   await page.getByRole('button', { name: /"\{traffic_sign\}"/ }).click()
   await expect(page.getByText('data/fields/traffic_sign/direction.json')).toBeVisible()
   await expect(
-    page.getByText('omitted: preset tag fixes traffic_sign=variable_message'),
+    page.getByText(
+      'omitted: traffic_sign/variable_message tag fixes traffic_sign=variable_message',
+    ),
   ).toBeVisible()
   await expect(
-    page.getByText('omitted: direction_vertex listed explicitly (same tag key)'),
+    page.getByText(
+      'omitted: direction_point blocked by direction_vertex on traffic_sign/variable_message (fields, same tag key `direction`)',
+    ),
   ).toBeVisible()
 })
 

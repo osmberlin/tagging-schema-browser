@@ -13,8 +13,43 @@ function fieldKey(fieldId: string, allFields: RawFields): string {
   return allFields[fieldId]?.key ?? fieldId
 }
 
+/** Structured reason a field is not inherited (iD `Preset#shouldInherit`). */
+export type FieldInheritanceOmission =
+  | {
+      kind: 'presetTag'
+      hostPresetId: string
+      tagKey: string
+      tagValue: string
+    }
+  | {
+      kind: 'explicitField'
+      hostPresetId: string
+      fieldListKey: 'fields' | 'moreFields'
+      blockingFieldId: string
+      tagKey: string
+    }
+
+/** Format a structured inheritance omission for the source preset tree. */
+export function formatFieldInheritanceOmission(
+  omittedFieldId: string,
+  omission: FieldInheritanceOmission,
+): string {
+  switch (omission.kind) {
+    case 'presetTag':
+      return `${omission.hostPresetId} tag fixes ${omission.tagKey}=${omission.tagValue}`
+    case 'explicitField': {
+      const where = `${omission.hostPresetId} (${omission.fieldListKey})`
+      if (omission.blockingFieldId === omittedFieldId) {
+        return `${omittedFieldId} listed explicitly on ${where}`
+      }
+      return `${omittedFieldId} blocked by ${omission.blockingFieldId} on ${omission.hostPresetId} (${omission.fieldListKey}, same tag key \`${omission.tagKey}\`)`
+    }
+  }
+}
+
 /** Whether a resolved field id applies to this preset (iD `Preset#shouldInherit`). */
 export function shouldInheritField(
+  hostPresetId: string,
   hostPreset: RawPreset,
   fieldId: string,
   hostOriginalFields: string[],
@@ -22,7 +57,8 @@ export function shouldInheritField(
   allFields: RawFields,
 ): boolean {
   return (
-    explainShouldNotInheritField(
+    getFieldInheritanceOmission(
+      hostPresetId,
       hostPreset,
       fieldId,
       hostOriginalFields,
@@ -32,14 +68,15 @@ export function shouldInheritField(
   )
 }
 
-/** Human-readable reason a referenced field is not inherited, or null when it applies. */
-export function explainShouldNotInheritField(
+/** Structured reason a referenced field is not inherited, or null when it applies. */
+export function getFieldInheritanceOmission(
+  hostPresetId: string,
   hostPreset: RawPreset,
   fieldId: string,
   hostOriginalFields: string[],
   hostOriginalMoreFields: string[],
   allFields: RawFields,
-): string | null {
+): FieldInheritanceOmission | null {
   const key = fieldKey(fieldId, allFields)
   const tags = hostPreset.tags ?? {}
 
@@ -52,32 +89,69 @@ export function explainShouldNotInheritField(
         return null
       }
       if (tagValue !== undefined && tagValue !== null && String(tagValue).length > 0) {
-        return `preset tag fixes ${tagKey}=${tagValue}`
+        return { kind: 'presetTag', hostPresetId, tagKey, tagValue: String(tagValue) }
       }
     }
   }
 
-  for (const hostFieldId of [...hostOriginalFields, ...hostOriginalMoreFields]) {
-    if (presetIdFromRef(hostFieldId)) continue
-    if (fieldKey(hostFieldId, allFields) === key) {
-      return `${hostFieldId} listed explicitly (same tag key)`
+  for (const [fieldListKey, list] of [
+    ['fields', hostOriginalFields],
+    ['moreFields', hostOriginalMoreFields],
+  ] as const) {
+    for (const hostFieldId of list) {
+      if (presetIdFromRef(hostFieldId)) continue
+      if (fieldKey(hostFieldId, allFields) === key) {
+        return {
+          kind: 'explicitField',
+          hostPresetId,
+          fieldListKey,
+          blockingFieldId: hostFieldId,
+          tagKey: key,
+        }
+      }
     }
   }
 
   return null
 }
 
+/** @deprecated Prefer `getFieldInheritanceOmission` + `formatFieldInheritanceOmission`. */
+export function explainShouldNotInheritField(
+  hostPresetId: string,
+  hostPreset: RawPreset,
+  fieldId: string,
+  hostOriginalFields: string[],
+  hostOriginalMoreFields: string[],
+  allFields: RawFields,
+): string | null {
+  const omission = getFieldInheritanceOmission(
+    hostPresetId,
+    hostPreset,
+    fieldId,
+    hostOriginalFields,
+    hostOriginalMoreFields,
+    allFields,
+  )
+  return omission ? formatFieldInheritanceOmission(fieldId, omission) : null
+}
+
 export type PresetRefFieldInheritanceEntry =
   | { applied: true; fieldId: string }
-  | { applied: false; fieldId: string; reason: string }
+  | { applied: false; fieldId: string; omission: FieldInheritanceOmission; reason: string }
 
 export type PresetRefFieldListEntry =
-  | { kind: 'field'; fieldId: string; applied: boolean; reason?: string }
+  | {
+      kind: 'field'
+      fieldId: string
+      applied: boolean
+      omission?: FieldInheritanceOmission
+      reason?: string
+    }
   | { kind: 'presetRef'; presetRef: string }
 
 /** Recursive expansion tree for a `{preset}` ref in the source preset panel. */
 export type PresetRefFieldExpansionNode =
-  | { kind: 'field'; fieldId: string; applied: boolean; reason?: string }
+  | { kind: 'field'; fieldId: string; applied: boolean; omission?: FieldInheritanceOmission }
   | {
       kind: 'presetRef'
       presetRef: string
@@ -149,7 +223,8 @@ export function buildPresetRefFieldExpansion(
       continue
     }
 
-    const reason = explainShouldNotInheritField(
+    const omission = getFieldInheritanceOmission(
+      inheritanceHostPresetId,
       inheritanceHostPreset,
       item,
       authoredFields,
@@ -157,8 +232,8 @@ export function buildPresetRefFieldExpansion(
       allFields,
     )
     nodes.push(
-      reason
-        ? { kind: 'field', fieldId: item, applied: false, reason }
+      omission
+        ? { kind: 'field', fieldId: item, applied: false, omission }
         : { kind: 'field', fieldId: item, applied: true },
     )
   }
@@ -187,7 +262,15 @@ export function getPresetRefFieldListEntries(
   ).map((node) =>
     node.kind === 'presetRef'
       ? { kind: 'presetRef', presetRef: node.presetRef }
-      : { kind: 'field', fieldId: node.fieldId, applied: node.applied, reason: node.reason },
+      : {
+          kind: 'field',
+          fieldId: node.fieldId,
+          applied: node.applied,
+          omission: node.omission,
+          reason: node.omission
+            ? formatFieldInheritanceOmission(node.fieldId, node.omission)
+            : undefined,
+        },
   )
 }
 
@@ -278,14 +361,22 @@ export function getPresetRefFieldInheritanceBreakdown(
 
   return collectReferencedPresetFieldIds(source, fieldListKey, rawPresets, new Set()).map(
     (fieldId) => {
-      const reason = explainShouldNotInheritField(
+      const omission = getFieldInheritanceOmission(
+        inheritanceHostPresetId,
         inheritanceHostPreset,
         fieldId,
         authoredFields,
         authoredMoreFields,
         allFields,
       )
-      return reason ? { applied: false, fieldId, reason } : { applied: true, fieldId }
+      return omission
+        ? {
+            applied: false,
+            fieldId,
+            omission,
+            reason: formatFieldInheritanceOmission(fieldId, omission),
+          }
+        : { applied: true, fieldId }
     },
   )
 }
@@ -532,6 +623,7 @@ function explicitDistFieldIds(fieldList: string[], inheritedIndices: Set<number>
 }
 
 function shouldIncludeDistField(
+  hostPresetId: string,
   hostPreset: RawPreset,
   fieldId: string,
   fieldIndex: number,
@@ -539,7 +631,9 @@ function shouldIncludeDistField(
   explicitFieldIdsInList: string[],
   allFields: RawFields,
 ): boolean {
-  if (shouldInheritField(hostPreset, fieldId, explicitFieldIdsInList, [], allFields)) {
+  if (
+    shouldInheritField(hostPresetId, hostPreset, fieldId, explicitFieldIdsInList, [], allFields)
+  ) {
     return true
   }
   return !inheritedIndices.has(fieldIndex)
@@ -550,6 +644,7 @@ function shouldIncludeDistField(
  * Mirrors iD `Preset#resolveFields` / `shouldInherit` (fields vs moreFields context).
  */
 export function getInheritedFieldItems(
+  hostPresetId: string,
   hostPreset: RawPreset,
   presetRef: string,
   fieldListKey: 'fields' | 'moreFields',
@@ -567,6 +662,7 @@ export function getInheritedFieldItems(
   return resolvePresetFieldList(presetId, source, fieldListKey, rawPresets, allFields).filter(
     (fieldId) =>
       shouldInheritField(
+        hostPresetId,
         hostPreset,
         fieldId,
         hostOriginalFields,
@@ -605,6 +701,7 @@ export function resolvePresetFieldList(
         const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
         return inherited.filter((fieldId) =>
           shouldInheritField(
+            presetId,
             preset,
             fieldId,
             hostOriginalFields,
@@ -641,6 +738,7 @@ export function resolvePresetFieldList(
     if (presetIdFromRef(item)) {
       resolved.push(
         ...getInheritedFieldItems(
+          presetId,
           preset,
           item,
           fieldListKey,
@@ -656,6 +754,7 @@ export function resolvePresetFieldList(
     if (
       usesPresetRefs ||
       shouldIncludeDistField(
+        presetId,
         preset,
         item,
         index,
