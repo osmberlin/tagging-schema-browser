@@ -3,6 +3,7 @@ import {
   displayPresetFieldList,
   getInheritedFieldItems,
   getPresetRefFieldInheritanceBreakdown,
+  getPresetRefFieldListEntries,
 } from '@/components/PagePresets/presetFieldInheritance'
 import type { RawFields, RawPresets } from '@/utils/types'
 
@@ -142,6 +143,236 @@ describe('displayPresetFieldList', () => {
         fields,
       ),
     ).toEqual(['name', 'shop'])
+  })
+
+  it('collapses dist-expanded non-slash preset refs to a preset ref', () => {
+    const rawPresets: RawPresets = {
+      office: {
+        tags: { office: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+        ],
+        moreFields: ['email', 'fax'],
+      },
+      'office/coworking': {
+        tags: { office: 'coworking' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+          'internet_access',
+          'internet_access/fee',
+        ],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website'],
+      },
+      'amenity/coworking_space': {
+        tags: { amenity: 'coworking_space' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+          'internet_access',
+          'internet_access/fee',
+        ],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website'],
+        searchable: false,
+      },
+    }
+
+    expect(
+      displayPresetFieldList(
+        'amenity/coworking_space',
+        'fields',
+        rawPresets['amenity/coworking_space']?.fields,
+        rawPresets,
+      ),
+    ).toEqual(['{office/coworking}'])
+  })
+
+  it('resolves nested preset refs using each preset own inheritance context', () => {
+    const rawPresets: RawPresets = {
+      office: {
+        tags: { office: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+        ],
+      },
+      'office/coworking': {
+        tags: { office: 'coworking' },
+        geometry: ['point', 'area'],
+        fields: ['{office}', 'internet_access', 'internet_access/fee'],
+      },
+      'amenity/coworking_space': {
+        tags: { amenity: 'coworking_space' },
+        geometry: ['point', 'area'],
+        fields: ['{office/coworking}'],
+        moreFields: ['{office/coworking}'],
+      },
+    }
+    const fields: RawFields = {
+      name: { key: 'name', type: 'text' },
+      office: { key: 'office', type: 'typeCombo' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      opening_hours: { key: 'opening_hours', type: 'text' },
+      phone: { key: 'phone', type: 'tel' },
+      website: { key: 'website', type: 'url' },
+      internet_access: { key: 'internet_access', type: 'combo' },
+      'internet_access/fee': { key: 'internet_access:fee', type: 'combo' },
+    }
+
+    const hostPreset = rawPresets['amenity/coworking_space']!
+    const inherited = getInheritedFieldItems(
+      hostPreset,
+      '{office/coworking}',
+      'fields',
+      ['{office/coworking}'],
+      ['{office/coworking}'],
+      rawPresets,
+      fields,
+    )
+
+    expect(inherited).toEqual([
+      'name',
+      'address',
+      'building_area_yes',
+      'opening_hours',
+      'phone',
+      'website',
+      'internet_access',
+      'internet_access/fee',
+    ])
+    expect(inherited).not.toContain('office')
+  })
+
+  it('prefers template refs when collapsing dist-expanded moreFields prefixes', () => {
+    const rawPresets: RawPresets = {
+      '@templates/contact': {
+        tags: { '@template': 'contact' },
+        geometry: ['point'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website'],
+      },
+      'barrier/border_control': {
+        tags: { barrier: 'border_control' },
+        geometry: ['point'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website', 'address'],
+      },
+      'leisure/marina_no_facilities': {
+        tags: { 'seamark:harbour:category': 'marina_no_facilities' },
+        geometry: ['point', 'area'],
+        fields: ['name'],
+        moreFields: [
+          'email',
+          'fax',
+          'mobile',
+          'phone',
+          'website',
+          'address',
+          'gnis/feature_id-US',
+          'seamark/harbour/category_marina',
+          'seamark/type',
+        ],
+      },
+    }
+
+    expect(
+      displayPresetFieldList(
+        'leisure/marina_no_facilities',
+        'moreFields',
+        rawPresets['leisure/marina_no_facilities']?.moreFields,
+        rawPresets,
+      ),
+    ).toEqual([
+      '{@templates/contact}',
+      'address',
+      'gnis/feature_id-US',
+      'seamark/harbour/category_marina',
+      'seamark/type',
+    ])
+  })
+
+  it('lists nested preset refs and omitted fields for the referenced preset host', () => {
+    const rawPresets: RawPresets = {
+      office: {
+        tags: { office: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+        ],
+      },
+      'office/coworking': {
+        tags: { office: 'coworking' },
+        geometry: ['point', 'area'],
+        fields: ['{office}', 'internet_access', 'internet_access/fee'],
+      },
+    }
+    const fields: RawFields = {
+      name: { key: 'name', type: 'text' },
+      office: { key: 'office', type: 'typeCombo' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      opening_hours: { key: 'opening_hours', type: 'text' },
+      phone: { key: 'phone', type: 'tel' },
+      website: { key: 'website', type: 'url' },
+      internet_access: { key: 'internet_access', type: 'combo' },
+      'internet_access/fee': { key: 'internet_access:fee', type: 'combo' },
+    }
+    const hostPreset = rawPresets['office/coworking']!
+
+    expect(
+      getPresetRefFieldListEntries(
+        hostPreset,
+        '{office}',
+        'fields',
+        ['{office}', 'internet_access', 'internet_access/fee'],
+        [],
+        rawPresets,
+        fields,
+      ),
+    ).toEqual([
+      { kind: 'field', fieldId: 'name', applied: true },
+      {
+        kind: 'field',
+        fieldId: 'office',
+        applied: false,
+        reason: 'preset tag fixes office=coworking',
+      },
+      { kind: 'field', fieldId: 'address', applied: true },
+      { kind: 'field', fieldId: 'building_area_yes', applied: true },
+      { kind: 'field', fieldId: 'opening_hours', applied: true },
+      { kind: 'field', fieldId: 'phone', applied: true },
+      { kind: 'field', fieldId: 'website', applied: true },
+    ])
   })
 
   it('explains omitted fields when expanding a preset ref', () => {
