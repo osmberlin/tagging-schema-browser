@@ -74,6 +74,11 @@ presets:
         - informal
         - not/name
         - oneway
+  highway/give_way:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
   highway/speed_camera:
     fields:
       parentId: highway
