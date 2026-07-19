@@ -468,6 +468,8 @@ function RefDisclosure({
           fieldListKey,
           rawPresets,
           fields,
+          new Set(),
+          host.hostPresetId,
         )
       : undefined)
   const expandedRaw =

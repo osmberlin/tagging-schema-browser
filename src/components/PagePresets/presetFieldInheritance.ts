@@ -28,6 +28,14 @@ export type FieldInheritanceOmission =
       blockingFieldId: string
       tagKey: string
     }
+  | {
+      kind: 'duplicateInFields'
+      hostPresetId: string
+      sourcePresetRef: string
+      sourcePresetId: string
+    }
+
+type HostFieldsProvenance = Map<string, { sourcePresetRef: string; sourcePresetId: string }>
 
 /** Format a structured inheritance omission for the source preset tree. */
 export function formatFieldInheritanceOmission(
@@ -44,6 +52,11 @@ export function formatFieldInheritanceOmission(
       }
       return `${omittedFieldId} blocked by ${omission.blockingFieldId} on ${omission.hostPresetId} (${omission.fieldListKey}, same tag key \`${omission.tagKey}\`)`
     }
+    case 'duplicateInFields':
+      if (omission.sourcePresetRef.startsWith('{')) {
+        return `${omittedFieldId} already in fields via ${omission.sourcePresetRef}`
+      }
+      return `${omittedFieldId} already in fields on ${omission.hostPresetId}`
   }
 }
 
@@ -161,6 +174,69 @@ export type PresetRefFieldExpansionNode =
     }
 
 /**
+ * For each field id already contributed by the page preset's `fields` list,
+ * record which `{preset}` ref (or literal field) introduced it.
+ */
+function buildHostFieldsProvenance(
+  pagePresetId: string,
+  rawPresets: RawPresets,
+  allFields: RawFields,
+): HostFieldsProvenance {
+  const host = rawPresets[pagePresetId]
+  if (!host) return new Map()
+
+  const authoredFields = getAuthoredExplicitFieldIds(pagePresetId, 'fields', rawPresets)
+  const authoredMoreFields = getAuthoredExplicitFieldIds(pagePresetId, 'moreFields', rawPresets)
+  const provenance: HostFieldsProvenance = new Map()
+
+  for (const item of getPresetRefDisplayFieldList(pagePresetId, 'fields', rawPresets)) {
+    const refId = presetIdFromRef(item)
+    if (refId) {
+      for (const fieldId of getInheritedFieldItems(
+        pagePresetId,
+        host,
+        item,
+        'fields',
+        authoredFields,
+        authoredMoreFields,
+        rawPresets,
+        allFields,
+      )) {
+        provenance.set(fieldId, { sourcePresetRef: item, sourcePresetId: refId })
+      }
+      continue
+    }
+
+    if (
+      shouldInheritField(pagePresetId, host, item, authoredFields, authoredMoreFields, allFields)
+    ) {
+      provenance.set(item, { sourcePresetRef: item, sourcePresetId: pagePresetId })
+    }
+  }
+
+  return provenance
+}
+
+function getDuplicateInFieldsOmission(
+  fieldId: string,
+  fieldListKey: 'fields' | 'moreFields',
+  pagePresetId: string,
+  hostFieldsProvenance: HostFieldsProvenance | undefined,
+): FieldInheritanceOmission | null {
+  if (fieldListKey !== 'moreFields' || !hostFieldsProvenance) return null
+
+  const source = hostFieldsProvenance.get(fieldId)
+  if (!source) return null
+
+  return {
+    kind: 'duplicateInFields',
+    hostPresetId: pagePresetId,
+    sourcePresetRef: source.sourcePresetRef,
+    sourcePresetId: source.sourcePresetId,
+  }
+}
+
+/**
  * Build the full inheritance expansion tree for a `{preset}` ref.
  * Cycle detection happens here (not in React render).
  */
@@ -171,6 +247,8 @@ export function buildPresetRefFieldExpansion(
   rawPresets: RawPresets,
   allFields: RawFields,
   expandedPresetIds: ReadonlySet<string> = new Set(),
+  pagePresetId?: string,
+  hostFieldsProvenance?: HostFieldsProvenance,
 ): PresetRefFieldExpansionNode[] {
   const presetId = presetIdFromRef(presetRef)
   if (!presetId) return []
@@ -178,6 +256,10 @@ export function buildPresetRefFieldExpansion(
   const inheritanceHostPreset = rawPresets[inheritanceHostPresetId]
   const referencedPreset = rawPresets[presetId]
   if (!inheritanceHostPreset || !referencedPreset) return []
+
+  const resolvedPagePresetId = pagePresetId ?? inheritanceHostPresetId
+  const resolvedHostFieldsProvenance =
+    hostFieldsProvenance ?? buildHostFieldsProvenance(resolvedPagePresetId, rawPresets, allFields)
 
   const displayList = getPresetRefDisplayFieldList(presetId, fieldListKey, rawPresets)
   const authoredFields = getAuthoredExplicitFieldIds(inheritanceHostPresetId, 'fields', rawPresets)
@@ -218,19 +300,28 @@ export function buildPresetRefFieldExpansion(
           rawPresets,
           allFields,
           activeExpansion,
+          resolvedPagePresetId,
+          resolvedHostFieldsProvenance,
         ),
       })
       continue
     }
 
-    const omission = getFieldInheritanceOmission(
-      inheritanceHostPresetId,
-      inheritanceHostPreset,
-      item,
-      authoredFields,
-      authoredMoreFields,
-      allFields,
-    )
+    const omission =
+      getDuplicateInFieldsOmission(
+        item,
+        fieldListKey,
+        resolvedPagePresetId,
+        resolvedHostFieldsProvenance,
+      ) ??
+      getFieldInheritanceOmission(
+        inheritanceHostPresetId,
+        inheritanceHostPreset,
+        item,
+        authoredFields,
+        authoredMoreFields,
+        allFields,
+      )
     nodes.push(
       omission
         ? { kind: 'field', fieldId: item, applied: false, omission }
