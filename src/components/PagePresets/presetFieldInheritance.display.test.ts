@@ -486,6 +486,78 @@ describe('displayPresetFieldList', () => {
     ])
   })
 
+  it('does not use the referenced preset as its own inheritance host', () => {
+    const rawPresets: RawPresets = {
+      office: {
+        tags: { office: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+        ],
+      },
+      'office/coworking': {
+        tags: { office: 'coworking' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+          'internet_access',
+        ],
+      },
+    }
+    const fields: RawFields = {
+      name: { key: 'name', type: 'text' },
+      office: { key: 'office', type: 'typeCombo' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      opening_hours: { key: 'opening_hours', type: 'text' },
+      phone: { key: 'phone', type: 'tel' },
+      website: { key: 'website', type: 'url' },
+      internet_access: { key: 'internet_access', type: 'combo' },
+    }
+
+    const wrongHostOmitted = buildPresetRefFieldExpansion(
+      'office',
+      '{office}',
+      'fields',
+      rawPresets,
+      fields,
+    ).filter((entry) => entry.kind === 'field' && !entry.applied)
+
+    expect(wrongHostOmitted.length).toBeGreaterThan(1)
+    expect(
+      wrongHostOmitted.some((entry) => entry.kind === 'field' && entry.fieldId === 'name'),
+    ).toBe(true)
+
+    expect(
+      buildPresetRefFieldExpansion(
+        'office/coworking',
+        '{office}',
+        'fields',
+        rawPresets,
+        fields,
+      ).filter((entry) => entry.kind === 'field' && !entry.applied),
+    ).toEqual([
+      {
+        kind: 'field',
+        fieldId: 'office',
+        applied: false,
+        reason: 'preset tag fixes office=coworking',
+      },
+    ])
+  })
+
   it('shows nested preset refs instead of false omitted fields for coworking_space', () => {
     const rawPresets: RawPresets = {
       office: {
