@@ -4,6 +4,7 @@ import {
   formatMissingInheritanceOverrideYaml,
   missingInheritanceOverrideFromCurrent,
   parentPresetId,
+  resolveMissingInheritanceListStatus,
   resolveMissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
 
@@ -217,6 +218,56 @@ describe('missingFieldInheritance', () => {
         fields: {
           parentId: 'tourism/information',
           missedFieldIds: ['address', 'building_area_yes'],
+        },
+      }),
+    ).toBe('stale')
+  })
+
+  it('allows partial overrides when only one field list is documented', () => {
+    const current = {
+      fields: {
+        parentId: 'man_made',
+        missedFieldIds: ['name'],
+        explicitPresetRefs: [],
+      },
+      moreFields: {
+        parentId: 'man_made',
+        missedFieldIds: ['material'],
+        explicitPresetRefs: [],
+      },
+    }
+    const fieldsOnlyOverride = {
+      fields: {
+        parentId: 'man_made',
+        missedFieldIds: ['name'],
+      },
+    }
+
+    expect(resolveMissingInheritanceStatus(current, fieldsOnlyOverride)).toBe('unreviewed')
+    expect(resolveMissingInheritanceListStatus(current.fields, fieldsOnlyOverride.fields)).toBe(
+      'intentional',
+    )
+    expect(resolveMissingInheritanceListStatus(current.moreFields, undefined)).toBe('unreviewed')
+  })
+
+  it('marks orphaned override lists stale when live detection no longer applies', () => {
+    const current = {
+      fields: {
+        parentId: 'man_made',
+        missedFieldIds: ['name'],
+        explicitPresetRefs: [],
+      },
+    }
+
+    expect(
+      resolveMissingInheritanceStatus(current, {
+        fields: {
+          parentId: 'man_made',
+          missedFieldIds: ['name'],
+        },
+        moreFields: {
+          parentId: 'man_made',
+          missedFieldIds: ['material'],
         },
       }),
     ).toBe('stale')
