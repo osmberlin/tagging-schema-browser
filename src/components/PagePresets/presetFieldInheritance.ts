@@ -281,13 +281,25 @@ function findDistExpandedPresetRefPrefix(
     return { presetId: match.presetId, prefixLength: match.prefixLength }
   }
 
-  const exactMatches = matches.filter((match) => match.isExact)
-  if (exactMatches.length === 1) {
-    const match = exactMatches[0]
+  // Whole-list dist expansion of a template (e.g. olive_grove moreFields → {@templates/contact}).
+  const exactTemplateMatches = matches.filter((match) => match.isExact && match.isTemplate)
+  if (exactTemplateMatches.length === 1) {
+    const match = exactTemplateMatches[0]
     return { presetId: match.presetId, prefixLength: match.prefixLength }
   }
 
-  const templateMatches = matches.filter((match) => match.isTemplate)
+  // Unambiguous whole-list match to another preset (never for @templates/* hosts — contact
+  // and olive_grove share the same dist-expanded contact fields).
+  if (!excludePresetId.startsWith('@templates/')) {
+    const exactNonTemplateMatches = matches.filter((match) => match.isExact && !match.isTemplate)
+    if (exactNonTemplateMatches.length === 1) {
+      const match = exactNonTemplateMatches[0]
+      return { presetId: match.presetId, prefixLength: match.prefixLength }
+    }
+  }
+
+  // Partial prefix only — never map one preset's full field list onto an unrelated preset.
+  const templateMatches = matches.filter((match) => match.isTemplate && !match.isExact)
   if (templateMatches.length > 0) {
     const best = templateMatches.reduce((left, right) =>
       right.prefixLength > left.prefixLength ? right : left,
