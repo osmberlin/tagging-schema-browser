@@ -5,7 +5,8 @@ import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
   displayPresetFieldList,
-  getPresetRefFieldInheritanceBreakdown,
+  getPresetRefDisplayFieldList,
+  getPresetRefFieldListEntries,
   presetIdFromRef,
 } from '@/components/PagePresets/presetFieldInheritance'
 import {
@@ -270,6 +271,26 @@ type HostPresetContext = {
   sourceFieldId?: string
 }
 
+type InheritanceHostContext = {
+  preset: RawPreset
+  originalFields: string[]
+  originalMoreFields: string[]
+}
+
+function inheritanceHostFromPresetId(
+  presetId: string,
+  rawPresets: RawPresets,
+): InheritanceHostContext | null {
+  const preset = rawPresets[presetId]
+  if (!preset) return null
+
+  return {
+    preset,
+    originalFields: getPresetRefDisplayFieldList(presetId, 'fields', rawPresets),
+    originalMoreFields: getPresetRefDisplayFieldList(presetId, 'moreFields', rawPresets),
+  }
+}
+
 /** Inherited name / terms / aliases when `name` references another preset. */
 function PresetRefInheritedLabels({
   labels,
@@ -403,6 +424,7 @@ function RefDisclosure({
   trailingComma,
   parentKey,
   host,
+  inheritanceHost,
   sortMode = 'alpha',
 }: {
   label: string
@@ -412,6 +434,7 @@ function RefDisclosure({
   trailingComma?: boolean
   parentKey?: string
   host: HostPresetContext
+  inheritanceHost?: InheritanceHostContext
   sortMode?: KeySortMode
 }) {
   const [open, setOpen] = useState(false)
@@ -489,6 +512,9 @@ function RefDisclosure({
             dataUrl={dataUrl}
             trailingComma={trailingComma}
             host={host}
+            inheritanceHost={
+              inheritanceHost ?? inheritanceHostFromPresetId(refInfo.id, rawPresets) ?? undefined
+            }
           />
         ) : expandedRaw ? (
           <>
@@ -570,6 +596,7 @@ function PresetRefInheritedFields({
   dataUrl,
   trailingComma,
   host,
+  inheritanceHost,
 }: {
   presetRef: string
   fieldListKey: 'fields' | 'moreFields'
@@ -577,19 +604,32 @@ function PresetRefInheritedFields({
   dataUrl: string
   trailingComma?: boolean
   host: HostPresetContext
+  inheritanceHost?: InheritanceHostContext
 }) {
   const { fields: allFields, rawPresets } = useSchema()
-  const breakdown = getPresetRefFieldInheritanceBreakdown(
-    host.hostPreset,
+  const presetId = presetIdFromRef(presetRef)
+  const resolvedInheritanceHost =
+    inheritanceHost ?? (presetId ? inheritanceHostFromPresetId(presetId, rawPresets) : null)
+
+  if (!resolvedInheritanceHost) {
+    return (
+      <JsonLine level={level} trailingComma={trailingComma}>
+        <span className="text-slate-400 italic">{'/* preset not loaded */'}</span>
+      </JsonLine>
+    )
+  }
+
+  const entries = getPresetRefFieldListEntries(
+    resolvedInheritanceHost.preset,
     presetRef,
     fieldListKey,
-    host.hostOriginalFields,
-    host.hostOriginalMoreFields,
+    resolvedInheritanceHost.originalFields,
+    resolvedInheritanceHost.originalMoreFields,
     rawPresets,
     allFields,
   )
 
-  if (breakdown.length === 0) {
+  if (entries.length === 0) {
     return (
       <JsonLine level={level} trailingComma={trailingComma}>
         <span className="text-slate-400 italic">{'/* no fields on referenced preset */'}</span>
@@ -599,8 +639,27 @@ function PresetRefInheritedFields({
 
   return (
     <>
-      {breakdown.map((entry, index) => {
-        const entryTrailingComma = index < breakdown.length - 1 ? true : trailingComma
+      {entries.map((entry, index) => {
+        const entryTrailingComma = index < entries.length - 1 ? true : trailingComma
+
+        if (entry.kind === 'presetRef') {
+          const refInfo = refInFieldList(entry.presetRef, rawPresets)
+          if (!refInfo) return null
+
+          return (
+            <RefDisclosure
+              key={`${fieldListKey}-${entry.presetRef}`}
+              label={entry.presetRef}
+              refInfo={refInfo}
+              level={level}
+              dataUrl={dataUrl}
+              trailingComma={entryTrailingComma}
+              parentKey={fieldListKey}
+              host={host}
+              inheritanceHost={resolvedInheritanceHost}
+            />
+          )
+        }
 
         if (entry.applied) {
           return (
@@ -620,7 +679,7 @@ function PresetRefInheritedFields({
           <OmittedInheritedFieldLine
             key={`${fieldListKey}-${entry.fieldId}-omitted`}
             fieldId={entry.fieldId}
-            reason={entry.reason}
+            reason={entry.reason ?? 'not inherited'}
             level={level}
             dataUrl={dataUrl}
             trailingComma={entryTrailingComma}
