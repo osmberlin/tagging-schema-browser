@@ -1,15 +1,11 @@
-# Launch a Cursor cloud agent when a schema override issue is opened.
+# Launch a Cursor cloud agent for schema override issues (manual only while batch audit PR merges).
 # Issue title must start with [missing-inheritance] or [risky-typecombo].
-# Only one schema-override PR is processed at a time; the next issue launches after merge.
-# Manual batch restart: Actions → Cursor override automation → Run workflow.
+# Auto-run on issue open / post-merge queue is paused until #213 lands.
+# Manual restart: Actions → Cursor override automation → Run workflow.
 # See .agents/skills/apply-schema-override/SKILL.md
 name: Cursor override automation
 
 on:
-  issues:
-    types: [opened]
-  pull_request:
-    types: [closed]
   workflow_dispatch:
     inputs:
       issue_numbers:
@@ -23,20 +19,6 @@ permissions:
 
 jobs:
   launch-agent:
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'issues' &&
-        (
-          startsWith(github.event.issue.title, '[missing-inheritance]') ||
-          startsWith(github.event.issue.title, '[risky-typecombo]')
-        )
-      ) ||
-      (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.merged == true &&
-        contains(github.event.pull_request.labels.*.name, 'schema-override')
-      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -52,6 +34,5 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          RESTART_SCHEMA_OVERRIDE_ISSUES: ${{ github.event_name == 'workflow_dispatch' }}
-          LAUNCH_NEXT_SCHEMA_OVERRIDE: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged }}
+          RESTART_SCHEMA_OVERRIDE_ISSUES: 'true'
           ISSUE_NUMBERS: ${{ github.event.inputs.issue_numbers }}
