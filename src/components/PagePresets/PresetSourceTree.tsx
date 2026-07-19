@@ -5,7 +5,7 @@ import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
   displayPresetFieldList,
-  getPresetRefDisplayFieldList,
+  getAuthoredExplicitFieldIds,
   getPresetRefFieldListEntries,
   presetIdFromRef,
 } from '@/components/PagePresets/presetFieldInheritance'
@@ -272,6 +272,7 @@ type HostPresetContext = {
 }
 
 type InheritanceHostContext = {
+  presetId: string
   preset: RawPreset
   originalFields: string[]
   originalMoreFields: string[]
@@ -285,9 +286,10 @@ function inheritanceHostFromPresetId(
   if (!preset) return null
 
   return {
+    presetId,
     preset,
-    originalFields: getPresetRefDisplayFieldList(presetId, 'fields', rawPresets),
-    originalMoreFields: getPresetRefDisplayFieldList(presetId, 'moreFields', rawPresets),
+    originalFields: getAuthoredExplicitFieldIds(presetId, 'fields', rawPresets),
+    originalMoreFields: getAuthoredExplicitFieldIds(presetId, 'moreFields', rawPresets),
   }
 }
 
@@ -620,11 +622,10 @@ function PresetRefInheritedFields({
   }
 
   const entries = getPresetRefFieldListEntries(
+    resolvedInheritanceHost.presetId,
     resolvedInheritanceHost.preset,
     presetRef,
     fieldListKey,
-    resolvedInheritanceHost.originalFields,
-    resolvedInheritanceHost.originalMoreFields,
     rawPresets,
     allFields,
   )
