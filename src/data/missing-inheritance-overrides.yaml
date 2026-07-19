@@ -75,6 +75,11 @@ presets:
         - brand
         - building/levels_building
         - height_building
+  highway/emergency_bay:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
   highway/footway/access_aisle:
     fields:
       parentId: highway/footway
