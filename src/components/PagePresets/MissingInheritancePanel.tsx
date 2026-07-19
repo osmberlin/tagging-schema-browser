@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import type {
   FieldListKey,
   MissingFieldInheritance,
-  MissingInheritanceOverride,
+  MissingInheritanceOverrideList,
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
 import { resolveMissingInheritanceListStatus } from '@/components/PagePresets/missingFieldInheritance'
@@ -46,14 +46,14 @@ const LIST_STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
 function FieldListSection({
   fieldListKey,
   section,
-  storedOverride,
+  listOverride,
 }: {
   fieldListKey: FieldListKey
   section: NonNullable<MissingFieldInheritance[FieldListKey]>
-  storedOverride?: MissingInheritanceOverride
+  listOverride?: MissingInheritanceOverrideList
 }) {
   const title = fieldListKey === 'fields' ? 'Primary fields' : 'More fields'
-  const listStatus = resolveMissingInheritanceListStatus(section, storedOverride?.[fieldListKey])
+  const listStatus = resolveMissingInheritanceListStatus(section, listOverride)
   return (
     <div className="not-prose space-y-2">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -135,8 +135,8 @@ export function MissingInheritancePanel({
   const storedOverride = missingInheritanceOverrides.presets[preset.id]
 
   const showCreateIssue =
-    (missingInheritanceStatus === 'unreviewed' && missingFieldInheritance) ||
-    (missingInheritanceStatus === 'stale' && (missingFieldInheritance || storedOverride))
+    (missingInheritanceStatus === 'unreviewed' && !!missingFieldInheritance) ||
+    (missingInheritanceStatus === 'stale' && !!(missingFieldInheritance || storedOverride))
 
   return (
     <SchemaIssueDisclosure
@@ -185,14 +185,14 @@ export function MissingInheritancePanel({
             <FieldListSection
               fieldListKey="fields"
               section={missingFieldInheritance.fields}
-              storedOverride={storedOverride}
+              listOverride={storedOverride?.fields}
             />
           ) : null}
           {missingFieldInheritance?.moreFields ? (
             <FieldListSection
               fieldListKey="moreFields"
               section={missingFieldInheritance.moreFields}
-              storedOverride={storedOverride}
+              listOverride={storedOverride?.moreFields}
             />
           ) : null}
         </div>
