@@ -137,18 +137,6 @@ jobs:
           CLOSE_LINKED_ISSUES_FROM_PR: ${{ steps.pr.outputs.number }}
         run: bun run .github/scripts/cursorOverrideAutomation.ts
 
-      - name: Launch next schema override issue
-        if: >-
-          steps.files.outputs.eligible == 'true' &&
-          steps.automerge.outcome == 'success' &&
-          steps.close-linked-issues.outcome == 'success'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          LAUNCH_NEXT_SCHEMA_OVERRIDE: 'true'
-        run: bun run .github/scripts/cursorOverrideAutomation.ts
-
       - name: Comment when auto-merge is queued
         if: >-
           steps.files.outputs.eligible == 'true' &&

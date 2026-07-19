@@ -21,3 +21,18 @@ export function auditPageHref({
   const query = params.toString()
   return `/audits/${slug}${query ? `?${query}` : ''}`
 }
+
+export function auditPageAbsoluteHref(params: Parameters<typeof auditPageHref>[0]): string {
+  const path = auditPageHref(params)
+  if (typeof window === 'undefined') return path
+  return `${window.location.origin}${path}`
+}
+
+export function presetDetailAbsoluteHref(presetId: string, dataUrl: string): string {
+  const params = new URLSearchParams()
+  if (dataUrl.trim()) params.set('dataUrl', dataUrl)
+  const query = params.toString()
+  const path = `/preset/${presetId}${query ? `?${query}` : ''}`
+  if (typeof window === 'undefined') return path
+  return `${window.location.origin}${path}`
+}

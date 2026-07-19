@@ -13,7 +13,7 @@ import { areaAccent } from '@/theme/areaAccent'
 import { comparisonAccent } from '@/theme/comparisonAccent'
 import { cn } from '@/utils/tw'
 
-type NavKey = SchemaArea | 'comparison'
+type NavKey = SchemaArea | 'comparison' | 'audits'
 
 type NavIndicator = {
   bg: string
@@ -56,7 +56,9 @@ const comparisonIndicator: NavIndicator = {
 }
 
 function getIndicator(key: NavKey): NavIndicator {
-  return key === 'comparison' ? comparisonIndicator : areaIndicators[key]
+  if (key === 'comparison') return comparisonIndicator
+  if (key === 'audits') return areaIndicators.fields
+  return areaIndicators[key]
 }
 
 function getActiveKey(pathname: string): NavKey {
@@ -65,6 +67,7 @@ function getActiveKey(pathname: string): NavKey {
   if (pathname === '/translations') return 'translations'
   if (pathname === '/preset-switch') return 'presetSwitch'
   if (pathname === '/comparison') return 'comparison'
+  if (pathname === '/audits' || pathname.startsWith('/audits/')) return 'audits'
   return 'presets'
 }
 
@@ -126,6 +129,19 @@ export function PrimaryNav({
         dataUrl: prev.dataUrl ?? '',
         locale: prev.locale ?? '',
       }),
+    },
+    {
+      key: 'audits',
+      to: '/audits',
+      label: 'Audits',
+      area: 'fields',
+      search: (prev) => ({
+        ...presetSearchDefaults,
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
+        reference: prev.reference,
+      }),
+      title: 'Review missing inheritance and risky typeCombo entries',
     },
     {
       key: 'icons',

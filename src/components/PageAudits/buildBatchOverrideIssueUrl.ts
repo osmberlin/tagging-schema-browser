@@ -1,5 +1,14 @@
+import {
+  auditDecisionIncludesIssue,
+  AUDIT_DECISION_LABELS,
+  type AuditDecision,
+} from '@/components/PageAudits/auditDecisions'
 import type { AuditEntry } from '@/components/PageAudits/auditEntries'
 import { missingInheritanceFromEntry } from '@/components/PageAudits/auditEntries'
+import {
+  auditPageAbsoluteHref,
+  presetDetailAbsoluteHref,
+} from '@/components/PageAudits/auditPageHref'
 import type { AuditSlug } from '@/components/PageAudits/auditSlugs'
 import {
   formatMissingInheritanceOverrideYaml,
@@ -16,40 +25,22 @@ import {
 } from '@/utils/buildSchemaOverrideIssueUrl'
 import { GITHUB_REPO_URL } from '@/utils/constants'
 
-export type AuditDecision = 'pending' | 'intentional' | 'remove_stale' | 'needs_work'
-
-function auditPageUrl(slug: AuditSlug, dataUrl: string, reference?: string): string {
-  if (typeof window === 'undefined') return `/audits/${slug}`
-  const params = new URLSearchParams()
-  if (dataUrl.trim()) params.set('dataUrl', dataUrl)
-  else if (reference) params.set('reference', reference)
-  const query = params.toString()
-  return `${window.location.origin}${window.location.pathname.replace(/\/audits\/[^/]+$/, `/audits/${slug}`)}${query ? `?${query}` : ''}`
-}
-
-function presetDetailUrl(presetId: string, dataUrl: string): string {
-  if (typeof window === 'undefined') return `/preset/${presetId}`
-  const params = new URLSearchParams()
-  if (dataUrl.trim()) params.set('dataUrl', dataUrl)
-  const query = params.toString()
-  return `${window.location.origin}/preset/${presetId}${query ? `?${query}` : ''}`
-}
-
-function snapshotYamlForEntry(entry: AuditEntry, decision: AuditDecision): string {
+function intentionalSnapshotYaml(entry: AuditEntry): string {
   if (entry.kind === 'missing-inheritance') {
-    if (decision === 'remove_stale' && entry.storedOverride) {
-      return formatMissingInheritanceOverrideYamlFromStored(entry.presetId, entry.storedOverride)
-    }
     const current = missingInheritanceFromEntry(entry)
-    if (!current || decision !== 'intentional') return ''
+    if (!current) return ''
     return formatMissingInheritanceOverrideYaml(entry.presetId, current)
   }
-
-  if (decision === 'remove_stale' && entry.storedOverride) {
-    return formatRiskyTypeComboOverrideYamlFromStored(entry.presetId, entry.storedOverride)
-  }
-  if (decision !== 'intentional' || !entry.riskyTypeCombo) return ''
+  if (!entry.riskyTypeCombo) return ''
   return formatRiskyTypeComboOverrideYaml(entry.presetId, entry.riskyTypeCombo)
+}
+
+function staleOverrideYaml(entry: AuditEntry): string {
+  if (!entry.storedOverride) return ''
+  if (entry.kind === 'missing-inheritance') {
+    return formatMissingInheritanceOverrideYamlFromStored(entry.presetId, entry.storedOverride)
+  }
+  return formatRiskyTypeComboOverrideYamlFromStored(entry.presetId, entry.storedOverride)
 }
 
 function entryLabel(entry: AuditEntry): string {
@@ -57,6 +48,10 @@ function entryLabel(entry: AuditEntry): string {
     return `${entry.presetId} (${entry.fieldListKey})`
   }
   return entry.presetId
+}
+
+function decisionLabelForEntry(decision: AuditDecision): string {
+  return AUDIT_DECISION_LABELS[decision]
 }
 
 export function buildBatchSchemaOverrideIssueUrl({
@@ -72,50 +67,76 @@ export function buildBatchSchemaOverrideIssueUrl({
   entries: AuditEntry[]
   decisions: Record<string, AuditDecision>
   dataUrl: string
-  reference?: string
+  reference?: 'release' | 'interim'
 }): string {
-  const selected = entries.filter((entry) => {
-    const decision = decisions[entry.entryId] ?? 'pending'
-    return decision === 'intentional' || decision === 'remove_stale' || decision === 'needs_work'
-  })
+  const selected = entries.filter((entry) =>
+    auditDecisionIncludesIssue(decisions[entry.entryId] ?? 'pending'),
+  )
 
   if (selected.length === 0) {
     throw new Error('Select at least one entry to include in the issue.')
   }
 
-  const overrideEntries = selected.filter((entry) => {
-    const decision = decisions[entry.entryId]
-    return decision === 'intentional' || decision === 'remove_stale'
-  })
+  const intentionalEntries = selected.filter((entry) => decisions[entry.entryId] === 'intentional')
+  const staleEntries = selected.filter((entry) => decisions[entry.entryId] === 'remove_stale')
   const needsWorkEntries = selected.filter((entry) => decisions[entry.entryId] === 'needs_work')
 
-  const snapshotLines = overrideEntries
-    .map((entry) => snapshotYamlForEntry(entry, decisions[entry.entryId] ?? 'pending'))
-    .filter((yaml) => yaml.trim().length > 0)
-
-  const auditUrl = auditPageUrl(slug, dataUrl, reference)
+  const auditUrl = auditPageAbsoluteHref({ slug, dataUrl, reference })
+  const schemaLabel = dataUrl.trim() || reference || 'release'
 
   const intro = [
     'Record schema override decisions from the Tagging Schema Browser audit page.',
-    `Keep the \`[${kind}]\` title prefix. Submit to enqueue a Cursor cloud agent (manual workflow) that opens one PR for all related override issues.`,
+    `Keep the \`[${kind}]\` title prefix. After submitting, run the **Cursor override automation** workflow manually to open one PR for all related override issues.`,
     '',
     `Audit: ${auditUrl}`,
-    `Schema: ${dataUrl || reference || 'release'}`,
+    `Schema: ${schemaLabel}`,
     '',
   ].join('\n')
 
   const entryLinks = selected
-    .map(
-      (entry) =>
-        `- \`${entryLabel(entry)}\` — [preset](${presetDetailUrl(entry.presetId, dataUrl)}) · [audit row](${auditUrl}&selected=${encodeURIComponent(entry.entryId)})`,
-    )
+    .map((entry) => {
+      const decision = decisions[entry.entryId] ?? 'pending'
+      return `- \`${entryLabel(entry)}\` — ${decisionLabelForEntry(decision)} — [preset](${presetDetailAbsoluteHref(entry.presetId, dataUrl)}) · [audit row](${auditUrl}${auditUrl.includes('?') ? '&' : '?'}selected=${encodeURIComponent(entry.entryId)})`
+    })
     .join('\n')
 
+  const intentionalYaml = intentionalEntries
+    .map((entry) => intentionalSnapshotYaml(entry))
+    .filter((yaml) => yaml.trim().length > 0)
+
   const snapshotSection =
-    snapshotLines.length > 0
-      ? ['## Snapshot', '', '```yaml', 'version: 1', 'presets:', ...snapshotLines, '```', ''].join(
-          '\n',
-        )
+    intentionalYaml.length > 0
+      ? [
+          '## Snapshot',
+          '',
+          'Apply these intentional overrides:',
+          '',
+          '```yaml',
+          'version: 1',
+          'presets:',
+          ...intentionalYaml,
+          '```',
+          '',
+        ].join('\n')
+      : ''
+
+  const staleYaml = staleEntries
+    .map((entry) => staleOverrideYaml(entry))
+    .filter((yaml) => yaml.trim().length > 0)
+
+  const staleSection =
+    staleYaml.length > 0
+      ? [
+          '## Remove stale overrides',
+          '',
+          'Delete these preset keys from the overrides file (live detection no longer applies):',
+          '',
+          '```yaml',
+          'presets:',
+          ...staleYaml,
+          '```',
+          '',
+        ].join('\n')
       : ''
 
   const needsWorkSection =
@@ -130,14 +151,17 @@ export function buildBatchSchemaOverrideIssueUrl({
         ].join('\n')
       : ''
 
-  const firstPreset = selected[0]?.presetId ?? 'batch'
+  const firstEntry = selected[0]
+  const firstDecision = firstEntry ? decisions[firstEntry.entryId] : 'pending'
   const title =
     selected.length === 1
-      ? buildSchemaOverrideIssueTitle(
-          kind,
-          firstPreset,
-          decisions[selected[0]!.entryId] === 'remove_stale',
-        )
+      ? firstDecision === 'needs_work'
+        ? `[${kind}] ${firstEntry!.presetId} — needs upstream work`
+        : buildSchemaOverrideIssueTitle(
+            kind,
+            firstEntry!.presetId,
+            firstDecision === 'remove_stale',
+          )
       : `[${kind}] batch review (${selected.length} entries)`
 
   const body = [
@@ -148,6 +172,7 @@ export function buildBatchSchemaOverrideIssueUrl({
     entryLinks,
     '',
     snapshotSection,
+    staleSection,
     needsWorkSection,
   ]
     .filter((section) => section.length > 0)

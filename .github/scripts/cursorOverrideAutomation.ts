@@ -17,17 +17,6 @@ export const OVERRIDE_TITLE_PREFIXES = {
 
 export type OverrideTriggerKind = keyof typeof OVERRIDE_TITLE_PREFIXES
 
-export const KIND_CONFIG = {
-  'missing-inheritance': {
-    title: 'Missing inheritance override',
-    skill: '.agents/skills/apply-schema-override/SKILL.md',
-  },
-  'risky-typecombo': {
-    title: 'Risky typeCombo override',
-    skill: '.agents/skills/apply-schema-override/SKILL.md',
-  },
-} as const satisfies Record<OverrideTriggerKind, { title: string; skill: string }>
-
 export const resolveActiveKindFromTitle = (title: string): OverrideTriggerKind | null => {
   const trimmed = title.trim()
   for (const kind of ['missing-inheritance', 'risky-typecombo'] as const) {
@@ -57,46 +46,6 @@ export const resolveSourceBranch = (body: string) => {
   const quoted = body.match(/\*\*Source branch:\*\*\s*`([^`]+)`/)
   if (quoted) return quoted[1]
   return 'main'
-}
-
-export const buildAgentPrompt = ({
-  owner,
-  repo,
-  issueNumber,
-  issueTitle,
-  activeKind,
-  issueBody,
-}: {
-  owner: string
-  repo: string
-  issueNumber: number
-  issueTitle: string
-  activeKind: OverrideTriggerKind
-  issueBody: string
-}) => {
-  const branch = resolveSourceBranch(issueBody)
-
-  return [
-    `Apply the schema override described in GitHub issue #${issueNumber} for ${owner}/${repo}.`,
-    '',
-    `Issue title: ${issueTitle}`,
-    `Kind: ${OVERRIDE_TITLE_PREFIXES[activeKind]}`,
-    `Base branch: ${branch}`,
-    '',
-    'Follow the skill at `.agents/skills/apply-schema-override/SKILL.md` in the repository.',
-    '',
-    'Requirements:',
-    `- Read the issue body below for the YAML snapshot and preset id.`,
-    `- Open a PR ready for review (not draft) with \`Closes #${issueNumber}\` on its own line.`,
-    `- Add the \`schema-override\` label to the PR.`,
-    `- Prefix the PR description with \`**[Cursor Agent]**\` and include \`Written by :robot: <model-name>:\`.`,
-    `- Only change the relevant \`src/data/*-overrides.yaml\` file.`,
-    `- Run \`bun run check\` before opening the PR.`,
-    '',
-    '---',
-    'Issue body:',
-    issueBody.trim() || '(empty)',
-  ].join('\n')
 }
 
 export const buildBatchAgentPrompt = ({
@@ -157,13 +106,11 @@ type CursorAgentLaunchResponse = {
   }
 }
 
-type IssuesEvent = {
-  issue: {
-    number: number
-    title: string
-    body: string | null
-    labels?: { name: string }[]
-  }
+type GitHubIssue = {
+  number: number
+  title: string
+  body: string | null
+  pull_request?: unknown
 }
 
 const githubApi = async <T>(token: string, path: string, init?: RequestInit): Promise<T> => {
@@ -218,144 +165,8 @@ const cursorApi = async <T>(apiKey: string, path: string, init?: RequestInit): P
   return response.json() as Promise<T>
 }
 
-export const launchCursorAgent = async ({
-  apiKey,
-  owner,
-  repo,
-  issueNumber,
-  issueTitle,
-  activeKind,
-  issueBody,
-}: {
-  apiKey: string
-  owner: string
-  repo: string
-  issueNumber: number
-  issueTitle: string
-  activeKind: OverrideTriggerKind
-  issueBody: string
-}) => {
-  const branch = resolveSourceBranch(issueBody)
-  const prompt = buildAgentPrompt({
-    owner,
-    repo,
-    issueNumber,
-    issueTitle,
-    activeKind,
-    issueBody,
-  })
-
-  return cursorApi<CursorAgentLaunchResponse>(apiKey, '', {
-    method: 'POST',
-    body: JSON.stringify({
-      prompt: { text: prompt },
-      model: 'default',
-      source: {
-        repository: `https://github.com/${owner}/${repo}`,
-        ref: branch,
-      },
-      target: {
-        autoCreatePr: true,
-        branchName: `cursor/schema-override-${issueNumber}`,
-      },
-    }),
-  })
-}
-
 const resolveAgentUrl = (agent: CursorAgentLaunchResponse) =>
   agent.target?.url ?? `https://cursor.com/agents?id=${agent.id}`
-
-export const runCursorOverrideAutomation = async ({
-  githubToken,
-  cursorApiKey,
-  repository,
-  event,
-  forceRestart = false,
-}: {
-  githubToken: string
-  cursorApiKey: string
-  repository: string
-  event: IssuesEvent
-  forceRestart?: boolean
-}) => {
-  const [owner, repo] = repository.split('/')
-  if (!owner || !repo) {
-    throw new Error(`Invalid GITHUB_REPOSITORY: ${repository}`)
-  }
-
-  const issue = event.issue
-  const activeKind = resolveActiveKindFromTitle(issue.title)
-
-  if (!activeKind) {
-    console.log('No Cursor override title prefix found on issue; skipping.')
-    return
-  }
-
-  const hasPr = await hasOpenOverridePullRequest({
-    token: githubToken,
-    repository,
-    issueNumber: issue.number,
-  })
-  if (hasPr) {
-    console.log(`Issue #${issue.number} already has an open PR; skipping.`)
-    return
-  }
-
-  const openSchemaOverridePrs = await listOpenSchemaOverridePullRequests({
-    token: githubToken,
-    repository,
-  })
-  if (openSchemaOverridePrs.length > 0) {
-    console.log(
-      `Schema override PR #${openSchemaOverridePrs[0]?.number} is open; queueing issue #${issue.number}.`,
-    )
-    return
-  }
-
-  const { labels } = await githubApi<{ labels: { name: string }[] }>(
-    githubToken,
-    `/repos/${owner}/${repo}/issues/${issue.number}`,
-  )
-
-  if (!forceRestart && hasEnqueuedLabel(labels)) {
-    console.log(`Issue #${issue.number} already has ${ENQUEUED_LABEL}; skipping.`)
-    return
-  }
-
-  const agent = await launchCursorAgent({
-    apiKey: cursorApiKey,
-    owner,
-    repo,
-    issueNumber: issue.number,
-    issueTitle: issue.title,
-    activeKind,
-    issueBody: issue.body ?? '',
-  })
-
-  const agentUrl = resolveAgentUrl(agent)
-  console.log(`Launched Cursor agent ${agent.id} for issue #${issue.number}: ${agentUrl}`)
-
-  await githubApi(githubToken, `/repos/${owner}/${repo}/issues/${issue.number}/comments`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      body: buildAgentLaunchedCommentBody({ issueNumber: issue.number, agentUrl }),
-    }),
-  })
-
-  await githubApi(githubToken, `/repos/${owner}/${repo}/issues/${issue.number}/labels`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ labels: [ENQUEUED_LABEL] }),
-  })
-}
-
-type GitHubIssue = {
-  number: number
-  title: string
-  body: string | null
-  pull_request?: unknown
-}
 
 export const listOpenOverrideIssues = async ({
   token,
@@ -535,7 +346,15 @@ export const launchBatchSchemaOverrideIssues = async ({
       repository,
       issueNumber: issue.number,
     })
-    if (!hasPr) pendingIssues.push(issue)
+    if (hasPr) continue
+
+    const { labels } = await githubApi<{ labels: { name: string }[] }>(
+      githubToken,
+      `/repos/${owner}/${repo}/issues/${issue.number}`,
+    )
+    if (hasEnqueuedLabel(labels)) continue
+
+    pendingIssues.push(issue)
   }
 
   if (pendingIssues.length === 0) {
@@ -602,9 +421,18 @@ const runFromGitHubActions = async () => {
     throw new Error('GITHUB_REPOSITORY is required')
   }
 
-  const cursorApiKey = process.env.CURSOR_API_KEY
-  if (!cursorApiKey) {
-    throw new Error('CURSOR_API_KEY is required')
+  const closePr = process.env.CLOSE_LINKED_ISSUES_FROM_PR
+  if (closePr) {
+    const pullRequestNumber = Number.parseInt(closePr, 10)
+    if (!Number.isFinite(pullRequestNumber)) {
+      throw new Error(`Invalid CLOSE_LINKED_ISSUES_FROM_PR: ${closePr}`)
+    }
+    await closeLinkedIssuesForPullRequest({
+      token: githubToken,
+      repository,
+      pullRequestNumber,
+    })
+    return
   }
 
   const batchKind = process.env.BATCH_OVERRIDE_KIND as OverrideTriggerKind | undefined
@@ -612,6 +440,11 @@ const runFromGitHubActions = async () => {
     throw new Error(
       `BATCH_OVERRIDE_KIND must be one of: ${Object.keys(OVERRIDE_TITLE_PREFIXES).join(', ')}`,
     )
+  }
+
+  const cursorApiKey = process.env.CURSOR_API_KEY
+  if (!cursorApiKey) {
+    throw new Error('CURSOR_API_KEY is required for batch override launch')
   }
 
   await launchBatchSchemaOverrideIssues({

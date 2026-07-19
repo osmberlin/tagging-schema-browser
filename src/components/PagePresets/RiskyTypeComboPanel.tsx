@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { auditPageHref } from '@/components/PageAudits/auditPageHref'
 import type { RiskyTypeCombo, RiskyTypeComboStatus } from '@/components/PagePresets/riskyTypeCombo'
-import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -36,9 +35,11 @@ function FieldSection({ riskyTypeCombo }: { riskyTypeCombo: RiskyTypeCombo }) {
 export function RiskyTypeComboPanel({
   preset,
   dataUrl = '',
+  reference,
 }: {
   preset: DenormalizedPreset
   dataUrl?: string
+  reference?: 'release' | 'interim'
 }) {
   const { riskyTypeCombo, riskyTypeComboStatus } = preset
 
@@ -48,6 +49,7 @@ export function RiskyTypeComboPanel({
   const auditHref = auditPageHref({
     slug: 'risky-typecombo',
     dataUrl,
+    reference,
     selected: preset.id,
   })
 
@@ -84,17 +86,6 @@ export function RiskyTypeComboPanel({
           </p>
         ) : null}
         {riskyTypeCombo ? <FieldSection riskyTypeCombo={riskyTypeCombo} /> : null}
-        {needsAudit ? (
-          <a
-            href={auditHref}
-            className={cn(
-              'inline-flex font-medium underline underline-offset-2',
-              areaAccent.fields.link,
-            )}
-          >
-            Review on audit page →
-          </a>
-        ) : null}
       </div>
     </section>
   )

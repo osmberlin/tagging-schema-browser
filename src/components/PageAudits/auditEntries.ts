@@ -1,3 +1,4 @@
+import type { AuditDecision } from '@/components/PageAudits/auditDecisions'
 import type { FieldListKey } from '@/components/PagePresets/missingFieldInheritance'
 import {
   resolveMissingInheritanceListStatus,
@@ -11,7 +12,7 @@ import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
 import type { DenormalizedPreset } from '@/utils/types'
 import type { AuditSlug } from './auditSlugs'
 
-export type AuditDecision = 'pending' | 'intentional' | 'remove_stale' | 'needs_work'
+export type { AuditDecision } from '@/components/PageAudits/auditDecisions'
 
 export type MissingInheritanceAuditEntry = {
   kind: 'missing-inheritance'
