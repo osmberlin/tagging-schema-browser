@@ -15,6 +15,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 concurrency:
   group: schema-override-auto-merge-${{ github.repository }}
@@ -115,6 +116,30 @@ jobs:
           MERGE_REQUIRED_APPROVALS: 0
           MERGE_FORKS: false
           MERGE_ERROR_FAIL: true
+
+      - name: Setup Bun
+        if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Close issues linked from PR body
+        # GITHUB_TOKEN merges do not trigger GitHub's native "Closes #X" closure.
+        if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CLOSE_LINKED_ISSUES_FROM_PR: ${{ steps.pr.outputs.number }}
+        run: bun run .github/scripts/cursorOverrideAutomation.ts
+
+      - name: Launch next schema override issue
+        if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          LAUNCH_NEXT_SCHEMA_OVERRIDE: 'true'
+        run: bun run .github/scripts/cursorOverrideAutomation.ts
 
       - name: Comment when auto-merge is queued
         if: >-

@@ -39,6 +39,20 @@ export const resolveActiveKindFromTitle = (title: string): OverrideTriggerKind |
 export const hasEnqueuedLabel = (labels: { name: string }[]) =>
   labels.some((label) => label.name === ENQUEUED_LABEL)
 
+/** Matches GitHub closing keywords in PR descriptions (Closes #123, Fixes #123, …). */
+export const CLOSING_KEYWORD_PATTERN = /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi
+
+export const extractClosingIssueNumbers = (text: string) => {
+  const issueNumbers = new Set<number>()
+  for (const match of text.matchAll(CLOSING_KEYWORD_PATTERN)) {
+    const issueNumber = Number.parseInt(match[1] ?? '', 10)
+    if (Number.isFinite(issueNumber)) {
+      issueNumbers.add(issueNumber)
+    }
+  }
+  return [...issueNumbers]
+}
+
 export const resolveSourceBranch = (body: string) => {
   const quoted = body.match(/\*\*Source branch:\*\*\s*`([^`]+)`/)
   if (quoted) return quoted[1]
@@ -383,6 +397,58 @@ export const hasOpenOverridePullRequest = async ({
   return false
 }
 
+export const closeLinkedIssuesForPullRequest = async ({
+  token,
+  repository,
+  pullRequestNumber,
+}: {
+  token: string
+  repository: string
+  pullRequestNumber: number
+}) => {
+  const [owner, repo] = repository.split('/')
+  if (!owner || !repo) {
+    throw new Error(`Invalid GITHUB_REPOSITORY: ${repository}`)
+  }
+
+  const pullRequest = await githubApi<{ body: string | null; merged: boolean }>(
+    token,
+    `/repos/${owner}/${repo}/pulls/${pullRequestNumber}`,
+  )
+
+  if (!pullRequest.merged) {
+    console.log(`PR #${pullRequestNumber} is not merged; skipping linked issue close.`)
+    return []
+  }
+
+  const issueNumbers = extractClosingIssueNumbers(pullRequest.body ?? '')
+  if (issueNumbers.length === 0) {
+    console.log(`PR #${pullRequestNumber} has no closing keywords in its body.`)
+    return []
+  }
+
+  const closedIssueNumbers: number[] = []
+  for (const issueNumber of issueNumbers) {
+    const issue = await githubApi<{ state: string }>(
+      token,
+      `/repos/${owner}/${repo}/issues/${issueNumber}`,
+    )
+    if (issue.state === 'closed') {
+      console.log(`Issue #${issueNumber} is already closed.`)
+      continue
+    }
+
+    await githubApi(token, `/repos/${owner}/${repo}/issues/${issueNumber}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ state: 'closed', state_reason: 'completed' }),
+    })
+    console.log(`Closed issue #${issueNumber} after merging PR #${pullRequestNumber}.`)
+    closedIssueNumbers.push(issueNumber)
+  }
+
+  return closedIssueNumbers
+}
+
 export const launchNextSchemaOverrideIssue = async ({
   githubToken,
   cursorApiKey,
@@ -472,6 +538,21 @@ const runFromGitHubActions = async () => {
   const repository = process.env.GITHUB_REPOSITORY
   if (!repository) {
     throw new Error('GITHUB_REPOSITORY is required')
+  }
+
+  if (process.env.CLOSE_LINKED_ISSUES_FROM_PR) {
+    const pullRequestNumber = Number.parseInt(process.env.CLOSE_LINKED_ISSUES_FROM_PR, 10)
+    if (!Number.isFinite(pullRequestNumber)) {
+      throw new Error(
+        `Invalid CLOSE_LINKED_ISSUES_FROM_PR: ${process.env.CLOSE_LINKED_ISSUES_FROM_PR}`,
+      )
+    }
+    await closeLinkedIssuesForPullRequest({
+      token: githubToken,
+      repository,
+      pullRequestNumber,
+    })
+    return
   }
 
   if (

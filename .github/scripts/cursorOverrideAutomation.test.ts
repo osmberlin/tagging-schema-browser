@@ -3,7 +3,9 @@ import {
   AGENT_LAUNCHED_MARKER,
   buildAgentLaunchedCommentBody,
   buildAgentPrompt,
+  closeLinkedIssuesForPullRequest,
   ENQUEUED_LABEL,
+  extractClosingIssueNumbers,
   hasEnqueuedLabel,
   launchNextSchemaOverrideIssue,
   listOpenOverrideIssues,
@@ -63,6 +65,50 @@ describe('cursorOverrideAutomation', () => {
 
     expect(body).toContain(AGENT_LAUNCHED_MARKER)
     expect(body).toContain('https://cursor.com/agents?id=bc_abc')
+  })
+
+  it('extracts closing issue numbers from PR bodies', () => {
+    expect(extractClosingIssueNumbers('Closes #194\n\n## Summary')).toEqual([194])
+    expect(extractClosingIssueNumbers('fixes #12 and resolves #34')).toEqual([12, 34])
+    expect(extractClosingIssueNumbers('No linked issues here')).toEqual([])
+  })
+
+  it('closes linked issues after a merged schema override PR', async () => {
+    const requestUrl = (input: RequestInfo | URL) => {
+      if (typeof input === 'string') return input
+      if (input instanceof URL) return input.href
+      return input.url
+    }
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = requestUrl(input)
+      const method = init?.method ?? 'GET'
+
+      if (url.endsWith('/pulls/195') && method === 'GET') {
+        return new Response(JSON.stringify({ body: 'Closes #194\n\n## Summary', merged: true }), {
+          status: 200,
+        })
+      }
+
+      if (url.endsWith('/issues/194') && method === 'GET') {
+        return new Response(JSON.stringify({ state: 'open' }), { status: 200 })
+      }
+
+      if (url.endsWith('/issues/194') && method === 'PATCH') {
+        return new Response(JSON.stringify({ state: 'closed' }), { status: 200 })
+      }
+
+      throw new Error(`Unexpected fetch: ${method} ${url}`)
+    })
+
+    const closed = await closeLinkedIssuesForPullRequest({
+      token: 'gh-token',
+      repository: 'osmberlin/tagging-schema-browser',
+      pullRequestNumber: 195,
+    })
+
+    expect(closed).toEqual([194])
+    fetchMock.mockRestore()
   })
 
   it('lists open override issues without pull_request sidecar', async () => {
