@@ -315,6 +315,79 @@ describe('displayPresetFieldList', () => {
     ])
   })
 
+  it('collapses office/coworking dist fields to preset and template refs', () => {
+    const rawPresets: RawPresets = {
+      office: {
+        tags: { office: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+        ],
+      },
+      '@templates/internet_access': {
+        tags: { '@template': 'internet_access' },
+        geometry: ['point'],
+        fields: ['internet_access', 'internet_access/fee'],
+        moreFields: ['internet_access', 'internet_access/fee', 'internet_access/ssid'],
+      },
+      '@templates/poi': {
+        tags: { '@template': 'poi' },
+        geometry: ['point'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website', 'address', 'wheelchair'],
+      },
+      'office/coworking': {
+        tags: { office: 'coworking' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+          'internet_access',
+          'internet_access/fee',
+        ],
+        moreFields: [
+          'internet_access',
+          'internet_access/fee',
+          'internet_access/ssid',
+          'email',
+          'fax',
+          'mobile',
+          'phone',
+          'website',
+          'address',
+          'wheelchair',
+        ],
+      },
+    }
+
+    expect(
+      displayPresetFieldList(
+        'office/coworking',
+        'fields',
+        rawPresets['office/coworking']?.fields,
+        rawPresets,
+      ),
+    ).toEqual(['{office}', '{@templates/internet_access}'])
+    expect(
+      displayPresetFieldList(
+        'office/coworking',
+        'moreFields',
+        rawPresets['office/coworking']?.moreFields,
+        rawPresets,
+      ),
+    ).toEqual(['{@templates/internet_access}', '{@templates/poi}'])
+  })
+
   it('lists nested preset refs and omitted fields for the referenced preset host', () => {
     const rawPresets: RawPresets = {
       office: {
@@ -330,10 +403,25 @@ describe('displayPresetFieldList', () => {
           'website',
         ],
       },
+      '@templates/internet_access': {
+        tags: { '@template': 'internet_access' },
+        geometry: ['point'],
+        fields: ['internet_access', 'internet_access/fee'],
+      },
       'office/coworking': {
         tags: { office: 'coworking' },
         geometry: ['point', 'area'],
-        fields: ['{office}', 'internet_access', 'internet_access/fee'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+          'internet_access',
+          'internet_access/fee',
+        ],
       },
     }
     const fields: RawFields = {
@@ -351,11 +439,10 @@ describe('displayPresetFieldList', () => {
 
     expect(
       getPresetRefFieldListEntries(
+        'office/coworking',
         hostPreset,
         '{office}',
         'fields',
-        ['{office}', 'internet_access', 'internet_access/fee'],
-        [],
         rawPresets,
         fields,
       ),
@@ -372,6 +459,138 @@ describe('displayPresetFieldList', () => {
       { kind: 'field', fieldId: 'opening_hours', applied: true },
       { kind: 'field', fieldId: 'phone', applied: true },
       { kind: 'field', fieldId: 'website', applied: true },
+    ])
+  })
+
+  it('shows nested preset refs instead of false omitted fields for coworking_space', () => {
+    const rawPresets: RawPresets = {
+      office: {
+        tags: { office: '*' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+        ],
+      },
+      '@templates/internet_access': {
+        tags: { '@template': 'internet_access' },
+        geometry: ['point'],
+        fields: ['internet_access', 'internet_access/fee'],
+        moreFields: ['internet_access', 'internet_access/fee', 'internet_access/ssid'],
+      },
+      '@templates/poi': {
+        tags: { '@template': 'poi' },
+        geometry: ['point'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website', 'address', 'wheelchair'],
+      },
+      'office/coworking': {
+        tags: { office: 'coworking' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+          'internet_access',
+          'internet_access/fee',
+        ],
+        moreFields: [
+          'internet_access',
+          'internet_access/fee',
+          'internet_access/ssid',
+          'email',
+          'fax',
+          'mobile',
+          'phone',
+          'website',
+          'address',
+          'wheelchair',
+        ],
+      },
+      'amenity/coworking_space': {
+        tags: { amenity: 'coworking_space' },
+        geometry: ['point', 'area'],
+        fields: [
+          'name',
+          'office',
+          'address',
+          'building_area_yes',
+          'opening_hours',
+          'phone',
+          'website',
+          'internet_access',
+          'internet_access/fee',
+        ],
+        moreFields: [
+          'internet_access',
+          'internet_access/fee',
+          'internet_access/ssid',
+          'email',
+          'fax',
+          'mobile',
+          'phone',
+          'website',
+          'address',
+          'wheelchair',
+        ],
+      },
+    }
+    const fields: RawFields = {
+      name: { key: 'name', type: 'text' },
+      office: { key: 'office', type: 'typeCombo' },
+      address: { key: 'addr:full', type: 'text' },
+      building_area_yes: { key: 'building', type: 'check' },
+      opening_hours: { key: 'opening_hours', type: 'text' },
+      phone: { key: 'phone', type: 'tel' },
+      website: { key: 'website', type: 'url' },
+      internet_access: { key: 'internet_access', type: 'combo' },
+      'internet_access/fee': { key: 'internet_access:fee', type: 'combo' },
+      'internet_access/ssid': { key: 'internet_access:ssid', type: 'text' },
+      email: { key: 'email', type: 'email' },
+      fax: { key: 'fax', type: 'text' },
+      mobile: { key: 'mobile', type: 'tel' },
+      wheelchair: { key: 'wheelchair', type: 'combo' },
+    }
+    const hostPreset = rawPresets['office/coworking']!
+
+    expect(
+      getPresetRefFieldListEntries(
+        'office/coworking',
+        hostPreset,
+        '{office}',
+        'fields',
+        rawPresets,
+        fields,
+      ).filter((entry) => entry.kind === 'field' && !entry.applied),
+    ).toEqual([
+      {
+        kind: 'field',
+        fieldId: 'office',
+        applied: false,
+        reason: 'preset tag fixes office=coworking',
+      },
+    ])
+
+    expect(
+      getPresetRefFieldListEntries(
+        'amenity/coworking_space',
+        rawPresets['amenity/coworking_space']!,
+        '{office/coworking}',
+        'fields',
+        rawPresets,
+        fields,
+      ),
+    ).toEqual([
+      { kind: 'presetRef', presetRef: '{office}' },
+      { kind: 'presetRef', presetRef: '{@templates/internet_access}' },
     ])
   })
 
@@ -395,20 +614,13 @@ describe('displayPresetFieldList', () => {
       direction_vertex: { key: 'direction', type: 'radio' },
     }
     const hostPreset = rawPresets['traffic_sign/variable_message']!
-    const displayFields = displayPresetFieldList(
-      'traffic_sign/variable_message',
-      'fields',
-      hostPreset.fields as string[],
-      rawPresets,
-    )
 
     expect(
       getPresetRefFieldInheritanceBreakdown(
+        'traffic_sign/variable_message',
         hostPreset,
         '{traffic_sign}',
         'fields',
-        displayFields,
-        [],
         rawPresets,
         fields,
       ),

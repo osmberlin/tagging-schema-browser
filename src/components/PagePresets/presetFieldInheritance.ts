@@ -123,16 +123,29 @@ export function getPresetRefDisplayFieldList(
 }
 
 /**
+ * Literal field ids authored on a preset (excludes `{preset}` refs).
+ * Matches iD `originalFields` / `originalMoreFields` used by `shouldInherit`.
+ */
+export function getAuthoredExplicitFieldIds(
+  presetId: string,
+  fieldListKey: 'fields' | 'moreFields',
+  rawPresets: RawPresets,
+): string[] {
+  return getPresetRefDisplayFieldList(presetId, fieldListKey, rawPresets).filter(
+    (item) => !presetIdFromRef(item),
+  )
+}
+
+/**
  * Immediate children when a `{preset}` ref is expanded in the source tree.
  * Nested `{preset}` refs are returned as entries (not flattened). Field entries
  * use the referenced preset as the inheritance host for `shouldInherit`.
  */
 export function getPresetRefFieldListEntries(
+  inheritanceHostPresetId: string,
   inheritanceHostPreset: RawPreset,
   presetRef: string,
   fieldListKey: 'fields' | 'moreFields',
-  inheritanceOriginalFields: string[],
-  inheritanceOriginalMoreFields: string[],
   rawPresets: RawPresets,
   allFields: RawFields,
 ): PresetRefFieldListEntry[] {
@@ -140,6 +153,12 @@ export function getPresetRefFieldListEntries(
   if (!presetId) return []
 
   const displayList = getPresetRefDisplayFieldList(presetId, fieldListKey, rawPresets)
+  const authoredFields = getAuthoredExplicitFieldIds(inheritanceHostPresetId, 'fields', rawPresets)
+  const authoredMoreFields = getAuthoredExplicitFieldIds(
+    inheritanceHostPresetId,
+    'moreFields',
+    rawPresets,
+  )
   const entries: PresetRefFieldListEntry[] = []
 
   for (const item of displayList) {
@@ -151,8 +170,8 @@ export function getPresetRefFieldListEntries(
     const reason = explainShouldNotInheritField(
       inheritanceHostPreset,
       item,
-      inheritanceOriginalFields,
-      inheritanceOriginalMoreFields,
+      authoredFields,
+      authoredMoreFields,
       allFields,
     )
     entries.push(
@@ -170,11 +189,10 @@ export function getPresetRefFieldListEntries(
  * Prefer `getPresetRefFieldListEntries` for the source tree — it preserves nested refs.
  */
 export function getPresetRefFieldInheritanceBreakdown(
+  inheritanceHostPresetId: string,
   inheritanceHostPreset: RawPreset,
   presetRef: string,
   fieldListKey: 'fields' | 'moreFields',
-  inheritanceOriginalFields: string[],
-  inheritanceOriginalMoreFields: string[],
   rawPresets: RawPresets,
   allFields: RawFields,
 ): PresetRefFieldInheritanceEntry[] {
@@ -184,13 +202,20 @@ export function getPresetRefFieldInheritanceBreakdown(
   const source = rawPresets[presetId]
   if (!source) return []
 
+  const authoredFields = getAuthoredExplicitFieldIds(inheritanceHostPresetId, 'fields', rawPresets)
+  const authoredMoreFields = getAuthoredExplicitFieldIds(
+    inheritanceHostPresetId,
+    'moreFields',
+    rawPresets,
+  )
+
   return collectReferencedPresetFieldIds(source, fieldListKey, rawPresets, new Set()).map(
     (fieldId) => {
       const reason = explainShouldNotInheritField(
         inheritanceHostPreset,
         fieldId,
-        inheritanceOriginalFields,
-        inheritanceOriginalMoreFields,
+        authoredFields,
+        authoredMoreFields,
         allFields,
       )
       return reason ? { applied: false, fieldId, reason } : { applied: true, fieldId }
@@ -281,22 +306,57 @@ function findDistExpandedPresetRefPrefix(
   return { presetId: match.presetId, prefixLength: match.prefixLength }
 }
 
-function collapseDistExpandedPresetRefPrefix(
+function collapseDistExpandedPresetRefs(
   presetId: string,
   fieldListKey: 'fields' | 'moreFields',
   list: string[],
   rawPresets: RawPresets,
   preferPresetIds: string[] = [],
 ): string[] {
-  const match = findDistExpandedPresetRefPrefix(
-    list,
-    fieldListKey,
-    rawPresets,
-    presetId,
-    preferPresetIds,
-  )
-  if (!match) return list
-  return [`{${match.presetId}}`, ...list.slice(match.prefixLength)]
+  let result = list
+  let changed = true
+
+  while (changed) {
+    changed = false
+
+    const startMatch = findDistExpandedPresetRefPrefix(
+      result,
+      fieldListKey,
+      rawPresets,
+      presetId,
+      preferPresetIds,
+    )
+    if (startMatch) {
+      result = [`{${startMatch.presetId}}`, ...result.slice(startMatch.prefixLength)]
+      changed = true
+      continue
+    }
+
+    for (let index = 0; index < result.length; index++) {
+      if (!presetIdFromRef(result[index] ?? '')) continue
+      const suffix = result.slice(index + 1)
+      if (suffix.length === 0) break
+
+      const suffixMatch = findDistExpandedPresetRefPrefix(
+        suffix,
+        fieldListKey,
+        rawPresets,
+        presetId,
+        preferPresetIds,
+      )
+      if (suffixMatch) {
+        result = [
+          ...result.slice(0, index + 1),
+          `{${suffixMatch.presetId}}`,
+          ...suffix.slice(suffixMatch.prefixLength),
+        ]
+        changed = true
+        break
+      }
+    }
+  }
+
+  return result
 }
 
 /**
@@ -338,7 +398,7 @@ export function displayPresetFieldList(
     if (!fieldListsMatch(prefix, ancestorFields)) continue
 
     const collapsed = [`{${ancestorId}}`, ...list.slice(ancestorFields.length)]
-    return collapseDistExpandedPresetRefPrefix(
+    return collapseDistExpandedPresetRefs(
       presetId,
       fieldListKey,
       collapsed,
@@ -347,13 +407,7 @@ export function displayPresetFieldList(
     )
   }
 
-  return collapseDistExpandedPresetRefPrefix(
-    presetId,
-    fieldListKey,
-    list,
-    rawPresets,
-    preferPresetIds,
-  )
+  return collapseDistExpandedPresetRefs(presetId, fieldListKey, list, rawPresets, preferPresetIds)
 }
 
 /** Indices of fields expanded from ancestor `{preset}` blocks in v7 dist output. */
