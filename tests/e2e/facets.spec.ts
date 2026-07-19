@@ -45,67 +45,50 @@ test('broken icon presets are flagged and filterable', async ({ page }) => {
   await expect(page.getByText('temaki-this-icon-does-not-exist')).toBeVisible()
 })
 
-test('missing slash-parent field inheritance is flagged and filterable', async ({ page }) => {
+test('missing slash-parent field inheritance links to audit page', async ({ page }) => {
   await loadTestSchema(page)
 
   await expect(page.getByText('Missing inheritance', { exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'show unreviewed' })).toBeVisible()
-  await expect(
-    page.locator('aside').getByRole('button', { name: /Missing \(unreviewed\)/i }),
-  ).toBeVisible()
-
-  await page.getByRole('button', { name: 'show unreviewed' }).click()
-  await expect(page.getByRole('button', { name: 'Field inheritance: unreviewed' })).toBeVisible()
-  await expect(
-    page.locator('tbody').getByText('man_made/crane/untyped_crane', { exact: true }),
-  ).toBeVisible()
-  await expect(page.getByText('Missing inheritance', { exact: true })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'show unreviewed' })).toHaveCount(0)
+  await page.getByRole('link', { name: 'open audit page' }).first().click()
+  await expect(page).toHaveURL(/\/audits\/missing-inheritance/)
+  await expect(page.getByRole('heading', { name: /Audit: Missing inheritance/i })).toBeVisible()
 })
 
-test('preset detail shows missing inheritance panel', async ({ page }) => {
+test('preset detail links missing inheritance to audit page', async ({ page }) => {
   await page.goto('/preset/man_made/crane/untyped_crane?dataUrl=/test-schema')
 
-  await page.getByRole('button', { name: 'Missing inheritance' }).click()
   await expect(page.getByTestId('missing-inheritance-panel')).toBeVisible()
   await expect(page.getByText(/Missing parent fields \(unreviewed\)/i)).toBeVisible()
-  await expect(page.getByText('crane/type', { exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'man_made/crane' })).toBeVisible()
-  await expect(page.getByTestId('missing-inheritance-create-issue')).toBeVisible()
-  await expect(page.getByTestId('missing-inheritance-create-issue')).toHaveAttribute(
-    'href',
-    /github\.com\/osmberlin\/tagging-schema-browser\/issues\/new/,
-  )
+  await expect(page.getByRole('link', { name: 'Open audit →' })).toBeVisible()
+  await page.getByRole('link', { name: 'Open audit →' }).click()
+  await expect(page).toHaveURL(/\/audits\/missing-inheritance.*selected=/)
 })
 
-test('preset detail shows risky typeCombo panel', async ({ page }) => {
+test('preset detail links risky typeCombo to audit page', async ({ page }) => {
   await page.goto('/preset/highway/residential?dataUrl=/test-schema')
 
-  await page.getByRole('button', { name: 'Risky typeCombo' }).click()
   await expect(page.getByTestId('risky-typecombo-panel')).toBeVisible()
   await expect(page.getByText(/Risky typeCombo \(unreviewed\)/i)).toBeVisible()
-  await expect(page.getByTestId('risky-typecombo-create-issue')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Open audit →' })).toBeVisible()
 })
 
-test('fields list shows risky typeCombo banner and filter', async ({ page }) => {
+test('fields list links risky typeCombo banner to audit page', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/fields?dataUrl=/test-schema')
 
   await expect(page.getByText(/typeCombo field(s)? look(s)? like a property/i)).toBeVisible()
-  await page.getByRole('button', { name: 'show fields' }).click()
-  await expect(page).toHaveURL(/f_riskyTypeCombo=risky/)
-  await expect(page.locator('[data-field="traffic_calming"]')).toBeVisible()
+  await page.getByRole('link', { name: 'open audit page' }).click()
+  await expect(page).toHaveURL(/\/audits\/risky-typecombo/)
 })
 
-test('field detail shows risky typeCombo usage panel', async ({ page }) => {
+test('field detail links risky typeCombo usage to audit page', async ({ page }) => {
   await loadTestSchema(page)
   await page.goto('/field/traffic_calming?dataUrl=/test-schema')
 
-  await page.getByRole('button', { name: 'Risky typeCombo usage' }).click()
   const panel = page.getByTestId('field-risky-typecombo-panel')
   await expect(panel).toBeVisible()
   await expect(panel.getByRole('link', { name: 'highway/residential' })).toBeVisible()
-  await expect(panel.getByText(/Risky \(unreviewed\)/i)).toBeVisible()
+  await expect(page.getByRole('link', { name: /risky typeCombo audit/i })).toBeVisible()
 })
 
 test('missing option icons are discoverable on icons page', async ({ page }) => {

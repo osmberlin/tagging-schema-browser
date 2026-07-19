@@ -3,6 +3,7 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { BrokenPresetIconsAlert } from '@/components/ui/SchemaIssueAlerts'
+import { SortSelect } from '@/components/ui/SortSelect'
 import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useBrokenPresetIconCount } from '@/hooks/useBrokenPresetIconCount'
 import { useDeferredSearchQuery } from '@/hooks/useDeferredSearchQuery'
@@ -97,18 +98,18 @@ export function PageIcons() {
               )
             })}
           </div>
-          <select
+          <SortSelect
             value={i_sort}
-            onChange={(e) =>
-              setFacetState({ i_sort: e.target.value as 'name' | 'usage_desc' | 'usage_asc' })
+            onChange={(value) =>
+              setFacetState({ i_sort: value as 'name' | 'usage_desc' | 'usage_asc' })
             }
             aria-label="Sort icons"
-            className={`min-w-[12.5rem] rounded-lg border border-slate-300 bg-white py-1.5 pr-9 pl-3 text-sm text-slate-900 shadow-sm transition ${areaAccent.icons.focus}`}
+            area="icons"
           >
             <option value="name">Name</option>
             <option value="usage_desc">Usage (high to low)</option>
             <option value="usage_asc">Usage (low to high)</option>
-          </select>
+          </SortSelect>
           <DownloadButton
             filename="icons.json"
             data={exportData}

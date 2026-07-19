@@ -37,6 +37,7 @@
     "@headlessui/react": "^2.2.0",
     "@mapbox/maki": "^8.2.0",
     "@rapideditor/temaki": "^5.12.0",
+    "@tanstack/react-form": "^1.33.2",
     "@tanstack/react-hotkeys": "^0.10.0",
     "@tanstack/react-query": "^5.90.0",
     "@tanstack/react-router": "^1.94.0",

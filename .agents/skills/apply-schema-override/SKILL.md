@@ -10,9 +10,11 @@ description: >-
 Use when a GitHub issue was opened from the Tagging Schema Browser with a title starting
 `[missing-inheritance]` or `[risky-typecombo]`.
 
-GitHub Actions launches a Cursor cloud agent via the Cloud Agents API when the issue is
-opened (see `.github/workflows/cursor-override-automation.yml`). The issue body is included
-in the agent prompt.
+GitHub Actions launches a Cursor cloud agent via the Cloud Agents API when you
+**manually run** the workflow (see `.github/workflows/cursor-override-automation.yml`).
+Pick the audit kind (`missing-inheritance` or `risky-typecombo`); all open issues with
+that title prefix are processed in **one PR** with a `Closes #…` line per issue.
+The issue bodies are included in the agent prompt.
 
 ## 1. Parse the issue
 
@@ -69,7 +71,7 @@ This runs `validate-inheritance-overrides` and `validate-risky-typecombo-overrid
 ## 5. Open a pull request
 
 - **Title:** `[skip netlify] Overrides: mark {presetId} missing inheritance as intentional` (adjust wording for typeCombo or stale removal when applicable)
-- **Body:** Start with `Written by :robot: <model-name>:` then `Closes #<issue-number>` on the next line, then a short user-facing summary of what was recorded and why (intentional omission or stale cleanup).
+- **Body:** Start with `Written by :robot: <model-name>:` then one `Closes #<issue-number>` line per issue the PR resolves, then a short user-facing summary of what was recorded and why (intentional omission or stale cleanup).
 - **Label:** `schema-override` (required for auto-merge)
 - **Ready for review:** open the PR **not** as a draft (`gh pr create` without `--draft`). If GitHub still opens a draft, run `gh pr ready` before finishing.
 - Only touch the relevant `src/data/*-overrides.yaml` file.
@@ -77,7 +79,7 @@ This runs `validate-inheritance-overrides` and `validate-risky-typecombo-overrid
 
 ## 6. Auto-merge
 
-CI must pass. Only one `schema-override` PR is open at a time so parallel agents do not conflict on the same YAML file. When an override PR merges, **Cursor override automation** launches the next queued issue. The `schema-override-auto-merge` workflow updates the branch from `main`, then **rebase-merges** eligible PRs once checks pass (YAML-only override change; typically 1–2 commits). Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
+CI must pass. Only one `schema-override` PR is open at a time so parallel agents do not conflict on the same YAML file. Run **Cursor override automation** again after a batch PR merges to process the next set of queued issues. The `schema-override-auto-merge` workflow updates the branch from `main`, then **rebase-merges** eligible PRs once checks pass (YAML-only override change; typically 1–2 commits). Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
 
 ## Attribution
 

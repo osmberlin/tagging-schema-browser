@@ -1,21 +1,19 @@
-# Launch a Cursor cloud agent when a schema override issue is opened.
-# Issue title must start with [missing-inheritance] or [risky-typecombo].
-# Only one schema-override PR is processed at a time; the next issue launches after merge.
-# Manual batch restart: Actions → Cursor override automation → Run workflow.
+# Manually launch a Cursor cloud agent to apply schema override issues in one PR.
+# Issue titles must start with [missing-inheritance] or [risky-typecombo].
+# Actions → Cursor override automation → Run workflow → pick the audit kind.
 # See .agents/skills/apply-schema-override/SKILL.md
 name: Cursor override automation
 
 on:
-  issues:
-    types: [opened]
-  pull_request:
-    types: [closed]
   workflow_dispatch:
     inputs:
-      issue_numbers:
-        description: Comma-separated issue numbers (empty = launch the next queued override issue)
-        required: false
-        type: string
+      kind:
+        description: Override kind (all open issues with this title prefix are processed in one PR)
+        required: true
+        type: choice
+        options:
+          - missing-inheritance
+          - risky-typecombo
 
 permissions:
   issues: write
@@ -23,20 +21,6 @@ permissions:
 
 jobs:
   launch-agent:
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'issues' &&
-        (
-          startsWith(github.event.issue.title, '[missing-inheritance]') ||
-          startsWith(github.event.issue.title, '[risky-typecombo]')
-        )
-      ) ||
-      (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.merged == true &&
-        contains(github.event.pull_request.labels.*.name, 'schema-override')
-      )
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -52,6 +36,4 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ github.token }}
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          RESTART_SCHEMA_OVERRIDE_ISSUES: ${{ github.event_name == 'workflow_dispatch' }}
-          LAUNCH_NEXT_SCHEMA_OVERRIDE: ${{ github.event_name == 'pull_request' && github.event.pull_request.merged }}
-          ISSUE_NUMBERS: ${{ github.event.inputs.issue_numbers }}
+          BATCH_OVERRIDE_KIND: ${{ github.event.inputs.kind }}

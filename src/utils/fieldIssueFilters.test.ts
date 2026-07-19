@@ -7,25 +7,12 @@ describe('fieldIssueFilters', () => {
     expect(activeFieldIssueFilter({ ...fieldFacetDefaults, f_iconMismatch: 'mismatch' })).toBe(
       'iconMismatch',
     )
-    expect(activeFieldIssueFilter({ ...fieldFacetDefaults, f_riskyTypeCombo: 'risky' })).toBe(
-      'riskyTypeCombo',
-    )
     expect(activeFieldIssueFilter(fieldFacetDefaults)).toBeNull()
   })
 
-  it('prefers icon mismatch when both facets are active', () => {
-    expect(
-      activeFieldIssueFilter({
-        ...fieldFacetDefaults,
-        f_iconMismatch: 'mismatch',
-        f_riskyTypeCombo: 'risky',
-      }),
-    ).toBe('iconMismatch')
-  })
-
   it('gates banners like the presets page', () => {
-    expect(showFieldIssueAlert(null, 'riskyTypeCombo')).toBe(true)
-    expect(showFieldIssueAlert('riskyTypeCombo', 'riskyTypeCombo')).toBe(true)
-    expect(showFieldIssueAlert('riskyTypeCombo', 'iconMismatch')).toBe(false)
+    expect(showFieldIssueAlert(null, 'iconMismatch')).toBe(true)
+    expect(showFieldIssueAlert('iconMismatch', 'iconMismatch')).toBe(true)
+    expect(showFieldIssueAlert('iconMismatch', 'iconMismatch')).toBe(true)
   })
 })
