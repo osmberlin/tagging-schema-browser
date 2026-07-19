@@ -214,6 +214,11 @@ presets:
       parentId: man_made
       missedFieldIds:
         - material
+  man_made/water_works:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
   natural/water/stream:
     fields:
       parentId: natural/water
