@@ -427,6 +427,7 @@ function RefDisclosure({
   parentKey,
   host,
   inheritanceHost,
+  expandedPresetRefs,
   sortMode = 'alpha',
 }: {
   label: string
@@ -437,6 +438,7 @@ function RefDisclosure({
   parentKey?: string
   host: HostPresetContext
   inheritanceHost?: InheritanceHostContext
+  expandedPresetRefs?: ReadonlySet<string>
   sortMode?: KeySortMode
 }) {
   const [open, setOpen] = useState(false)
@@ -517,6 +519,7 @@ function RefDisclosure({
             inheritanceHost={
               inheritanceHost ?? inheritanceHostFromPresetId(refInfo.id, rawPresets) ?? undefined
             }
+            expandedPresetRefs={expandedPresetRefs}
           />
         ) : expandedRaw ? (
           <>
@@ -599,6 +602,7 @@ function PresetRefInheritedFields({
   trailingComma,
   host,
   inheritanceHost,
+  expandedPresetRefs,
 }: {
   presetRef: string
   fieldListKey: 'fields' | 'moreFields'
@@ -607,6 +611,7 @@ function PresetRefInheritedFields({
   trailingComma?: boolean
   host: HostPresetContext
   inheritanceHost?: InheritanceHostContext
+  expandedPresetRefs?: ReadonlySet<string>
 }) {
   const { fields: allFields, rawPresets } = useSchema()
   const presetId = presetIdFromRef(presetRef)
@@ -620,6 +625,20 @@ function PresetRefInheritedFields({
       </JsonLine>
     )
   }
+
+  if (presetId && expandedPresetRefs?.has(presetId)) {
+    return (
+      <JsonLine level={level} trailingComma={trailingComma}>
+        <span className="text-slate-400 italic">
+          {'/* cyclic preset ref — already expanded above */'}
+        </span>
+      </JsonLine>
+    )
+  }
+
+  const nextExpandedPresetRefs = presetId
+    ? new Set([...(expandedPresetRefs ?? []), presetId])
+    : expandedPresetRefs
 
   const entries = getPresetRefFieldListEntries(
     resolvedInheritanceHost.presetId,
@@ -658,6 +677,7 @@ function PresetRefInheritedFields({
               parentKey={fieldListKey}
               host={host}
               inheritanceHost={resolvedInheritanceHost}
+              expandedPresetRefs={nextExpandedPresetRefs}
             />
           )
         }

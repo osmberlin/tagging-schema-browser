@@ -315,6 +315,39 @@ describe('displayPresetFieldList', () => {
     ])
   })
 
+  it('does not collapse contact template moreFields onto olive_grove', () => {
+    const rawPresets: RawPresets = {
+      '@templates/contact': {
+        tags: { '@template': 'contact' },
+        geometry: ['point'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website'],
+      },
+      'landuse/olive_grove': {
+        tags: { landuse: 'orchard', trees: 'olive_trees' },
+        geometry: ['area'],
+        fields: ['name', 'operator'],
+        moreFields: ['email', 'fax', 'mobile', 'phone', 'website'],
+      },
+    }
+
+    expect(
+      displayPresetFieldList(
+        '@templates/contact',
+        'moreFields',
+        rawPresets['@templates/contact']?.moreFields,
+        rawPresets,
+      ),
+    ).toEqual(['email', 'fax', 'mobile', 'phone', 'website'])
+    expect(
+      displayPresetFieldList(
+        'landuse/olive_grove',
+        'moreFields',
+        rawPresets['landuse/olive_grove']?.moreFields,
+        rawPresets,
+      ),
+    ).toEqual(['{@templates/contact}'])
+  })
+
   it('collapses office/coworking dist fields to preset and template refs', () => {
     const rawPresets: RawPresets = {
       office: {
