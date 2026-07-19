@@ -4,6 +4,10 @@
 # `{parent}` and without inheriting some parent fields. Record `missedFieldIds`
 # as a snapshot — CI fails when the live schema no longer matches (stale override).
 #
+# `fields` and `moreFields` are independent: you may record only one list when
+# the other still inherits via `{parent}` or remains unreviewed. Omitting a list
+# key is valid; extra keys with no live detection are stale.
+#
 # Entries may also be proposed from the Tagging Schema Browser (GitHub issues with
 # a Snapshot YAML block). See `.agents/skills/apply-schema-override/SKILL.md`.
 #
@@ -138,10 +142,6 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
-    moreFields:
-      parentId: man_made
-      missedFieldIds:
-        - material
   man_made/breakwater:
     fields:
       parentId: man_made
@@ -191,10 +191,6 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
-    moreFields:
-      parentId: man_made
-      missedFieldIds:
-        - material
   man_made/surveillance:
     fields:
       parentId: man_made
