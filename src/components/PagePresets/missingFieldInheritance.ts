@@ -69,6 +69,9 @@ export function detectMissingFieldInheritance(
 
   const result: MissingFieldInheritance = {}
 
+  const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
+  const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
+
   for (const fieldListKey of ['fields', 'moreFields'] as const) {
     const explicitList = preset[fieldListKey]
     if (!Array.isArray(explicitList)) continue
@@ -88,9 +91,6 @@ export function detectMissingFieldInheritance(
       rawPresets,
       allFields,
     )
-
-    const hostOriginalFields = Array.isArray(preset.fields) ? preset.fields : []
-    const hostOriginalMoreFields = Array.isArray(preset.moreFields) ? preset.moreFields : []
 
     const childSet = new Set(childResolved)
     const missedFieldIds = parentResolved
@@ -155,7 +155,7 @@ export function resolveMissingInheritanceStatus(
   current: MissingFieldInheritance | null,
   override: MissingInheritanceOverride | undefined,
 ): MissingInheritanceStatus {
-  if (!current) {
+  if (!current || (!current.fields && !current.moreFields)) {
     return override ? 'stale' : 'none'
   }
   if (!override) return 'unreviewed'
