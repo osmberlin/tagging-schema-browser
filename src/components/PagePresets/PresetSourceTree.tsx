@@ -6,6 +6,7 @@ import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnric
 import {
   buildPresetRefFieldExpansion,
   displayPresetFieldList,
+  formatFieldInheritanceOmission,
   getAuthoredExplicitFieldIds,
   presetIdFromRef,
   type PresetRefFieldExpansionNode,
@@ -579,14 +580,14 @@ function RefDisclosure({
 /** Field from a preset ref that is not inherited, with reason. */
 function OmittedInheritedFieldLine({
   fieldId,
-  reason,
+  omission,
   level,
   dataUrl,
   trailingComma,
   host,
 }: {
   fieldId: string
-  reason: string
+  omission: NonNullable<Extract<PresetRefFieldExpansionNode, { kind: 'field' }>['omission']>
   level: number
   dataUrl: string
   trailingComma?: boolean
@@ -594,6 +595,8 @@ function OmittedInheritedFieldLine({
 }) {
   const refInfo = refInFieldList(fieldId, host.rawPresets)
   if (!refInfo) return null
+
+  const reason = formatFieldInheritanceOmission(fieldId, omission)
 
   return (
     <JsonLine level={level} trailingComma={trailingComma}>
@@ -696,11 +699,13 @@ function PresetRefExpansionTree({
           )
         }
 
+        if (!node.omission) return null
+
         return (
           <OmittedInheritedFieldLine
             key={`${fieldListKey}-${node.fieldId}-omitted`}
             fieldId={node.fieldId}
-            reason={node.reason ?? 'not inherited'}
+            omission={node.omission}
             level={level}
             dataUrl={dataUrl}
             trailingComma={entryTrailingComma}

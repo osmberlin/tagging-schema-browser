@@ -2,12 +2,34 @@ import { describe, expect, it } from 'vitest'
 import {
   buildPresetRefFieldExpansion,
   displayPresetFieldList,
+  formatFieldInheritanceOmission,
   getInheritedFieldItems,
   getPresetRefFieldInheritanceBreakdown,
 } from '@/components/PagePresets/presetFieldInheritance'
 import type { RawFields, RawPresets } from '@/utils/types'
 
 describe('displayPresetFieldList', () => {
+  it('formats omission reasons with host preset and field list', () => {
+    expect(
+      formatFieldInheritanceOmission('email', {
+        kind: 'explicitField',
+        hostPresetId: 'office/coworking',
+        fieldListKey: 'moreFields',
+        blockingFieldId: 'email',
+        tagKey: 'email',
+      }),
+    ).toBe('email listed explicitly on office/coworking (moreFields)')
+
+    expect(
+      formatFieldInheritanceOmission('office', {
+        kind: 'presetTag',
+        hostPresetId: 'office/coworking',
+        tagKey: 'office',
+        tagValue: 'coworking',
+      }),
+    ).toBe('office/coworking tag fixes office=coworking')
+  })
+
   const rawPresets: RawPresets = {
     traffic_sign: {
       tags: { traffic_sign: '*' },
@@ -97,6 +119,7 @@ describe('displayPresetFieldList', () => {
     expect(displayFields).toEqual(['{traffic_sign}', 'direction_vertex'])
 
     const inherited = getInheritedFieldItems(
+      'traffic_sign/variable_message',
       hostPreset,
       '{traffic_sign}',
       'fields',
@@ -134,6 +157,7 @@ describe('displayPresetFieldList', () => {
 
     expect(
       getInheritedFieldItems(
+        'shop/yes',
         rawPresets['shop/yes']!,
         '{shop}',
         'fields',
@@ -247,6 +271,7 @@ describe('displayPresetFieldList', () => {
 
     const hostPreset = rawPresets['amenity/coworking_space']!
     const inherited = getInheritedFieldItems(
+      'amenity/coworking_space',
       hostPreset,
       '{office/coworking}',
       'fields',
@@ -476,7 +501,12 @@ describe('displayPresetFieldList', () => {
         kind: 'field',
         fieldId: 'office',
         applied: false,
-        reason: 'preset tag fixes office=coworking',
+        omission: {
+          kind: 'presetTag',
+          hostPresetId: 'office/coworking',
+          tagKey: 'office',
+          tagValue: 'coworking',
+        },
       },
       { kind: 'field', fieldId: 'address', applied: true },
       { kind: 'field', fieldId: 'building_area_yes', applied: true },
@@ -553,7 +583,12 @@ describe('displayPresetFieldList', () => {
         kind: 'field',
         fieldId: 'office',
         applied: false,
-        reason: 'preset tag fixes office=coworking',
+        omission: {
+          kind: 'presetTag',
+          hostPresetId: 'office/coworking',
+          tagKey: 'office',
+          tagValue: 'coworking',
+        },
       },
     ])
   })
@@ -668,7 +703,12 @@ describe('displayPresetFieldList', () => {
         kind: 'field',
         fieldId: 'office',
         applied: false,
-        reason: 'preset tag fixes office=coworking',
+        omission: {
+          kind: 'presetTag',
+          hostPresetId: 'office/coworking',
+          tagKey: 'office',
+          tagValue: 'coworking',
+        },
       },
     ])
 
@@ -691,7 +731,12 @@ describe('displayPresetFieldList', () => {
             kind: 'field',
             fieldId: 'office',
             applied: false,
-            reason: 'preset tag fixes office=coworking',
+            omission: {
+              kind: 'presetTag',
+              hostPresetId: 'office/coworking',
+              tagKey: 'office',
+              tagValue: 'coworking',
+            },
           },
           { kind: 'field', fieldId: 'address', applied: true },
           { kind: 'field', fieldId: 'building_area_yes', applied: true },
@@ -820,13 +865,27 @@ describe('displayPresetFieldList', () => {
       {
         applied: false,
         fieldId: 'traffic_sign',
-        reason: 'preset tag fixes traffic_sign=variable_message',
+        omission: {
+          kind: 'presetTag',
+          hostPresetId: 'traffic_sign/variable_message',
+          tagKey: 'traffic_sign',
+          tagValue: 'variable_message',
+        },
+        reason: 'traffic_sign/variable_message tag fixes traffic_sign=variable_message',
       },
       { applied: true, fieldId: 'traffic_sign/direction' },
       {
         applied: false,
         fieldId: 'direction_point',
-        reason: 'direction_vertex listed explicitly (same tag key)',
+        omission: {
+          kind: 'explicitField',
+          hostPresetId: 'traffic_sign/variable_message',
+          fieldListKey: 'fields',
+          blockingFieldId: 'direction_vertex',
+          tagKey: 'direction',
+        },
+        reason:
+          'direction_point blocked by direction_vertex on traffic_sign/variable_message (fields, same tag key `direction`)',
       },
     ])
   })
