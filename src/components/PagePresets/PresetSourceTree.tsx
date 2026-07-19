@@ -2,7 +2,6 @@ import { Link } from '@tanstack/react-router'
 import { Fragment, type ReactNode, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
-import { FieldSourceEnrichment } from '@/components/PagePresets/FieldSourceEnrichment'
 import {
   buildPresetRefFieldExpansion,
   displayPresetFieldList,
@@ -268,8 +267,6 @@ type HostPresetContext = {
   hostPreset: RawPreset
   hostOriginalFields: string[]
   hostOriginalMoreFields: string[]
-  hostPresetDenorm?: DenormalizedPreset
-  allPresets: DenormalizedPreset[]
   rawPresets: RawPresets
   /** When rendering a field's source JSON, the field id being viewed. */
   sourceFieldId?: string
@@ -561,13 +558,6 @@ function RefDisclosure({
               sortMode={refInfo.kind === 'preset' ? 'preset' : sortMode}
               jsonRootKind={refInfo.kind === 'field' ? 'field' : 'preset'}
             />
-            {refInfo.kind === 'field' && host.hostPresetDenorm ? (
-              <FieldSourceEnrichment
-                fieldId={refInfo.id}
-                preset={host.hostPresetDenorm}
-                presets={host.allPresets}
-              />
-            ) : null}
           </>
         ) : (
           <JsonLine level={level + 1} trailingComma={trailingComma}>
@@ -1175,8 +1165,6 @@ export function PresetSourceTree({
     hostOriginalMoreFields: Array.isArray(displayRaw.moreFields)
       ? (displayRaw.moreFields as string[]).filter((f) => typeof f === 'string')
       : [],
-    hostPresetDenorm: preset,
-    allPresets: presets ?? [],
     rawPresets,
     sourceFieldId: sourceKind === 'field' ? presetId : undefined,
   }
