@@ -262,6 +262,8 @@ export type PresetSourceTreeProps = {
 }
 
 type HostPresetContext = {
+  /** Preset whose source JSON is being rendered (the inheritance host for top-level refs). */
+  hostPresetId: string
   hostPreset: RawPreset
   hostOriginalFields: string[]
   hostOriginalMoreFields: string[]
@@ -419,6 +421,15 @@ function NameRefDisclosure({
   )
 }
 
+function resolveInheritanceHostContext(
+  host: HostPresetContext,
+  inheritanceHost: InheritanceHostContext | undefined,
+  rawPresets: RawPresets,
+): InheritanceHostContext | null {
+  if (inheritanceHost) return inheritanceHost
+  return inheritanceHostFromPresetId(host.hostPresetId, rawPresets)
+}
+
 function RefDisclosure({
   label,
   refInfo,
@@ -446,6 +457,18 @@ function RefDisclosure({
   const { fields, rawPresets } = useSchema()
   const fieldListKey = parentKey === 'fields' || parentKey === 'moreFields' ? parentKey : undefined
   const inheritPresetFields = refInfo.kind === 'preset' && fieldListKey
+  const resolvedInheritanceHost = resolveInheritanceHostContext(host, inheritanceHost, rawPresets)
+  const resolvedExpansionNodes =
+    expansionNodes ??
+    (inheritPresetFields && fieldListKey && resolvedInheritanceHost
+      ? buildPresetRefFieldExpansion(
+          resolvedInheritanceHost.presetId,
+          label,
+          fieldListKey,
+          rawPresets,
+          fields,
+        )
+      : undefined)
   const expandedRaw =
     refInfo.kind === 'field'
       ? (fields[refInfo.id] as Record<string, unknown> | undefined)
@@ -510,9 +533,9 @@ function RefDisclosure({
       </JsonLine>
       {open ? (
         inheritPresetFields ? (
-          expansionNodes ? (
+          resolvedExpansionNodes ? (
             <PresetRefExpansionTree
-              nodes={expansionNodes}
+              nodes={resolvedExpansionNodes}
               fieldListKey={fieldListKey}
               level={level + 1}
               dataUrl={dataUrl}
@@ -520,17 +543,9 @@ function RefDisclosure({
               host={host}
             />
           ) : (
-            <PresetRefInheritedFields
-              presetRef={label}
-              fieldListKey={fieldListKey}
-              level={level + 1}
-              dataUrl={dataUrl}
-              trailingComma={trailingComma}
-              host={host}
-              inheritanceHost={
-                inheritanceHost ?? inheritanceHostFromPresetId(refInfo.id, rawPresets) ?? undefined
-              }
-            />
+            <JsonLine level={level + 1} trailingComma={trailingComma}>
+              <span className="text-slate-400 italic">{'/* preset not loaded */'}</span>
+            </JsonLine>
           )
         ) : expandedRaw ? (
           <>
@@ -694,57 +709,6 @@ function PresetRefExpansionTree({
         )
       })}
     </>
-  )
-}
-
-/** Inherited field ids when a preset ref is expanded inside fields or moreFields. */
-function PresetRefInheritedFields({
-  presetRef,
-  fieldListKey,
-  level,
-  dataUrl,
-  trailingComma,
-  host,
-  inheritanceHost,
-}: {
-  presetRef: string
-  fieldListKey: 'fields' | 'moreFields'
-  level: number
-  dataUrl: string
-  trailingComma?: boolean
-  host: HostPresetContext
-  inheritanceHost?: InheritanceHostContext
-}) {
-  const { fields: allFields, rawPresets } = useSchema()
-  const presetId = presetIdFromRef(presetRef)
-  const resolvedInheritanceHost =
-    inheritanceHost ?? (presetId ? inheritanceHostFromPresetId(presetId, rawPresets) : null)
-
-  if (!resolvedInheritanceHost) {
-    return (
-      <JsonLine level={level} trailingComma={trailingComma}>
-        <span className="text-slate-400 italic">{'/* preset not loaded */'}</span>
-      </JsonLine>
-    )
-  }
-
-  const nodes = buildPresetRefFieldExpansion(
-    resolvedInheritanceHost.presetId,
-    presetRef,
-    fieldListKey,
-    rawPresets,
-    allFields,
-  )
-
-  return (
-    <PresetRefExpansionTree
-      nodes={nodes}
-      fieldListKey={fieldListKey}
-      level={level}
-      dataUrl={dataUrl}
-      trailingComma={trailingComma}
-      host={host}
-    />
   )
 }
 
@@ -1196,6 +1160,7 @@ export function PresetSourceTree({
         }
       : raw
   const host: HostPresetContext = {
+    hostPresetId: presetId,
     hostPreset: raw as RawPreset,
     hostOriginalFields: Array.isArray(displayRaw.fields)
       ? (displayRaw.fields as string[]).filter((f) => typeof f === 'string')
