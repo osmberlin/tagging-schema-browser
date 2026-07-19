@@ -1,19 +1,3 @@
-import type {
-  MissingFieldInheritance,
-  MissingInheritanceOverride,
-} from '@/components/PagePresets/missingFieldInheritance'
-import {
-  formatMissingInheritanceOverrideYaml,
-  formatMissingInheritanceOverrideYamlFromStored,
-} from '@/components/PagePresets/missingFieldInheritance'
-import type {
-  RiskyTypeCombo,
-  RiskyTypeComboOverride,
-} from '@/components/PagePresets/riskyTypeCombo'
-import {
-  formatRiskyTypeComboOverrideYaml,
-  formatRiskyTypeComboOverrideYamlFromStored,
-} from '@/components/PagePresets/riskyTypeCombo'
 import { GITHUB_REPO_URL } from '@/utils/constants'
 
 export type SchemaOverrideKind = 'missing-inheritance' | 'risky-typecombo'
@@ -63,7 +47,7 @@ function introSection(
   const action = removeStaleOnly ? 'Remove stale override' : 'Record intentional override'
   return [
     `${action} from the Tagging Schema Browser.`,
-    `Keep the \`${config.titlePrefix}\` title prefix. Submit to enqueue a Cursor cloud agent that opens a PR for this override.`,
+    `Keep the \`${config.titlePrefix}\` title prefix. After submitting, run the **Cursor override automation** workflow manually to open a PR.`,
     '',
   ].join('\n')
 }
@@ -138,68 +122,4 @@ export function buildSchemaOverrideIssueUrl(input: BuildSchemaOverrideIssueUrlIn
     )
   }
   return url
-}
-
-export function buildMissingInheritanceOverrideIssueUrl({
-  presetId,
-  missingFieldInheritance,
-  pageUrl,
-  dataUrl,
-  existingOverride,
-}: {
-  presetId: string
-  missingFieldInheritance?: MissingFieldInheritance | null
-  pageUrl: string
-  dataUrl: string
-  existingOverride?: MissingInheritanceOverride
-}): string {
-  const storedOverride = existingOverride
-  const removeStaleOnly = !missingFieldInheritance && storedOverride !== undefined
-  const storedOverrideYaml =
-    storedOverride !== undefined
-      ? formatMissingInheritanceOverrideYamlFromStored(presetId, storedOverride)
-      : undefined
-
-  return buildSchemaOverrideIssueUrl({
-    kind: 'missing-inheritance',
-    presetId,
-    snapshotYaml: missingFieldInheritance
-      ? formatMissingInheritanceOverrideYaml(presetId, missingFieldInheritance)
-      : '',
-    pageUrl,
-    dataUrl,
-    removeStaleOnly,
-    existingOverrideYaml: removeStaleOnly ? storedOverrideYaml : undefined,
-  })
-}
-
-export function buildRiskyTypeComboOverrideIssueUrl({
-  presetId,
-  riskyTypeCombo,
-  pageUrl,
-  dataUrl,
-  existingOverride,
-}: {
-  presetId: string
-  riskyTypeCombo?: RiskyTypeCombo | null
-  pageUrl: string
-  dataUrl: string
-  existingOverride?: RiskyTypeComboOverride
-}): string {
-  const storedOverride = existingOverride
-  const removeStaleOnly = !riskyTypeCombo && storedOverride !== undefined
-  const storedOverrideYaml =
-    storedOverride !== undefined
-      ? formatRiskyTypeComboOverrideYamlFromStored(presetId, storedOverride)
-      : undefined
-
-  return buildSchemaOverrideIssueUrl({
-    kind: 'risky-typecombo',
-    presetId,
-    snapshotYaml: riskyTypeCombo ? formatRiskyTypeComboOverrideYaml(presetId, riskyTypeCombo) : '',
-    pageUrl,
-    dataUrl,
-    removeStaleOnly,
-    existingOverrideYaml: removeStaleOnly ? storedOverrideYaml : undefined,
-  })
 }

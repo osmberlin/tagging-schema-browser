@@ -24,7 +24,17 @@ import type { DenormalizedPreset, SchemaIndices } from '@/utils/types'
 
 export function PresetDetailPage() {
   const { _splat: presetId } = useParams({ strict: false })
-  const { presetsById, presets, rawPresets, dataUrl, data, loading, error } = useSchema()
+  const {
+    presetsById,
+    presets,
+    rawPresets,
+    dataUrl,
+    customDataUrl,
+    reference,
+    data,
+    loading,
+    error,
+  } = useSchema()
   const preset = presetId ? presetsById.get(presetId) : undefined
   const raw = presetId ? rawPresets[presetId] : undefined
 
@@ -65,6 +75,8 @@ export function PresetDetailPage() {
       presets={presets}
       indices={data.indices}
       dataUrl={dataUrl ?? ''}
+      customDataUrl={customDataUrl ?? ''}
+      reference={reference}
     />
   )
 }
@@ -75,12 +87,16 @@ function PresetDetailContent({
   presets,
   indices,
   dataUrl,
+  customDataUrl,
+  reference,
 }: {
   preset: DenormalizedPreset
   raw: Record<string, unknown>
   presets: DenormalizedPreset[]
   indices: SchemaIndices
   dataUrl: string
+  customDataUrl: string
+  reference?: 'release' | 'interim'
 }) {
   const { locale, localeMap, loading: localeLoading, error: localeError } = useLocale()
   const loc = locale ? localeMap?.get(preset.id) : undefined
@@ -195,9 +211,17 @@ function PresetDetailContent({
         childRefs={indices.childIconMismatchRefsByPresetId.get(preset.id) ?? []}
       />
 
-      <MissingInheritancePanel preset={preset} dataUrl={dataUrl} />
+      <MissingInheritancePanel
+        preset={preset}
+        dataUrl={customDataUrl ?? ''}
+        reference={customDataUrl ? undefined : reference}
+      />
 
-      <RiskyTypeComboPanel preset={preset} dataUrl={dataUrl} />
+      <RiskyTypeComboPanel
+        preset={preset}
+        dataUrl={customDataUrl ?? ''}
+        reference={customDataUrl ? undefined : reference}
+      />
 
       <DetailDisclosure
         title="Translation"

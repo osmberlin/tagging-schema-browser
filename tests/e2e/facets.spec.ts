@@ -45,6 +45,15 @@ test('broken icon presets are flagged and filterable', async ({ page }) => {
   await expect(page.getByText('temaki-this-icon-does-not-exist')).toBeVisible()
 })
 
+test('audits index is reachable from main navigation', async ({ page }) => {
+  await loadTestSchema(page)
+
+  await page.getByRole('link', { name: 'Audits' }).click()
+  await expect(page).toHaveURL(/\/audits/)
+  await expect(page.getByRole('heading', { name: /^Audits\b/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Missing inheritance/i })).toBeVisible()
+})
+
 test('missing slash-parent field inheritance links to audit page', async ({ page }) => {
   await loadTestSchema(page)
 
@@ -61,7 +70,9 @@ test('preset detail links missing inheritance to audit page', async ({ page }) =
   await expect(page.getByText(/Missing parent fields \(unreviewed\)/i)).toBeVisible()
   await expect(page.getByRole('link', { name: 'Open audit →' })).toBeVisible()
   await page.getByRole('link', { name: 'Open audit →' }).click()
-  await expect(page).toHaveURL(/\/audits\/missing-inheritance.*selected=/)
+  await expect(page).toHaveURL(
+    /\/audits\/missing-inheritance.*selected=man_made%2Fcrane%2Funtyped_crane%3Afields/,
+  )
 })
 
 test('preset detail links risky typeCombo to audit page', async ({ page }) => {

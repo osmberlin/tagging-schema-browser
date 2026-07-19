@@ -1,16 +1,22 @@
 import { useForm } from '@tanstack/react-form'
-import { Link, Navigate, useParams, useSearch } from '@tanstack/react-router'
+import { Link, useParams, useSearch } from '@tanstack/react-router'
 import { useEffect, useMemo, useRef } from 'react'
 import { z } from 'zod'
+import {
+  AUDIT_DECISION_HELP,
+  AUDIT_DECISION_LABELS,
+  countAuditDecisionsForIssue,
+  type AuditDecision,
+} from '@/components/PageAudits/auditDecisions'
 import {
   auditEntriesForSlug,
   auditEntryNeedsAction,
   defaultAuditDecision,
-  type AuditDecision,
   type AuditEntry,
 } from '@/components/PageAudits/auditEntries'
 import { AUDIT_META, auditSlugToKind, isAuditSlug } from '@/components/PageAudits/auditSlugs'
 import { buildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/buildBatchOverrideIssueUrl'
+import { fieldListTitle } from '@/components/PageAudits/fieldListTitle'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
@@ -28,16 +34,13 @@ type AuditFormValues = {
   decisions: Record<string, AuditDecision>
 }
 
-const DECISION_OPTIONS: { value: AuditDecision; label: string }[] = [
-  { value: 'pending', label: 'Unreviewed' },
-  { value: 'intentional', label: 'Intentional (false positive)' },
-  { value: 'remove_stale', label: 'Remove stale override' },
-  { value: 'needs_work', label: 'Needs upstream work' },
-]
+const DECISION_OPTIONS: { value: AuditDecision; label: string }[] = (
+  Object.entries(AUDIT_DECISION_LABELS) as [AuditDecision, string][]
+).map(([value, label]) => ({ value, label }))
 
 function decisionLabel(entry: AuditEntry, decision: AuditDecision): string {
   if (entry.status === 'stale' && decision === 'pending') return 'Stale (choose action)'
-  return DECISION_OPTIONS.find((option) => option.value === decision)?.label ?? decision
+  return AUDIT_DECISION_LABELS[decision]
 }
 
 function AuditEntryRow({
@@ -87,7 +90,10 @@ function AuditEntryRow({
         {entry.kind === 'missing-inheritance' ? (
           <div className="space-y-2">
             <p>
-              List <code className="font-mono text-xs">{entry.fieldListKey}</code> — parent{' '}
+              <span className="font-medium text-slate-900">
+                {fieldListTitle(entry.fieldListKey)}
+              </span>{' '}
+              — parent{' '}
               <Link
                 to="/preset/$"
                 params={{ _splat: entry.parentId }}
@@ -97,7 +103,7 @@ function AuditEntryRow({
                 {entry.parentId}
               </Link>
             </p>
-            <p className="text-xs text-slate-500">Missing field ids:</p>
+            <p className="text-xs text-slate-500">Field ids not inherited from the parent list:</p>
             <ul className="list-inside list-disc font-mono text-xs text-slate-800">
               {entry.missedFieldIds.map((fieldId) => (
                 <li key={fieldId}>
@@ -119,7 +125,7 @@ function AuditEntryRow({
             ) : null}
           </div>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-2 text-sm">
             {entry.riskyTypeCombo.fields.map((field) => (
               <li key={`${field.fieldId}:${field.listKey}`}>
                 <Link
@@ -132,6 +138,10 @@ function AuditEntryRow({
                 </Link>{' '}
                 <span className="text-slate-500">
                   (<code>{field.fieldKey}</code>, {field.listKey})
+                </span>
+                <span className="block text-xs text-slate-600">
+                  Leaving this <code>typeCombo</code> empty in iD can write{' '}
+                  <code>{field.fieldKey}=yes</code>.
                 </span>
               </li>
             ))}
@@ -169,10 +179,10 @@ function AuditEntryRow({
 }
 
 export function AuditDetailPage() {
-  const { _splat: slugParam } = useParams({ strict: false })
+  const { slug: slugParam } = useParams({ strict: false })
   const slug = slugParam && isAuditSlug(slugParam) ? slugParam : null
   const { selected } = useSearch({ strict: false, select: (raw) => auditSearchSchema.parse(raw) })
-  const { presets, data, dataUrl, loading } = useSchema()
+  const { presets, data, dataUrl, reference, loading } = useSchema()
 
   const entries = useMemo(() => {
     if (!slug || !data) return []
@@ -228,9 +238,19 @@ export function AuditDetailPage() {
         </h1>
         <p className="max-w-3xl text-sm text-slate-600">{meta.description}</p>
         <p className="text-sm text-slate-500">
-          Mark each row, then open one GitHub issue for the selected overrides. Run the{' '}
+          Choose a decision for each row you want to act on. Rows left as{' '}
+          <strong>Unreviewed</strong> are skipped. Then open one GitHub issue and run the{' '}
           <strong>Cursor override automation</strong> workflow manually when you are ready for a PR.
         </p>
+        <ul className="max-w-3xl list-inside list-disc text-sm text-slate-500">
+          {(
+            Object.entries(AUDIT_DECISION_HELP) as [keyof typeof AUDIT_DECISION_HELP, string][]
+          ).map(([decision, help]) => (
+            <li key={decision}>
+              <strong>{AUDIT_DECISION_LABELS[decision]}</strong> — {help}
+            </li>
+          ))}
+        </ul>
       </header>
 
       {actionableCount === 0 ? (
@@ -249,6 +269,7 @@ export function AuditDetailPage() {
                 entries,
                 decisions: form.state.values.decisions,
                 dataUrl: dataUrl ?? '',
+                reference,
               })
               window.open(issueUrl, '_blank', 'noopener,noreferrer')
             } catch (error) {
@@ -257,73 +278,81 @@ export function AuditDetailPage() {
           }}
           className="space-y-4"
         >
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-medium tracking-wide text-slate-500 uppercase">
-                <tr>
-                  <th className="px-3 py-2">Preset</th>
-                  <th className="px-3 py-2">Details</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Decision</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry) => (
-                  <AuditEntryRow
-                    key={entry.entryId}
-                    entry={entry}
-                    selected={selected === entry.entryId}
-                    decision={
-                      form.state.values.decisions[entry.entryId] ?? defaultAuditDecision(entry)
-                    }
-                    onDecisionChange={(value) => {
-                      form.setFieldValue('decisions', {
-                        ...form.state.values.decisions,
-                        [entry.entryId]: value,
-                      })
-                    }}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <form.Subscribe selector={(state) => state.values.decisions}>
+            {(decisions) => {
+              const issueCount = countAuditDecisionsForIssue(decisions)
+              return (
+                <>
+                  <div className="overflow-x-auto rounded-xl border border-slate-200">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-xs font-medium tracking-wide text-slate-500 uppercase">
+                        <tr>
+                          <th className="px-3 py-2">Preset</th>
+                          <th className="px-3 py-2">Details</th>
+                          <th className="px-3 py-2">Status</th>
+                          <th className="px-3 py-2">Decision</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {entries.map((entry) => (
+                          <AuditEntryRow
+                            key={entry.entryId}
+                            entry={entry}
+                            selected={selected === entry.entryId}
+                            decision={decisions[entry.entryId] ?? defaultAuditDecision(entry)}
+                            onDecisionChange={(value) => {
+                              form.setFieldValue('decisions', {
+                                ...decisions,
+                                [entry.entryId]: value,
+                              })
+                            }}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              className={externalActionPillClass('border border-mauve-200 bg-mauve-50/80')}
-              data-testid="audit-create-issue"
-            >
-              Create GitHub issue ↗
-            </button>
-            <Link
-              to="/"
-              search={(prev) => ({
-                ...presetSearchDefaults,
-                dataUrl: prev.dataUrl ?? '',
-                locale: prev.locale ?? '',
-              })}
-              className="text-sm font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
-            >
-              Back to presets
-            </Link>
-          </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="submit"
+                      disabled={issueCount === 0}
+                      className={cn(
+                        externalActionPillClass('border border-mauve-200 bg-mauve-50/80'),
+                        issueCount === 0 && 'cursor-not-allowed opacity-50',
+                      )}
+                      data-testid="audit-create-issue"
+                    >
+                      Create GitHub issue ({issueCount}) ↗
+                    </button>
+                    <Link
+                      to="/audits"
+                      search={(prev) => ({
+                        dataUrl: prev.dataUrl ?? '',
+                        locale: prev.locale ?? '',
+                        reference: prev.reference,
+                      })}
+                      className="text-sm font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
+                    >
+                      All audits
+                    </Link>
+                    <Link
+                      to="/"
+                      search={(prev) => ({
+                        ...presetSearchDefaults,
+                        dataUrl: prev.dataUrl ?? '',
+                        locale: prev.locale ?? '',
+                      })}
+                      className="text-sm font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
+                    >
+                      Presets
+                    </Link>
+                  </div>
+                </>
+              )
+            }}
+          </form.Subscribe>
         </form>
       )}
     </div>
-  )
-}
-
-export function AuditsIndexRedirect() {
-  return (
-    <Navigate
-      to="/"
-      search={(prev) => ({
-        ...presetSearchDefaults,
-        dataUrl: prev.dataUrl ?? '',
-        locale: prev.locale ?? '',
-      })}
-      replace
-    />
   )
 }

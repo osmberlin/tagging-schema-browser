@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   AGENT_LAUNCHED_MARKER,
   buildAgentLaunchedCommentBody,
-  buildAgentPrompt,
   buildBatchAgentPrompt,
   closeLinkedIssuesForPullRequest,
   ENQUEUED_LABEL,
@@ -36,26 +35,6 @@ describe('cursorOverrideAutomation', () => {
   it('skips when the enqueued label is already on the issue', () => {
     expect(hasEnqueuedLabel([{ name: ENQUEUED_LABEL }])).toBe(true)
     expect(hasEnqueuedLabel([{ name: 'bug' }])).toBe(false)
-  })
-
-  it('builds agent prompt with skill, issue body, and PR requirements', () => {
-    const prompt = buildAgentPrompt({
-      owner: 'osmberlin',
-      repo: 'tagging-schema-browser',
-      issueNumber: 138,
-      issueTitle: '[missing-inheritance] shop/trade',
-      activeKind: 'missing-inheritance',
-      issueBody: '**Source branch:** `main`\nPreset: `shop/trade`',
-    })
-
-    expect(prompt).toContain('issue #138')
-    expect(prompt).toContain('.agents/skills/apply-schema-override/SKILL.md')
-    expect(prompt).toContain('Closes #138')
-    expect(prompt).toContain('schema-override')
-    expect(prompt).toContain('ready for review (not draft)')
-    expect(prompt).toContain('Preset: `shop/trade`')
-    expect(prompt).toContain('Base branch: main')
-    expect(prompt).not.toContain('@cursoragent')
   })
 
   it('builds batch agent prompt with closing keywords for every issue', () => {
@@ -178,6 +157,14 @@ describe('cursorOverrideAutomation', () => {
 
       if (url.includes('/pulls?state=open')) {
         return new Response(JSON.stringify([]), { status: 200 })
+      }
+
+      if (url.endsWith('/issues/151') && method === 'GET') {
+        return new Response(JSON.stringify({ labels: [] }), { status: 200 })
+      }
+
+      if (url.endsWith('/issues/152') && method === 'GET') {
+        return new Response(JSON.stringify({ labels: [] }), { status: 200 })
       }
 
       if (url.includes('/issues/151/comments') && method === 'POST') {

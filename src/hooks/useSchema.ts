@@ -46,6 +46,7 @@ export function useSchema() {
   return {
     dataUrl: resolvedDataUrl,
     customDataUrl: customDataUrl || null,
+    reference: dataUrlParam.trim() ? undefined : reference,
     unsupportedBuild: isUnsupportedUrl ? predictedBuild : null,
     setDataUrl: (url: string | null) => {
       void navigate({ to: '.', search: (prev) => ({ ...prev, dataUrl: url ?? '' }) })

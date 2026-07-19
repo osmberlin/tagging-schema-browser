@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { auditPageHref } from '@/components/PageAudits/auditPageHref'
+import { firstMissingInheritanceAuditEntryId } from '@/components/PageAudits/firstMissingInheritanceEntryId'
 import type {
   FieldListKey,
   MissingFieldInheritance,
@@ -7,7 +8,6 @@ import type {
   MissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
 import { resolveMissingInheritanceListStatus } from '@/components/PagePresets/missingFieldInheritance'
-import { areaAccent } from '@/theme/areaAccent'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
@@ -29,18 +29,13 @@ function FieldListSection({
   fieldListKey,
   section,
   listOverride,
-  presetId,
-  dataUrl,
 }: {
   fieldListKey: FieldListKey
   section: NonNullable<MissingFieldInheritance[FieldListKey]>
   listOverride?: MissingInheritanceOverrideList
-  presetId: string
-  dataUrl: string
 }) {
   const title = fieldListKey === 'fields' ? 'Primary fields' : 'More fields'
   const listStatus = resolveMissingInheritanceListStatus(section, listOverride)
-  const entryId = `${presetId}:${fieldListKey}`
   return (
     <div className="space-y-2 text-sm text-slate-700">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -69,17 +64,6 @@ function FieldListSection({
           Other preset refs on this list: {section.explicitPresetRefs.join(', ')}
         </p>
       ) : null}
-      {listStatus === 'unreviewed' || listStatus === 'stale' ? (
-        <a
-          href={auditPageHref({ slug: 'missing-inheritance', dataUrl, selected: entryId })}
-          className={cn(
-            'inline-flex text-sm font-medium underline underline-offset-2',
-            areaAccent.fields.link,
-          )}
-        >
-          Review on audit page →
-        </a>
-      ) : null}
     </div>
   )
 }
@@ -87,9 +71,11 @@ function FieldListSection({
 export function MissingInheritancePanel({
   preset,
   dataUrl = '',
+  reference,
 }: {
   preset: DenormalizedPreset
   dataUrl?: string
+  reference?: 'release' | 'interim'
 }) {
   const { missingFieldInheritance, missingInheritanceStatus } = preset
 
@@ -100,6 +86,7 @@ export function MissingInheritancePanel({
 
   const needsAudit =
     missingInheritanceStatus === 'unreviewed' || missingInheritanceStatus === 'stale'
+  const auditSelected = firstMissingInheritanceAuditEntryId(preset)
 
   return (
     <section
@@ -115,7 +102,12 @@ export function MissingInheritancePanel({
         </div>
         {needsAudit ? (
           <a
-            href={auditPageHref({ slug: 'missing-inheritance', dataUrl, selected: preset.id })}
+            href={auditPageHref({
+              slug: 'missing-inheritance',
+              dataUrl,
+              reference,
+              selected: auditSelected,
+            })}
             className={cn(
               'inline-flex shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-medium text-amber-900 ring-1 ring-amber-200 ring-inset hover:bg-amber-100',
             )}
@@ -137,19 +129,12 @@ export function MissingInheritancePanel({
           </p>
         ) : null}
         {missingFieldInheritance?.fields ? (
-          <FieldListSection
-            fieldListKey="fields"
-            section={missingFieldInheritance.fields}
-            presetId={preset.id}
-            dataUrl={dataUrl}
-          />
+          <FieldListSection fieldListKey="fields" section={missingFieldInheritance.fields} />
         ) : null}
         {missingFieldInheritance?.moreFields ? (
           <FieldListSection
             fieldListKey="moreFields"
             section={missingFieldInheritance.moreFields}
-            presetId={preset.id}
-            dataUrl={dataUrl}
           />
         ) : null}
       </div>
