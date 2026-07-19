@@ -1,3 +1,5 @@
+import { isTemplatePresetId } from '@/utils/presetTemplate'
+
 const REPO = 'openstreetmap/id-tagging-schema'
 
 /**
@@ -47,6 +49,7 @@ export function schemaRepoPath(
   options?: { searchable?: boolean },
 ): string {
   if (kind === 'field') return `data/fields/${id}.json`
-  const presetId = options?.searchable === false ? unsearchablePresetId(id) : id
+  const useUnderscore = options?.searchable === false && !isTemplatePresetId(id)
+  const presetId = useUnderscore ? unsearchablePresetId(id) : id
   return `data/presets/${presetId}.json`
 }
