@@ -142,8 +142,14 @@ export function resolveMissingInheritanceListStatus(
 /**
  * Compare live missing inheritance with a reviewed override snapshot.
  *
- * `fields` and `moreFields` are independent: an override may document only one
- * list when the other still inherits via `{parent}` or remains unreviewed.
+ * Both `fields` and `moreFields` are audited when explicitly defined without
+ * `{parent}`. Overrides are per-list snapshots (`missedFieldIds`), not a single
+ * "preset is OK" flag — that keeps CI able to detect when a parent gains fields
+ * that children should inherit.
+ *
+ * A preset may document one list while the other remains unreviewed (partial
+ * override). Overall status stays `unreviewed` until every detected list has a
+ * matching override section.
  */
 export function resolveMissingInheritanceStatus(
   current: MissingFieldInheritance | null,
