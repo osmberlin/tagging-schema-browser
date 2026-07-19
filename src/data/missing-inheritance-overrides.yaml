@@ -47,6 +47,11 @@ presets:
       parentId: barrier
       missedFieldIds:
         - level
+  barrier/kerb:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
   barrier/swing_gate:
     moreFields:
       parentId: barrier
