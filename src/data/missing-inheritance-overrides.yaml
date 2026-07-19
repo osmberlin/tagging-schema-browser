@@ -80,6 +80,11 @@ presets:
         - brand
         - building/levels_building
         - height_building
+  entrance/emergency:
+    fields:
+      parentId: entrance
+      missedFieldIds:
+        - address
   highway/emergency_bay:
     fields:
       parentId: highway
