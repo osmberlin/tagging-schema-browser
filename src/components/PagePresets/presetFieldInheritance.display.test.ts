@@ -62,6 +62,112 @@ describe('displayPresetFieldList', () => {
     ).toEqual(['{traffic_sign}', 'direction_vertex'])
   })
 
+  it('does not collapse onto unrelated presets with identical dist field lists', () => {
+    const presets: RawPresets = {
+      traffic_sign: {
+        tags: { traffic_sign: '*' },
+        geometry: ['point', 'vertex'],
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point'],
+      },
+      'highway/traffic_sign': {
+        tags: { highway: 'traffic_sign' },
+        geometry: ['point', 'vertex'],
+        searchable: false,
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point'],
+      },
+      'traffic_sign/variable_message': {
+        tags: { traffic_sign: 'variable_message' },
+        geometry: ['point', 'vertex'],
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point', 'direction_vertex'],
+      },
+      'traffic_calming/rumble_strip': {
+        tags: { traffic_calming: 'rumble_strip' },
+        geometry: ['line'],
+        fields: ['direction_vertex'],
+      },
+    }
+
+    expect(
+      displayPresetFieldList('traffic_sign', 'fields', presets.traffic_sign?.fields, presets),
+    ).toEqual(['traffic_sign', 'traffic_sign/direction', 'direction_point'])
+
+    expect(
+      displayPresetFieldList(
+        'traffic_sign/variable_message',
+        'fields',
+        presets['traffic_sign/variable_message']?.fields,
+        presets,
+      ),
+    ).toEqual(['{traffic_sign}', 'direction_vertex'])
+  })
+
+  it('expands variable_message traffic_sign ref without highway consumer cycle', () => {
+    const rawPresets: RawPresets = {
+      traffic_sign: {
+        tags: { traffic_sign: '*' },
+        geometry: ['point', 'vertex'],
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point'],
+      },
+      'highway/traffic_sign': {
+        tags: { highway: 'traffic_sign' },
+        geometry: ['point', 'vertex'],
+        searchable: false,
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point'],
+      },
+      'traffic_sign/variable_message': {
+        tags: { traffic_sign: 'variable_message' },
+        geometry: ['point', 'vertex'],
+        fields: ['traffic_sign', 'traffic_sign/direction', 'direction_point', 'direction_vertex'],
+      },
+      'traffic_calming/rumble_strip': {
+        tags: { traffic_calming: 'rumble_strip' },
+        geometry: ['line'],
+        fields: ['direction_vertex'],
+      },
+    }
+    const fields: RawFields = {
+      traffic_sign: { key: 'traffic_sign', type: 'typeCombo' },
+      'traffic_sign/direction': { key: 'traffic_sign:direction', type: 'radio' },
+      direction_point: { key: 'direction', type: 'number' },
+      direction_vertex: { key: 'direction', type: 'radio' },
+    }
+
+    expect(
+      buildPresetRefFieldExpansion(
+        'traffic_sign/variable_message',
+        '{traffic_sign}',
+        'fields',
+        rawPresets,
+        fields,
+      ),
+    ).toEqual([
+      {
+        kind: 'field',
+        fieldId: 'traffic_sign',
+        applied: false,
+        omission: {
+          kind: 'presetTag',
+          hostPresetId: 'traffic_sign/variable_message',
+          tagKey: 'traffic_sign',
+          tagValue: 'variable_message',
+        },
+      },
+      { kind: 'field', fieldId: 'traffic_sign/direction', applied: true },
+      {
+        kind: 'field',
+        fieldId: 'direction_point',
+        applied: false,
+        omission: {
+          kind: 'explicitField',
+          hostPresetId: 'traffic_sign/variable_message',
+          fieldListKey: 'fields',
+          blockingFieldId: 'direction_vertex',
+          tagKey: 'direction',
+        },
+      },
+    ])
+  })
+
   it('keeps lists that already use preset refs', () => {
     const list = rawPresets['amenity/clinic/abortion']?.fields as string[]
     expect(displayPresetFieldList('amenity/clinic/abortion', 'fields', list, rawPresets)).toEqual([
