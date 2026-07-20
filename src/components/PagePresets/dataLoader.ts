@@ -9,11 +9,14 @@ export const SCHEMA_CORE_FILES = [
   'fields.min.json',
 ] as const
 
+const OPTIONAL_FILES = ['discarded.min.json', 'discarded.json'] as const
+
 export type RawSchemaPayload = {
   presets: RawPresets
   translations: RawTranslations
   categories: RawCategories
   fields: RawFields
+  discarded: Record<string, boolean>
   loadErrors: string[]
 }
 
@@ -32,9 +35,10 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
   let translations: RawTranslations = {}
   let categories: RawCategories = {}
   let fields: RawFields = {}
+  let discarded: Record<string, boolean> = {}
 
   const results = await Promise.all(
-    SCHEMA_CORE_FILES.map(async (file) => {
+    [...SCHEMA_CORE_FILES, ...OPTIONAL_FILES].map(async (file) => {
       try {
         const data = await fetchJson<unknown>(base, file)
         return { file, data } as const
@@ -47,7 +51,9 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
 
   for (const result of results) {
     if ('error' in result) {
-      loadErrors.push(`${result.file}: ${result.error}`)
+      if (!OPTIONAL_FILES.includes(result.file as (typeof OPTIONAL_FILES)[number])) {
+        loadErrors.push(`${result.file}: ${result.error}`)
+      }
       continue
     }
     const { file, data } = result
@@ -55,9 +61,14 @@ export async function loadSchemaData(dataUrl: string): Promise<RawSchemaPayload>
     else if (file === 'translations/en.min.json') translations = data as RawTranslations
     else if (file === 'preset_categories.min.json') categories = data as RawCategories
     else if (file === 'fields.min.json') fields = data as RawFields
+    else if (file === 'discarded.min.json' || file === 'discarded.json') {
+      if (Object.keys(discarded).length === 0) {
+        discarded = data as Record<string, boolean>
+      }
+    }
   }
 
-  return { presets, translations, categories, fields, loadErrors }
+  return { presets, translations, categories, fields, discarded, loadErrors }
 }
 
 export function getExpectedFilesHelp(): string {

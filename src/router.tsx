@@ -21,6 +21,10 @@ import { IconFacetSidebar } from '@/components/PageIcons/IconFacetSidebar'
 import { IconSearchBar } from '@/components/PageIcons/IconSearchBar'
 import { IconsPageProvider } from '@/components/PageIcons/IconsPageContext'
 import { iconFacetDefaults, iconFacetSchema } from '@/components/PageIcons/useIconFacetState'
+import {
+  presetMatchSearchDefaults,
+  presetMatchSearchSchema,
+} from '@/components/PagePresetMatch/presetMatchSearch'
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
 import { PagePresets } from '@/components/PagePresets/PagePresets'
 import { PresetDetailPage } from '@/components/PagePresets/PresetDetailPage'
@@ -76,6 +80,12 @@ const LazyPageComparison = lazy(() =>
 const LazyPagePresetSwitch = lazy(() =>
   import('@/components/PagePresetSwitch/PagePresetSwitch').then((m) => ({
     default: m.PagePresetSwitch,
+  })),
+)
+
+const LazyPagePresetMatch = lazy(() =>
+  import('@/components/PagePresetMatch/PagePresetMatch').then((m) => ({
+    default: m.PagePresetMatch,
   })),
 )
 
@@ -318,6 +328,19 @@ const presetSwitchRoute = createRoute({
   ),
 })
 
+const presetMatchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/preset-match',
+  head: documentTitleHead('Preset match'),
+  validateSearch: presetMatchSearchSchema,
+  search: { middlewares: [stripSearchParams(presetMatchSearchDefaults)] },
+  component: () => (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading preset match...</p>}>
+      <LazyPagePresetMatch />
+    </Suspense>
+  ),
+})
+
 const comparisonRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/comparison',
@@ -370,6 +393,7 @@ const routeTree = rootRoute.addChildren([
   fieldsRoute,
   translationsRoute,
   presetSwitchRoute,
+  presetMatchRoute,
   comparisonRoute,
   presetRoute,
   fieldRoute,

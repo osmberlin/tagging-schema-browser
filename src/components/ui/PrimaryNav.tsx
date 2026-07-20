@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
+import { presetMatchSearchDefaults } from '@/components/PagePresetMatch/presetMatchSearch'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
@@ -47,6 +48,11 @@ const areaIndicators: Record<SchemaArea, NavIndicator> = {
     ring: areaAccent.presetSwitch.navIndicatorRing,
     text: areaAccent.presetSwitch.navIndicatorText,
   },
+  presetMatch: {
+    bg: areaAccent.presetMatch.navIndicatorBg,
+    ring: areaAccent.presetMatch.navIndicatorRing,
+    text: areaAccent.presetMatch.navIndicatorText,
+  },
 }
 
 const comparisonIndicator: NavIndicator = {
@@ -64,6 +70,7 @@ function getActiveKey(pathname: string): NavKey {
   if (pathname === '/fields' || pathname.startsWith('/field/')) return 'fields'
   if (pathname === '/translations') return 'translations'
   if (pathname === '/preset-switch') return 'presetSwitch'
+  if (pathname === '/preset-match') return 'presetMatch'
   if (pathname === '/comparison') return 'comparison'
   return 'presets'
 }
@@ -160,6 +167,18 @@ export function PrimaryNav({
         locale: prev.locale ?? '',
       }),
       title: 'Compare tag changes when switching presets',
+    },
+    {
+      key: 'presetMatch',
+      to: '/preset-match',
+      label: 'Preset match',
+      area: 'presetMatch',
+      search: (prev) => ({
+        ...presetMatchSearchDefaults,
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
+      }),
+      title: 'See which preset iD would pick for a set of tags',
     },
     ...(isComparing
       ? [
