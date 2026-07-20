@@ -273,3 +273,68 @@ presets:
       parentId: waterway
       missedFieldIds:
         - name
+  tourism/information/guidepost:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - address
+        - building_area_yes
+    moreFields:
+      parentId: tourism/information
+      missedFieldIds:
+        - level
+  building/hangar:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - building/levels
+        - address
+  barrier/hedge:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/height_restrictor:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  tourism/information/guidepost:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - address
+        - building_area_yes
+    moreFields:
+      parentId: tourism/information
+      missedFieldIds:
+        - level
+  man_made/groyne:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/charge_point:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/lighthouse:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/mineshaft:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  type/route/monorail:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
