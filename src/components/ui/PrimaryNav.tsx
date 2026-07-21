@@ -3,17 +3,18 @@ import { motion, useReducedMotion } from 'motion/react'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
+import { presetBuilderSearchDefaults } from '@/components/PagePresetBuilder/presetBuilderSearch'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { translationsSearchDefaults } from '@/components/PageTranslations/translationsSearch'
-import { AreaIcon, type SchemaArea } from '@/components/ui/areaIcons'
+import { AreaIcon, PresetBuilderNavIcon, type SchemaArea } from '@/components/ui/areaIcons'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { useComparison } from '@/hooks/useComparison'
 import { areaAccent } from '@/theme/areaAccent'
 import { comparisonAccent } from '@/theme/comparisonAccent'
 import { cn } from '@/utils/tw'
 
-type NavKey = SchemaArea | 'comparison'
+type NavKey = SchemaArea | 'comparison' | 'presetBuilder'
 
 type NavIndicator = {
   bg: string
@@ -56,10 +57,13 @@ const comparisonIndicator: NavIndicator = {
 }
 
 function getIndicator(key: NavKey): NavIndicator {
-  return key === 'comparison' ? comparisonIndicator : areaIndicators[key]
+  if (key === 'comparison') return comparisonIndicator
+  if (key === 'presetBuilder') return areaIndicators.presets
+  return areaIndicators[key]
 }
 
 function getActiveKey(pathname: string): NavKey {
+  if (pathname === '/preset-builder') return 'presetBuilder'
   if (pathname === '/icons') return 'icons'
   if (pathname === '/fields' || pathname.startsWith('/field/')) return 'fields'
   if (pathname === '/translations') return 'translations'
@@ -80,6 +84,7 @@ type NavItem = {
   }) => Record<string, unknown>
   title?: string
   children?: React.ReactNode
+  customIcon?: React.ReactNode
 }
 
 const springTransition = { type: 'spring' as const, stiffness: 500, damping: 35, bounce: 0 }
@@ -160,6 +165,18 @@ export function PrimaryNav({
         locale: prev.locale ?? '',
       }),
       title: 'Compare tag changes when switching presets',
+    },
+    {
+      key: 'presetBuilder',
+      to: '/preset-builder',
+      label: 'Preset builder',
+      search: (prev) => ({
+        ...presetBuilderSearchDefaults,
+        dataUrl: prev.dataUrl ?? '',
+        locale: prev.locale ?? '',
+      }),
+      title: 'Draft a new preset JSON file',
+      customIcon: <PresetBuilderNavIcon className="h-3.5 w-3.5" />,
     },
     ...(isComparing
       ? [
@@ -245,7 +262,14 @@ export function PrimaryNav({
               highlighted ? itemIndicator.text : 'text-slate-600',
             )}
           >
-            {item.area ? (
+            {item.key === 'presetBuilder' ? (
+              <PresetBuilderNavIcon
+                className={cn(
+                  'mr-1.5 inline h-3.5 w-3.5 align-[-2px]',
+                  highlighted ? itemIndicator.text : areaAccent.presets.icon,
+                )}
+              />
+            ) : item.area ? (
               <AreaIcon
                 area={item.area}
                 className={cn(
