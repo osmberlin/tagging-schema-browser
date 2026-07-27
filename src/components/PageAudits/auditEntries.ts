@@ -28,6 +28,8 @@ export type MissingInheritanceAuditEntry = {
   missedFieldIds: string[]
   /** Field ids already recorded in the override snapshot for this list. */
   documentedMissedFieldIds: string[]
+  /** Live detection missed field ids for this list (empty when orphaned stale). */
+  liveMissedFieldIds: string[]
   explicitPresetRefs: string[]
   storedOverride?: MissingInheritanceOverride
 }
@@ -68,8 +70,9 @@ function missingInheritanceEntries(presets: DenormalizedPreset[]): MissingInheri
             fieldListKey,
             status: 'stale',
             parentId: listOverride?.parentId ?? '',
-            missedFieldIds: listOverride?.missedFieldIds ?? [],
+            missedFieldIds: [],
             documentedMissedFieldIds: listOverride?.missedFieldIds ?? [],
+            liveMissedFieldIds: [],
             explicitPresetRefs: [],
             storedOverride,
           })
@@ -87,6 +90,7 @@ function missingInheritanceEntries(presets: DenormalizedPreset[]): MissingInheri
         parentId: section.parentId,
         missedFieldIds: remainingMissedFieldIds(section, listOverride),
         documentedMissedFieldIds: listOverride?.missedFieldIds ?? [],
+        liveMissedFieldIds: section.missedFieldIds,
         explicitPresetRefs: section.explicitPresetRefs,
         storedOverride,
       })
@@ -132,31 +136,53 @@ export function auditEntryNeedsAction(entry: AuditEntry): boolean {
   return entry.status === 'unreviewed' || entry.status === 'stale'
 }
 
-export function defaultAuditDecision(entry: AuditEntry): AuditDecision {
-  if (entry.status === 'stale') return 'remove_stale'
-  if (entry.status === 'unreviewed') return 'pending'
+export function defaultAuditDecision(_entry: AuditEntry): AuditDecision {
   return 'pending'
+}
+
+/** Documented override ids that still match live detection for this list. */
+export function validDocumentedMissedFieldIds(entry: MissingInheritanceAuditEntry): string[] {
+  const live = new Set(entry.liveMissedFieldIds)
+  return entry.documentedMissedFieldIds.filter((fieldId) => live.has(fieldId))
+}
+
+/** Override ids no longer missing on the live preset (stale subset). */
+export function invalidOverrideMissedFieldIds(entry: MissingInheritanceAuditEntry): string[] {
+  const live = new Set(entry.liveMissedFieldIds)
+  return entry.documentedMissedFieldIds.filter((fieldId) => !live.has(fieldId))
+}
+
+export function isOrphanedStaleMissingInheritanceEntry(
+  entry: MissingInheritanceAuditEntry,
+): boolean {
+  return entry.status === 'stale' && entry.liveMissedFieldIds.length === 0
 }
 
 export function missingInheritanceFromEntry(
   entry: MissingInheritanceAuditEntry,
 ): MissingFieldInheritance | null {
-  if (entry.status === 'stale' && entry.missedFieldIds.length === 0) return null
+  if (isOrphanedStaleMissingInheritanceEntry(entry)) return null
+
+  const live = new Set(entry.liveMissedFieldIds)
+  const validDocumented = validDocumentedMissedFieldIds(entry)
 
   const mergedList = mergeMissingInheritanceOverrideList(
     {
       parentId: entry.parentId,
-      missedFieldIds: [...entry.documentedMissedFieldIds, ...entry.missedFieldIds],
+      missedFieldIds: [...validDocumented, ...entry.missedFieldIds],
       explicitPresetRefs: entry.explicitPresetRefs,
     },
     entry.storedOverride?.[entry.fieldListKey],
     entry.missedFieldIds,
   )
 
+  const missedFieldIds = mergedList.missedFieldIds.filter((fieldId) => live.has(fieldId))
+  if (missedFieldIds.length === 0) return null
+
   return {
     [entry.fieldListKey]: {
       parentId: entry.parentId,
-      missedFieldIds: mergedList.missedFieldIds,
+      missedFieldIds,
       explicitPresetRefs: entry.explicitPresetRefs,
     },
   }

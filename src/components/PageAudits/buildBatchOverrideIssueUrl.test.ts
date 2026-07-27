@@ -11,8 +11,9 @@ const missingEntry: MissingInheritanceAuditEntry = {
   status: 'unreviewed',
   parentId: 'man_made/crane',
   missedFieldIds: ['crane/type'],
-  explicitPresetRefs: [],
   documentedMissedFieldIds: [],
+  liveMissedFieldIds: ['crane/type'],
+  explicitPresetRefs: [],
 }
 
 describe('buildBatchSchemaOverrideIssueUrl', () => {
@@ -107,6 +108,7 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
       parentId: 'tourism/information',
       missedFieldIds: ['building_area_yes'],
       documentedMissedFieldIds: ['address'],
+      liveMissedFieldIds: ['address', 'building_area_yes'],
       storedOverride: {
         fields: {
           parentId: 'tourism/information',
@@ -126,6 +128,103 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
     const body = new URL(url).searchParams.get('body') ?? ''
     expect(body).toContain('- address')
     expect(body).toContain('- building_area_yes')
+  })
+
+  it('merges fields and moreFields for the same preset into one YAML block', () => {
+    const fieldsEntry: MissingInheritanceAuditEntry = {
+      ...missingEntry,
+      presetId: 'man_made',
+      entryId: 'man_made:fields',
+      parentId: 'amenity',
+      fieldListKey: 'fields',
+      missedFieldIds: ['name'],
+      liveMissedFieldIds: ['name'],
+    }
+    const moreFieldsEntry: MissingInheritanceAuditEntry = {
+      ...missingEntry,
+      presetId: 'man_made',
+      entryId: 'man_made:moreFields',
+      parentId: 'amenity',
+      fieldListKey: 'moreFields',
+      missedFieldIds: ['material'],
+      liveMissedFieldIds: ['material'],
+    }
+
+    const url = buildBatchSchemaOverrideIssueUrl({
+      kind: 'missing-inheritance',
+      slug: 'missing-inheritance',
+      entries: [fieldsEntry, moreFieldsEntry],
+      decisions: {
+        [fieldsEntry.entryId]: 'intentional',
+        [moreFieldsEntry.entryId]: 'intentional',
+      },
+      dataUrl: '/test-schema',
+    })
+
+    const body = new URL(url).searchParams.get('body') ?? ''
+    const yamlBlock = body.match(/```yaml\n([\s\S]*?)```/)?.[1] ?? ''
+    const parsed = Bun.YAML.parse(yamlBlock) as {
+      presets: Record<string, { fields?: unknown; moreFields?: unknown }>
+    }
+
+    expect(Object.keys(parsed.presets)).toEqual(['man_made'])
+    expect(parsed.presets['man_made']?.fields).toBeTruthy()
+    expect(parsed.presets['man_made']?.moreFields).toBeTruthy()
+    expect(body.match(/man_made:/g)?.length).toBe(1)
+  })
+
+  it('filters invalid override ids from intentional snapshots for stale entries', () => {
+    const staleEntry: MissingInheritanceAuditEntry = {
+      ...missingEntry,
+      status: 'stale',
+      missedFieldIds: [],
+      documentedMissedFieldIds: ['crane/type', 'removed_field'],
+      liveMissedFieldIds: ['crane/type'],
+      storedOverride: {
+        fields: {
+          parentId: 'man_made/crane',
+          missedFieldIds: ['crane/type', 'removed_field'],
+        },
+      },
+    }
+
+    const url = buildBatchSchemaOverrideIssueUrl({
+      kind: 'missing-inheritance',
+      slug: 'missing-inheritance',
+      entries: [staleEntry],
+      decisions: { [staleEntry.entryId]: 'intentional' },
+      dataUrl: '/test-schema',
+    })
+
+    const body = new URL(url).searchParams.get('body') ?? ''
+    expect(body).toContain('- crane/type')
+    expect(body).not.toContain('removed_field')
+  })
+
+  it('throws when intentional snapshot has no valid ids left', () => {
+    const orphanedStale: MissingInheritanceAuditEntry = {
+      ...missingEntry,
+      status: 'stale',
+      missedFieldIds: [],
+      documentedMissedFieldIds: ['crane/type'],
+      liveMissedFieldIds: [],
+      storedOverride: {
+        fields: {
+          parentId: 'man_made/crane',
+          missedFieldIds: ['crane/type'],
+        },
+      },
+    }
+
+    expect(() =>
+      buildBatchSchemaOverrideIssueUrl({
+        kind: 'missing-inheritance',
+        slug: 'missing-inheritance',
+        entries: [orphanedStale],
+        decisions: { [orphanedStale.entryId]: 'intentional' },
+        dataUrl: '/test-schema',
+      }),
+    ).toThrow(/Select at least one entry/)
   })
 
   it('throws when no entries are selected', () => {

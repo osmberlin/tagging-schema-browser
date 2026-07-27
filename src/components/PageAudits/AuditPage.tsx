@@ -12,6 +12,9 @@ import {
   auditEntriesForSlug,
   auditEntryNeedsAction,
   defaultAuditDecision,
+  invalidOverrideMissedFieldIds,
+  isOrphanedStaleMissingInheritanceEntry,
+  validDocumentedMissedFieldIds,
   type AuditEntry,
 } from '@/components/PageAudits/auditEntries'
 import { AUDIT_META, auditSlugToKind, isAuditSlug } from '@/components/PageAudits/auditSlugs'
@@ -37,6 +40,13 @@ type AuditFormValues = {
 const DECISION_OPTIONS: { value: AuditDecision; label: string }[] = (
   Object.entries(AUDIT_DECISION_LABELS) as [AuditDecision, string][]
 ).map(([value, label]) => ({ value, label }))
+
+function decisionOptionsForEntry(entry: AuditEntry): { value: AuditDecision; label: string }[] {
+  if (entry.status === 'stale') {
+    return DECISION_OPTIONS.filter((option) => option.value !== 'intentional')
+  }
+  return DECISION_OPTIONS
+}
 
 function decisionLabel(entry: AuditEntry, decision: AuditDecision): string {
   if (entry.status === 'stale' && decision === 'pending') return 'Stale (choose action)'
@@ -103,38 +113,69 @@ function AuditEntryRow({
                 {entry.parentId}
               </Link>
             </p>
-            <p className="text-xs text-slate-500">Still needs a decision:</p>
-            <ul className="list-inside list-disc font-mono text-xs text-slate-800">
-              {entry.missedFieldIds.length > 0 ? (
-                entry.missedFieldIds.map((fieldId) => (
-                  <li key={fieldId}>
-                    <Link
-                      to="/field/$"
-                      params={{ _splat: fieldId }}
-                      search={(prev) => ({
-                        dataUrl: prev.dataUrl ?? '',
-                        locale: prev.locale ?? '',
-                      })}
-                      className="text-sky-700 underline underline-offset-2"
-                    >
-                      {fieldId}
-                    </Link>
-                  </li>
-                ))
-              ) : (
-                <li className="text-slate-500">None</li>
-              )}
-            </ul>
-            {entry.documentedMissedFieldIds.length > 0 ? (
+            {isOrphanedStaleMissingInheritanceEntry(entry) ? (
               <>
-                <p className="text-xs text-slate-500">Already documented as intentional skips:</p>
-                <ul className="list-inside list-disc font-mono text-xs text-slate-500">
-                  {entry.documentedMissedFieldIds.map((fieldId) => (
-                    <li key={fieldId}>{fieldId}</li>
-                  ))}
+                <p className="text-xs text-slate-500">Stale override (live detection gone):</p>
+                <ul className="list-inside list-disc font-mono text-xs text-slate-800">
+                  {entry.documentedMissedFieldIds.length > 0 ? (
+                    entry.documentedMissedFieldIds.map((fieldId) => (
+                      <li key={fieldId}>{fieldId}</li>
+                    ))
+                  ) : (
+                    <li className="text-slate-500">None</li>
+                  )}
                 </ul>
               </>
-            ) : null}
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">Still needs a decision:</p>
+                <ul className="list-inside list-disc font-mono text-xs text-slate-800">
+                  {entry.missedFieldIds.length > 0 ? (
+                    entry.missedFieldIds.map((fieldId) => (
+                      <li key={fieldId}>
+                        <Link
+                          to="/field/$"
+                          params={{ _splat: fieldId }}
+                          search={(prev) => ({
+                            dataUrl: prev.dataUrl ?? '',
+                            locale: prev.locale ?? '',
+                          })}
+                          className="text-sky-700 underline underline-offset-2"
+                        >
+                          {fieldId}
+                        </Link>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-slate-500">None</li>
+                  )}
+                </ul>
+                {validDocumentedMissedFieldIds(entry).length > 0 ? (
+                  <>
+                    <p className="text-xs text-slate-500">
+                      Already documented as intentional skips:
+                    </p>
+                    <ul className="list-inside list-disc font-mono text-xs text-slate-500">
+                      {validDocumentedMissedFieldIds(entry).map((fieldId) => (
+                        <li key={fieldId}>{fieldId}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+                {entry.status === 'stale' && invalidOverrideMissedFieldIds(entry).length > 0 ? (
+                  <>
+                    <p className="text-xs text-rose-600">
+                      Override ids no longer missing on live preset:
+                    </p>
+                    <ul className="list-inside list-disc font-mono text-xs text-rose-700">
+                      {invalidOverrideMissedFieldIds(entry).map((fieldId) => (
+                        <li key={fieldId}>{fieldId}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
+              </>
+            )}
             {entry.explicitPresetRefs.length > 0 ? (
               <p className="text-xs text-slate-500">
                 Other preset refs: {entry.explicitPresetRefs.join(', ')}
@@ -184,7 +225,7 @@ function AuditEntryRow({
           aria-label={`Decision for ${entry.presetId}`}
           className="w-full min-w-[12rem] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm"
         >
-          {DECISION_OPTIONS.map((option) => (
+          {decisionOptionsForEntry(entry).map((option) => (
             <option key={option.value} value={option.value}>
               {decisionLabel(entry, option.value)}
             </option>
@@ -256,8 +297,9 @@ export function AuditDetailPage() {
         <p className="max-w-3xl text-sm text-slate-600">{meta.description}</p>
         <p className="text-sm text-slate-500">
           Choose a decision for each row you want to act on. Rows left as{' '}
-          <strong>Unreviewed</strong> are skipped. Then open one GitHub issue and run the{' '}
-          <strong>Cursor override automation</strong> workflow manually when you are ready for a PR.
+          <strong>Unreviewed</strong> (including stale rows until you pick an action) are skipped.
+          Then open one GitHub issue and run the <strong>Cursor override automation</strong>{' '}
+          workflow manually when you are ready for a PR.
         </p>
         <ul className="max-w-3xl list-inside list-disc text-sm text-slate-500">
           {(

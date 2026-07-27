@@ -87,6 +87,8 @@ This runs `validate-inheritance-overrides` and `validate-risky-typecombo-overrid
 
 CI must pass. Only one `schema-override` PR is open at a time so parallel agents do not conflict on the same YAML file. After a batch PR merges, **manually run** **Cursor override automation** again to process the next set of queued issues. The `schema-override-auto-merge` workflow updates the branch from `main`, then **rebase-merges** eligible PRs once checks pass (YAML-only override change; typically 1–2 commits). Netlify deploy previews are skipped for YAML-only override PRs (see `scripts/netlify-deploy-preview-ignore.sh`).
 
+If a batch agent fails after issues were enqueued, remove the `schema-override-agent-enqueued` label from those issues before running the workflow again (the automation skips enqueued issues to avoid duplicate launches).
+
 ## Attribution
 
 Prefix agent comments and PR descriptions with `**[Cursor Agent]**` when interacting on GitHub (in addition to the `Written by :robot:` line in PR bodies per AGENTS.md).

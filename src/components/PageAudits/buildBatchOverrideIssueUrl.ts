@@ -13,6 +13,8 @@ import type { AuditSlug } from '@/components/PageAudits/auditSlugs'
 import {
   formatMissingInheritanceOverrideYaml,
   formatMissingInheritanceOverrideYamlFromStored,
+  type MissingFieldInheritance,
+  type MissingInheritanceOverride,
 } from '@/components/PagePresets/missingFieldInheritance'
 import {
   formatRiskyTypeComboOverrideYaml,
@@ -25,22 +27,70 @@ import {
 } from '@/utils/buildSchemaOverrideIssueUrl'
 import { GITHUB_REPO_URL } from '@/utils/constants'
 
-function intentionalSnapshotYaml(entry: AuditEntry): string {
-  if (entry.kind === 'missing-inheritance') {
-    const current = missingInheritanceFromEntry(entry)
-    if (!current) return ''
-    return formatMissingInheritanceOverrideYaml(entry.presetId, current)
+function mergeMissingFieldInheritance(
+  left: MissingFieldInheritance,
+  right: MissingFieldInheritance,
+): MissingFieldInheritance {
+  return {
+    fields: right.fields ?? left.fields,
+    moreFields: right.moreFields ?? left.moreFields,
   }
-  if (!entry.riskyTypeCombo) return ''
-  return formatRiskyTypeComboOverrideYaml(entry.presetId, entry.riskyTypeCombo)
 }
 
-function staleOverrideYaml(entry: AuditEntry): string {
-  if (!entry.storedOverride) return ''
-  if (entry.kind === 'missing-inheritance') {
-    return formatMissingInheritanceOverrideYamlFromStored(entry.presetId, entry.storedOverride)
+function mergeMissingInheritanceOverride(
+  left: MissingInheritanceOverride,
+  right: MissingInheritanceOverride,
+): MissingInheritanceOverride {
+  return {
+    fields: right.fields ?? left.fields,
+    moreFields: right.moreFields ?? left.moreFields,
   }
-  return formatRiskyTypeComboOverrideYamlFromStored(entry.presetId, entry.storedOverride)
+}
+
+function intentionalSnapshotYamlBlocks(entries: AuditEntry[]): string[] {
+  const byPreset = new Map<string, MissingFieldInheritance>()
+  const riskyYaml: string[] = []
+
+  for (const entry of entries) {
+    if (entry.kind === 'missing-inheritance') {
+      const current = missingInheritanceFromEntry(entry)
+      if (!current) continue
+      const existing = byPreset.get(entry.presetId) ?? {}
+      byPreset.set(entry.presetId, mergeMissingFieldInheritance(existing, current))
+      continue
+    }
+    if (!entry.riskyTypeCombo) continue
+    riskyYaml.push(formatRiskyTypeComboOverrideYaml(entry.presetId, entry.riskyTypeCombo))
+  }
+
+  const missingYaml = [...byPreset.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([presetId, current]) => formatMissingInheritanceOverrideYaml(presetId, current))
+
+  return [...missingYaml, ...riskyYaml]
+}
+
+function staleOverrideYamlBlocks(entries: AuditEntry[]): string[] {
+  const byPreset = new Map<string, MissingInheritanceOverride>()
+  const riskyYaml: string[] = []
+
+  for (const entry of entries) {
+    if (!entry.storedOverride) continue
+    if (entry.kind === 'missing-inheritance') {
+      const existing = byPreset.get(entry.presetId) ?? {}
+      byPreset.set(entry.presetId, mergeMissingInheritanceOverride(existing, entry.storedOverride))
+      continue
+    }
+    riskyYaml.push(formatRiskyTypeComboOverrideYamlFromStored(entry.presetId, entry.storedOverride))
+  }
+
+  const missingYaml = [...byPreset.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([presetId, override]) =>
+      formatMissingInheritanceOverrideYamlFromStored(presetId, override),
+    )
+
+  return [...missingYaml, ...riskyYaml]
 }
 
 function entryLabel(entry: AuditEntry): string {
@@ -52,6 +102,16 @@ function entryLabel(entry: AuditEntry): string {
 
 function decisionLabelForEntry(decision: AuditDecision): string {
   return AUDIT_DECISION_LABELS[decision]
+}
+
+function entryContributesToIssue(entry: AuditEntry, decision: AuditDecision): boolean {
+  if (decision === 'needs_work') return true
+  if (decision === 'intentional') {
+    if (entry.kind === 'missing-inheritance') return missingInheritanceFromEntry(entry) !== null
+    return Boolean(entry.riskyTypeCombo)
+  }
+  if (decision === 'remove_stale') return Boolean(entry.storedOverride)
+  return false
 }
 
 export function buildBatchSchemaOverrideIssueUrl({
@@ -69,9 +129,10 @@ export function buildBatchSchemaOverrideIssueUrl({
   dataUrl: string
   reference?: 'release' | 'interim'
 }): string {
-  const selected = entries.filter((entry) =>
-    auditDecisionIncludesIssue(decisions[entry.entryId] ?? 'pending'),
-  )
+  const selected = entries.filter((entry) => {
+    const decision = decisions[entry.entryId] ?? 'pending'
+    return auditDecisionIncludesIssue(decision) && entryContributesToIssue(entry, decision)
+  })
 
   if (selected.length === 0) {
     throw new Error('Select at least one entry to include in the issue.')
@@ -100,9 +161,7 @@ export function buildBatchSchemaOverrideIssueUrl({
     })
     .join('\n')
 
-  const intentionalYaml = intentionalEntries
-    .map((entry) => intentionalSnapshotYaml(entry))
-    .filter((yaml) => yaml.trim().length > 0)
+  const intentionalYaml = intentionalSnapshotYamlBlocks(intentionalEntries)
 
   const snapshotSection =
     intentionalYaml.length > 0
@@ -120,9 +179,7 @@ export function buildBatchSchemaOverrideIssueUrl({
         ].join('\n')
       : ''
 
-  const staleYaml = staleEntries
-    .map((entry) => staleOverrideYaml(entry))
-    .filter((yaml) => yaml.trim().length > 0)
+  const staleYaml = staleOverrideYamlBlocks(staleEntries)
 
   const staleSection =
     staleYaml.length > 0

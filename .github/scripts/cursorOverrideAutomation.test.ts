@@ -247,4 +247,66 @@ describe('cursorOverrideAutomation', () => {
     )
     fetchMock.mockRestore()
   })
+
+  it('skips issues that already have the enqueued label', async () => {
+    const requestUrl = (input: RequestInfo | URL) => {
+      if (typeof input === 'string') return input
+      if (input instanceof URL) return input.href
+      return input.url
+    }
+
+    const logs: string[] = []
+    const originalLog = console.log
+    console.log = (...args: unknown[]) => {
+      logs.push(args.map(String).join(' '))
+    }
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = requestUrl(input)
+      const method = init?.method ?? 'GET'
+
+      if (url.includes('/issues?state=open&labels=schema-override')) {
+        return new Response(JSON.stringify([]), { status: 200 })
+      }
+
+      if (url.includes('/issues?state=open')) {
+        return new Response(
+          JSON.stringify([
+            {
+              number: 151,
+              title: '[missing-inheritance] foo',
+              body: 'Preset: `x`',
+              labels: [{ name: ENQUEUED_LABEL }],
+            },
+          ]),
+          { status: 200 },
+        )
+      }
+
+      if (url.includes('/pulls?state=open')) {
+        return new Response(JSON.stringify([]), { status: 200 })
+      }
+
+      if (url.endsWith('/issues/151') && method === 'GET') {
+        return new Response(JSON.stringify({ labels: [{ name: ENQUEUED_LABEL }] }), { status: 200 })
+      }
+
+      throw new Error(`Unexpected fetch: ${method} ${url}`)
+    })
+
+    await launchBatchSchemaOverrideIssues({
+      githubToken: 'gh-token',
+      cursorApiKey: 'cursor-key',
+      repository: 'osmberlin/tagging-schema-browser',
+      activeKind: 'missing-inheritance',
+    })
+
+    expect(fetchMock.mock.calls.some(([url]) => requestUrl(url).includes('api.cursor.com'))).toBe(
+      false,
+    )
+    expect(logs.some((line) => line.includes(ENQUEUED_LABEL))).toBe(true)
+
+    console.log = originalLog
+    fetchMock.mockRestore()
+  })
 })

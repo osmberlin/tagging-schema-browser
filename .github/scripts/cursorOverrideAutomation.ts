@@ -352,7 +352,12 @@ export const launchBatchSchemaOverrideIssues = async ({
       githubToken,
       `/repos/${owner}/${repo}/issues/${issue.number}`,
     )
-    if (hasEnqueuedLabel(labels)) continue
+    if (hasEnqueuedLabel(labels)) {
+      console.log(
+        `Skipping issue #${issue.number}: already has ${ENQUEUED_LABEL} (remove the label manually to retry after a failed batch).`,
+      )
+      continue
+    }
 
     pendingIssues.push(issue)
   }

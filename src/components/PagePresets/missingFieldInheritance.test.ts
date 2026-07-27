@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   detectMissingFieldInheritance,
   formatMissingInheritanceOverrideYaml,
+  mergeMissingInheritanceOverrideList,
   missingInheritanceOverrideFromCurrent,
+  overrideMissedFieldIdsAreValid,
   parentPresetId,
+  remainingMissedFieldIds,
   resolveMissingInheritanceListStatus,
   resolveMissingInheritanceStatus,
 } from '@/components/PagePresets/missingFieldInheritance'
@@ -330,6 +333,77 @@ describe('missingFieldInheritance', () => {
         missedFieldIds: ['address', 'building_area_yes'],
       },
     })
+  })
+
+  it('remainingMissedFieldIds excludes documented override ids', () => {
+    const current = {
+      parentId: 'building',
+      missedFieldIds: ['building/levels', 'address', 'height'],
+      explicitPresetRefs: [],
+    }
+
+    expect(remainingMissedFieldIds(current, undefined)).toEqual([
+      'building/levels',
+      'address',
+      'height',
+    ])
+    expect(
+      remainingMissedFieldIds(current, {
+        parentId: 'building',
+        missedFieldIds: ['building/levels', 'address'],
+      }),
+    ).toEqual(['height'])
+  })
+
+  it('mergeMissingInheritanceOverrideList unions documented ids', () => {
+    const current = {
+      parentId: 'tourism/information',
+      missedFieldIds: ['address', 'building_area_yes'],
+      explicitPresetRefs: [],
+    }
+
+    expect(mergeMissingInheritanceOverrideList(current, undefined, ['building_area_yes'])).toEqual({
+      parentId: 'tourism/information',
+      missedFieldIds: ['building_area_yes'],
+    })
+
+    expect(
+      mergeMissingInheritanceOverrideList(
+        current,
+        { parentId: 'tourism/information', missedFieldIds: ['address'] },
+        ['building_area_yes'],
+      ),
+    ).toEqual({
+      parentId: 'tourism/information',
+      missedFieldIds: ['address', 'building_area_yes'],
+    })
+  })
+
+  it('overrideMissedFieldIdsAreValid rejects ids no longer missing', () => {
+    const current = {
+      parentId: 'tourism/information',
+      missedFieldIds: ['address', 'building_area_yes'],
+      explicitPresetRefs: [],
+    }
+
+    expect(
+      overrideMissedFieldIdsAreValid(current, {
+        parentId: 'tourism/information',
+        missedFieldIds: ['address'],
+      }),
+    ).toBe(true)
+    expect(
+      overrideMissedFieldIdsAreValid(current, {
+        parentId: 'tourism/information',
+        missedFieldIds: ['operator'],
+      }),
+    ).toBe(false)
+    expect(
+      overrideMissedFieldIdsAreValid(current, {
+        parentId: 'other/parent',
+        missedFieldIds: ['address'],
+      }),
+    ).toBe(false)
   })
 
   it('formats a paste-ready yaml block for missing-inheritance-overrides.yaml', () => {
