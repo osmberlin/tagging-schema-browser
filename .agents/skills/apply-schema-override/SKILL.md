@@ -28,7 +28,7 @@ Read the issue body and extract:
   - or a single-issue `Preset: \`…\`` line (legacy)
   - or preset keys under `presets:` in the YAML blocks
 - **Intentional overrides** from the fenced ` ```yaml ` block under **Snapshot** (`version: 1` / `presets:`)
-- **Stale removals** from the fenced ` ```yaml ` block under **Remove stale overrides** — delete those preset keys from the overrides file (do not apply them as snapshots)
+- **Stale removals** from the fenced ` ```yaml ` block under **Remove stale overrides** — for missing-inheritance, delete only the listed `fields` / `moreFields` sections under each preset; remove the preset key only if no lists remain. For risky-typecombo, delete the whole preset key (do not apply them as snapshots)
 - **Needs upstream work** from `## Needs upstream work` — track in the PR summary only; do not write overrides for these presets
 
 Within one list, `missedFieldIds` may be a **subset** of live detection (partial intentional skip). Merge new snapshots with any existing documented ids for that list. Stale means the override references field ids that are no longer missing.
@@ -42,7 +42,7 @@ Make one commit for the issue’s primary change:
 - Open the target file under `src/data/`.
 - Ensure top-level `version: 1` and `presets:` exist.
 - Insert or replace each intentional preset entry from **Snapshot** (two-space indent under `presets:`).
-- Delete each preset key listed under **Remove stale overrides**.
+- Under **Remove stale overrides**: for missing-inheritance, remove only the `fields` / `moreFields` keys shown for each preset (drop the preset key if empty); for risky-typecombo, delete the whole preset key.
 - Keep preset keys sorted alphabetically when practical.
 - Do not change unrelated preset entries in this commit.
 - `fields` and `moreFields` are separate override sections (both are audited). Apply

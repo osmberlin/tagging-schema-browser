@@ -227,6 +227,64 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
     ).toThrow(/Select at least one entry/)
   })
 
+  it('emits list-scoped stale removal when only one list is stale', () => {
+    const storedOverride = {
+      fields: {
+        parentId: 'amenity',
+        missedFieldIds: ['name'],
+      },
+      moreFields: {
+        parentId: 'amenity',
+        missedFieldIds: ['material'],
+      },
+    }
+    const fieldsEntry: MissingInheritanceAuditEntry = {
+      ...missingEntry,
+      presetId: 'man_made',
+      entryId: 'man_made:fields',
+      parentId: 'amenity',
+      fieldListKey: 'fields',
+      status: 'intentional',
+      missedFieldIds: [],
+      documentedMissedFieldIds: ['name'],
+      liveMissedFieldIds: ['name'],
+      storedOverride,
+    }
+    const staleMoreFieldsEntry: MissingInheritanceAuditEntry = {
+      ...missingEntry,
+      presetId: 'man_made',
+      entryId: 'man_made:moreFields',
+      parentId: 'amenity',
+      fieldListKey: 'moreFields',
+      status: 'stale',
+      missedFieldIds: [],
+      documentedMissedFieldIds: ['material'],
+      liveMissedFieldIds: [],
+      storedOverride,
+    }
+
+    const url = buildBatchSchemaOverrideIssueUrl({
+      kind: 'missing-inheritance',
+      slug: 'missing-inheritance',
+      entries: [fieldsEntry, staleMoreFieldsEntry],
+      decisions: { [staleMoreFieldsEntry.entryId]: 'remove_stale' },
+      dataUrl: '/test-schema',
+    })
+
+    const body = new URL(url).searchParams.get('body') ?? ''
+    expect(body).toContain('## Remove stale overrides')
+    expect(body).toContain('Delete only the listed list keys')
+    const staleYaml =
+      body.match(/## Remove stale overrides[\s\S]*?```yaml\n([\s\S]*?)```/)?.[1] ?? ''
+    const parsed = Bun.YAML.parse(`presets:\n${staleYaml}`) as {
+      presets: Record<string, { fields?: unknown; moreFields?: unknown }>
+    }
+
+    expect(parsed.presets['man_made']?.moreFields).toBeTruthy()
+    expect(parsed.presets['man_made']?.fields).toBeUndefined()
+    expect(body).not.toContain('## Snapshot')
+  })
+
   it('throws when no entries are selected', () => {
     expect(() =>
       buildBatchSchemaOverrideIssueUrl({

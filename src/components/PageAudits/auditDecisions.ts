@@ -10,7 +10,8 @@ export const AUDIT_DECISION_LABELS: Record<AuditDecision, string> = {
 export const AUDIT_DECISION_HELP: Record<Exclude<AuditDecision, 'pending'>, string> = {
   intentional:
     'Records the fields still needing a decision as intentional skips (merges with any already-documented ids for that list).',
-  remove_stale: 'Delete the stored override entry — it references fields no longer missing.',
+  remove_stale:
+    'Delete the stored override for this list — it references fields no longer missing. Other lists on the same preset are kept.',
   needs_work: 'Track in the issue only — fix in id-tagging-schema, not overrides.',
 }
 

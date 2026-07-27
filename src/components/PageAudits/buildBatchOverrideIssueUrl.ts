@@ -12,7 +12,8 @@ import {
 import type { AuditSlug } from '@/components/PageAudits/auditSlugs'
 import {
   formatMissingInheritanceOverrideYaml,
-  formatMissingInheritanceOverrideYamlFromStored,
+  formatMissingInheritanceOverrideYamlListScopedFromStored,
+  type FieldListKey,
   type MissingFieldInheritance,
   type MissingInheritanceOverride,
 } from '@/components/PagePresets/missingFieldInheritance'
@@ -31,16 +32,6 @@ function mergeMissingFieldInheritance(
   left: MissingFieldInheritance,
   right: MissingFieldInheritance,
 ): MissingFieldInheritance {
-  return {
-    fields: right.fields ?? left.fields,
-    moreFields: right.moreFields ?? left.moreFields,
-  }
-}
-
-function mergeMissingInheritanceOverride(
-  left: MissingInheritanceOverride,
-  right: MissingInheritanceOverride,
-): MissingInheritanceOverride {
   return {
     fields: right.fields ?? left.fields,
     moreFields: right.moreFields ?? left.moreFields,
@@ -71,24 +62,32 @@ function intentionalSnapshotYamlBlocks(entries: AuditEntry[]): string[] {
 }
 
 function staleOverrideYamlBlocks(entries: AuditEntry[]): string[] {
-  const byPreset = new Map<string, MissingInheritanceOverride>()
+  const staleListKeysByPreset = new Map<string, Set<FieldListKey>>()
+  const storedOverrideByPreset = new Map<string, MissingInheritanceOverride>()
   const riskyYaml: string[] = []
 
   for (const entry of entries) {
     if (!entry.storedOverride) continue
     if (entry.kind === 'missing-inheritance') {
-      const existing = byPreset.get(entry.presetId) ?? {}
-      byPreset.set(entry.presetId, mergeMissingInheritanceOverride(existing, entry.storedOverride))
+      const listKeys = staleListKeysByPreset.get(entry.presetId) ?? new Set<FieldListKey>()
+      listKeys.add(entry.fieldListKey)
+      staleListKeysByPreset.set(entry.presetId, listKeys)
+      storedOverrideByPreset.set(entry.presetId, entry.storedOverride)
       continue
     }
     riskyYaml.push(formatRiskyTypeComboOverrideYamlFromStored(entry.presetId, entry.storedOverride))
   }
 
-  const missingYaml = [...byPreset.entries()]
+  const missingYaml = [...staleListKeysByPreset.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([presetId, override]) =>
-      formatMissingInheritanceOverrideYamlFromStored(presetId, override),
-    )
+    .map(([presetId, fieldListKeys]) => {
+      const override = storedOverrideByPreset.get(presetId)
+      if (!override) return ''
+      return formatMissingInheritanceOverrideYamlListScopedFromStored(presetId, override, [
+        ...fieldListKeys,
+      ])
+    })
+    .filter((block) => block.length > 0)
 
   return [...missingYaml, ...riskyYaml]
 }
@@ -186,7 +185,7 @@ export function buildBatchSchemaOverrideIssueUrl({
       ? [
           '## Remove stale overrides',
           '',
-          'Delete these preset keys from the overrides file (live detection no longer applies):',
+          'Delete only the listed list keys (`fields` / `moreFields`) under these presets. Remove the preset key if no lists remain (live detection no longer applies):',
           '',
           '```yaml',
           'presets:',

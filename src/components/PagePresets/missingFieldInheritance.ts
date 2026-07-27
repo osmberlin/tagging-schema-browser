@@ -271,9 +271,26 @@ export function formatMissingInheritanceOverrideYamlFromStored(
   presetId: string,
   override: MissingInheritanceOverride,
 ): string {
+  return formatMissingInheritanceOverrideYamlListScopedFromStored(presetId, override, [
+    'fields',
+    'moreFields',
+  ])
+}
+
+/** Format only selected list sections from a stored override (list-scoped stale removal). */
+export function formatMissingInheritanceOverrideYamlListScopedFromStored(
+  presetId: string,
+  override: MissingInheritanceOverride,
+  fieldListKeys: readonly FieldListKey[],
+): string {
+  const scoped: MissingInheritanceOverride = {}
+  for (const fieldListKey of fieldListKeys) {
+    const section = override[fieldListKey]
+    if (section) scoped[fieldListKey] = section
+  }
   const current: MissingFieldInheritance = {}
   for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const section = override[fieldListKey]
+    const section = scoped[fieldListKey]
     if (!section) continue
     current[fieldListKey] = { ...section, explicitPresetRefs: [] }
   }
