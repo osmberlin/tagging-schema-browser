@@ -32,7 +32,7 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
     )
     const body = parsed.searchParams.get('body') ?? ''
     expect(body).toContain('## Entries')
-    expect(body).toContain('Intentional (false positive)')
+    expect(body).toContain('False positive')
     expect(body).toContain('## Snapshot')
     expect(body).toContain('parentId: man_made/crane')
     expect(body).toContain('Cursor override automation')
@@ -61,7 +61,7 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
 
     const body = new URL(url).searchParams.get('body') ?? ''
     expect(body).toContain('## Remove stale overrides')
-    expect(body).toContain('Remove stale override')
+    expect(body).toContain('Delete outdated override')
     expect(body).not.toContain('## Snapshot')
     expect(parsedTitle(new URL(url))).toContain('remove stale override')
   })

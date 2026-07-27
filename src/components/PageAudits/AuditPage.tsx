@@ -5,6 +5,7 @@ import { z } from 'zod'
 import {
   AUDIT_DECISION_HELP,
   AUDIT_DECISION_LABELS,
+  AUDIT_DECISION_SHORT_LABELS,
   countAuditDecisionsForIssue,
   type AuditDecision,
 } from '@/components/PageAudits/auditDecisions'
@@ -37,20 +38,70 @@ type AuditFormValues = {
   decisions: Record<string, AuditDecision>
 }
 
-const DECISION_OPTIONS: { value: AuditDecision; label: string }[] = (
-  Object.entries(AUDIT_DECISION_LABELS) as [AuditDecision, string][]
-).map(([value, label]) => ({ value, label }))
+const ACTIONABLE_DECISIONS: Exclude<AuditDecision, 'pending'>[] = [
+  'intentional',
+  'remove_stale',
+  'needs_work',
+]
 
-function decisionOptionsForEntry(entry: AuditEntry): { value: AuditDecision; label: string }[] {
+function actionableDecisionsForEntry(entry: AuditEntry): Exclude<AuditDecision, 'pending'>[] {
   if (entry.status === 'stale') {
-    return DECISION_OPTIONS.filter((option) => option.value !== 'intentional')
+    return ACTIONABLE_DECISIONS.filter((decision) => decision !== 'intentional')
   }
-  return DECISION_OPTIONS
+  return ACTIONABLE_DECISIONS
 }
 
-function decisionLabel(entry: AuditEntry, decision: AuditDecision): string {
-  if (entry.status === 'stale' && decision === 'pending') return 'Stale (choose action)'
-  return AUDIT_DECISION_LABELS[decision]
+function decisionButtonClass(active: boolean) {
+  return cn(
+    'rounded-md border px-2 py-1 text-xs font-medium transition-colors',
+    active
+      ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
+      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
+  )
+}
+
+function AuditDecisionActions({
+  entry,
+  decision,
+  onDecisionChange,
+}: {
+  entry: AuditEntry
+  decision: AuditDecision
+  onDecisionChange: (decision: AuditDecision) => void
+}) {
+  const options = actionableDecisionsForEntry(entry)
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div
+        className="flex flex-wrap gap-1.5"
+        role="group"
+        aria-label={`Decision for ${entry.presetId}`}
+      >
+        {options.map((option) => {
+          const active = decision === option
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={active}
+              className={decisionButtonClass(active)}
+              onClick={() => onDecisionChange(active ? 'pending' : option)}
+            >
+              {active ? 'Mark unreviewed' : AUDIT_DECISION_SHORT_LABELS[option]}
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-xs text-slate-500">
+        {decision === 'pending'
+          ? entry.status === 'stale'
+            ? 'Choose whether to delete the outdated override or track upstream work.'
+            : 'Click a button once to select; click again to clear.'
+          : AUDIT_DECISION_HELP[decision]}
+      </p>
+    </div>
+  )
 }
 
 function AuditEntryRow({
@@ -58,11 +109,17 @@ function AuditEntryRow({
   selected,
   decision,
   onDecisionChange,
+  showPresetCell,
+  presetRowSpan,
+  presetGroupStart,
 }: {
   entry: AuditEntry
   selected: boolean
   decision: AuditDecision
   onDecisionChange: (decision: AuditDecision) => void
+  showPresetCell: boolean
+  presetRowSpan: number
+  presetGroupStart: boolean
 }) {
   const rowRef = useRef<HTMLTableRowElement>(null)
 
@@ -80,22 +137,28 @@ function AuditEntryRow({
       data-audit-entry={entry.entryId}
       className={cn(
         'border-b border-slate-100 align-top',
+        presetGroupStart && 'border-t-2 border-t-slate-200',
         selected && 'bg-amber-50/80 ring-1 ring-amber-200 ring-inset',
       )}
     >
-      <td className="px-3 py-3">
-        <div className="space-y-1">
-          <Link
-            to="/preset/$"
-            params={{ _splat: entry.presetId }}
-            search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-            className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:text-sky-700"
-          >
-            {entry.presetName}
-          </Link>
-          <p className="font-mono text-xs text-slate-500">{entry.presetId}</p>
-        </div>
-      </td>
+      {showPresetCell ? (
+        <td className="px-3 py-3 align-top" rowSpan={presetRowSpan}>
+          <div className="space-y-1">
+            <Link
+              to="/preset/$"
+              params={{ _splat: entry.presetId }}
+              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+              className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:text-sky-700"
+            >
+              {entry.presetName}
+            </Link>
+            <p className="font-mono text-xs text-slate-500">{entry.presetId}</p>
+            {presetRowSpan > 1 ? (
+              <p className="text-xs text-slate-400">{presetRowSpan} lists</p>
+            ) : null}
+          </div>
+        </td>
+      ) : null}
       <td className="px-3 py-3 text-sm text-slate-700">
         {entry.kind === 'missing-inheritance' ? (
           <div className="space-y-2">
@@ -219,18 +282,11 @@ function AuditEntryRow({
         </span>
       </td>
       <td className="px-3 py-3">
-        <select
-          value={decision}
-          onChange={(event) => onDecisionChange(event.target.value as AuditDecision)}
-          aria-label={`Decision for ${entry.presetId}`}
-          className="w-full min-w-[12rem] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 shadow-sm"
-        >
-          {decisionOptionsForEntry(entry).map((option) => (
-            <option key={option.value} value={option.value}>
-              {decisionLabel(entry, option.value)}
-            </option>
-          ))}
-        </select>
+        <AuditDecisionActions
+          entry={entry}
+          decision={decision}
+          onDecisionChange={onDecisionChange}
+        />
       </td>
     </tr>
   )
@@ -286,6 +342,19 @@ export function AuditDetailPage() {
 
   const actionableCount = entries.length
 
+  const presetGroups = useMemo(() => {
+    const groups: { presetId: string; entries: AuditEntry[] }[] = []
+    for (const entry of entries) {
+      const last = groups[groups.length - 1]
+      if (last && last.presetId === entry.presetId) {
+        last.entries.push(entry)
+      } else {
+        groups.push({ presetId: entry.presetId, entries: [entry] })
+      }
+    }
+    return groups
+  }, [entries])
+
   return (
     <div className="space-y-4 pb-12">
       <header className="space-y-2 border-b border-slate-200 pb-4">
@@ -296,10 +365,9 @@ export function AuditDetailPage() {
         </h1>
         <p className="max-w-3xl text-sm text-slate-600">{meta.description}</p>
         <p className="text-sm text-slate-500">
-          Choose a decision for each row you want to act on. Rows left as{' '}
-          <strong>Unreviewed</strong> (including stale rows until you pick an action) are skipped.
-          Then open one GitHub issue and run the <strong>Cursor override automation</strong>{' '}
-          workflow manually when you are ready for a PR.
+          Use the action buttons on each row (one click to select, click again to clear). Rows left
+          as <strong>Unreviewed</strong> are skipped in the GitHub issue. Then run the{' '}
+          <strong>Cursor override automation</strong> workflow manually when you are ready for a PR.
         </p>
         <ul className="max-w-3xl list-inside list-disc text-sm text-slate-500">
           {(
@@ -353,20 +421,25 @@ export function AuditDetailPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {entries.map((entry) => (
-                          <AuditEntryRow
-                            key={entry.entryId}
-                            entry={entry}
-                            selected={selected === entry.entryId}
-                            decision={decisions[entry.entryId] ?? defaultAuditDecision(entry)}
-                            onDecisionChange={(value) => {
-                              form.setFieldValue('decisions', {
-                                ...decisions,
-                                [entry.entryId]: value,
-                              })
-                            }}
-                          />
-                        ))}
+                        {presetGroups.flatMap((group, groupIndex) =>
+                          group.entries.map((entry, entryIndex) => (
+                            <AuditEntryRow
+                              key={entry.entryId}
+                              entry={entry}
+                              selected={selected === entry.entryId}
+                              decision={decisions[entry.entryId] ?? defaultAuditDecision(entry)}
+                              onDecisionChange={(value) => {
+                                form.setFieldValue('decisions', {
+                                  ...decisions,
+                                  [entry.entryId]: value,
+                                })
+                              }}
+                              showPresetCell={entryIndex === 0}
+                              presetRowSpan={group.entries.length}
+                              presetGroupStart={groupIndex > 0 && entryIndex === 0}
+                            />
+                          )),
+                        )}
                       </tbody>
                     </table>
                   </div>

@@ -2,16 +2,22 @@ export type AuditDecision = 'pending' | 'intentional' | 'remove_stale' | 'needs_
 
 export const AUDIT_DECISION_LABELS: Record<AuditDecision, string> = {
   pending: 'Unreviewed',
-  intentional: 'Intentional (false positive)',
-  remove_stale: 'Remove stale override',
+  intentional: 'False positive',
+  remove_stale: 'Delete outdated override',
   needs_work: 'Needs upstream work',
+}
+
+export const AUDIT_DECISION_SHORT_LABELS: Record<Exclude<AuditDecision, 'pending'>, string> = {
+  intentional: 'False positive',
+  remove_stale: 'Delete outdated override',
+  needs_work: 'Upstream work',
 }
 
 export const AUDIT_DECISION_HELP: Record<Exclude<AuditDecision, 'pending'>, string> = {
   intentional:
-    'Records the fields still needing a decision as intentional skips (merges with any already-documented ids for that list).',
+    'Document the remaining missing fields as intentional skips (merges with any ids already in the override). Edit the issue body after opening if you only want a subset.',
   remove_stale:
-    'Delete the stored override for this list — it references fields no longer missing. Other lists on the same preset are kept.',
+    'Remove the stored override for this list from YAML — it documents fields that are no longer missing on the live preset. Sibling lists on the same preset are kept.',
   needs_work: 'Track in the issue only — fix in id-tagging-schema, not overrides.',
 }
 
