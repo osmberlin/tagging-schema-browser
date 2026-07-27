@@ -8,6 +8,10 @@
 # the other still inherits via `{parent}` or remains unreviewed. Omitting a list
 # key is valid; extra keys with no live detection are stale.
 #
+# Within one list, `missedFieldIds` may be a **subset** of the live detection
+# (document obvious skips first; remaining ids stay unreviewed). Stale means the
+# override references field ids that are no longer missing from the parent.
+#
 # Entries may also be proposed from the Tagging Schema Browser (GitHub issues with
 # a Snapshot YAML block). See `.agents/skills/apply-schema-override/SKILL.md`.
 #
@@ -273,3 +277,58 @@ presets:
       parentId: waterway
       missedFieldIds:
         - name
+  barrier/hedge:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/height_restrictor:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  building/hangar:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - building/levels
+        - address
+  man_made/charge_point:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/groyne:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/lighthouse:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/mineshaft:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  tourism/information/guidepost:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - address
+        - building_area_yes
+    moreFields:
+      parentId: tourism/information
+      missedFieldIds:
+        - level
+  type/route/monorail:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type

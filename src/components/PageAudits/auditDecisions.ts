@@ -8,8 +8,8 @@ export const AUDIT_DECISION_LABELS: Record<AuditDecision, string> = {
 }
 
 export const AUDIT_DECISION_HELP: Record<Exclude<AuditDecision, 'pending'>, string> = {
-  intentional: 'Record in overrides YAML — live detection will stop flagging this entry.',
-  remove_stale: 'Delete the stored override entry — live detection no longer applies.',
+  intentional: 'Record in overrides YAML — documents intentional skips (partial lists are OK).',
+  remove_stale: 'Delete the stored override entry — it references fields no longer missing.',
   needs_work: 'Track in the issue only — fix in id-tagging-schema, not overrides.',
 }
 

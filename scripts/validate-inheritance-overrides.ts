@@ -2,7 +2,7 @@
 /**
  * Validates `src/data/missing-inheritance-overrides.yaml` against a schema dist.
  *
- * Fails when an override snapshot no longer matches the live preset (stale).
+ * Fails when an override references field ids that are no longer missing (stale).
  * Defaults to the published npm release dist. Pass `--dir` for a local fixture
  * (e.g. public/test-schema) or `--schema <url>` for another dist.
  */
@@ -117,7 +117,9 @@ if (unknownOverrides.length > 0 || stale.length > 0) {
     )
   }
   if (stale.length > 0) {
-    lines.push('Stale overrides (re-review and update missedFieldIds or remove entry):')
+    lines.push(
+      'Stale overrides (remove entry or drop field ids that are no longer missing from the parent):',
+    )
     for (const presetId of stale) lines.push(`  - ${presetId}`)
   }
   console.error(lines.join('\n'))

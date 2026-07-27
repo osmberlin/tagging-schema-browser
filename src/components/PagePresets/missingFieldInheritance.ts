@@ -124,12 +124,32 @@ function sameFieldIdSet(a: string[], b: string[]): boolean {
   return sortedA.every((value, index) => value === sortedB[index])
 }
 
-function overrideListMatches(
+/** Every override id must still be missing from the slash parent on the live preset. */
+export function overrideMissedFieldIdsAreValid(
+  current: MissingFieldListInheritance,
+  override: MissingInheritanceOverrideList,
+): boolean {
+  if (override.parentId !== current.parentId) return false
+  const currentSet = new Set(current.missedFieldIds)
+  return override.missedFieldIds.every((fieldId) => currentSet.has(fieldId))
+}
+
+/** Missed field ids not yet documented in the override snapshot. */
+export function remainingMissedFieldIds(
+  current: MissingFieldListInheritance,
+  override?: MissingInheritanceOverrideList,
+): string[] {
+  if (!override) return [...current.missedFieldIds]
+  const documented = new Set(override.missedFieldIds)
+  return current.missedFieldIds.filter((fieldId) => !documented.has(fieldId))
+}
+
+export function overrideDocumentsAllMissedFields(
   current: MissingFieldListInheritance,
   override: MissingInheritanceOverrideList,
 ): boolean {
   return (
-    override.parentId === current.parentId &&
+    overrideMissedFieldIdsAreValid(current, override) &&
     sameFieldIdSet(override.missedFieldIds, current.missedFieldIds)
   )
 }
@@ -143,7 +163,8 @@ export function resolveMissingInheritanceListStatus(
     return override ? 'stale' : 'none'
   }
   if (!override) return 'unreviewed'
-  return overrideListMatches(current, override) ? 'intentional' : 'stale'
+  if (!overrideMissedFieldIdsAreValid(current, override)) return 'stale'
+  return overrideDocumentsAllMissedFields(current, override) ? 'intentional' : 'unreviewed'
 }
 
 /**
@@ -157,6 +178,11 @@ export function resolveMissingInheritanceListStatus(
  * A preset may document one list while the other remains unreviewed (partial
  * override). Overall status stays `unreviewed` until every detected list has a
  * matching override section.
+ *
+ * Within one list, `missedFieldIds` may be a **subset** of the live detection
+ * (document the obvious skips first; remaining ids stay unreviewed). Stale means
+ * the override references field ids that are no longer missing, or the list key
+ * exists without live detection.
  */
 export function resolveMissingInheritanceStatus(
   current: MissingFieldInheritance | null,
@@ -186,6 +212,20 @@ export function hasMissingFieldInheritance(status: MissingInheritanceStatus): bo
 }
 
 /** Strip debug-only fields so the result matches `MissingInheritanceOverride`. */
+/** Merge a stored override with newly documented missed field ids for one list. */
+export function mergeMissingInheritanceOverrideList(
+  current: MissingFieldListInheritance,
+  existing: MissingInheritanceOverrideList | undefined,
+  newlyDocumentedIds: string[],
+): MissingInheritanceOverrideList {
+  const merged = new Set(existing?.missedFieldIds ?? [])
+  for (const fieldId of newlyDocumentedIds) merged.add(fieldId)
+  return {
+    parentId: current.parentId,
+    missedFieldIds: [...merged].sort(),
+  }
+}
+
 export function missingInheritanceOverrideFromCurrent(
   current: MissingFieldInheritance,
 ): MissingInheritanceOverride {

@@ -1,6 +1,8 @@
 import type { AuditDecision } from '@/components/PageAudits/auditDecisions'
 import type { FieldListKey } from '@/components/PagePresets/missingFieldInheritance'
 import {
+  mergeMissingInheritanceOverrideList,
+  remainingMissedFieldIds,
   resolveMissingInheritanceListStatus,
   type MissingFieldInheritance,
   type MissingInheritanceOverride,
@@ -22,7 +24,10 @@ export type MissingInheritanceAuditEntry = {
   fieldListKey: FieldListKey
   status: MissingInheritanceStatus
   parentId: string
+  /** Missed field ids that still need a decision (excludes already-documented overrides). */
   missedFieldIds: string[]
+  /** Field ids already recorded in the override snapshot for this list. */
+  documentedMissedFieldIds: string[]
   explicitPresetRefs: string[]
   storedOverride?: MissingInheritanceOverride
 }
@@ -64,6 +69,7 @@ function missingInheritanceEntries(presets: DenormalizedPreset[]): MissingInheri
             status: 'stale',
             parentId: listOverride?.parentId ?? '',
             missedFieldIds: listOverride?.missedFieldIds ?? [],
+            documentedMissedFieldIds: listOverride?.missedFieldIds ?? [],
             explicitPresetRefs: [],
             storedOverride,
           })
@@ -79,7 +85,8 @@ function missingInheritanceEntries(presets: DenormalizedPreset[]): MissingInheri
         fieldListKey,
         status: listStatus,
         parentId: section.parentId,
-        missedFieldIds: section.missedFieldIds,
+        missedFieldIds: remainingMissedFieldIds(section, listOverride),
+        documentedMissedFieldIds: listOverride?.missedFieldIds ?? [],
         explicitPresetRefs: section.explicitPresetRefs,
         storedOverride,
       })
@@ -135,10 +142,21 @@ export function missingInheritanceFromEntry(
   entry: MissingInheritanceAuditEntry,
 ): MissingFieldInheritance | null {
   if (entry.status === 'stale' && entry.missedFieldIds.length === 0) return null
+
+  const mergedList = mergeMissingInheritanceOverrideList(
+    {
+      parentId: entry.parentId,
+      missedFieldIds: [...entry.documentedMissedFieldIds, ...entry.missedFieldIds],
+      explicitPresetRefs: entry.explicitPresetRefs,
+    },
+    entry.storedOverride?.[entry.fieldListKey],
+    entry.missedFieldIds,
+  )
+
   return {
     [entry.fieldListKey]: {
       parentId: entry.parentId,
-      missedFieldIds: entry.missedFieldIds,
+      missedFieldIds: mergedList.missedFieldIds,
       explicitPresetRefs: entry.explicitPresetRefs,
     },
   }

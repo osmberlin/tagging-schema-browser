@@ -208,6 +208,12 @@ describe('missingFieldInheritance', () => {
 
     expect(
       resolveMissingInheritanceStatus(current, {
+        fields: { parentId: 'tourism/information', missedFieldIds: ['address'] },
+      }),
+    ).toBe('unreviewed')
+
+    expect(
+      resolveMissingInheritanceStatus(current, {
         fields: { parentId: 'tourism/information', missedFieldIds: ['operator'] },
       }),
     ).toBe('stale')
@@ -221,6 +227,32 @@ describe('missingFieldInheritance', () => {
         },
       }),
     ).toBe('stale')
+  })
+
+  it('treats a valid partial missedFieldIds subset as unreviewed, not stale', () => {
+    const current = {
+      fields: {
+        parentId: 'building',
+        missedFieldIds: ['building/levels', 'address', 'height'],
+        explicitPresetRefs: [],
+      },
+    }
+
+    expect(
+      resolveMissingInheritanceListStatus(current.fields, {
+        parentId: 'building',
+        missedFieldIds: ['building/levels', 'address'],
+      }),
+    ).toBe('unreviewed')
+
+    expect(
+      resolveMissingInheritanceStatus(current, {
+        fields: {
+          parentId: 'building',
+          missedFieldIds: ['building/levels', 'address'],
+        },
+      }),
+    ).toBe('unreviewed')
   })
 
   it('stays unreviewed until every detected list has a matching override', () => {

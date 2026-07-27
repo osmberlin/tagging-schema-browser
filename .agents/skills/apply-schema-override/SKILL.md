@@ -31,6 +31,8 @@ Read the issue body and extract:
 - **Stale removals** from the fenced ` ```yaml ` block under **Remove stale overrides** — delete those preset keys from the overrides file (do not apply them as snapshots)
 - **Needs upstream work** from `## Needs upstream work` — track in the PR summary only; do not write overrides for these presets
 
+Within one list, `missedFieldIds` may be a **subset** of live detection (partial intentional skip). Merge new snapshots with any existing documented ids for that list. Stale means the override references field ids that are no longer missing.
+
 Batch issues may list many presets in one issue. Process every entry in **Entries** that has a Snapshot or Remove stale section.
 
 ## 2. Commit 1 — apply the issue snapshot

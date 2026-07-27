@@ -12,6 +12,7 @@ const missingEntry: MissingInheritanceAuditEntry = {
   parentId: 'man_made/crane',
   missedFieldIds: ['crane/type'],
   explicitPresetRefs: [],
+  documentedMissedFieldIds: [],
 }
 
 describe('buildBatchSchemaOverrideIssueUrl', () => {
@@ -96,6 +97,35 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
     expect(new URL(url).searchParams.get('title')).toBe(
       '[risky-typecombo] highway/residential — needs upstream work',
     )
+  })
+
+  it('merges partial override snapshots when documenting remaining missed fields', () => {
+    const entry: MissingInheritanceAuditEntry = {
+      ...missingEntry,
+      presetId: 'tourism/information/terminal',
+      entryId: 'tourism/information/terminal:fields',
+      parentId: 'tourism/information',
+      missedFieldIds: ['building_area_yes'],
+      documentedMissedFieldIds: ['address'],
+      storedOverride: {
+        fields: {
+          parentId: 'tourism/information',
+          missedFieldIds: ['address'],
+        },
+      },
+    }
+
+    const url = buildBatchSchemaOverrideIssueUrl({
+      kind: 'missing-inheritance',
+      slug: 'missing-inheritance',
+      entries: [entry],
+      decisions: { [entry.entryId]: 'intentional' },
+      dataUrl: '/test-schema',
+    })
+
+    const body = new URL(url).searchParams.get('body') ?? ''
+    expect(body).toContain('- address')
+    expect(body).toContain('- building_area_yes')
   })
 
   it('throws when no entries are selected', () => {

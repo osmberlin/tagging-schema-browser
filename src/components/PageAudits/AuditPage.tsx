@@ -103,21 +103,38 @@ function AuditEntryRow({
                 {entry.parentId}
               </Link>
             </p>
-            <p className="text-xs text-slate-500">Field ids not inherited from the parent list:</p>
+            <p className="text-xs text-slate-500">Still needs a decision:</p>
             <ul className="list-inside list-disc font-mono text-xs text-slate-800">
-              {entry.missedFieldIds.map((fieldId) => (
-                <li key={fieldId}>
-                  <Link
-                    to="/field/$"
-                    params={{ _splat: fieldId }}
-                    search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
-                    className="text-sky-700 underline underline-offset-2"
-                  >
-                    {fieldId}
-                  </Link>
-                </li>
-              ))}
+              {entry.missedFieldIds.length > 0 ? (
+                entry.missedFieldIds.map((fieldId) => (
+                  <li key={fieldId}>
+                    <Link
+                      to="/field/$"
+                      params={{ _splat: fieldId }}
+                      search={(prev) => ({
+                        dataUrl: prev.dataUrl ?? '',
+                        locale: prev.locale ?? '',
+                      })}
+                      className="text-sky-700 underline underline-offset-2"
+                    >
+                      {fieldId}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <li className="text-slate-500">None</li>
+              )}
             </ul>
+            {entry.documentedMissedFieldIds.length > 0 ? (
+              <>
+                <p className="text-xs text-slate-500">Already documented as intentional skips:</p>
+                <ul className="list-inside list-disc font-mono text-xs text-slate-500">
+                  {entry.documentedMissedFieldIds.map((fieldId) => (
+                    <li key={fieldId}>{fieldId}</li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
             {entry.explicitPresetRefs.length > 0 ? (
               <p className="text-xs text-slate-500">
                 Other preset refs: {entry.explicitPresetRefs.join(', ')}
