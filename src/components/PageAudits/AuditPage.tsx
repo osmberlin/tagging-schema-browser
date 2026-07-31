@@ -18,13 +18,16 @@ import {
   validDocumentedMissedFieldIds,
   type AuditEntry,
 } from '@/components/PageAudits/auditEntries'
+import {
+  AuditSchemaLoadingPanel,
+  AuditSchemaRefreshBanner,
+} from '@/components/PageAudits/AuditSchemaStatus'
 import { AUDIT_META, auditSlugToKind, isAuditSlug } from '@/components/PageAudits/auditSlugs'
 import { buildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/buildBatchOverrideIssueUrl'
 import { fieldListTitle } from '@/components/PageAudits/fieldListTitle'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
-import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalActionPillClass } from '@/theme/externalAccent'
@@ -53,7 +56,7 @@ function actionableDecisionsForEntry(entry: AuditEntry): Exclude<AuditDecision, 
 
 function decisionButtonClass(active: boolean) {
   return cn(
-    'rounded-md border px-2 py-1 text-xs font-medium transition-colors',
+    'min-w-[9.5rem] rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors',
     active
       ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
@@ -72,9 +75,9 @@ function AuditDecisionActions({
   const options = actionableDecisionsForEntry(entry)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-[14rem] flex-col gap-2">
       <div
-        className="flex flex-wrap gap-1.5"
+        className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3"
         role="group"
         aria-label={`Decision for ${entry.presetId}`}
       >
@@ -88,16 +91,16 @@ function AuditDecisionActions({
               className={decisionButtonClass(active)}
               onClick={() => onDecisionChange(active ? 'pending' : option)}
             >
-              {active ? 'Mark unreviewed' : AUDIT_DECISION_SHORT_LABELS[option]}
+              {AUDIT_DECISION_SHORT_LABELS[option]}
             </button>
           )
         })}
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="min-h-[3.25rem] text-xs leading-relaxed whitespace-normal text-slate-500">
         {decision === 'pending'
           ? entry.status === 'stale'
-            ? 'Choose whether to delete the outdated override or track upstream work.'
-            : 'Click a button once to select; click again to clear.'
+            ? 'Stale rows are detected automatically when a stored override no longer matches live inheritance. Choose delete or upstream work; click the active button again to clear.'
+            : 'Click a button to select; click the same button again to clear.'
           : AUDIT_DECISION_HELP[decision]}
       </p>
     </div>
@@ -281,7 +284,7 @@ function AuditEntryRow({
           {entry.status}
         </span>
       </td>
-      <td className="px-3 py-3">
+      <td className="w-[38%] min-w-[14rem] px-3 py-3 align-top">
         <AuditDecisionActions
           entry={entry}
           decision={decision}
@@ -329,7 +332,7 @@ export function AuditDetailPage() {
   const meta = AUDIT_META[slug]
 
   if (loading && !data) {
-    return <SchemaLoadingPanel label="Loading schema…" />
+    return <AuditSchemaLoadingPanel />
   }
 
   if (!data) {
@@ -380,6 +383,8 @@ export function AuditDetailPage() {
         </ul>
       </header>
 
+      <AuditSchemaRefreshBanner />
+
       {actionableCount === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
           No unreviewed or stale entries for this audit.
@@ -411,13 +416,13 @@ export function AuditDetailPage() {
               return (
                 <>
                   <div className="overflow-x-auto rounded-xl border border-slate-200">
-                    <table className="min-w-full text-left text-sm">
+                    <table className="w-full table-fixed text-left text-sm">
                       <thead className="bg-slate-50 text-xs font-medium tracking-wide text-slate-500 uppercase">
                         <tr>
-                          <th className="px-3 py-2">Preset</th>
-                          <th className="px-3 py-2">Details</th>
-                          <th className="px-3 py-2">Status</th>
-                          <th className="px-3 py-2">Decision</th>
+                          <th className="w-[14%] px-3 py-2">Preset</th>
+                          <th className="w-[34%] px-3 py-2">Details</th>
+                          <th className="w-[10%] px-3 py-2">Status</th>
+                          <th className="w-[42%] px-3 py-2">Decision</th>
                         </tr>
                       </thead>
                       <tbody>

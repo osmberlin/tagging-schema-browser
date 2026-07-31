@@ -1,11 +1,14 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { auditEntriesForSlug, auditEntryNeedsAction } from '@/components/PageAudits/auditEntries'
+import {
+  AuditSchemaLoadingPanel,
+  AuditSchemaRefreshBanner,
+} from '@/components/PageAudits/AuditSchemaStatus'
 import { AUDIT_META, AUDIT_SLUGS } from '@/components/PageAudits/auditSlugs'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
-import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 
@@ -23,7 +26,7 @@ export function AuditsIndexPage() {
   }, [data, presets])
 
   if (loading && !data) {
-    return <SchemaLoadingPanel label="Loading schema…" />
+    return <AuditSchemaLoadingPanel />
   }
 
   if (!data) {
@@ -44,6 +47,8 @@ export function AuditsIndexPage() {
           are ready for a PR.
         </p>
       </header>
+
+      <AuditSchemaRefreshBanner />
 
       <ul className="grid gap-4 sm:grid-cols-2">
         {AUDIT_SLUGS.map((slug) => {

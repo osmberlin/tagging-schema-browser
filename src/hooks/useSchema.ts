@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useReference, useReferenceHydrated } from '@/features/data-source/reference-store'
 import { SCHEMA_STALE_TIME } from '@/queries/queryClient'
@@ -39,6 +39,7 @@ export function useSchema() {
     enabled: resolvedDataUrl.trim().length > 0 && !isUnsupportedUrl,
     staleTime: SCHEMA_STALE_TIME,
     initialData: () => cachedSchemaData(resolvedDataUrl),
+    placeholderData: keepPreviousData,
   })
 
   const data = query.data ?? null

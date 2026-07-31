@@ -17,7 +17,7 @@ export const AUDIT_DECISION_HELP: Record<Exclude<AuditDecision, 'pending'>, stri
   intentional:
     'Document the remaining missing fields as intentional skips (merges with any ids already in the override). Edit the issue body after opening if you only want a subset.',
   remove_stale:
-    'Remove the stored override for this list from YAML — it documents fields that are no longer missing on the live preset. Sibling lists on the same preset are kept.',
+    'Delete a stored override whose field ids no longer match live detection — e.g. after id-tagging-schema adds inheritance or fixes the preset. These rows show status stale (not unreviewed). Only the listed fields/moreFields section is removed.',
   needs_work: 'Track in the issue only — fix in id-tagging-schema, not overrides.',
 }
 
