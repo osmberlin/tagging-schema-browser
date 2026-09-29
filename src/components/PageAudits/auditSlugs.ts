@@ -18,7 +18,7 @@ export const AUDIT_META: Record<
   'missing-inheritance': {
     title: 'Missing inheritance',
     description:
-      'Presets with explicit field lists that do not inherit every field from their slash parent.',
+      'Presets with explicit field lists that do not inherit every field from their parent preset (the preset one path segment up, e.g. building for building/hangar).',
     area: 'fields',
     overrideFile: 'src/data/missing-inheritance-overrides.yaml',
   },

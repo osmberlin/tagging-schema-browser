@@ -14,14 +14,14 @@ import { cn } from '@/utils/tw'
 import type { DenormalizedPreset } from '@/utils/types'
 
 const STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
-  none: 'Inherits from slash parent',
+  none: 'Inherits from parent preset',
   unreviewed: 'Missing parent fields (unreviewed)',
   intentional: 'Missing parent fields (intentional)',
   stale: 'Override snapshot stale',
 }
 
 const LIST_STATUS_LABELS: Record<MissingInheritanceStatus, string> = {
-  none: 'Inherits from slash parent',
+  none: 'Inherits from parent preset',
   unreviewed: 'Unreviewed',
   intentional: 'Intentional omission',
   stale: 'Override stale',
@@ -45,7 +45,7 @@ function FieldListSection({
         <span className="text-xs text-slate-500">{LIST_STATUS_LABELS[listStatus]}</span>
       </div>
       <p>
-        Expected slash-parent source:{' '}
+        Expected parent preset:{' '}
         <Link
           to="/preset/$"
           params={{ _splat: section.parentId }}
@@ -123,11 +123,11 @@ export function MissingInheritancePanel({
         {missingFieldInheritance && parentId ? (
           <p className="text-sm text-slate-700">
             This preset defines an explicit field list without <code>{`{${parentId}}`}</code>, so it
-            does not inherit every field from its slash parent.
+            does not inherit every field from its parent preset.
           </p>
         ) : missingInheritanceStatus === 'stale' ? (
           <p className="text-sm text-slate-700">
-            This preset no longer has missing slash-parent field inheritance, but a reviewed
+            This preset no longer has missing parent-preset field inheritance, but a reviewed
             override entry still exists.
           </p>
         ) : null}
