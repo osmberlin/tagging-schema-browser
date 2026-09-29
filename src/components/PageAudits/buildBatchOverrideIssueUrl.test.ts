@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { AuditEntry } from '@/components/PageAudits/auditEntries'
-import { buildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/buildBatchOverrideIssueUrl'
+import {
+  buildBatchSchemaOverrideIssueUrl,
+  ISSUE_URL_MAX_LENGTH,
+  tryBuildBatchSchemaOverrideIssueUrl,
+} from '@/components/PageAudits/buildBatchOverrideIssueUrl'
 import { parseOverrideChangeBlock } from '@/components/PageAudits/overrideChanges'
 
 const entry: AuditEntry = {
@@ -55,5 +59,22 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
 
   it('throws without decisions', () => {
     expect(() => issueParams({})).toThrow(/Decide at least one field/)
+  })
+
+  it('reports an over-long issue via the non-throwing helper', () => {
+    const many: AuditEntry[] = Array.from({ length: 400 }, (_, index) => ({
+      ...entry,
+      entryId: `shop/trade${index}`,
+      presetId: `shop/trade${index}`,
+    }))
+    const decisions = Object.fromEntries(
+      many.map((item) => [`${item.entryId}::trade`, 'intentional' as const]),
+    )
+    const args = { slug: 'risky-typecombo' as const, entries: many, decisions, dataUrl: '' }
+    const result = tryBuildBatchSchemaOverrideIssueUrl(args)
+    expect(result).toEqual({ error: expect.stringContaining(`> ${ISSUE_URL_MAX_LENGTH}`) })
+    expect(
+      tryBuildBatchSchemaOverrideIssueUrl({ ...args, entries: many.slice(0, 1) }),
+    ).toHaveProperty('url')
   })
 })
