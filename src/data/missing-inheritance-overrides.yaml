@@ -332,3 +332,63 @@ presets:
       parentId: type/route
       missedFieldIds:
         - network/type
+  amenity/vending_machine/excrement_bags:
+    moreFields:
+      parentId: amenity/vending_machine
+      missedFieldIds:
+        - branch_brand
+  building/carport:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+  building/garage:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+  building/garages:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+  building/roof:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+    moreFields:
+      parentId: building
+      missedFieldIds:
+        - smoking
+        - wheelchair
+  type/route/road:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/subway:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/train:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/tram:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/trolleybus:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  waterway/drain:
+    fields:
+      parentId: waterway
+      missedFieldIds:
+        - name
