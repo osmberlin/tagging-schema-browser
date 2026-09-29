@@ -102,7 +102,10 @@ export function IconCard({
         </div>
 
         {presetUsageCount > 0 ? (
-          <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-slate-500" title={presetNames}>
+          <p
+            className="mt-1.5 line-clamp-2 text-xs leading-snug text-slate-500"
+            title={presetNames}
+          >
             <AreaIcon
               area="presets"
               className={cn('mr-1 inline h-3 w-3 align-[-2px]', areaAccent.presets.icon)}
