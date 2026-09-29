@@ -451,3 +451,18 @@ presets:
       parentId: type/route
       missedFieldIds:
         - network/type
+  area/highway:
+    fields:
+      parentId: area
+      missedFieldIds:
+        - name
+  education/kindergarten:
+    fields:
+      parentId: education
+      missedFieldIds:
+        - building_area
+  education/university:
+    fields:
+      parentId: education
+      missedFieldIds:
+        - building_area
