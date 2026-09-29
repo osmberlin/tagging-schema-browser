@@ -21,6 +21,7 @@ import { usePresetSearch } from './usePresetSearch'
 import { presetSearchDefaults } from './useSearchState'
 
 const COLUMN_WIDTH = 160
+const ROW_ESTIMATE = 33
 
 const dash = <span className="text-slate-300">—</span>
 
@@ -124,6 +125,9 @@ type Row = {
   link?: (p: DenormalizedPreset) => CellLink | null
 }
 type Section = { title: string; area?: SchemaArea; rows: Row[] }
+type FlatRow =
+  | { kind: 'section'; key: string; section: Section }
+  | { kind: 'row'; key: string; row: Row }
 
 function ColumnSpacer({ width, as: Tag = 'th' }: { width: number; as?: 'th' | 'td' }) {
   if (width <= 0) return null
@@ -370,6 +374,7 @@ export function PresetTable() {
                 : null,
           },
           {
+            rowKey: 'Options icons',
             label: <AreaLabel area="icons">Options icons</AreaLabel>,
             labelTitle: 'Icons used by field options on this preset',
             render: (p) => {
@@ -461,6 +466,38 @@ export function PresetTable() {
   const totalColumnWidth = columnVirtualizer.getTotalSize()
   const paddingLeft = virtualColumns[0]?.start ?? 0
   const paddingRight = totalColumnWidth - (virtualColumns.at(-1)?.end ?? 0)
+  const spanColumns = virtualColumns.length + (paddingLeft > 0 ? 1 : 0) + (paddingRight > 0 ? 1 : 0)
+  const spanAll = spanColumns + 1
+
+  // Tag and field rows can number in the hundreds; virtualize rows too so horizontal
+  // scrolling only re-renders the visible cells (see issue #239).
+  const flatRows = useMemo<FlatRow[]>(
+    () =>
+      sections.flatMap((section) => [
+        { kind: 'section', key: `section:${section.title}`, section } as const,
+        ...section.rows.map(
+          (row) =>
+            ({
+              kind: 'row',
+              key: `${section.title}:${row.rowKey ?? (typeof row.label === 'string' ? row.label : '')}`,
+              row,
+            }) as const,
+        ),
+      ]),
+    [sections],
+  )
+
+  const rowVirtualizer = useVirtualizer({
+    count: flatRows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ROW_ESTIMATE,
+    getItemKey: (index) => flatRows[index]?.key ?? index,
+    overscan: 8,
+  })
+
+  const virtualRows = rowVirtualizer.getVirtualItems()
+  const paddingTop = virtualRows[0]?.start ?? 0
+  const paddingBottom = rowVirtualizer.getTotalSize() - (virtualRows.at(-1)?.end ?? 0)
 
   if (!result) return null
 
@@ -504,56 +541,76 @@ export function PresetTable() {
             </tr>
           </thead>
           <tbody>
-            {sections.map((section) => (
-              <Fragment key={section.title}>
-                <tr>
-                  <th className="sticky left-0 z-10 border-r border-b border-slate-200 bg-slate-100 px-3 py-1 text-left font-display text-xs font-medium tracking-wide text-slate-600">
-                    {section.area ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <AreaIcon
-                          area={section.area}
-                          className={`h-3 w-3 shrink-0 ${areaAccent[section.area].icon}`}
-                        />
-                        {section.title}
-                      </span>
-                    ) : (
-                      section.title
-                    )}
-                  </th>
-                  <th
-                    colSpan={
-                      virtualColumns.length + (paddingLeft > 0 ? 1 : 0) + (paddingRight > 0 ? 1 : 0)
-                    }
-                    className="border-b border-slate-200 bg-slate-100 px-0 py-1"
-                    style={{ width: totalColumnWidth, minWidth: totalColumnWidth }}
-                  />
-                </tr>
-                {section.rows.map((row) => (
+            {paddingTop > 0 ? (
+              <tr aria-hidden>
+                <td colSpan={spanAll} className="border-0 p-0" style={{ height: paddingTop }} />
+              </tr>
+            ) : null}
+            {virtualRows.map((virtualRow) => {
+              const item = flatRows[virtualRow.index]
+              if (!item) return null
+              if (item.kind === 'section') {
+                const { section } = item
+                return (
                   <tr
-                    key={row.rowKey ?? (typeof row.label === 'string' ? row.label : section.title)}
-                    className="group"
+                    key={item.key}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
                   >
-                    <th
-                      title={row.labelTitle}
-                      className={cn(
-                        'sticky left-0 z-10 border-r border-b border-slate-200 bg-white px-3 py-1.5 text-left align-top font-normal text-slate-600 group-hover:bg-slate-50',
-                        row.mono && 'font-mono text-xs',
+                    <th className="sticky left-0 z-10 border-r border-b border-slate-200 bg-slate-100 px-3 py-1 text-left font-display text-xs font-medium tracking-wide text-slate-600">
+                      {section.area ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <AreaIcon
+                            area={section.area}
+                            className={`h-3 w-3 shrink-0 ${areaAccent[section.area].icon}`}
+                          />
+                          {section.title}
+                        </span>
+                      ) : (
+                        section.title
                       )}
-                    >
-                      {row.label}
                     </th>
-                    <VirtualizedPresetColumns
-                      presets={presets}
-                      virtualColumns={virtualColumns}
-                      paddingLeft={paddingLeft}
-                      paddingRight={paddingRight}
-                      spacerAs="td"
-                      renderColumn={(preset) => <PresetValueCell preset={preset} row={row} />}
+                    <th
+                      colSpan={spanColumns}
+                      className="border-b border-slate-200 bg-slate-100 px-0 py-1"
+                      style={{ width: totalColumnWidth, minWidth: totalColumnWidth }}
                     />
                   </tr>
-                ))}
-              </Fragment>
-            ))}
+                )
+              }
+              const { row } = item
+              return (
+                <tr
+                  key={item.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  className="group"
+                >
+                  <th
+                    title={row.labelTitle}
+                    className={cn(
+                      'sticky left-0 z-10 border-r border-b border-slate-200 bg-white px-3 py-1.5 text-left align-top font-normal text-slate-600 group-hover:bg-slate-50',
+                      row.mono && 'font-mono text-xs',
+                    )}
+                  >
+                    {row.label}
+                  </th>
+                  <VirtualizedPresetColumns
+                    presets={presets}
+                    virtualColumns={virtualColumns}
+                    paddingLeft={paddingLeft}
+                    paddingRight={paddingRight}
+                    spacerAs="td"
+                    renderColumn={(preset) => <PresetValueCell preset={preset} row={row} />}
+                  />
+                </tr>
+              )
+            })}
+            {paddingBottom > 0 ? (
+              <tr aria-hidden>
+                <td colSpan={spanAll} className="border-0 p-0" style={{ height: paddingBottom }} />
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
