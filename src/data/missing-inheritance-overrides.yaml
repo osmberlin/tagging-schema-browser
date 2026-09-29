@@ -392,3 +392,62 @@ presets:
       parentId: waterway
       missedFieldIds:
         - name
+  shop/vacant:
+    fields:
+      parentId: shop
+      missedFieldIds:
+        - opening_hours
+        - payment_multi
+  tourism/information/board:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - address
+        - building_area_yes
+  tourism/information/map:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - address
+        - building_area_yes
+  tourism/information/route_marker:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - address
+        - building_area_yes
+  type/route/climbing:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/detour:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/ferry:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/light_rail:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/pipeline:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/piste:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/railway:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
