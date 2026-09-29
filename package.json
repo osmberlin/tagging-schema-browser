@@ -75,7 +75,7 @@
     "tailwindcss": "^4.3.3",
     "typescript": "7.0.2",
     "vite": "^8.1.5",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.1"
   },
   "optionalDependencies": {
     "@typescript/typescript-darwin-arm64": "7.0.2",
