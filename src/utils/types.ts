@@ -29,7 +29,6 @@ export type RawPreset = {
   matchScore?: number
   searchable?: boolean
   suggestion?: boolean
-  reference?: { key: string; value: string }
   locationSet?: { include?: string[]; exclude?: string[] }
   locationSetCrossReference?: string
   relation?: string

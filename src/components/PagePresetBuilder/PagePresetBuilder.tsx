@@ -187,6 +187,8 @@ export function PagePresetBuilder() {
         moreCount: 0,
         presets: [],
         iconMismatchCount: 0,
+        iconMissingCount: 0,
+        riskyUsageCount: 0,
         optionIconNames: [],
       }))
     return [...schemaFields, ...draftEntries]
