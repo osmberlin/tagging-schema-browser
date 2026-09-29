@@ -17,7 +17,7 @@ import { applyIconFacets, useIconFacetState } from './useIconFacetState'
 
 const ICON_CARD_MIN_WIDTH = 180
 const ICON_CARD_GAP = 12
-const ICON_CARD_ROW_ESTIMATE = 208
+const ICON_CARD_ROW_ESTIMATE = 176
 
 export function PageIcons() {
   const { data, dataUrl } = useSchema()
