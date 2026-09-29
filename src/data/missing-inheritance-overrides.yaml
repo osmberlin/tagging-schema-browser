@@ -337,11 +337,6 @@ presets:
       parentId: amenity/vending_machine
       missedFieldIds:
         - branch_brand
-  building/carport:
-    fields:
-      parentId: building
-      missedFieldIds:
-        - name
   building/garage:
     fields:
       parentId: building
