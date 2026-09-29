@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  defaultAuditDecision,
   invalidOverrideMissedFieldIds,
   isOrphanedStaleMissingInheritanceEntry,
   missingInheritanceFromEntry,
@@ -29,11 +28,6 @@ const baseEntry: MissingInheritanceAuditEntry = {
 }
 
 describe('auditEntries', () => {
-  it('defaults every actionable row to pending', () => {
-    expect(defaultAuditDecision({ ...baseEntry, status: 'stale' })).toBe('pending')
-    expect(defaultAuditDecision({ ...baseEntry, status: 'unreviewed' })).toBe('pending')
-  })
-
   it('merges valid documented and remaining ids for intentional snapshots', () => {
     expect(missingInheritanceFromEntry(baseEntry)).toEqual({
       fields: {

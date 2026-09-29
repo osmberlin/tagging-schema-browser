@@ -1,12 +1,11 @@
 import type { SchemaOverrideKind } from '@/utils/buildSchemaOverrideIssueUrl'
 
-export const AUDIT_SLUGS = ['missing-inheritance', 'risky-typecombo'] as const
+export const AUDIT_SLUGS = [
+  'missing-inheritance',
+  'risky-typecombo',
+] as const satisfies readonly SchemaOverrideKind[]
 
 export type AuditSlug = (typeof AUDIT_SLUGS)[number]
-
-export function auditSlugToKind(slug: AuditSlug): SchemaOverrideKind {
-  return slug
-}
 
 export function isAuditSlug(value: string): value is AuditSlug {
   return (AUDIT_SLUGS as readonly string[]).includes(value)

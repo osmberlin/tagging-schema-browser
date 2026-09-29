@@ -6,13 +6,12 @@ import {
   AUDIT_DECISION_HELP,
   AUDIT_DECISION_LABELS,
   AUDIT_DECISION_SHORT_LABELS,
-  countAuditDecisionsForIssue,
+  auditDecisionIncludesIssue,
   type AuditDecision,
 } from '@/components/PageAudits/auditDecisions'
 import {
   auditEntriesForSlug,
   auditEntryNeedsAction,
-  defaultAuditDecision,
   invalidOverrideMissedFieldIds,
   isOrphanedStaleMissingInheritanceEntry,
   validDocumentedMissedFieldIds,
@@ -22,7 +21,7 @@ import {
   AuditSchemaLoadingPanel,
   AuditSchemaRefreshBanner,
 } from '@/components/PageAudits/AuditSchemaStatus'
-import { AUDIT_META, auditSlugToKind, isAuditSlug } from '@/components/PageAudits/auditSlugs'
+import { AUDIT_META, isAuditSlug } from '@/components/PageAudits/auditSlugs'
 import { buildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/buildBatchOverrideIssueUrl'
 import { fieldListTitle } from '@/components/PageAudits/fieldListTitle'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
@@ -32,6 +31,12 @@ import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
 import { externalActionPillClass } from '@/theme/externalAccent'
 import { cn } from '@/utils/tw'
+
+/** Keep data source + locale when linking to preset/field detail pages. */
+const keepDataSource = (prev: { dataUrl?: string; locale?: string }) => ({
+  dataUrl: prev.dataUrl ?? '',
+  locale: prev.locale ?? '',
+})
 
 const auditSearchSchema = z.object({
   selected: z.string().catch(''),
@@ -47,11 +52,11 @@ const ACTIONABLE_DECISIONS: Exclude<AuditDecision, 'pending'>[] = [
   'needs_work',
 ]
 
+// "False positive" makes no sense for stale rows; "Delete outdated override" only for stale rows.
 function actionableDecisionsForEntry(entry: AuditEntry): Exclude<AuditDecision, 'pending'>[] {
-  if (entry.status === 'stale') {
-    return ACTIONABLE_DECISIONS.filter((decision) => decision !== 'intentional')
-  }
-  return ACTIONABLE_DECISIONS
+  return ACTIONABLE_DECISIONS.filter((decision) =>
+    entry.status === 'stale' ? decision !== 'intentional' : decision !== 'remove_stale',
+  )
 }
 
 function decisionButtonClass(active: boolean) {
@@ -96,13 +101,9 @@ function AuditDecisionActions({
           )
         })}
       </div>
-      <p className="min-h-[3.25rem] text-xs leading-relaxed whitespace-normal text-slate-500">
-        {decision === 'pending'
-          ? entry.status === 'stale'
-            ? 'Stale rows are detected automatically when a stored override no longer matches live inheritance. Choose delete or upstream work; click the active button again to clear.'
-            : 'Click a button to select; click the same button again to clear.'
-          : AUDIT_DECISION_HELP[decision]}
-      </p>
+      {decision !== 'pending' ? (
+        <p className="text-xs leading-relaxed text-slate-500">{AUDIT_DECISION_HELP[decision]}</p>
+      ) : null}
     </div>
   )
 }
@@ -150,7 +151,7 @@ function AuditEntryRow({
             <Link
               to="/preset/$"
               params={{ _splat: entry.presetId }}
-              search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+              search={keepDataSource}
               className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:text-sky-700"
             >
               {entry.presetName}
@@ -173,7 +174,7 @@ function AuditEntryRow({
               <Link
                 to="/preset/$"
                 params={{ _splat: entry.parentId }}
-                search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+                search={keepDataSource}
                 className="font-mono text-xs text-sky-700 underline underline-offset-2"
               >
                 {entry.parentId}
@@ -202,10 +203,7 @@ function AuditEntryRow({
                         <Link
                           to="/field/$"
                           params={{ _splat: fieldId }}
-                          search={(prev) => ({
-                            dataUrl: prev.dataUrl ?? '',
-                            locale: prev.locale ?? '',
-                          })}
+                          search={keepDataSource}
                           className="text-sky-700 underline underline-offset-2"
                         >
                           {fieldId}
@@ -255,7 +253,7 @@ function AuditEntryRow({
                 <Link
                   to="/field/$"
                   params={{ _splat: field.fieldId }}
-                  search={(prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' })}
+                  search={keepDataSource}
                   className="font-mono text-xs text-sky-700 underline underline-offset-2"
                 >
                   {field.fieldId}
@@ -306,23 +304,24 @@ export function AuditDetailPage() {
     return auditEntriesForSlug(slug, presets).filter(auditEntryNeedsAction)
   }, [slug, data, presets])
 
-  const defaultDecisions = useMemo(() => {
-    const decisions: Record<string, AuditDecision> = {}
+  const presetGroups = useMemo(() => {
+    const groups: { presetId: string; entries: AuditEntry[] }[] = []
     for (const entry of entries) {
-      decisions[entry.entryId] = defaultAuditDecision(entry)
+      const last = groups.at(-1)
+      if (last?.presetId === entry.presetId) last.entries.push(entry)
+      else groups.push({ presetId: entry.presetId, entries: [entry] })
     }
-    return decisions
+    return groups
   }, [entries])
 
-  const form = useForm({
-    defaultValues: { decisions: defaultDecisions } satisfies AuditFormValues,
-  })
+  // Missing keys mean "pending"; only decisions for currently listed entries are counted/used.
+  const form = useForm({ defaultValues: { decisions: {} } as AuditFormValues })
 
   useEffect(
-    function resetAuditFormWhenEntriesChange() {
-      form.reset({ decisions: defaultDecisions })
+    function resetAuditFormWhenSlugChanges() {
+      form.reset({ decisions: {} })
     },
-    [defaultDecisions, form],
+    [slug, form],
   )
 
   if (!slug) {
@@ -345,19 +344,6 @@ export function AuditDetailPage() {
 
   const actionableCount = entries.length
 
-  const presetGroups = useMemo(() => {
-    const groups: { presetId: string; entries: AuditEntry[] }[] = []
-    for (const entry of entries) {
-      const last = groups[groups.length - 1]
-      if (last && last.presetId === entry.presetId) {
-        last.entries.push(entry)
-      } else {
-        groups.push({ presetId: entry.presetId, entries: [entry] })
-      }
-    }
-    return groups
-  }, [entries])
-
   return (
     <div className="space-y-4 pb-12">
       <header className="space-y-2 border-b border-slate-200 pb-4">
@@ -367,20 +353,25 @@ export function AuditDetailPage() {
           <CountPill className="text-sm">{actionableCount}</CountPill>
         </h1>
         <p className="max-w-3xl text-sm text-slate-600">{meta.description}</p>
-        <p className="text-sm text-slate-500">
-          Use the action buttons on each row (one click to select, click again to clear). Rows left
-          as <strong>Unreviewed</strong> are skipped in the GitHub issue. Then run the{' '}
-          <strong>Cursor override automation</strong> workflow manually when you are ready for a PR.
-        </p>
-        <ul className="max-w-3xl list-inside list-disc text-sm text-slate-500">
-          {(
-            Object.entries(AUDIT_DECISION_HELP) as [keyof typeof AUDIT_DECISION_HELP, string][]
-          ).map(([decision, help]) => (
-            <li key={decision}>
-              <strong>{AUDIT_DECISION_LABELS[decision]}</strong> — {help}
-            </li>
-          ))}
-        </ul>
+        <details className="max-w-3xl text-sm text-slate-500">
+          <summary className="cursor-pointer font-medium text-slate-600 hover:text-slate-900">
+            How does this work?
+          </summary>
+          <p className="mt-2">
+            Pick a decision per row (click again to clear). Rows left <strong>Unreviewed</strong>{' '}
+            are skipped. “Create GitHub issue” opens one issue for all decisions; then run the{' '}
+            <strong>Cursor override automation</strong> workflow manually to get a PR.
+          </p>
+          <ul className="mt-2 list-inside list-disc">
+            {(
+              Object.entries(AUDIT_DECISION_HELP) as [keyof typeof AUDIT_DECISION_HELP, string][]
+            ).map(([decision, help]) => (
+              <li key={decision}>
+                <strong>{AUDIT_DECISION_LABELS[decision]}</strong> — {help}
+              </li>
+            ))}
+          </ul>
+        </details>
       </header>
 
       <AuditSchemaRefreshBanner />
@@ -396,7 +387,7 @@ export function AuditDetailPage() {
             event.stopPropagation()
             try {
               const issueUrl = buildBatchSchemaOverrideIssueUrl({
-                kind: auditSlugToKind(slug),
+                kind: slug,
                 slug,
                 entries,
                 decisions: form.state.values.decisions,
@@ -412,7 +403,9 @@ export function AuditDetailPage() {
         >
           <form.Subscribe selector={(state) => state.values.decisions}>
             {(decisions) => {
-              const issueCount = countAuditDecisionsForIssue(decisions)
+              const issueCount = entries.filter((entry) =>
+                auditDecisionIncludesIssue(decisions[entry.entryId] ?? 'pending'),
+              ).length
               return (
                 <>
                   <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -432,7 +425,7 @@ export function AuditDetailPage() {
                               key={entry.entryId}
                               entry={entry}
                               selected={selected === entry.entryId}
-                              decision={decisions[entry.entryId] ?? defaultAuditDecision(entry)}
+                              decision={decisions[entry.entryId] ?? 'pending'}
                               onDecisionChange={(value) => {
                                 form.setFieldValue('decisions', {
                                   ...decisions,
@@ -449,7 +442,7 @@ export function AuditDetailPage() {
                     </table>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 py-3 backdrop-blur">
                     <button
                       type="submit"
                       disabled={issueCount === 0}

@@ -1,4 +1,3 @@
-import type { AuditDecision } from '@/components/PageAudits/auditDecisions'
 import type { FieldListKey } from '@/components/PagePresets/missingFieldInheritance'
 import {
   mergeMissingInheritanceOverrideList,
@@ -134,10 +133,6 @@ export function auditEntriesForSlug(slug: AuditSlug, presets: DenormalizedPreset
 
 export function auditEntryNeedsAction(entry: AuditEntry): boolean {
   return entry.status === 'unreviewed' || entry.status === 'stale'
-}
-
-export function defaultAuditDecision(_entry: AuditEntry): AuditDecision {
-  return 'pending'
 }
 
 /** Documented override ids that still match live detection for this list. */

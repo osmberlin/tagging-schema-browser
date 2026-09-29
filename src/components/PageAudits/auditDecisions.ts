@@ -24,7 +24,3 @@ export const AUDIT_DECISION_HELP: Record<Exclude<AuditDecision, 'pending'>, stri
 export function auditDecisionIncludesIssue(decision: AuditDecision): boolean {
   return decision === 'intentional' || decision === 'remove_stale' || decision === 'needs_work'
 }
-
-export function countAuditDecisionsForIssue(decisions: Record<string, AuditDecision>): number {
-  return Object.values(decisions).filter(auditDecisionIncludesIssue).length
-}
