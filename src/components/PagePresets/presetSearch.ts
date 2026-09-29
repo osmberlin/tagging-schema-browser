@@ -14,8 +14,6 @@ type PresetSearchRecord = DenormalizedPreset & {
   iconName: string
   hasIconFacet: 'yes' | 'no' | 'broken'
   iconMismatchFacet: 'mismatch' | 'no'
-  missingInheritanceFacet: DenormalizedPreset['missingInheritanceStatus']
-  riskyTypeComboFacet: DenormalizedPreset['riskyTypeComboStatus']
   templateFacet: 'yes' | 'no'
   searchableFacet: 'yes' | 'no'
   expectedNoIconFacet: 'yes' | 'no'
@@ -36,8 +34,6 @@ function toItemsJsRecords(presets: DenormalizedPreset[]): Record<string, unknown
     iconPrefix: p.iconPrefix ?? 'none',
     hasIconFacet: p.icon && isIconSvgConfirmedMissing(p.icon) ? 'broken' : p.hasIcon ? 'yes' : 'no',
     iconMismatchFacet: p.iconMismatch ? 'mismatch' : 'no',
-    missingInheritanceFacet: p.missingInheritanceStatus,
-    riskyTypeComboFacet: p.riskyTypeComboStatus,
     templateFacet: p.isTemplate ? 'yes' : 'no',
     searchableFacet: p.searchable === false ? 'no' : 'yes',
     expectedNoIconFacet: isExpectedNoIconPreset(p) ? 'yes' : 'no',
@@ -69,8 +65,6 @@ const itemsJsConfig = {
     },
     hasIconFacet: { title: 'Has icon', size: 3 },
     iconMismatchFacet: { title: 'Icon consistency', size: 2 },
-    missingInheritanceFacet: { title: 'Field inheritance', size: 4 },
-    riskyTypeComboFacet: { title: 'Field type safety', size: 4 },
     templateFacet: { title: 'Template', size: 2 },
     searchableFacet: { title: 'Searchable', size: 2 },
     expectedNoIconFacet: { title: 'Expected no icon', size: 2 },
@@ -200,14 +194,6 @@ export function searchPresets(params: {
     mappedFilters.hasIconFacet = mappedFilters.hasIcon
     mappedFilters.hasIcon = []
   }
-  if (mappedFilters.missingInheritance) {
-    mappedFilters.missingInheritanceFacet = mappedFilters.missingInheritance
-    mappedFilters.missingInheritance = []
-  }
-  if (mappedFilters.riskyTypeCombo) {
-    mappedFilters.riskyTypeComboFacet = mappedFilters.riskyTypeCombo
-    mappedFilters.riskyTypeCombo = []
-  }
   if (mappedFilters.iconMismatch) {
     mappedFilters.iconMismatchFacet = mappedFilters.iconMismatch
     mappedFilters.iconMismatch = []
@@ -258,8 +244,6 @@ export function searchPresets(params: {
           aliasesText,
           hasIconFacet,
           iconMismatchFacet,
-          missingInheritanceFacet,
-          riskyTypeComboFacet,
           templateFacet,
           searchableFacet,
           expectedNoIconFacet,
@@ -274,8 +258,6 @@ export function searchPresets(params: {
         void aliasesText
         void hasIconFacet
         void iconMismatchFacet
-        void missingInheritanceFacet
-        void riskyTypeComboFacet
         void templateFacet
         void searchableFacet
         void expectedNoIconFacet
@@ -298,14 +280,6 @@ export function searchPresets(params: {
       if ('hasIconFacet' in mapped) {
         mapped.hasIcon = mapped.hasIconFacet
         delete mapped.hasIconFacet
-      }
-      if ('missingInheritanceFacet' in mapped) {
-        mapped.missingInheritance = mapped.missingInheritanceFacet
-        delete mapped.missingInheritanceFacet
-      }
-      if ('riskyTypeComboFacet' in mapped) {
-        mapped.riskyTypeCombo = mapped.riskyTypeComboFacet
-        delete mapped.riskyTypeComboFacet
       }
       if ('iconMismatchFacet' in mapped) {
         mapped.iconMismatch = mapped.iconMismatchFacet

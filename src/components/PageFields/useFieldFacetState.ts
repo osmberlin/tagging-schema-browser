@@ -11,7 +11,6 @@ export const fieldFacetSchema = z.object({
   f_type: z.string().catch('all'),
   f_usage: z.enum(['all', 'used', 'unused']).catch('all'),
   f_iconMismatch: z.enum(['all', 'mismatch', 'missing']).catch('all'),
-  f_riskyTypeCombo: z.enum(['all', 'risky']).catch('all'),
   f_sort: z.enum(['name', 'label', 'usage_desc', 'usage_asc']).catch('usage_desc'),
   f_optionIcon: z.string().catch(''),
 })
@@ -39,7 +38,6 @@ export function useFieldFacetMeta(fields: FieldViewModel[]) {
     let unusedCount = 0
     let mismatchCount = 0
     let missingCount = 0
-    let riskyTypeComboCount = 0
 
     for (const field of fields) {
       typeCounts.set(field.type, (typeCounts.get(field.type) ?? 0) + 1)
@@ -47,10 +45,9 @@ export function useFieldFacetMeta(fields: FieldViewModel[]) {
       else unusedCount += 1
       if (field.iconMismatchCount > 0) mismatchCount += 1
       if (field.iconMissingCount > 0) missingCount += 1
-      if (field.type === 'typeCombo' && field.riskyUsageCount > 0) riskyTypeComboCount += 1
     }
 
-    return { typeCounts, usedCount, unusedCount, mismatchCount, missingCount, riskyTypeComboCount }
+    return { typeCounts, usedCount, unusedCount, mismatchCount, missingCount }
   }, [fields])
 }
 

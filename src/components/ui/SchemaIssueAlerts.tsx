@@ -1,4 +1,6 @@
+import { auditPageHref } from '@/components/PageAudits/auditPageHref'
 import { SchemaIssueAction, SchemaIssueAlert } from '@/components/ui/SchemaIssue'
+import { schemaIssueStyles } from '@/theme/schemaIssue'
 
 export function BrokenPresetIconsAlert({
   count,
@@ -21,70 +23,77 @@ export function BrokenPresetIconsAlert({
 export function MissingInheritanceAlerts({
   unreviewedCount,
   staleCount,
-  onShowUnreviewed,
-  onShowStale,
-  showUnreviewed = true,
-  showStale = true,
+  dataUrl = '',
+  locale = '',
 }: {
   unreviewedCount: number
   staleCount: number
-  onShowUnreviewed: () => void
-  onShowStale: () => void
-  showUnreviewed?: boolean
-  showStale?: boolean
+  dataUrl?: string
+  locale?: string
 }) {
+  if (unreviewedCount <= 0 && staleCount <= 0) return null
+
   return (
-    <>
-      {showUnreviewed && unreviewedCount > 0 ? (
-        <SchemaIssueAlert variant="warning" title="Missing inheritance">
+    <SchemaIssueAlert variant="warning" title="Missing inheritance">
+      {unreviewedCount > 0 ? (
+        <>
           <strong>{unreviewedCount}</strong> {unreviewedCount === 1 ? 'preset has' : 'presets have'}{' '}
           unreviewed missing slash-parent field inheritance —{' '}
-          <SchemaIssueAction onClick={onShowUnreviewed}>show unreviewed</SchemaIssueAction>.
-        </SchemaIssueAlert>
+        </>
       ) : null}
-      {showStale && staleCount > 0 ? (
-        <SchemaIssueAlert variant="error" title="Stale override">
-          <strong>{staleCount}</strong> {staleCount === 1 ? 'override is' : 'overrides are'} stale —{' '}
-          <SchemaIssueAction onClick={onShowStale}>show stale overrides</SchemaIssueAction>.
-        </SchemaIssueAlert>
+      {staleCount > 0 ? (
+        <>
+          <strong>{staleCount}</strong> override{staleCount === 1 ? ' is' : 's are'} stale
+          {unreviewedCount > 0 ? '; ' : ' — '}
+        </>
       ) : null}
-    </>
+      <a
+        href={auditPageHref({ slug: 'missing-inheritance', dataUrl, locale })}
+        className={schemaIssueStyles.alertLink}
+      >
+        open audit page
+      </a>
+      .
+    </SchemaIssueAlert>
   )
 }
 
 export function RiskyTypeComboAlerts({
   unreviewedCount,
   staleCount,
-  onShowUnreviewed,
-  onShowStale,
-  showUnreviewed = true,
-  showStale = true,
+  dataUrl = '',
+  locale = '',
 }: {
   unreviewedCount: number
   staleCount: number
-  onShowUnreviewed: () => void
-  onShowStale: () => void
-  showUnreviewed?: boolean
-  showStale?: boolean
+  dataUrl?: string
+  locale?: string
 }) {
+  if (unreviewedCount <= 0 && staleCount <= 0) return null
+
   return (
-    <>
-      {showUnreviewed && unreviewedCount > 0 ? (
-        <SchemaIssueAlert variant="warning" title="Risky typeCombo">
+    <SchemaIssueAlert variant="warning" title="Risky typeCombo">
+      {unreviewedCount > 0 ? (
+        <>
           <strong>{unreviewedCount}</strong>{' '}
           {unreviewedCount === 1 ? 'preset exposes' : 'presets expose'} a property{' '}
           <code>typeCombo</code> field that can add <code>=yes</code> when left empty —{' '}
-          <SchemaIssueAction onClick={onShowUnreviewed}>show affected presets</SchemaIssueAction>.
-        </SchemaIssueAlert>
+        </>
       ) : null}
-      {showStale && staleCount > 0 ? (
-        <SchemaIssueAlert variant="error" title="Stale typeCombo override">
-          <strong>{staleCount}</strong> risky typeCombo{' '}
-          {staleCount === 1 ? 'override is' : 'overrides are'} stale —{' '}
-          <SchemaIssueAction onClick={onShowStale}>show stale overrides</SchemaIssueAction>.
-        </SchemaIssueAlert>
+      {staleCount > 0 ? (
+        <>
+          <strong>{staleCount}</strong> risky typeCombo override{staleCount === 1 ? ' is' : 's are'}{' '}
+          stale{unreviewedCount > 0 ? '; ' : ' — '}
+        </>
       ) : null}
-    </>
+      <a
+        href={auditPageHref({ slug: 'risky-typecombo', dataUrl, locale })}
+        className={schemaIssueStyles.alertLink}
+      >
+        open audit page
+      </a>
+      .
+    </SchemaIssueAlert>
   )
 }
 
@@ -117,10 +126,12 @@ export function FieldIconMismatchAlert({
 
 export function FieldRiskyTypeComboAlert({
   count,
-  onShowRisky,
+  dataUrl = '',
+  locale = '',
 }: {
   count: number
-  onShowRisky: () => void
+  dataUrl?: string
+  locale?: string
 }) {
   if (count <= 0) return null
 
@@ -128,7 +139,13 @@ export function FieldRiskyTypeComboAlert({
     <SchemaIssueAlert variant="warning" title="Risky typeCombo">
       <strong>{count}</strong> {count === 1 ? 'typeCombo field looks' : 'typeCombo fields look'}{' '}
       like a property, not a type selector —{' '}
-      <SchemaIssueAction onClick={onShowRisky}>show fields</SchemaIssueAction>.
+      <a
+        href={auditPageHref({ slug: 'risky-typecombo', dataUrl, locale })}
+        className={schemaIssueStyles.alertLink}
+      >
+        open audit page
+      </a>
+      .
     </SchemaIssueAlert>
   )
 }
