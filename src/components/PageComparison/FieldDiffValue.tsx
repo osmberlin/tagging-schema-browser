@@ -216,6 +216,42 @@ function RecordDiffValue({ diff, arrowClass }: { diff: DiffEntry; arrowClass: st
   )
 }
 
+function IconRecordDiffValue({ diff, arrowClass }: { diff: DiffEntry; arrowClass: string }) {
+  const { removed, added, modified } = diff.recordChanges!
+  const keyClass = 'font-mono text-xs text-slate-500'
+
+  return (
+    <span className="inline-flex flex-col gap-1">
+      {removed.map((key) => (
+        <span key={`removed-${key}`} className="inline-flex flex-wrap items-center gap-x-1">
+          <span className="text-rose-600">−</span>
+          <span className={keyClass}>{key}=</span>
+          {diff.beforeRecord?.[key] ? (
+            <IconDiffLink iconName={diff.beforeRecord[key]} tone="before" />
+          ) : null}
+        </span>
+      ))}
+      {added.map((key) => (
+        <span key={`added-${key}`} className="inline-flex flex-wrap items-center gap-x-1">
+          <span className="text-emerald-700">+</span>
+          <span className={keyClass}>{key}=</span>
+          {diff.afterRecord?.[key] ? (
+            <IconDiffLink iconName={diff.afterRecord[key]} tone="after" />
+          ) : null}
+        </span>
+      ))}
+      {modified.map((entry) => (
+        <span key={entry.key} className="inline-flex flex-wrap items-center gap-x-1">
+          <span className={keyClass}>{entry.key}=</span>
+          <IconDiffLink iconName={entry.before} tone="before" />
+          <span className={arrowClass}>→</span>
+          <IconDiffLink iconName={entry.after} tone="after" />
+        </span>
+      ))}
+    </span>
+  )
+}
+
 function PlainDiffValue({ diff, arrowClass }: { diff: DiffEntry; arrowClass: string }) {
   return (
     <>
@@ -239,6 +275,10 @@ export function FieldDiffValue({
 
   if (diff.kind === 'ordered-list' && diff.orderedListChanges) {
     return <OrderedListDiffValue diff={diff} arrowClass={arrowClass} />
+  }
+
+  if (diff.kind === 'record' && diff.recordChanges && diff.label === 'Icons') {
+    return <IconRecordDiffValue diff={diff} arrowClass={arrowClass} />
   }
 
   if (diff.kind === 'record' && diff.recordChanges) {
