@@ -132,6 +132,11 @@ function UnorderedListDiffValue({ diff, arrowClass }: { diff: DiffEntry; arrowCl
           ({unchangedCount} unchanged{unchangedCount === 1 ? '' : 's'})
         </span>
       ) : null}
+      {diff.notes?.map((note) => (
+        <span key={note} className="text-xs text-slate-500">
+          {note}
+        </span>
+      ))}
     </span>
   )
 }
