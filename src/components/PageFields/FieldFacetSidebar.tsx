@@ -94,6 +94,13 @@ export function FieldFacetSidebar() {
             count={meta.mismatchCount}
             onClick={() => setState({ f_iconMismatch: 'mismatch', f_riskyTypeCombo: 'all' })}
           />
+          <FacetButton
+            active={state.f_iconMismatch === 'missing'}
+            label="Option icon missing"
+            labelArea="presets"
+            count={meta.missingCount}
+            onClick={() => setState({ f_iconMismatch: 'missing', f_riskyTypeCombo: 'all' })}
+          />
         </ul>
       </SidebarSection>
 
