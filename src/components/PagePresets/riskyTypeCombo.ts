@@ -83,13 +83,6 @@ export function detectRiskyTypeCombo(
   return { fields }
 }
 
-function sameFieldIdSet(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false
-  const sortedA = [...a].sort()
-  const sortedB = [...b].sort()
-  return sortedA.every((value, index) => value === sortedB[index])
-}
-
 export function resolveRiskyTypeComboStatus(
   current: RiskyTypeCombo | null,
   override: RiskyTypeComboOverride | undefined,
@@ -99,42 +92,13 @@ export function resolveRiskyTypeComboStatus(
   }
   if (!override) return 'unreviewed'
 
-  const currentIds = current.fields.map((field) => field.fieldId)
-  return sameFieldIdSet(currentIds, override.fieldIds) ? 'intentional' : 'stale'
+  // Like missing inheritance: the override may document a subset (rest stays unreviewed);
+  // ids that are no longer risky make it stale.
+  const currentIds = new Set(current.fields.map((field) => field.fieldId))
+  if (!override.fieldIds.every((fieldId) => currentIds.has(fieldId))) return 'stale'
+  return override.fieldIds.length === currentIds.size ? 'intentional' : 'unreviewed'
 }
 
 export function hasRiskyTypeCombo(status: RiskyTypeComboStatus): boolean {
   return status === 'unreviewed' || status === 'intentional' || status === 'stale'
-}
-
-export function riskyTypeComboOverrideFromCurrent(current: RiskyTypeCombo): RiskyTypeComboOverride {
-  return {
-    fieldIds: current.fields.map((field) => field.fieldId),
-  }
-}
-
-export function formatRiskyTypeComboOverrideYaml(
-  presetId: string,
-  current: RiskyTypeCombo,
-): string {
-  const override = riskyTypeComboOverrideFromCurrent(current)
-  const lines = [`  ${presetId}:`, '    fieldIds:']
-  for (const fieldId of override.fieldIds) {
-    lines.push(`      - ${fieldId}`)
-  }
-  return `${lines.join('\n')}\n`
-}
-
-/** Format a stored override entry for issue bodies (stale removal / diff). */
-export function formatRiskyTypeComboOverrideYamlFromStored(
-  presetId: string,
-  override: RiskyTypeComboOverride,
-): string {
-  return formatRiskyTypeComboOverrideYaml(presetId, {
-    fields: override.fieldIds.map((fieldId) => ({
-      fieldId,
-      fieldKey: fieldId,
-      listKey: 'fields' as const,
-    })),
-  })
 }
