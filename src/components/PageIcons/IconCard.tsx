@@ -24,10 +24,10 @@ function formatOptionUsages(usages: OptionIconUsageRef[]): string {
 }
 
 const iconCardClass =
-  'flex h-52 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white'
+  'flex h-44 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white'
 
 const footerSlotClass =
-  'flex flex-1 items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-medium'
+  'flex flex-1 items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-medium'
 
 const footerLinkClass =
   'transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset'
@@ -64,19 +64,19 @@ export function IconCard({
 
   return (
     <article className={iconCardClass} data-icon={iconName}>
-      <div className="flex min-w-0 flex-1 flex-col p-2.5 pb-2">
+      <div className="flex min-w-0 flex-1 flex-col p-2">
         <div className="flex min-w-0 items-center gap-2">
           <Tooltip
             content={missingSvg ? 'Missing icon asset' : '60px reference size in the editor'}
             placement="top"
           >
             <div
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-slate-500 [&_svg]:h-8 [&_svg]:w-8 [&_svg]:fill-current ${
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 [&_svg]:h-7 [&_svg]:w-7 [&_svg]:fill-current ${
                 missingSvg ? 'border border-red-300 bg-red-50 text-red-700' : 'bg-slate-100'
               }`}
             >
               {svgDataUrl ? (
-                <img src={svgDataUrl} alt="" className="h-8 w-8 object-contain" />
+                <img src={svgDataUrl} alt="" className="h-7 w-7 object-contain" />
               ) : missingSvg ? (
                 <span className="text-sm font-bold">!</span>
               ) : (
@@ -102,7 +102,7 @@ export function IconCard({
         </div>
 
         {presetUsageCount > 0 ? (
-          <p className="mt-2 line-clamp-2 text-xs leading-snug text-slate-500" title={presetNames}>
+          <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-slate-500" title={presetNames}>
             <AreaIcon
               area="presets"
               className={cn('mr-1 inline h-3 w-3 align-[-2px]', areaAccent.presets.icon)}
@@ -112,7 +112,7 @@ export function IconCard({
         ) : null}
         {optionUsageCount > 0 ? (
           <p
-            className="mt-1.5 line-clamp-2 text-xs leading-snug text-slate-500"
+            className="mt-1 line-clamp-2 text-xs leading-snug text-slate-500"
             title={optionSummary}
           >
             <AreaIcon
