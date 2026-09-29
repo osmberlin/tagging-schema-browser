@@ -1,14 +1,14 @@
 import { useEffect, useMemo } from 'react'
 import { collectOptionIconUsages } from '@/utils/fieldOptions'
 import type { DenormalizedPreset, FieldTranslations, IconViewModel, RawFields } from '@/utils/types'
-import { ensureIconsForNames, getIconRegistry, useIconRegistryEpoch } from './iconRegistry'
+import { ensureIconsForNames, useIconRegistryEntries } from './iconRegistry'
 
 export function useIconSearch(
   presets: DenormalizedPreset[],
   fields: RawFields,
   fieldTranslations: FieldTranslations = {},
 ) {
-  const registryEpoch = useIconRegistryEpoch()
+  const registryEntries = useIconRegistryEntries()
 
   useEffect(() => {
     const presetIconNames = presets
@@ -22,8 +22,6 @@ export function useIconSearch(
   }, [presets, fields, fieldTranslations])
 
   return useMemo(() => {
-    const registry = getIconRegistry()
-    void registryEpoch
     const presetUsage = new Map<string, DenormalizedPreset[]>()
     const optionUsage = collectOptionIconUsages(fields, presets, fieldTranslations)
 
@@ -34,15 +32,16 @@ export function useIconSearch(
       presetUsage.set(preset.icon, list)
     }
 
-    const referenced = new Set([...presetUsage.keys(), ...optionUsage.keys()])
-    for (const iconName of referenced) {
-      if (!registry.has(iconName)) {
+    // Referenced icons without a registry entry (unknown name / supplier) still get a card.
+    const entries = new Map(registryEntries.map((entry) => [entry.name, entry]))
+    for (const iconName of [...presetUsage.keys(), ...optionUsage.keys()]) {
+      if (!entries.has(iconName)) {
         const prefix = iconName.split('-')[0] ?? 'unknown'
-        registry.set(iconName, { name: iconName, prefix })
+        entries.set(iconName, { name: iconName, prefix })
       }
     }
 
-    const icons: IconViewModel[] = Array.from(registry.values()).map((entry) => {
+    const icons: IconViewModel[] = Array.from(entries.values()).map((entry) => {
       const presetsForIcon = presetUsage.get(entry.name) ?? []
       const optionsForIcon = optionUsage.get(entry.name) ?? []
       const presetUsageCount = presetsForIcon.length
@@ -58,5 +57,5 @@ export function useIconSearch(
     })
 
     return { icons }
-  }, [presets, fields, fieldTranslations, registryEpoch])
+  }, [presets, fields, fieldTranslations, registryEntries])
 }
