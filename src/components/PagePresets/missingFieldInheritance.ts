@@ -134,16 +134,6 @@ export function overrideMissedFieldIdsAreValid(
   return override.missedFieldIds.every((fieldId) => currentSet.has(fieldId))
 }
 
-/** Missed field ids not yet documented in the override snapshot. */
-export function remainingMissedFieldIds(
-  current: MissingFieldListInheritance,
-  override?: MissingInheritanceOverrideList,
-): string[] {
-  if (!override) return [...current.missedFieldIds]
-  const documented = new Set(override.missedFieldIds)
-  return current.missedFieldIds.filter((fieldId) => !documented.has(fieldId))
-}
-
 export function overrideDocumentsAllMissedFields(
   current: MissingFieldListInheritance,
   override: MissingInheritanceOverrideList,
@@ -209,90 +199,4 @@ export function resolveMissingInheritanceStatus(
 
 export function hasMissingFieldInheritance(status: MissingInheritanceStatus): boolean {
   return status === 'unreviewed' || status === 'intentional' || status === 'stale'
-}
-
-/** Strip debug-only fields so the result matches `MissingInheritanceOverride`. */
-/** Merge a stored override with newly documented missed field ids for one list. */
-export function mergeMissingInheritanceOverrideList(
-  current: MissingFieldListInheritance,
-  existing: MissingInheritanceOverrideList | undefined,
-  newlyDocumentedIds: string[],
-): MissingInheritanceOverrideList {
-  const merged = new Set(existing?.missedFieldIds ?? [])
-  for (const fieldId of newlyDocumentedIds) merged.add(fieldId)
-  return {
-    parentId: current.parentId,
-    missedFieldIds: [...merged].sort(),
-  }
-}
-
-export function missingInheritanceOverrideFromCurrent(
-  current: MissingFieldInheritance,
-): MissingInheritanceOverride {
-  const override: MissingInheritanceOverride = {}
-  for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const section = current[fieldListKey]
-    if (!section) continue
-    override[fieldListKey] = {
-      parentId: section.parentId,
-      missedFieldIds: [...section.missedFieldIds],
-    }
-  }
-  return override
-}
-
-/**
- * YAML block to paste under `presets:` in `missing-inheritance-overrides.yaml`.
- * Omits `explicitPresetRefs` and other debug-only fields.
- */
-export function formatMissingInheritanceOverrideYaml(
-  presetId: string,
-  current: MissingFieldInheritance,
-): string {
-  const override = missingInheritanceOverrideFromCurrent(current)
-  const lines: string[] = [`  ${presetId}:`]
-
-  for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const section = override[fieldListKey]
-    if (!section) continue
-    lines.push(`    ${fieldListKey}:`)
-    lines.push(`      parentId: ${section.parentId}`)
-    lines.push('      missedFieldIds:')
-    for (const fieldId of section.missedFieldIds) {
-      lines.push(`        - ${fieldId}`)
-    }
-  }
-
-  return `${lines.join('\n')}\n`
-}
-
-/** Format a stored override entry for issue bodies (stale removal / diff). */
-export function formatMissingInheritanceOverrideYamlFromStored(
-  presetId: string,
-  override: MissingInheritanceOverride,
-): string {
-  return formatMissingInheritanceOverrideYamlListScopedFromStored(presetId, override, [
-    'fields',
-    'moreFields',
-  ])
-}
-
-/** Format only selected list sections from a stored override (list-scoped stale removal). */
-export function formatMissingInheritanceOverrideYamlListScopedFromStored(
-  presetId: string,
-  override: MissingInheritanceOverride,
-  fieldListKeys: readonly FieldListKey[],
-): string {
-  const scoped: MissingInheritanceOverride = {}
-  for (const fieldListKey of fieldListKeys) {
-    const section = override[fieldListKey]
-    if (section) scoped[fieldListKey] = section
-  }
-  const current: MissingFieldInheritance = {}
-  for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const section = scoped[fieldListKey]
-    if (!section) continue
-    current[fieldListKey] = { ...section, explicitPresetRefs: [] }
-  }
-  return formatMissingInheritanceOverrideYaml(presetId, current)
 }

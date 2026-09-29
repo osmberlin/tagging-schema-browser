@@ -3,19 +3,17 @@ import { Link, useParams, useSearch } from '@tanstack/react-router'
 import { useEffect, useMemo, useRef } from 'react'
 import { z } from 'zod'
 import {
-  AUDIT_DECISION_HELP,
-  AUDIT_DECISION_LABELS,
-  AUDIT_DECISION_SHORT_LABELS,
-  auditDecisionIncludesIssue,
-  type AuditDecision,
+  FIELD_DECISION_HELP,
+  FIELD_DECISION_LABELS,
+  FIELD_DECISIONS_BY_STATE,
+  fieldDecisionKey,
+  type AuditFieldState,
+  type FieldDecision,
 } from '@/components/PageAudits/auditDecisions'
 import {
   auditEntriesForSlug,
-  auditEntryNeedsAction,
-  invalidOverrideMissedFieldIds,
-  isOrphanedStaleMissingInheritanceEntry,
-  validDocumentedMissedFieldIds,
   type AuditEntry,
+  type AuditField,
 } from '@/components/PageAudits/auditEntries'
 import {
   AuditSchemaLoadingPanel,
@@ -24,12 +22,10 @@ import {
 import { AUDIT_META, isAuditSlug } from '@/components/PageAudits/auditSlugs'
 import { buildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/buildBatchOverrideIssueUrl'
 import { fieldListTitle } from '@/components/PageAudits/fieldListTitle'
-import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
-import { externalActionPillClass } from '@/theme/externalAccent'
 import { cn } from '@/utils/tw'
 
 /** Keep data source + locale when linking to preset/field detail pages. */
@@ -42,95 +38,209 @@ const auditSearchSchema = z.object({
   selected: z.string().catch(''),
 })
 
-type AuditFormValues = {
-  decisions: Record<string, AuditDecision>
+type Decisions = Record<string, FieldDecision | undefined>
+
+const DECISION_ACTIVE_CLASS: Record<FieldDecision, string> = {
+  intentional: 'bg-emerald-600 text-white',
+  needs_work: 'bg-amber-500 text-white',
+  remove: 'bg-rose-600 text-white',
 }
 
-const ACTIONABLE_DECISIONS: Exclude<AuditDecision, 'pending'>[] = [
-  'intentional',
-  'remove_stale',
-  'needs_work',
-]
+const linkClass = 'text-sky-700 underline decoration-sky-300 underline-offset-2 hover:text-sky-900'
 
-// "False positive" makes no sense for stale rows; "Delete outdated override" only for stale rows.
-function actionableDecisionsForEntry(entry: AuditEntry): Exclude<AuditDecision, 'pending'>[] {
-  return ACTIONABLE_DECISIONS.filter((decision) =>
-    entry.status === 'stale' ? decision !== 'intentional' : decision !== 'remove_stale',
-  )
-}
-
-function decisionButtonClass(active: boolean) {
-  return cn(
-    'min-w-[9.5rem] rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors',
-    active
-      ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
-      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50',
-  )
-}
-
-function AuditDecisionActions({
-  entry,
-  decision,
-  onDecisionChange,
+/**
+ * Single-line text that truncates with "…" and shows the full value on hover.
+ * `fromStart` cuts the beginning instead, so ids with a shared prefix stay distinguishable.
+ */
+function Truncated({
+  text,
+  className,
+  fromStart = false,
 }: {
-  entry: AuditEntry
-  decision: AuditDecision
-  onDecisionChange: (decision: AuditDecision) => void
+  text: string
+  className?: string
+  fromStart?: boolean
 }) {
-  const options = actionableDecisionsForEntry(entry)
-
   return (
-    <div className="flex min-w-[14rem] flex-col gap-2">
-      <div
-        className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3"
-        role="group"
-        aria-label={`Decision for ${entry.presetId}`}
+    <span
+      className={cn('block truncate', fromStart && 'text-left [direction:rtl]', className)}
+      title={text}
+    >
+      {/* LRM marks keep punctuation in place inside the rtl box. */}
+      {fromStart ? `\u200E${text}\u200E` : text}
+    </span>
+  )
+}
+
+/** Segmented button group. Clicking the active option clears it. */
+function DecisionButtons({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: FieldDecision[]
+  value: FieldDecision | undefined
+  onChange: (value: FieldDecision | undefined) => void
+  label: string
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className="inline-flex shrink-0 overflow-hidden rounded-md text-xs font-medium ring-1 ring-slate-300"
+    >
+      {options.map((option) => {
+        const active = value === option
+        return (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={active}
+            title={FIELD_DECISION_HELP[option]}
+            onClick={() => onChange(active ? undefined : option)}
+            className={cn(
+              'px-2.5 py-1 whitespace-nowrap transition-colors not-first:border-l not-first:border-slate-300',
+              active ? DECISION_ACTIVE_CLASS[option] : 'bg-white text-slate-700 hover:bg-slate-100',
+            )}
+          >
+            {FIELD_DECISION_LABELS[option]}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function FieldLink({ field }: { field: AuditField }) {
+  return (
+    <div className="min-w-0 flex-1">
+      <Link
+        to="/field/$"
+        params={{ _splat: field.fieldId }}
+        search={keepDataSource}
+        className={cn('font-mono text-xs', linkClass)}
       >
-        {options.map((option) => {
-          const active = decision === option
-          return (
-            <button
-              key={option}
-              type="button"
-              aria-pressed={active}
-              className={decisionButtonClass(active)}
-              onClick={() => onDecisionChange(active ? 'pending' : option)}
-            >
-              {AUDIT_DECISION_SHORT_LABELS[option]}
-            </button>
-          )
-        })}
-      </div>
-      {decision !== 'pending' ? (
-        <p className="text-xs leading-relaxed text-slate-500">{AUDIT_DECISION_HELP[decision]}</p>
+        <Truncated text={field.fieldId} fromStart />
+      </Link>
+      {field.fieldKey ? (
+        <Truncated
+          text={`empty typeCombo can write ${field.fieldKey}=yes`}
+          className="text-xs text-slate-500"
+        />
       ) : null}
     </div>
+  )
+}
+
+function fieldGroupTitle(entry: AuditEntry, state: AuditFieldState): string {
+  if (state === 'stale') return 'Outdated override entries (no longer detected)'
+  if (entry.kind === 'risky-typecombo') return 'typeCombo fields that can write key=yes'
+  return `${fieldListTitle(entry.listKey!)} of the parent that are not inherited`
+}
+
+function EntryFields({
+  entry,
+  decisions,
+  setDecisions,
+}: {
+  entry: AuditEntry
+  decisions: Decisions
+  setDecisions: (updates: Decisions) => void
+}) {
+  const keyOf = (field: AuditField) => fieldDecisionKey(entry.entryId, field.fieldId)
+  const groups = (['missing', 'stale'] as const)
+    .map((state) => ({ state, fields: entry.fields.filter((field) => field.state === state) }))
+    .filter((group) => group.fields.length > 0)
+
+  return (
+    <div className="space-y-4">
+      {groups.map(({ state, fields }) => {
+        const options = FIELD_DECISIONS_BY_STATE[state]
+        const first = decisions[keyOf(fields[0]!)]
+        const allSame = fields.every((field) => decisions[keyOf(field)] === first)
+        return (
+          <div key={state} className="space-y-1">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-1">
+              <p className="min-w-0 flex-1 text-xs font-semibold text-slate-600">
+                {fieldGroupTitle(entry, state)}
+              </p>
+              {fields.length > 1 ? <span className="text-xs text-slate-500">All:</span> : null}
+              {fields.length > 1 ? (
+                <DecisionButtons
+                  label={`Decision for all fields of ${entry.entryId}`}
+                  options={options}
+                  value={allSame ? first : undefined}
+                  onChange={(value) =>
+                    setDecisions(Object.fromEntries(fields.map((field) => [keyOf(field), value])))
+                  }
+                />
+              ) : null}
+            </div>
+            <ul className="space-y-1">
+              {fields.map((field) => (
+                <li key={field.fieldId} className="flex items-center gap-3">
+                  <FieldLink field={field} />
+                  <DecisionButtons
+                    label={`Decision for ${field.fieldId}`}
+                    options={options}
+                    value={decisions[keyOf(field)]}
+                    onChange={(value) => setDecisions({ [keyOf(field)]: value })}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      })}
+      {entry.documentedFieldIds.length > 0 ? (
+        <p className="text-xs text-slate-500">
+          Already OK to skip:{' '}
+          <span className="font-mono">{entry.documentedFieldIds.join(', ')}</span>
+        </p>
+      ) : null}
+      {entry.explicitPresetRefs.length > 0 ? (
+        <p className="text-xs text-slate-500">
+          Other preset refs:{' '}
+          <span className="font-mono">{entry.explicitPresetRefs.join(', ')}</span>
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+function PresetLink({ presetId, className }: { presetId: string; className?: string }) {
+  return (
+    <Link
+      to="/preset/$"
+      params={{ _splat: presetId }}
+      search={keepDataSource}
+      className={className}
+    >
+      <Truncated text={presetId} fromStart />
+    </Link>
   )
 }
 
 function AuditEntryRow({
   entry,
   selected,
-  decision,
-  onDecisionChange,
-  showPresetCell,
   presetRowSpan,
-  presetGroupStart,
+  groupStart,
+  children,
 }: {
   entry: AuditEntry
   selected: boolean
-  decision: AuditDecision
-  onDecisionChange: (decision: AuditDecision) => void
-  showPresetCell: boolean
+  /** 0 = preset cell is rendered by an earlier row of the same preset. */
   presetRowSpan: number
-  presetGroupStart: boolean
+  groupStart: boolean
+  children: React.ReactNode
 }) {
   const rowRef = useRef<HTMLTableRowElement>(null)
 
   useEffect(
     function scrollSelectedAuditRowIntoView() {
-      if (!selected || !rowRef.current) return
-      rowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      if (selected) rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     },
     [selected],
   )
@@ -140,155 +250,30 @@ function AuditEntryRow({
       ref={rowRef}
       data-audit-entry={entry.entryId}
       className={cn(
-        'border-b border-slate-100 align-top',
-        presetGroupStart && 'border-t-2 border-t-slate-200',
-        selected && 'bg-amber-50/80 ring-1 ring-amber-200 ring-inset',
+        'align-top',
+        groupStart ? 'border-t-2 border-slate-200' : 'border-t border-slate-100',
+        selected && 'bg-amber-50/80',
       )}
     >
-      {showPresetCell ? (
-        <td className="px-3 py-3 align-top" rowSpan={presetRowSpan}>
-          <div className="space-y-1">
-            <Link
-              to="/preset/$"
-              params={{ _splat: entry.presetId }}
-              search={keepDataSource}
-              className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:text-sky-700"
-            >
-              {entry.presetName}
-            </Link>
-            <p className="font-mono text-xs text-slate-500">{entry.presetId}</p>
-            {presetRowSpan > 1 ? (
-              <p className="text-xs text-slate-400">{presetRowSpan} lists</p>
-            ) : null}
-          </div>
+      {presetRowSpan > 0 ? (
+        <td className="px-3 py-3" rowSpan={presetRowSpan}>
+          <Link
+            to="/preset/$"
+            params={{ _splat: entry.presetId }}
+            search={keepDataSource}
+            className="font-medium text-slate-900 underline decoration-slate-300 underline-offset-2 hover:text-sky-700"
+          >
+            <Truncated text={entry.presetName} />
+          </Link>
+          <Truncated text={entry.presetId} fromStart className="font-mono text-xs text-slate-500" />
         </td>
       ) : null}
-      <td className="px-3 py-3 text-sm text-slate-700">
-        {entry.kind === 'missing-inheritance' ? (
-          <div className="space-y-2">
-            <p>
-              <span className="font-medium text-slate-900">
-                {fieldListTitle(entry.fieldListKey)}
-              </span>{' '}
-              — parent{' '}
-              <Link
-                to="/preset/$"
-                params={{ _splat: entry.parentId }}
-                search={keepDataSource}
-                className="font-mono text-xs text-sky-700 underline underline-offset-2"
-              >
-                {entry.parentId}
-              </Link>
-            </p>
-            {isOrphanedStaleMissingInheritanceEntry(entry) ? (
-              <>
-                <p className="text-xs text-slate-500">Stale override (live detection gone):</p>
-                <ul className="list-inside list-disc font-mono text-xs text-slate-800">
-                  {entry.documentedMissedFieldIds.length > 0 ? (
-                    entry.documentedMissedFieldIds.map((fieldId) => (
-                      <li key={fieldId}>{fieldId}</li>
-                    ))
-                  ) : (
-                    <li className="text-slate-500">None</li>
-                  )}
-                </ul>
-              </>
-            ) : (
-              <>
-                <p className="text-xs text-slate-500">Still needs a decision:</p>
-                <ul className="list-inside list-disc font-mono text-xs text-slate-800">
-                  {entry.missedFieldIds.length > 0 ? (
-                    entry.missedFieldIds.map((fieldId) => (
-                      <li key={fieldId}>
-                        <Link
-                          to="/field/$"
-                          params={{ _splat: fieldId }}
-                          search={keepDataSource}
-                          className="text-sky-700 underline underline-offset-2"
-                        >
-                          {fieldId}
-                        </Link>
-                      </li>
-                    ))
-                  ) : (
-                    <li className="text-slate-500">None</li>
-                  )}
-                </ul>
-                {validDocumentedMissedFieldIds(entry).length > 0 ? (
-                  <>
-                    <p className="text-xs text-slate-500">
-                      Already documented as intentional skips:
-                    </p>
-                    <ul className="list-inside list-disc font-mono text-xs text-slate-500">
-                      {validDocumentedMissedFieldIds(entry).map((fieldId) => (
-                        <li key={fieldId}>{fieldId}</li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null}
-                {entry.status === 'stale' && invalidOverrideMissedFieldIds(entry).length > 0 ? (
-                  <>
-                    <p className="text-xs text-rose-600">
-                      Override ids no longer missing on live preset:
-                    </p>
-                    <ul className="list-inside list-disc font-mono text-xs text-rose-700">
-                      {invalidOverrideMissedFieldIds(entry).map((fieldId) => (
-                        <li key={fieldId}>{fieldId}</li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null}
-              </>
-            )}
-            {entry.explicitPresetRefs.length > 0 ? (
-              <p className="text-xs text-slate-500">
-                Other preset refs: {entry.explicitPresetRefs.join(', ')}
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {entry.riskyTypeCombo.fields.map((field) => (
-              <li key={`${field.fieldId}:${field.listKey}`}>
-                <Link
-                  to="/field/$"
-                  params={{ _splat: field.fieldId }}
-                  search={keepDataSource}
-                  className="font-mono text-xs text-sky-700 underline underline-offset-2"
-                >
-                  {field.fieldId}
-                </Link>{' '}
-                <span className="text-slate-500">
-                  (<code>{field.fieldKey}</code>, {field.listKey})
-                </span>
-                <span className="block text-xs text-slate-600">
-                  Leaving this <code>typeCombo</code> empty in iD can write{' '}
-                  <code>{field.fieldKey}=yes</code>.
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </td>
-      <td className="px-3 py-3 text-sm">
-        <span
-          className={cn(
-            'inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset',
-            entry.status === 'stale'
-              ? 'bg-rose-50 text-rose-800 ring-rose-100'
-              : 'bg-amber-50 text-amber-800 ring-amber-100',
-          )}
-        >
-          {entry.status}
-        </span>
-      </td>
-      <td className="w-[38%] min-w-[14rem] px-3 py-3 align-top">
-        <AuditDecisionActions
-          entry={entry}
-          decision={decision}
-          onDecisionChange={onDecisionChange}
-        />
-      </td>
+      {entry.kind === 'missing-inheritance' ? (
+        <td className="px-3 py-3">
+          <PresetLink presetId={entry.parentId!} className={cn('font-mono text-xs', linkClass)} />
+        </td>
+      ) : null}
+      <td className="px-3 py-3">{children}</td>
     </tr>
   )
 }
@@ -299,26 +284,15 @@ export function AuditDetailPage() {
   const { selected } = useSearch({ strict: false, select: (raw) => auditSearchSchema.parse(raw) })
   const { presets, data, dataUrl, reference, loading } = useSchema()
 
-  const entries = useMemo(() => {
-    if (!slug || !data) return []
-    return auditEntriesForSlug(slug, presets).filter(auditEntryNeedsAction)
-  }, [slug, data, presets])
+  const entries = useMemo(
+    () => (slug && data ? auditEntriesForSlug(slug, presets) : []),
+    [slug, data, presets],
+  )
 
-  const presetGroups = useMemo(() => {
-    const groups: { presetId: string; entries: AuditEntry[] }[] = []
-    for (const entry of entries) {
-      const last = groups.at(-1)
-      if (last?.presetId === entry.presetId) last.entries.push(entry)
-      else groups.push({ presetId: entry.presetId, entries: [entry] })
-    }
-    return groups
-  }, [entries])
-
-  // Missing keys mean "pending"; only decisions for currently listed entries are counted/used.
-  const form = useForm({ defaultValues: { decisions: {} } as AuditFormValues })
+  const form = useForm({ defaultValues: { decisions: {} as Decisions } })
 
   useEffect(
-    function resetAuditFormWhenSlugChanges() {
+    function resetDecisionsWhenSlugChanges() {
       form.reset({ decisions: {} })
     },
     [slug, form],
@@ -342,15 +316,15 @@ export function AuditDetailPage() {
     )
   }
 
-  const actionableCount = entries.length
+  const hasParentColumn = slug === 'missing-inheritance'
 
   return (
-    <div className="space-y-4 pb-12">
+    <div className="space-y-4">
       <header className="space-y-2 border-b border-slate-200 pb-4">
         <h1 className="flex flex-wrap items-center gap-2 font-display text-2xl font-semibold text-slate-900">
           <AreaIcon area={meta.area} className={`h-7 w-7 ${areaAccent[meta.area].icon}`} />
           Audit: {meta.title}
-          <CountPill className="text-sm">{actionableCount}</CountPill>
+          <CountPill className="text-sm">{entries.length}</CountPill>
         </h1>
         <p className="max-w-3xl text-sm text-slate-600">{meta.description}</p>
         <details className="max-w-3xl text-sm text-slate-500">
@@ -358,16 +332,15 @@ export function AuditDetailPage() {
             How does this work?
           </summary>
           <p className="mt-2">
-            Pick a decision per row (click again to clear). Rows left <strong>Unreviewed</strong>{' '}
-            are skipped. “Create GitHub issue” opens one issue for all decisions; then run the{' '}
-            <strong>Cursor override automation</strong> workflow manually to get a PR.
+            Decide per field, or use the buttons in a group header to decide all fields at once
+            (click an active button again to clear). Undecided fields are left out. “Create GitHub
+            issue” opens one issue with all decisions; submitting it runs a workflow that updates{' '}
+            <code>{meta.overrideFile}</code> and opens a PR.
           </p>
           <ul className="mt-2 list-inside list-disc">
-            {(
-              Object.entries(AUDIT_DECISION_HELP) as [keyof typeof AUDIT_DECISION_HELP, string][]
-            ).map(([decision, help]) => (
+            {(Object.keys(FIELD_DECISION_HELP) as FieldDecision[]).map((decision) => (
               <li key={decision}>
-                <strong>{AUDIT_DECISION_LABELS[decision]}</strong> — {help}
+                <strong>{FIELD_DECISION_LABELS[decision]}</strong> — {FIELD_DECISION_HELP[decision]}
               </li>
             ))}
           </ul>
@@ -376,112 +349,106 @@ export function AuditDetailPage() {
 
       <AuditSchemaRefreshBanner />
 
-      {actionableCount === 0 ? (
+      {entries.length === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">
-          No unreviewed or stale entries for this audit.
+          Nothing left to review for this audit.
         </p>
       ) : (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            try {
-              const issueUrl = buildBatchSchemaOverrideIssueUrl({
-                kind: slug,
-                slug,
-                entries,
-                decisions: form.state.values.decisions,
-                dataUrl: dataUrl ?? '',
-                reference,
-              })
-              window.open(issueUrl, '_blank', 'noopener,noreferrer')
-            } catch (error) {
-              window.alert(error instanceof Error ? error.message : 'Could not build issue URL.')
+        <form.Subscribe selector={(state) => state.values.decisions}>
+          {(decisions) => {
+            const setDecisions = (updates: Decisions) =>
+              form.setFieldValue('decisions', { ...decisions, ...updates })
+            const counts = { intentional: 0, needs_work: 0, remove: 0 }
+            for (const entry of entries) {
+              for (const field of entry.fields) {
+                const decision = decisions[fieldDecisionKey(entry.entryId, field.fieldId)]
+                if (decision) counts[decision] += 1
+              }
             }
-          }}
-          className="space-y-4"
-        >
-          <form.Subscribe selector={(state) => state.values.decisions}>
-            {(decisions) => {
-              const issueCount = entries.filter((entry) =>
-                auditDecisionIncludesIssue(decisions[entry.entryId] ?? 'pending'),
-              ).length
-              return (
-                <>
-                  <div className="overflow-x-auto rounded-xl border border-slate-200">
-                    <table className="w-full table-fixed text-left text-sm">
-                      <thead className="bg-slate-50 text-xs font-medium tracking-wide text-slate-500 uppercase">
-                        <tr>
-                          <th className="w-[14%] px-3 py-2">Preset</th>
-                          <th className="w-[34%] px-3 py-2">Details</th>
-                          <th className="w-[10%] px-3 py-2">Status</th>
-                          <th className="w-[42%] px-3 py-2">Decision</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {presetGroups.flatMap((group, groupIndex) =>
-                          group.entries.map((entry, entryIndex) => (
-                            <AuditEntryRow
-                              key={entry.entryId}
-                              entry={entry}
-                              selected={selected === entry.entryId}
-                              decision={decisions[entry.entryId] ?? 'pending'}
-                              onDecisionChange={(value) => {
-                                form.setFieldValue('decisions', {
-                                  ...decisions,
-                                  [entry.entryId]: value,
-                                })
-                              }}
-                              showPresetCell={entryIndex === 0}
-                              presetRowSpan={group.entries.length}
-                              presetGroupStart={groupIndex > 0 && entryIndex === 0}
-                            />
-                          )),
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+            const decidedCount = counts.intentional + counts.needs_work + counts.remove
 
-                  <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-slate-200 bg-white/95 py-3 backdrop-blur">
-                    <button
-                      type="submit"
-                      disabled={issueCount === 0}
-                      className={cn(
-                        externalActionPillClass('border border-mauve-200 bg-mauve-50/80'),
-                        issueCount === 0 && 'cursor-not-allowed opacity-50',
-                      )}
-                      data-testid="audit-create-issue"
-                    >
-                      Create GitHub issue ({issueCount}) ↗
-                    </button>
-                    <Link
-                      to="/audits"
-                      search={(prev) => ({
-                        dataUrl: prev.dataUrl ?? '',
-                        locale: prev.locale ?? '',
-                        reference: prev.reference,
+            return (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  try {
+                    const issueUrl = buildBatchSchemaOverrideIssueUrl({
+                      slug,
+                      entries,
+                      decisions,
+                      dataUrl: dataUrl ?? '',
+                      reference,
+                    })
+                    window.open(issueUrl, '_blank', 'noopener,noreferrer')
+                  } catch (error) {
+                    window.alert(
+                      error instanceof Error ? error.message : 'Could not build issue URL.',
+                    )
+                  }
+                }}
+              >
+                <div className="overflow-x-auto rounded-t-xl border border-slate-200">
+                  <table className="w-full min-w-[40rem] table-fixed text-left text-sm">
+                    <thead className="bg-slate-50 text-xs font-medium tracking-wide text-slate-500 uppercase">
+                      <tr>
+                        <th className="w-[22%] px-3 py-2">Preset</th>
+                        {hasParentColumn ? <th className="w-[16%] px-3 py-2">Parent</th> : null}
+                        <th className="px-3 py-2">Fields</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entries.map((entry, index) => {
+                        const previous = entries[index - 1]
+                        const groupStart = previous?.presetId !== entry.presetId
+                        const presetRowSpan = groupStart
+                          ? entries.slice(index).findIndex((e) => e.presetId !== entry.presetId)
+                          : 0
+                        return (
+                          <AuditEntryRow
+                            key={entry.entryId}
+                            entry={entry}
+                            selected={selected === entry.entryId}
+                            presetRowSpan={
+                              presetRowSpan === -1 ? entries.length - index : presetRowSpan
+                            }
+                            groupStart={groupStart && index > 0}
+                          >
+                            <EntryFields
+                              entry={entry}
+                              decisions={decisions}
+                              setDecisions={setDecisions}
+                            />
+                          </AuditEntryRow>
+                        )
                       })}
-                      className="text-sm font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
-                    >
-                      All audits
-                    </Link>
-                    <Link
-                      to="/"
-                      search={(prev) => ({
-                        ...presetSearchDefaults,
-                        dataUrl: prev.dataUrl ?? '',
-                        locale: prev.locale ?? '',
-                      })}
-                      className="text-sm font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
-                    >
-                      Presets
-                    </Link>
-                  </div>
-                </>
-              )
-            }}
-          </form.Subscribe>
-        </form>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-b-xl bg-slate-900 px-4 py-3 text-sm text-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.15)]">
+                  <span>
+                    {decidedCount === 0
+                      ? 'No decisions yet'
+                      : (Object.keys(counts) as FieldDecision[])
+                          .filter((decision) => counts[decision] > 0)
+                          .map(
+                            (decision) => `${counts[decision]} ${FIELD_DECISION_LABELS[decision]}`,
+                          )
+                          .join(' · ')}
+                  </span>
+                  <button
+                    type="submit"
+                    disabled={decidedCount === 0}
+                    data-testid="audit-create-issue"
+                    className="ml-auto rounded-md bg-white px-3 py-1.5 font-semibold text-slate-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Create GitHub issue ↗
+                  </button>
+                </div>
+              </form>
+            )
+          }}
+        </form.Subscribe>
       )}
     </div>
   )

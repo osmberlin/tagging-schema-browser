@@ -1,184 +1,135 @@
+import type { AuditFieldState } from '@/components/PageAudits/auditDecisions'
+import type { AuditSlug } from '@/components/PageAudits/auditSlugs'
 import type { FieldListKey } from '@/components/PagePresets/missingFieldInheritance'
-import {
-  mergeMissingInheritanceOverrideList,
-  remainingMissedFieldIds,
-  resolveMissingInheritanceListStatus,
-  type MissingFieldInheritance,
-  type MissingInheritanceOverride,
-  type MissingInheritanceStatus,
-} from '@/components/PagePresets/missingFieldInheritance'
-import type { RiskyTypeCombo, RiskyTypeComboStatus } from '@/components/PagePresets/riskyTypeCombo'
 import { missingInheritanceOverrides } from '@/data/missingInheritanceOverrides'
 import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
 import type { DenormalizedPreset } from '@/utils/types'
-import type { AuditSlug } from './auditSlugs'
 
-export type { AuditDecision } from '@/components/PageAudits/auditDecisions'
+export type AuditField = {
+  fieldId: string
+  state: AuditFieldState
+  /** Risky typeCombo only: the OSM key that may be written as `key=yes`. */
+  fieldKey?: string
+}
 
-export type MissingInheritanceAuditEntry = {
-  kind: 'missing-inheritance'
+/** One audit row: a preset (risky typeCombo) or one field list of a preset (missing inheritance). */
+export type AuditEntry = {
+  kind: AuditSlug
   entryId: string
   presetId: string
   presetName: string
-  fieldListKey: FieldListKey
-  status: MissingInheritanceStatus
-  parentId: string
-  /** Missed field ids that still need a decision (excludes already-documented overrides). */
-  missedFieldIds: string[]
-  /** Field ids already recorded in the override snapshot for this list. */
-  documentedMissedFieldIds: string[]
-  /** Live detection missed field ids for this list (empty when orphaned stale). */
-  liveMissedFieldIds: string[]
+  /** Missing inheritance only. */
+  listKey?: FieldListKey
+  /** Missing inheritance only. */
+  parentId?: string
+  /** Fields that need a decision. */
+  fields: AuditField[]
+  /** Already documented in the override file and still valid. */
+  documentedFieldIds: string[]
   explicitPresetRefs: string[]
-  storedOverride?: MissingInheritanceOverride
 }
 
-export type RiskyTypeComboAuditEntry = {
-  kind: 'risky-typecombo'
-  entryId: string
-  presetId: string
-  presetName: string
-  status: RiskyTypeComboStatus
-  riskyTypeCombo: RiskyTypeCombo
-  storedOverride?: (typeof riskyTypeComboOverrides.presets)[string]
+function splitFields(liveIds: string[], documentedIds: string[]) {
+  const live = new Set(liveIds)
+  const documented = new Set(documentedIds)
+  return {
+    documentedFieldIds: documentedIds.filter((id) => live.has(id)),
+    missing: liveIds.filter((id) => !documented.has(id)),
+    stale: documentedIds.filter((id) => !live.has(id)),
+  }
 }
 
-export type AuditEntry = MissingInheritanceAuditEntry | RiskyTypeComboAuditEntry
+function toFields(missing: string[], stale: string[]): AuditField[] {
+  return [
+    ...missing.map((fieldId) => ({ fieldId, state: 'missing' as const })),
+    ...stale.map((fieldId) => ({ fieldId, state: 'stale' as const })),
+  ]
+}
 
-function missingInheritanceEntries(presets: DenormalizedPreset[]): MissingInheritanceAuditEntry[] {
-  const entries: MissingInheritanceAuditEntry[] = []
+/** Presets plus override-only ids whose preset no longer exists in the schema. */
+function presetsWithOverrides(
+  presets: DenormalizedPreset[],
+  overridePresetIds: string[],
+): { id: string; name: string; preset?: DenormalizedPreset }[] {
+  const known = new Set(presets.map((preset) => preset.id))
+  return [
+    ...presets.map((preset) => ({ id: preset.id, name: preset.name, preset })),
+    ...overridePresetIds.filter((id) => !known.has(id)).map((id) => ({ id, name: id })),
+  ]
+}
 
-  for (const preset of presets) {
-    const { missingFieldInheritance, missingInheritanceStatus } = preset
-    if (!missingFieldInheritance || missingInheritanceStatus === 'none') continue
+function missingInheritanceEntries(presets: DenormalizedPreset[]): AuditEntry[] {
+  const overrides = missingInheritanceOverrides.presets
+  const entries: AuditEntry[] = []
 
-    const storedOverride = missingInheritanceOverrides.presets[preset.id]
+  for (const { id, name, preset } of presetsWithOverrides(presets, Object.keys(overrides))) {
+    for (const listKey of ['fields', 'moreFields'] as const) {
+      const live = preset?.missingFieldInheritance?.[listKey]
+      const override = overrides[id]?.[listKey]
+      if (!live && !override) continue
 
-    for (const fieldListKey of ['fields', 'moreFields'] as const) {
-      const section = missingFieldInheritance[fieldListKey]
-      const listOverride = storedOverride?.[fieldListKey]
-      const listStatus = resolveMissingInheritanceListStatus(section, listOverride)
-      if (listStatus === 'none' || listStatus === 'intentional') continue
-      if (!section) {
-        if (listStatus === 'stale') {
-          entries.push({
-            kind: 'missing-inheritance',
-            entryId: `${preset.id}:${fieldListKey}`,
-            presetId: preset.id,
-            presetName: preset.name,
-            fieldListKey,
-            status: 'stale',
-            parentId: listOverride?.parentId ?? '',
-            missedFieldIds: [],
-            documentedMissedFieldIds: listOverride?.missedFieldIds ?? [],
-            liveMissedFieldIds: [],
-            explicitPresetRefs: [],
-            storedOverride,
-          })
-        }
-        continue
-      }
+      const parentId = live?.parentId ?? override?.parentId ?? ''
+      // A different parent invalidates every documented id.
+      const documentedIds =
+        override && override.parentId === parentId ? override.missedFieldIds : []
+      const { documentedFieldIds, missing, stale } = splitFields(
+        live?.missedFieldIds ?? [],
+        documentedIds,
+      )
+      const staleIds = override && override.parentId !== parentId ? override.missedFieldIds : stale
+      const fields = toFields(missing, staleIds)
+      if (fields.length === 0) continue
 
       entries.push({
         kind: 'missing-inheritance',
-        entryId: `${preset.id}:${fieldListKey}`,
-        presetId: preset.id,
-        presetName: preset.name,
-        fieldListKey,
-        status: listStatus,
-        parentId: section.parentId,
-        missedFieldIds: remainingMissedFieldIds(section, listOverride),
-        documentedMissedFieldIds: listOverride?.missedFieldIds ?? [],
-        liveMissedFieldIds: section.missedFieldIds,
-        explicitPresetRefs: section.explicitPresetRefs,
-        storedOverride,
+        entryId: `${id}:${listKey}`,
+        presetId: id,
+        presetName: name,
+        listKey,
+        parentId,
+        fields,
+        documentedFieldIds,
+        explicitPresetRefs: live?.explicitPresetRefs ?? [],
       })
     }
   }
 
-  return entries.sort((a, b) => a.presetId.localeCompare(b.presetId))
+  return entries.sort((a, b) => a.entryId.localeCompare(b.entryId))
 }
 
-function riskyTypeComboEntries(presets: DenormalizedPreset[]): RiskyTypeComboAuditEntry[] {
-  const entries: RiskyTypeComboAuditEntry[] = []
+function riskyTypeComboEntries(presets: DenormalizedPreset[]): AuditEntry[] {
+  const overrides = riskyTypeComboOverrides.presets
+  const entries: AuditEntry[] = []
 
-  for (const preset of presets) {
-    const { riskyTypeCombo, riskyTypeComboStatus } = preset
-    if (riskyTypeComboStatus === 'none') continue
+  for (const { id, name, preset } of presetsWithOverrides(presets, Object.keys(overrides))) {
+    const liveFields = preset?.riskyTypeCombo?.fields ?? []
+    const { documentedFieldIds, missing, stale } = splitFields(
+      liveFields.map((field) => field.fieldId),
+      overrides[id]?.fieldIds ?? [],
+    )
+    const fields = toFields(missing, stale).map((field) => ({
+      ...field,
+      fieldKey: liveFields.find((live) => live.fieldId === field.fieldId)?.fieldKey,
+    }))
+    if (fields.length === 0) continue
 
     entries.push({
       kind: 'risky-typecombo',
-      entryId: preset.id,
-      presetId: preset.id,
-      presetName: preset.name,
-      status: riskyTypeComboStatus,
-      riskyTypeCombo: riskyTypeCombo ?? {
-        fields: (riskyTypeComboOverrides.presets[preset.id]?.fieldIds ?? []).map((fieldId) => ({
-          fieldId,
-          fieldKey: fieldId,
-          listKey: 'fields' as const,
-        })),
-      },
-      storedOverride: riskyTypeComboOverrides.presets[preset.id],
+      entryId: id,
+      presetId: id,
+      presetName: name,
+      fields,
+      documentedFieldIds,
+      explicitPresetRefs: [],
     })
   }
 
-  return entries.sort((a, b) => a.presetId.localeCompare(b.presetId))
+  return entries.sort((a, b) => a.entryId.localeCompare(b.entryId))
 }
 
+/** Rows that still need a decision (undocumented or stale fields). */
 export function auditEntriesForSlug(slug: AuditSlug, presets: DenormalizedPreset[]): AuditEntry[] {
-  if (slug === 'missing-inheritance') return missingInheritanceEntries(presets)
-  return riskyTypeComboEntries(presets)
-}
-
-export function auditEntryNeedsAction(entry: AuditEntry): boolean {
-  return entry.status === 'unreviewed' || entry.status === 'stale'
-}
-
-/** Documented override ids that still match live detection for this list. */
-export function validDocumentedMissedFieldIds(entry: MissingInheritanceAuditEntry): string[] {
-  const live = new Set(entry.liveMissedFieldIds)
-  return entry.documentedMissedFieldIds.filter((fieldId) => live.has(fieldId))
-}
-
-/** Override ids no longer missing on the live preset (stale subset). */
-export function invalidOverrideMissedFieldIds(entry: MissingInheritanceAuditEntry): string[] {
-  const live = new Set(entry.liveMissedFieldIds)
-  return entry.documentedMissedFieldIds.filter((fieldId) => !live.has(fieldId))
-}
-
-export function isOrphanedStaleMissingInheritanceEntry(
-  entry: MissingInheritanceAuditEntry,
-): boolean {
-  return entry.status === 'stale' && entry.liveMissedFieldIds.length === 0
-}
-
-export function missingInheritanceFromEntry(
-  entry: MissingInheritanceAuditEntry,
-): MissingFieldInheritance | null {
-  if (isOrphanedStaleMissingInheritanceEntry(entry)) return null
-
-  const live = new Set(entry.liveMissedFieldIds)
-  const validDocumented = validDocumentedMissedFieldIds(entry)
-
-  const mergedList = mergeMissingInheritanceOverrideList(
-    {
-      parentId: entry.parentId,
-      missedFieldIds: [...validDocumented, ...entry.missedFieldIds],
-      explicitPresetRefs: entry.explicitPresetRefs,
-    },
-    entry.storedOverride?.[entry.fieldListKey],
-    entry.missedFieldIds,
-  )
-
-  const missedFieldIds = mergedList.missedFieldIds.filter((fieldId) => live.has(fieldId))
-  if (missedFieldIds.length === 0) return null
-
-  return {
-    [entry.fieldListKey]: {
-      parentId: entry.parentId,
-      missedFieldIds,
-      explicitPresetRefs: entry.explicitPresetRefs,
-    },
-  }
+  return slug === 'missing-inheritance'
+    ? missingInheritanceEntries(presets)
+    : riskyTypeComboEntries(presets)
 }

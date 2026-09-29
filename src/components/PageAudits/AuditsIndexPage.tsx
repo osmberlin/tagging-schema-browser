@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
-import { auditEntriesForSlug, auditEntryNeedsAction } from '@/components/PageAudits/auditEntries'
+import { auditEntriesForSlug } from '@/components/PageAudits/auditEntries'
 import {
   AuditSchemaLoadingPanel,
   AuditSchemaRefreshBanner,
@@ -18,10 +18,7 @@ export function AuditsIndexPage() {
   const counts = useMemo(() => {
     if (!data) return null
     return Object.fromEntries(
-      AUDIT_SLUGS.map((slug) => [
-        slug,
-        auditEntriesForSlug(slug, presets).filter(auditEntryNeedsAction).length,
-      ]),
+      AUDIT_SLUGS.map((slug) => [slug, auditEntriesForSlug(slug, presets).length]),
     ) as Record<(typeof AUDIT_SLUGS)[number], number>
   }, [data, presets])
 

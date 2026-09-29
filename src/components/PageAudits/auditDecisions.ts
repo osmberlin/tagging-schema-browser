@@ -1,26 +1,27 @@
-export type AuditDecision = 'pending' | 'intentional' | 'remove_stale' | 'needs_work'
+/** Decision for one field of one audit row. Missing key in the decisions record = not decided. */
+export type FieldDecision = 'intentional' | 'needs_work' | 'remove'
 
-export const AUDIT_DECISION_LABELS: Record<AuditDecision, string> = {
-  pending: 'Unreviewed',
-  intentional: 'False positive',
-  remove_stale: 'Delete outdated override',
-  needs_work: 'Needs upstream work',
+/** `missing`: live detection, not yet documented. `stale`: documented in the override but no longer detected. */
+export type AuditFieldState = 'missing' | 'stale'
+
+export const FIELD_DECISIONS_BY_STATE: Record<AuditFieldState, FieldDecision[]> = {
+  missing: ['intentional', 'needs_work'],
+  stale: ['remove'],
 }
 
-export const AUDIT_DECISION_SHORT_LABELS: Record<Exclude<AuditDecision, 'pending'>, string> = {
-  intentional: 'False positive',
-  remove_stale: 'Delete outdated override',
-  needs_work: 'Upstream work',
+export const FIELD_DECISION_LABELS: Record<FieldDecision, string> = {
+  intentional: 'OK to skip',
+  needs_work: 'Fix upstream',
+  remove: 'Remove',
 }
 
-export const AUDIT_DECISION_HELP: Record<Exclude<AuditDecision, 'pending'>, string> = {
-  intentional:
-    'Document the remaining missing fields as intentional skips (merges with any ids already in the override). Edit the issue body after opening if you only want a subset.',
-  remove_stale:
-    'Delete a stored override whose field ids no longer match live detection — e.g. after id-tagging-schema adds inheritance or fixes the preset. These rows show status stale (not unreviewed). Only the listed fields/moreFields section is removed.',
-  needs_work: 'Track in the issue only — fix in id-tagging-schema, not overrides.',
+export const FIELD_DECISION_HELP: Record<FieldDecision, string> = {
+  intentional: 'False positive — record it in the override file so the audit stops reporting it.',
+  needs_work: 'Real problem — listed in the issue only; fix it in id-tagging-schema.',
+  remove:
+    'The override lists a field that is no longer detected (e.g. id-tagging-schema fixed the preset). Remove it from the override file.',
 }
 
-export function auditDecisionIncludesIssue(decision: AuditDecision): boolean {
-  return decision === 'intentional' || decision === 'remove_stale' || decision === 'needs_work'
+export function fieldDecisionKey(entryId: string, fieldId: string): string {
+  return `${entryId}::${fieldId}`
 }
