@@ -37,8 +37,10 @@ export function MissingInheritanceAlerts({
     <SchemaIssueAlert variant="warning" title="Missing inheritance">
       {unreviewedCount > 0 ? (
         <>
-          <strong>{unreviewedCount}</strong> {unreviewedCount === 1 ? 'preset has' : 'presets have'}{' '}
-          unreviewed missing slash-parent field inheritance —{' '}
+          <strong>{unreviewedCount}</strong>{' '}
+          {unreviewedCount === 1 ? 'preset does not' : 'presets do not'} inherit all fields from
+          their parent preset (e.g. <code>building</code> for <code>building/hangar</code>) and need
+          review —{' '}
         </>
       ) : null}
       {staleCount > 0 ? (
