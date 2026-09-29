@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   diffOrderedLists,
+  diffRecordDimension,
   diffRecords,
   diffSortedLists,
   diffUnorderedListDimension,
@@ -78,5 +79,13 @@ describe('diffUnorderedListDimension', () => {
     expect(
       diffUnorderedListDimension('Terms', ['coffee', 'espresso'], ['espresso', 'coffee']),
     ).toBeNull()
+  })
+})
+
+describe('diffRecordDimension record maps', () => {
+  it('keeps full before/after maps so renderers can look up added/removed values', () => {
+    const diff = diffRecordDimension('Icons', { a: 'x' }, { b: 'y' })
+    expect(diff?.beforeRecord).toEqual({ a: 'x' })
+    expect(diff?.afterRecord).toEqual({ b: 'y' })
   })
 })
