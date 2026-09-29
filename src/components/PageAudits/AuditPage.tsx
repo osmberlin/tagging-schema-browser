@@ -20,7 +20,7 @@ import {
   AuditSchemaRefreshBanner,
 } from '@/components/PageAudits/AuditSchemaStatus'
 import { AUDIT_META, isAuditSlug } from '@/components/PageAudits/auditSlugs'
-import { buildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/buildBatchOverrideIssueUrl'
+import { tryBuildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/buildBatchOverrideIssueUrl'
 import { fieldListTitle } from '@/components/PageAudits/fieldListTitle'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
@@ -361,24 +361,24 @@ export function AuditDetailPage() {
               }
             }
             const decidedCount = counts.intentional + counts.needs_work + counts.remove
+            const issue =
+              decidedCount === 0
+                ? undefined
+                : tryBuildBatchSchemaOverrideIssueUrl({
+                    slug,
+                    entries,
+                    decisions,
+                    dataUrl: dataUrl ?? '',
+                    reference,
+                  })
+            const issueError = issue && 'error' in issue ? issue.error : undefined
 
             return (
               <form
                 onSubmit={(event) => {
                   event.preventDefault()
-                  try {
-                    const issueUrl = buildBatchSchemaOverrideIssueUrl({
-                      slug,
-                      entries,
-                      decisions,
-                      dataUrl: dataUrl ?? '',
-                      reference,
-                    })
-                    window.open(issueUrl, '_blank', 'noopener,noreferrer')
-                  } catch (error) {
-                    window.alert(
-                      error instanceof Error ? error.message : 'Could not build issue URL.',
-                    )
+                  if (issue && 'url' in issue) {
+                    window.open(issue.url, '_blank', 'noopener,noreferrer')
                   }
                 }}
               >
@@ -424,9 +424,19 @@ export function AuditDetailPage() {
                           )
                           .join(' · ')}
                   </span>
+                  {issueError ? (
+                    <span
+                      role="alert"
+                      className="text-amber-300"
+                      data-testid="audit-issue-too-long"
+                    >
+                      {issueError} Clear some decisions to enable submitting, then review the rest
+                      in a follow-up issue.
+                    </span>
+                  ) : null}
                   <button
                     type="submit"
-                    disabled={decidedCount === 0}
+                    disabled={decidedCount === 0 || issueError !== undefined}
                     data-testid="audit-create-issue"
                     className="ml-auto rounded-md bg-white px-3 py-1.5 font-semibold text-slate-900 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >

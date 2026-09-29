@@ -94,3 +94,14 @@ export function buildBatchSchemaOverrideIssueUrl({
   }
   return url
 }
+
+/** Non-throwing variant so the UI can warn about an over-long issue before submit. */
+export function tryBuildBatchSchemaOverrideIssueUrl(
+  args: Parameters<typeof buildBatchSchemaOverrideIssueUrl>[0],
+): { url: string } | { error: string } {
+  try {
+    return { url: buildBatchSchemaOverrideIssueUrl(args) }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Could not build issue URL.' }
+  }
+}
