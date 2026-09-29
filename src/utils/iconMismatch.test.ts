@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getChildPresetIconMismatchRefs,
   getParentPresetIconMismatchRows,
+  isOptionIconMissing,
 } from '@/utils/iconMismatch'
 import type { DenormalizedPreset, FieldTranslations, RawFields } from '@/utils/types'
 
@@ -88,5 +89,18 @@ describe('icon mismatch refs', () => {
     expect(refs[0]?.row.optionValue).toBe('cushion')
     expect(refs[0]?.row.icon).toBe('temaki-cushion')
     expect(refs[0]?.section.fieldId).toBe('playground/type')
+  })
+})
+
+describe('isOptionIconMissing', () => {
+  it('flags options without icon when the child preset has one and the field uses icons', () => {
+    expect(isOptionIconMissing(undefined, 'maki-park', true)).toBe(true)
+  })
+  it('ignores fields that define no icons at all', () => {
+    expect(isOptionIconMissing(undefined, 'maki-park', false)).toBe(false)
+  })
+  it('ignores options with an icon or child presets without one', () => {
+    expect(isOptionIconMissing('maki-park', 'maki-park', true)).toBe(false)
+    expect(isOptionIconMissing(undefined, undefined, true)).toBe(false)
   })
 })
