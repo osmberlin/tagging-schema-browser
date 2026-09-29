@@ -9,6 +9,8 @@ import { UnsupportedSchemaNotice } from '@/components/ui/UnsupportedSchemaNotice
 import { useComparison } from '@/hooks/useComparison'
 import { useSchema } from '@/hooks/useSchema'
 import { comparisonAccent } from '@/theme/comparisonAccent'
+import type { CompareTab } from '@/utils/comparisonTab'
+import { defaultComparisonTab } from '@/utils/comparisonTab'
 import type { DiffEntry } from '@/utils/jsonDiff'
 import { exportSchemaComparison } from '@/utils/pageExports'
 import { isLikelyStaleBranchComparison } from '@/utils/presetDiff'
@@ -16,8 +18,6 @@ import type { ModifiedEntity } from '@/utils/schemaDiff'
 import { entityChangeCount } from '@/utils/schemaDiff'
 import { formatUnreleasedUpdatedAt } from '@/utils/schemaVersion'
 import type { DenormalizedPreset } from '@/utils/types'
-
-type CompareTab = 'presets' | 'fields' | 'categories'
 
 function DiffGrid({ diffs }: { diffs: DiffEntry[] }) {
   if (diffs.length === 0) return null
@@ -164,7 +164,17 @@ function TabButton({
       }`}
     >
       {label}
-      <CountPill className={active ? '' : 'bg-slate-200 text-slate-600'}>{count}</CountPill>
+      <CountPill
+        className={
+          active
+            ? 'bg-violet-600 text-white'
+            : count > 0
+              ? comparisonAccent.badge
+              : 'bg-slate-200 text-slate-600'
+        }
+      >
+        {count}
+      </CountPill>
     </button>
   )
 }
@@ -224,7 +234,7 @@ export function PageComparison() {
   } = useComparison()
   const unreleasedAge = formatUnreleasedUpdatedAt(unreleasedUpdatedAt)
   const { dataUrl, data, unsupportedBuild } = useSchema()
-  const [tab, setTab] = useState<CompareTab>('presets')
+  const [selectedTab, setTab] = useState<CompareTab | null>(null)
   const exportData = useMemo(() => (result ? exportSchemaComparison(result) : null), [result])
   const staleBranchHint =
     compareMode === 'preview' && result ? isLikelyStaleBranchComparison(result.presets) : false
@@ -270,6 +280,10 @@ export function PageComparison() {
     : 0
   const fieldCount = result ? entityChangeCount(result.fields) : 0
   const categoryCount = result ? entityChangeCount(result.categories) : 0
+  // Until the user picks a tab, show the first one that actually has changes.
+  const tab =
+    selectedTab ??
+    defaultComparisonTab({ presets: presetCount, fields: fieldCount, categories: categoryCount })
 
   return (
     <div className="space-y-6">
