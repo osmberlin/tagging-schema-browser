@@ -23,6 +23,8 @@ export type RawPreset = {
   addTags?: Record<string, string>
   /** Tags removed when deselecting this preset. Defaults to `addTags`, then `tags`. */
   removeTags?: Record<string, string>
+  /** Wiki/taginfo reference key (and optional value) for this preset. */
+  reference?: { key: string; value?: string }
   matchScore?: number
   searchable?: boolean
   suggestion?: boolean
