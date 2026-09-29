@@ -169,6 +169,13 @@ function diffRawPreset(
   )
   if (removeTags) diffs.push(removeTags)
 
+  const reference = diffRecordDimension(
+    'Reference',
+    { ...baseline.reference },
+    { ...current.reference },
+  )
+  if (reference) diffs.push(reference)
+
   const fields = diffOrderedListDimension('Fields', baseline.fields ?? [], current.fields ?? [])
   if (fields) diffs.push(fields)
 
