@@ -38,6 +38,9 @@ export function useSchema() {
     queryFn: () => fetchSchemaData(resolvedDataUrl),
     enabled: resolvedDataUrl.trim().length > 0 && !isUnsupportedUrl,
     staleTime: SCHEMA_STALE_TIME,
+    // A failed load must not refetch every time a consumer mounts: SchemaContent swaps the page
+    // for a spinner while loading, which remounts the page, which refetched … forever.
+    retryOnMount: false,
     initialData: () => cachedSchemaData(resolvedDataUrl),
     placeholderData: keepPreviousData,
   })
@@ -54,6 +57,9 @@ export function useSchema() {
     },
     load: (url: string) => {
       void navigate({ to: '.', search: (prev) => ({ ...prev, dataUrl: url.trim() || '' }) })
+    },
+    retry: () => {
+      void query.refetch()
     },
     loading: query.isLoading && !query.data,
     refetching: query.isFetching && Boolean(query.data),

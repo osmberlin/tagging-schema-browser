@@ -41,6 +41,7 @@ import {
 } from '@/components/PageTranslations/translationsSearch'
 import { TranslationsSidebar } from '@/components/PageTranslations/TranslationsSidebar'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { SchemaLoadErrorPanel } from '@/components/ui/SchemaLoadErrorPanel'
 import { SidebarLayout } from '@/components/ui/SidebarLayout'
 import { UnsupportedSchemaNotice } from '@/components/ui/UnsupportedSchemaNotice'
 import {
@@ -120,7 +121,8 @@ function RouteChunkFallback({ label }: { label: string }) {
 
 function SchemaContent({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const { unsupportedBuild, customDataUrl, dataUrl, error, loading, data } = useSchema()
+  const { unsupportedBuild, customDataUrl, dataUrl, error, loading, data, retry, setDataUrl } =
+    useSchema()
 
   useEffect(
     function clearSourceTreeCacheOnSchemaChange() {
@@ -144,6 +146,23 @@ function SchemaContent({ children }: { children: React.ReactNode }) {
     dataUrl.trim().length > 0
   ) {
     return <SchemaLoadingPanel />
+  }
+
+  if (
+    schemaRouteWaitsForInitialLoad(location.pathname) &&
+    error &&
+    !loading &&
+    !data &&
+    dataUrl.trim().length > 0
+  ) {
+    return (
+      <SchemaLoadErrorPanel
+        error={error}
+        dataUrl={dataUrl}
+        onRetry={retry}
+        onUseDefault={() => setDataUrl(null)}
+      />
+    )
   }
 
   return children
