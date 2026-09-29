@@ -231,30 +231,39 @@ export function diffPresetWithSchema(
   const rawOnly = diffRawPresetById(presetId, baseline, current).filter(
     (d) => !denormalizedLabels.has(d.label),
   )
-  return annotateUniversalFieldRemovals([...denormalized, ...rawOnly], current, currentPreset)
+  return annotateUniversalFieldChanges(
+    [...denormalized, ...rawOnly],
+    baseline,
+    current,
+    release,
+    currentPreset,
+  )
 }
 
 /**
  * Universal fields are implicitly shown in every preset's "More fields" by iD,
- * so removing one from `fields` does not hide it from editors.
+ * so adding one to or removing one from `fields` only moves it between sections.
  */
-function annotateUniversalFieldRemovals(
+function annotateUniversalFieldChanges(
   diffs: DiffEntry[],
+  baseline: SchemaData,
   current: SchemaData,
+  release: DenormalizedPreset,
   currentPreset: DenormalizedPreset,
 ): DiffEntry[] {
   return diffs.map((diff) => {
     if (diff.label !== 'Fields' || !diff.orderedListChanges) return diff
-    const universal = diff.orderedListChanges.removed.filter(
-      (id) => current.fields[id]?.universal && !currentPreset.moreFields.includes(id),
-    )
-    if (universal.length === 0) return diff
-    return {
-      ...diff,
-      notes: universal.map(
-        (id) => `“${id}” is a universal field and stays available via More fields.`,
-      ),
-    }
+    const { removed, added } = diff.orderedListChanges
+    const notes = [
+      ...removed
+        .filter((id) => current.fields[id]?.universal && !currentPreset.moreFields.includes(id))
+        .map((id) => `“${id}” is a universal field and stays available via More fields.`),
+      ...added
+        .filter((id) => baseline.fields[id]?.universal && !release.moreFields.includes(id))
+        .map((id) => `“${id}” is a universal field and was already available via More fields.`),
+    ]
+    if (notes.length === 0) return diff
+    return { ...diff, notes }
   })
 }
 
