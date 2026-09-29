@@ -1,4 +1,5 @@
 import type { AuditSlug } from '@/components/PageAudits/auditSlugs'
+import { appPath } from '@/utils/constants'
 
 export function auditPageHref({
   slug,
@@ -19,7 +20,7 @@ export function auditPageHref({
   if (locale.trim()) params.set('locale', locale)
   if (selected.trim()) params.set('selected', selected)
   const query = params.toString()
-  return `/audits/${slug}${query ? `?${query}` : ''}`
+  return appPath(`/audits/${slug}${query ? `?${query}` : ''}`)
 }
 
 export function auditPageAbsoluteHref(params: Parameters<typeof auditPageHref>[0]): string {
@@ -32,7 +33,7 @@ export function presetDetailAbsoluteHref(presetId: string, dataUrl: string): str
   const params = new URLSearchParams()
   if (dataUrl.trim()) params.set('dataUrl', dataUrl)
   const query = params.toString()
-  const path = `/preset/${presetId}${query ? `?${query}` : ''}`
+  const path = appPath(`/preset/${presetId}${query ? `?${query}` : ''}`)
   if (typeof window === 'undefined') return path
   return `${window.location.origin}${path}`
 }
