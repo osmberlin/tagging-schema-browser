@@ -58,7 +58,8 @@ export function buildBatchSchemaOverrideIssueUrl({
       : 'Nothing to change in the override file — tracking only.',
     '',
     `Audit: ${auditPageAbsoluteHref({ slug, dataUrl, reference })}`,
-    `Schema: ${dataUrl.trim() || reference || 'release'}`,
+    // Backticks keep GitHub from auto-linking the schema dist folder (it is not a browsable page).
+    `Schema: \`${dataUrl.trim() || reference || 'release'}\``,
     '',
     ...(changes.length > 0
       ? ['## Override changes', '', ...changes.map((change) => changeLine(change, dataUrl)), '']
