@@ -1,6 +1,9 @@
 name: CI
 
-on: [pull_request]
+on:
+  pull_request:
+  # Dispatched by the Schema override PR workflow: PRs opened with GITHUB_TOKEN don't trigger `pull_request`.
+  workflow_dispatch:
 
 permissions:
   contents: read
