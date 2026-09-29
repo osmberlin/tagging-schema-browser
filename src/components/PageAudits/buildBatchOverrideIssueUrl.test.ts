@@ -42,6 +42,11 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
     ])
   })
 
+  it('wraps the schema reference in backticks so GitHub does not auto-link it', () => {
+    const body = issueParams({ 'shop/trade::other': 'needs_work' }).get('body')!
+    expect(body).toContain('\nSchema: `release`\n')
+  })
+
   it('omits the change block for tracking-only issues', () => {
     expect(issueParams({ 'shop/trade::other': 'needs_work' }).get('body')).not.toContain(
       'override-changes',
