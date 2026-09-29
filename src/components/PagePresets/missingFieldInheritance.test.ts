@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   detectMissingFieldInheritance,
-  formatMissingInheritanceOverrideYaml,
-  missingInheritanceOverrideFromCurrent,
+  overrideMissedFieldIdsAreValid,
   parentPresetId,
   resolveMissingInheritanceListStatus,
   resolveMissingInheritanceStatus,
@@ -208,6 +207,12 @@ describe('missingFieldInheritance', () => {
 
     expect(
       resolveMissingInheritanceStatus(current, {
+        fields: { parentId: 'tourism/information', missedFieldIds: ['address'] },
+      }),
+    ).toBe('unreviewed')
+
+    expect(
+      resolveMissingInheritanceStatus(current, {
         fields: { parentId: 'tourism/information', missedFieldIds: ['operator'] },
       }),
     ).toBe('stale')
@@ -221,6 +226,32 @@ describe('missingFieldInheritance', () => {
         },
       }),
     ).toBe('stale')
+  })
+
+  it('treats a valid partial missedFieldIds subset as unreviewed, not stale', () => {
+    const current = {
+      fields: {
+        parentId: 'building',
+        missedFieldIds: ['building/levels', 'address', 'height'],
+        explicitPresetRefs: [],
+      },
+    }
+
+    expect(
+      resolveMissingInheritanceListStatus(current.fields, {
+        parentId: 'building',
+        missedFieldIds: ['building/levels', 'address'],
+      }),
+    ).toBe('unreviewed')
+
+    expect(
+      resolveMissingInheritanceStatus(current, {
+        fields: {
+          parentId: 'building',
+          missedFieldIds: ['building/levels', 'address'],
+        },
+      }),
+    ).toBe('unreviewed')
   })
 
   it('stays unreviewed until every detected list has a matching override', () => {
@@ -283,47 +314,30 @@ describe('missingFieldInheritance', () => {
     ).toBe('stale')
   })
 
-  it('builds a valid override object without debug-only fields', () => {
+  it('overrideMissedFieldIdsAreValid rejects ids no longer missing', () => {
     const current = {
-      fields: {
-        parentId: 'tourism/information',
-        missedFieldIds: ['address', 'building_area_yes'],
-        explicitPresetRefs: ['other/preset'],
-      },
+      parentId: 'tourism/information',
+      missedFieldIds: ['address', 'building_area_yes'],
+      explicitPresetRefs: [],
     }
-
-    expect(missingInheritanceOverrideFromCurrent(current)).toEqual({
-      fields: {
-        parentId: 'tourism/information',
-        missedFieldIds: ['address', 'building_area_yes'],
-      },
-    })
-  })
-
-  it('formats a paste-ready yaml block for missing-inheritance-overrides.yaml', () => {
-    const current = {
-      fields: {
-        parentId: 'tourism/information',
-        missedFieldIds: ['address', 'building_area_yes'],
-        explicitPresetRefs: [],
-      },
-    }
-
-    expect(formatMissingInheritanceOverrideYaml('tourism/information/terminal', current))
-      .toBe(`  tourism/information/terminal:
-    fields:
-      parentId: tourism/information
-      missedFieldIds:
-        - address
-        - building_area_yes
-`)
-
-    const parsed = Bun.YAML.parse(
-      `version: 1\npresets:\n${formatMissingInheritanceOverrideYaml('tourism/information/terminal', current)}`,
-    ) as { presets: Record<string, unknown> }
 
     expect(
-      resolveMissingInheritanceStatus(current, parsed.presets['tourism/information/terminal']),
-    ).toBe('intentional')
+      overrideMissedFieldIdsAreValid(current, {
+        parentId: 'tourism/information',
+        missedFieldIds: ['address'],
+      }),
+    ).toBe(true)
+    expect(
+      overrideMissedFieldIdsAreValid(current, {
+        parentId: 'tourism/information',
+        missedFieldIds: ['operator'],
+      }),
+    ).toBe(false)
+    expect(
+      overrideMissedFieldIdsAreValid(current, {
+        parentId: 'other/parent',
+        missedFieldIds: ['address'],
+      }),
+    ).toBe(false)
   })
 })

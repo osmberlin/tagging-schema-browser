@@ -6,4 +6,40 @@
 #
 # CI validates against the published npm release dist (see validate-risky-typecombo-overrides).
 version: 1
-presets: {}
+presets:
+  power/generator:
+    fieldIds:
+      - generator/output/electricity
+  power/generator/method/photovoltaic:
+    fieldIds:
+      - generator/output/electricity
+  power/generator/method/photovoltaic/building/roof:
+    fieldIds:
+      - generator/output/electricity
+  power/generator/method/photovoltaic/location/roof:
+    fieldIds:
+      - generator/output/electricity
+  power/generator/source/hydro:
+    fieldIds:
+      - generator/output/electricity
+  power/generator/source/nuclear:
+    fieldIds:
+      - generator/output/electricity
+  power/generator/source/wind:
+    fieldIds:
+      - generator/output/electricity
+  power/plant:
+    fieldIds:
+      - plant/output/electricity
+  power/plant/source/coal:
+    fieldIds:
+      - plant/output/electricity
+  power/plant/source/gas:
+    fieldIds:
+      - plant/output/electricity
+  power/plant/source/hydro:
+    fieldIds:
+      - plant/output/electricity
+  power/plant/source/nuclear:
+    fieldIds:
+      - plant/output/electricity

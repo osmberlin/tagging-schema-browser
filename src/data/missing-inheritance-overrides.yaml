@@ -8,8 +8,12 @@
 # the other still inherits via `{parent}` or remains unreviewed. Omitting a list
 # key is valid; extra keys with no live detection are stale.
 #
-# Entries may also be proposed from the Tagging Schema Browser (GitHub issues with
-# a Snapshot YAML block). See `.agents/skills/apply-schema-override/SKILL.md`.
+# Within one list, `missedFieldIds` may be a **subset** of the live detection
+# (document obvious skips first; remaining ids stay unreviewed). Stale means the
+# override references field ids that are no longer missing from the parent.
+#
+# Entries are usually added from the Tagging Schema Browser audit pages (issue →
+# PR workflow). See `.agents/skills/apply-schema-override/SKILL.md`.
 #
 # `fields` and `moreFields` are both audited when explicitly defined without
 # `{parent}`. Overrides are per-list snapshots, not a single "preset is OK" flag.
@@ -274,6 +278,116 @@ presets:
       missedFieldIds:
         - network/type
   waterway/ditch:
+    fields:
+      parentId: waterway
+      missedFieldIds:
+        - name
+  barrier/hedge:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/height_restrictor:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  building/hangar:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - building/levels
+        - address
+  man_made/charge_point:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/groyne:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/lighthouse:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/mineshaft:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  tourism/information/guidepost:
+    fields:
+      parentId: tourism/information
+      missedFieldIds:
+        - address
+        - building_area_yes
+    moreFields:
+      parentId: tourism/information
+      missedFieldIds:
+        - level
+  type/route/monorail:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  amenity/vending_machine/excrement_bags:
+    moreFields:
+      parentId: amenity/vending_machine
+      missedFieldIds:
+        - branch_brand
+  building/garage:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+  building/garages:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+  building/roof:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+    moreFields:
+      parentId: building
+      missedFieldIds:
+        - smoking
+        - wheelchair
+  type/route/road:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/subway:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/train:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/tram:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  type/route/trolleybus:
+    fields:
+      parentId: type/route
+      missedFieldIds:
+        - network/type
+  waterway/drain:
     fields:
       parentId: waterway
       missedFieldIds:

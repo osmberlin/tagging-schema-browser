@@ -115,6 +115,49 @@ describe('diffPreset', () => {
 })
 
 describe('comparePresets', () => {
+  it('notes when an added field is universal and was already reachable via More fields', () => {
+    const fields = { name: { type: 'localized', key: 'name', universal: true }, brand: {} }
+    const result = comparePresets(
+      [preset('shop', { fields: ['brand'] })],
+      [preset('shop', { fields: ['name', 'brand'] })],
+      {
+        baseline: minimalSchema({ fields } as Partial<SchemaData>),
+        current: minimalSchema({ fields } as Partial<SchemaData>),
+      },
+    )
+    const fieldsDiff = result.modified[0].diffs.find((d) => d.label === 'Fields')
+    expect(fieldsDiff?.notes).toEqual([
+      '“name” is a universal field and was already available via More fields.',
+    ])
+  })
+
+  it('notes when a removed field is universal and still reachable via More fields', () => {
+    const fields = { name: { type: 'localized', key: 'name', universal: true }, brand: {} }
+    const result = comparePresets(
+      [preset('shop', { fields: ['name', 'brand'] })],
+      [preset('shop', { fields: ['brand'] })],
+      {
+        baseline: minimalSchema({ fields } as Partial<SchemaData>),
+        current: minimalSchema({ fields } as Partial<SchemaData>),
+      },
+    )
+    const fieldsDiff = result.modified[0].diffs.find((d) => d.label === 'Fields')
+    expect(fieldsDiff?.notes).toEqual([
+      '“name” is a universal field and stays available via More fields.',
+    ])
+  })
+
+  it('lists preset reference changes', () => {
+    const result = comparePresets([preset('shop')], [preset('shop')], {
+      baseline: minimalSchema({ rawPresets: { shop: { reference: { key: 'shop' } } } }),
+      current: minimalSchema({
+        rawPresets: { shop: { reference: { key: 'shop', value: 'convenience' } } },
+      }),
+    })
+    expect(result.statusById.get('shop')).toBe('modified')
+    expect(result.modified[0].diffs.map((d) => d.label)).toEqual(['Reference'])
+  })
+
   it('classifies added, removed, and modified presets', () => {
     const release = [preset('keep'), preset('removed'), preset('mod', { name: 'Before' })]
     const current = [preset('keep'), preset('added'), preset('mod', { name: 'After' })]

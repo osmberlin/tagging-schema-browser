@@ -4,7 +4,7 @@ import {
   hasFieldOptionTranslation,
   type FieldOptionTranslation,
 } from '@/utils/fieldOptionTranslation'
-import { isOptionIconMismatch } from '@/utils/iconMismatch'
+import { isOptionIconMismatch, isOptionIconMissing } from '@/utils/iconMismatch'
 import type {
   DenormalizedPreset,
   FieldOptionMismatchRow,
@@ -239,6 +239,8 @@ export function getFieldOptionMismatchRows(
   }
 
   const rows: FieldOptionMismatchRow[] = []
+  const field = fields[fieldId]
+  const fieldHasIcons = field ? Object.keys(resolveFieldIcons(field, fields)).length > 0 : false
 
   for (const preset of presets) {
     if (!preset.fields.includes(fieldId) && !preset.moreFields.includes(fieldId)) continue
@@ -254,6 +256,7 @@ export function getFieldOptionMismatchRows(
         optionIcon: row.icon,
         labelEn: row.labelEn,
         iconMismatch: row.iconMismatch,
+        iconMissing: isOptionIconMissing(row.icon, row.childPreset.icon, fieldHasIcons),
         parentPreset: { id: preset.id, name: preset.name },
         childPreset: row.childPreset,
       })

@@ -27,6 +27,11 @@ export type DiffEntry = {
   listChanges?: ListChanges
   orderedListChanges?: OrderedListChanges
   recordChanges?: RecordChanges
+  /** Full before/after maps of a record diff (lets renderers look up values of added/removed keys). */
+  beforeRecord?: Record<string, string>
+  afterRecord?: Record<string, string>
+  /** Extra explanatory notes shown below the diff value. */
+  notes?: string[]
 }
 
 export function formatScalar(value: unknown): string {
@@ -217,5 +222,7 @@ export function diffRecordDimension(
     before: formatRecord(before),
     after: formatRecord(after),
     recordChanges,
+    beforeRecord: before,
+    afterRecord: after,
   }
 }

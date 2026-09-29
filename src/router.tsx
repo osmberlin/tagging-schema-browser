@@ -13,6 +13,8 @@ import {
 import { Suspense, lazy, useEffect } from 'react'
 import { z } from 'zod'
 import { PageAbout } from '@/components/PageAbout/PageAbout'
+import { AuditDetailPage } from '@/components/PageAudits/AuditPage'
+import { AuditsIndexPage } from '@/components/PageAudits/AuditsIndexPage'
 import { FieldDetailPage } from '@/components/PageFields/FieldDetailPage'
 import { FieldFacetSidebar } from '@/components/PageFields/FieldFacetSidebar'
 import { FieldSearchBar } from '@/components/PageFields/FieldSearchBar'
@@ -39,6 +41,7 @@ import {
 } from '@/components/PageTranslations/translationsSearch'
 import { TranslationsSidebar } from '@/components/PageTranslations/TranslationsSidebar'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
+import { SchemaLoadErrorPanel } from '@/components/ui/SchemaLoadErrorPanel'
 import { SidebarLayout } from '@/components/ui/SidebarLayout'
 import { UnsupportedSchemaNotice } from '@/components/ui/UnsupportedSchemaNotice'
 import {
@@ -118,7 +121,8 @@ function RouteChunkFallback({ label }: { label: string }) {
 
 function SchemaContent({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const { unsupportedBuild, customDataUrl, dataUrl, error, loading, data } = useSchema()
+  const { unsupportedBuild, customDataUrl, dataUrl, error, loading, data, retry, setDataUrl } =
+    useSchema()
 
   useEffect(
     function clearSourceTreeCacheOnSchemaChange() {
@@ -142,6 +146,23 @@ function SchemaContent({ children }: { children: React.ReactNode }) {
     dataUrl.trim().length > 0
   ) {
     return <SchemaLoadingPanel />
+  }
+
+  if (
+    schemaRouteWaitsForInitialLoad(location.pathname) &&
+    error &&
+    !loading &&
+    !data &&
+    dataUrl.trim().length > 0
+  ) {
+    return (
+      <SchemaLoadErrorPanel
+        error={error}
+        dataUrl={dataUrl}
+        onRetry={retry}
+        onUseDefault={() => setDataUrl(null)}
+      />
+    )
   }
 
   return children
@@ -343,6 +364,32 @@ const fieldRoute = createRoute({
   component: FieldDetailPage,
 })
 
+const auditsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/audits',
+  component: () => <Outlet />,
+})
+
+const auditsIndexRoute = createRoute({
+  getParentRoute: () => auditsRoute,
+  path: '/',
+  head: documentTitleHead('Audits'),
+  component: AuditsIndexPage,
+})
+
+const auditSearchSchema = z.object({
+  selected: z.string().catch(''),
+})
+
+const auditDetailRoute = createRoute({
+  getParentRoute: () => auditsRoute,
+  path: '/$slug',
+  head: documentTitleHead('Audit'),
+  validateSearch: auditSearchSchema,
+  search: { middlewares: [stripSearchParams({ selected: '' })] },
+  component: AuditDetailPage,
+})
+
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/about',
@@ -373,6 +420,7 @@ const routeTree = rootRoute.addChildren([
   comparisonRoute,
   presetRoute,
   fieldRoute,
+  auditsRoute.addChildren([auditsIndexRoute, auditDetailRoute]),
   aboutRoute,
   previewLoadingRoute,
   previewLoadingRefreshRoute,

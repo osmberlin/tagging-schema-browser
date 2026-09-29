@@ -22,6 +22,19 @@ export function isOptionIconMismatch(
   return optionIcon !== childPresetIcon
 }
 
+/**
+ * True when a child preset has an icon but the field option has none, while the field
+ * already defines icons for other options. Fields without any icons are skipped to avoid
+ * flagging generic dropdowns that intentionally have no icons.
+ */
+export function isOptionIconMissing(
+  optionIcon: string | undefined,
+  childPresetIcon: string | undefined,
+  fieldHasIcons: boolean,
+): boolean {
+  return fieldHasIcons && !optionIcon && Boolean(childPresetIcon)
+}
+
 /** Mark presets involved in any option ↔ child-preset icon mismatch. */
 export function annotatePresetIconMismatches(
   presets: DenormalizedPreset[],

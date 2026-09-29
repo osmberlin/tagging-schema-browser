@@ -47,9 +47,11 @@ const pinheadLoadPromises = new Map<string, Promise<void>>()
 const supplierLoadPromises = new Map<IconSupplier, Promise<void>>()
 const registryListeners = new Set<() => void>()
 let registryEpoch = 0
+let registryEntriesSnapshot: IconRegistryEntry[] | null = null
 
 function notifyRegistryChange(): void {
   registryEpoch += 1
+  registryEntriesSnapshot = null
   for (const listener of registryListeners) listener()
 }
 
@@ -74,6 +76,20 @@ export function useIconSvgDataUrl(iconName?: string): string | null {
     () => getIconSvgDataUrl(iconName),
     () => getIconSvgDataUrl(iconName),
   )
+}
+
+/** Immutable list of registry entries; a new array identity after every registry change. */
+export function getIconRegistryEntries(): IconRegistryEntry[] {
+  registryEntriesSnapshot ??= Array.from(registryCache.values())
+  return registryEntriesSnapshot
+}
+
+/**
+ * Registry entries as a React-visible value. Unlike reading the mutable Map, this lets
+ * memoization (incl. React Compiler) recompute when supplier catalogs finish loading.
+ */
+export function useIconRegistryEntries(): IconRegistryEntry[] {
+  return useSyncExternalStore(subscribeIconRegistry, getIconRegistryEntries, getIconRegistryEntries)
 }
 
 export function iconSupplierFromName(iconName: string): IconSupplier | null {

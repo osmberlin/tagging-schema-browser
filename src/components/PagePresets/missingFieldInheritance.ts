@@ -124,12 +124,22 @@ function sameFieldIdSet(a: string[], b: string[]): boolean {
   return sortedA.every((value, index) => value === sortedB[index])
 }
 
-function overrideListMatches(
+/** Every override id must still be missing from the slash parent on the live preset. */
+export function overrideMissedFieldIdsAreValid(
+  current: MissingFieldListInheritance,
+  override: MissingInheritanceOverrideList,
+): boolean {
+  if (override.parentId !== current.parentId) return false
+  const currentSet = new Set(current.missedFieldIds)
+  return override.missedFieldIds.every((fieldId) => currentSet.has(fieldId))
+}
+
+export function overrideDocumentsAllMissedFields(
   current: MissingFieldListInheritance,
   override: MissingInheritanceOverrideList,
 ): boolean {
   return (
-    override.parentId === current.parentId &&
+    overrideMissedFieldIdsAreValid(current, override) &&
     sameFieldIdSet(override.missedFieldIds, current.missedFieldIds)
   )
 }
@@ -143,7 +153,8 @@ export function resolveMissingInheritanceListStatus(
     return override ? 'stale' : 'none'
   }
   if (!override) return 'unreviewed'
-  return overrideListMatches(current, override) ? 'intentional' : 'stale'
+  if (!overrideMissedFieldIdsAreValid(current, override)) return 'stale'
+  return overrideDocumentsAllMissedFields(current, override) ? 'intentional' : 'unreviewed'
 }
 
 /**
@@ -157,6 +168,11 @@ export function resolveMissingInheritanceListStatus(
  * A preset may document one list while the other remains unreviewed (partial
  * override). Overall status stays `unreviewed` until every detected list has a
  * matching override section.
+ *
+ * Within one list, `missedFieldIds` may be a **subset** of the live detection
+ * (document the obvious skips first; remaining ids stay unreviewed). Stale means
+ * the override references field ids that are no longer missing, or the list key
+ * exists without live detection.
  */
 export function resolveMissingInheritanceStatus(
   current: MissingFieldInheritance | null,
@@ -183,59 +199,4 @@ export function resolveMissingInheritanceStatus(
 
 export function hasMissingFieldInheritance(status: MissingInheritanceStatus): boolean {
   return status === 'unreviewed' || status === 'intentional' || status === 'stale'
-}
-
-/** Strip debug-only fields so the result matches `MissingInheritanceOverride`. */
-export function missingInheritanceOverrideFromCurrent(
-  current: MissingFieldInheritance,
-): MissingInheritanceOverride {
-  const override: MissingInheritanceOverride = {}
-  for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const section = current[fieldListKey]
-    if (!section) continue
-    override[fieldListKey] = {
-      parentId: section.parentId,
-      missedFieldIds: [...section.missedFieldIds],
-    }
-  }
-  return override
-}
-
-/**
- * YAML block to paste under `presets:` in `missing-inheritance-overrides.yaml`.
- * Omits `explicitPresetRefs` and other debug-only fields.
- */
-export function formatMissingInheritanceOverrideYaml(
-  presetId: string,
-  current: MissingFieldInheritance,
-): string {
-  const override = missingInheritanceOverrideFromCurrent(current)
-  const lines: string[] = [`  ${presetId}:`]
-
-  for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const section = override[fieldListKey]
-    if (!section) continue
-    lines.push(`    ${fieldListKey}:`)
-    lines.push(`      parentId: ${section.parentId}`)
-    lines.push('      missedFieldIds:')
-    for (const fieldId of section.missedFieldIds) {
-      lines.push(`        - ${fieldId}`)
-    }
-  }
-
-  return `${lines.join('\n')}\n`
-}
-
-/** Format a stored override entry for issue bodies (stale removal / diff). */
-export function formatMissingInheritanceOverrideYamlFromStored(
-  presetId: string,
-  override: MissingInheritanceOverride,
-): string {
-  const current: MissingFieldInheritance = {}
-  for (const fieldListKey of ['fields', 'moreFields'] as const) {
-    const section = override[fieldListKey]
-    if (!section) continue
-    current[fieldListKey] = { ...section, explicitPresetRefs: [] }
-  }
-  return formatMissingInheritanceOverrideYaml(presetId, current)
 }

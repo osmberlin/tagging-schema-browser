@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useReference, useReferenceHydrated } from '@/features/data-source/reference-store'
 import { SCHEMA_STALE_TIME } from '@/queries/queryClient'
@@ -38,7 +38,11 @@ export function useSchema() {
     queryFn: () => fetchSchemaData(resolvedDataUrl),
     enabled: resolvedDataUrl.trim().length > 0 && !isUnsupportedUrl,
     staleTime: SCHEMA_STALE_TIME,
+    // A failed load must not refetch every time a consumer mounts: SchemaContent swaps the page
+    // for a spinner while loading, which remounts the page, which refetched … forever.
+    retryOnMount: false,
     initialData: () => cachedSchemaData(resolvedDataUrl),
+    placeholderData: keepPreviousData,
   })
 
   const data = query.data ?? null
@@ -46,12 +50,16 @@ export function useSchema() {
   return {
     dataUrl: resolvedDataUrl,
     customDataUrl: customDataUrl || null,
+    reference: dataUrlParam.trim() ? undefined : reference,
     unsupportedBuild: isUnsupportedUrl ? predictedBuild : null,
     setDataUrl: (url: string | null) => {
       void navigate({ to: '.', search: (prev) => ({ ...prev, dataUrl: url ?? '' }) })
     },
     load: (url: string) => {
       void navigate({ to: '.', search: (prev) => ({ ...prev, dataUrl: url.trim() || '' }) })
+    },
+    retry: () => {
+      void query.refetch()
     },
     loading: query.isLoading && !query.data,
     refetching: query.isFetching && Boolean(query.data),

@@ -23,6 +23,8 @@ export type RawPreset = {
   addTags?: Record<string, string>
   /** Tags removed when deselecting this preset. Defaults to `addTags`, then `tags`. */
   removeTags?: Record<string, string>
+  /** Wiki/taginfo reference key (and optional value) for this preset. */
+  reference?: { key: string; value?: string }
   matchScore?: number
   searchable?: boolean
   suggestion?: boolean
@@ -109,6 +111,8 @@ export type FieldOptionMismatchRow = {
   optionIcon?: string
   labelEn: string
   iconMismatch: boolean
+  /** Option has no icon while the linked child preset has one (and the field uses icons). */
+  iconMissing: boolean
   parentPreset: { id: string; name: string }
   childPreset: { id: string; name: string; icon?: string }
 }
@@ -197,6 +201,8 @@ export type FieldViewModel = {
   presets: DenormalizedPreset[]
   /** Option ↔ child-preset icon mismatches involving this field. */
   iconMismatchCount: number
+  /** Options without icon whose child preset has one. */
+  iconMissingCount: number
   optionIconNames: string[]
   /** Presets where this field is flagged as unreviewed risky typeCombo. */
   riskyUsageCount: number

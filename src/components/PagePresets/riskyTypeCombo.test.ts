@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   detectRiskyTypeCombo,
-  formatRiskyTypeComboOverrideYaml,
   resolveRiskyTypeComboStatus,
-  riskyTypeComboOverrideFromCurrent,
 } from '@/components/PagePresets/riskyTypeCombo'
 
 describe('riskyTypeCombo', () => {
@@ -85,19 +83,11 @@ describe('riskyTypeCombo', () => {
       }),
     ).toBe('stale')
     expect(resolveRiskyTypeComboStatus(null, { fieldIds: ['trade'] })).toBe('stale')
-  })
-
-  it('formats override yaml', () => {
-    const yaml = formatRiskyTypeComboOverrideYaml('shop/trade', {
-      fields: [{ fieldId: 'trade', fieldKey: 'trade', listKey: 'fields' }],
-    })
-
-    expect(yaml).toContain('shop/trade:')
-    expect(yaml).toContain('- trade')
     expect(
-      riskyTypeComboOverrideFromCurrent({
-        fields: [{ fieldId: 'trade', fieldKey: 'trade', listKey: 'fields' }],
-      }),
-    ).toEqual({ fieldIds: ['trade'] })
+      resolveRiskyTypeComboStatus(
+        { fields: [...current.fields, { fieldId: 'b', fieldKey: 'b', listKey: 'fields' }] },
+        { fieldIds: ['trade'] },
+      ),
+    ).toBe('unreviewed')
   })
 })

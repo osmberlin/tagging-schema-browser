@@ -169,6 +169,13 @@ function diffRawPreset(
   )
   if (removeTags) diffs.push(removeTags)
 
+  const reference = diffRecordDimension(
+    'Reference',
+    { ...baseline.reference },
+    { ...current.reference },
+  )
+  if (reference) diffs.push(reference)
+
   const fields = diffOrderedListDimension('Fields', baseline.fields ?? [], current.fields ?? [])
   if (fields) diffs.push(fields)
 
@@ -231,7 +238,40 @@ export function diffPresetWithSchema(
   const rawOnly = diffRawPresetById(presetId, baseline, current).filter(
     (d) => !denormalizedLabels.has(d.label),
   )
-  return [...denormalized, ...rawOnly]
+  return annotateUniversalFieldChanges(
+    [...denormalized, ...rawOnly],
+    baseline,
+    current,
+    release,
+    currentPreset,
+  )
+}
+
+/**
+ * Universal fields are implicitly shown in every preset's "More fields" by iD,
+ * so adding one to or removing one from `fields` only moves it between sections.
+ */
+function annotateUniversalFieldChanges(
+  diffs: DiffEntry[],
+  baseline: SchemaData,
+  current: SchemaData,
+  release: DenormalizedPreset,
+  currentPreset: DenormalizedPreset,
+): DiffEntry[] {
+  return diffs.map((diff) => {
+    if (diff.label !== 'Fields' || !diff.orderedListChanges) return diff
+    const { removed, added } = diff.orderedListChanges
+    const notes = [
+      ...removed
+        .filter((id) => current.fields[id]?.universal && !currentPreset.moreFields.includes(id))
+        .map((id) => `“${id}” is a universal field and stays available via More fields.`),
+      ...added
+        .filter((id) => baseline.fields[id]?.universal && !release.moreFields.includes(id))
+        .map((id) => `“${id}” is a universal field and was already available via More fields.`),
+    ]
+    if (notes.length === 0) return diff
+    return { ...diff, notes }
+  })
 }
 
 /** Compare preset datasets keyed by id. Prefer schema-aware diffs when both sides are loaded. */

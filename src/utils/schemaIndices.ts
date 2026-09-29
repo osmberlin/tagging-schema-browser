@@ -7,7 +7,11 @@ import {
 } from '@/utils/fieldOptions'
 import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
 import { sortFieldTypes } from '@/utils/fieldTypes'
-import { isOptionIconMismatch, type PresetIconMismatchRef } from '@/utils/iconMismatch'
+import {
+  isOptionIconMismatch,
+  isOptionIconMissing,
+  type PresetIconMismatchRef,
+} from '@/utils/iconMismatch'
 import type {
   DenormalizedPreset,
   FieldOptionMismatchRow,
@@ -147,6 +151,7 @@ function buildOptionRowsForField(
       optionIcon: icon,
       labelEn: fieldOptionTitle(strings[opt]) ?? opt,
       iconMismatch: isOptionIconMismatch(icon, childPresetIcon),
+      iconMissing: isOptionIconMissing(icon, childPresetIcon, Object.keys(icons).length > 0),
       parentPreset: { id: preset.id, name: preset.name },
       childPreset: { id: child.id, name: child.name, icon: childPresetIcon },
     })
@@ -194,10 +199,11 @@ function fieldLabel(
 
 function buildFieldMismatchCounts(
   fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>,
+  flag: 'iconMismatch' | 'iconMissing' = 'iconMismatch',
 ): Map<string, number> {
   const counts = new Map<string, number>()
   for (const [fieldId, rows] of fieldOptionMismatchRows) {
-    const mismatchCount = rows.filter((row) => row.iconMismatch).length
+    const mismatchCount = rows.filter((row) => row[flag]).length
     if (mismatchCount > 0) counts.set(fieldId, mismatchCount)
   }
   return counts
@@ -281,6 +287,7 @@ export function buildFieldCatalog(
   fieldRiskyPresetUsages: Map<string, FieldRiskyTypeComboUsage[]>,
 ): { fieldCatalog: FieldViewModel[]; fieldTypes: string[] } {
   const mismatchCounts = buildFieldMismatchCounts(fieldOptionMismatchRows)
+  const missingCounts = buildFieldMismatchCounts(fieldOptionMismatchRows, 'iconMissing')
 
   const fieldCatalog: FieldViewModel[] = Object.entries(fields).map(([id, raw]) => {
     const primaryPresets = presetsByPrimaryField.get(id) ?? []
@@ -301,6 +308,7 @@ export function buildFieldCatalog(
       moreCount: morePresets.length,
       presets: Array.from(presetsById.values()),
       iconMismatchCount: mismatchCounts.get(id) ?? 0,
+      iconMissingCount: missingCounts.get(id) ?? 0,
       optionIconNames: listFieldOptionIconNames(id, raw, fields, fieldTranslations),
       riskyUsageCount: riskyUsageCountForField(fieldRiskyPresetUsages.get(id)),
     }

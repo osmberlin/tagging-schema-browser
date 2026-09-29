@@ -1,10 +1,9 @@
-# Auto-merge schema override PRs from Cursor agents after CI passes.
+# Auto-merge schema override PRs (opened by the Schema override PR workflow) after CI passes.
 # Rebase merge preserves 1–2 commits per PR (apply snapshot, optional stale cleanup).
+# Auto-run on PR events is still paused; run manually via workflow_dispatch with the PR number.
 name: Schema override auto-merge
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled, ready_for_review]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -24,20 +23,13 @@ concurrency:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'schema-override')
     steps:
       - name: Resolve PR number
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            pr_number="${{ github.event.inputs.pr_number }}"
-          else
-            pr_number="${{ github.event.pull_request.number }}"
-          fi
+          pr_number="${{ github.event.inputs.pr_number }}"
           echo "number=$pr_number" >> "$GITHUB_OUTPUT"
           labels=$(gh pr view "$pr_number" --repo "${{ github.repository }}" --json labels --jq '[.labels[].name] | join(",")')
           if ! echo "$labels" | grep -q 'schema-override'; then
@@ -71,12 +63,7 @@ jobs:
           echo "eligible=true" >> "$GITHUB_OUTPUT"
 
       - name: Comment when manual review is required
-        if: >-
-          steps.files.outputs.eligible != 'true' &&
-          (
-            github.event_name == 'workflow_dispatch' ||
-            contains(fromJSON('["opened", "labeled", "reopened"]'), github.event.action)
-          )
+        if: steps.files.outputs.eligible != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
@@ -117,46 +104,21 @@ jobs:
           MERGE_FORKS: false
           MERGE_ERROR_FAIL: true
 
-      - name: Checkout repository
-        if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
-        uses: actions/checkout@v7
-
-      - name: Setup Bun
-        if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: package.json
-
       - name: Close issues linked from PR body
-        id: close-linked-issues
         # GITHUB_TOKEN merges do not trigger GitHub's native "Closes #X" closure.
         if: steps.files.outputs.eligible == 'true' && steps.automerge.outcome == 'success'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          CLOSE_LINKED_ISSUES_FROM_PR: ${{ steps.pr.outputs.number }}
-        run: bun run .github/scripts/cursorOverrideAutomation.ts
-
-      - name: Launch next schema override issue
-        if: >-
-          steps.files.outputs.eligible == 'true' &&
-          steps.automerge.outcome == 'success' &&
-          steps.close-linked-issues.outcome == 'success'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          LAUNCH_NEXT_SCHEMA_OVERRIDE: 'true'
-        run: bun run .github/scripts/cursorOverrideAutomation.ts
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json body --jq .body \
+            | grep -oiE '(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+' | grep -oE '[0-9]+' | sort -u \
+            | while read -r issue; do gh issue close "$issue" --repo "$GITHUB_REPOSITORY" --reason completed; done
 
       - name: Comment when auto-merge is queued
         if: >-
           steps.files.outputs.eligible == 'true' &&
-          steps.automerge.outcome == 'success' &&
-          (
-            github.event_name == 'workflow_dispatch' ||
-            contains(fromJSON('["opened", "labeled", "reopened", "ready_for_review"]'), github.event.action)
-          )
+          steps.automerge.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}

@@ -21,3 +21,9 @@ function ensureTrailingSlash(url: string): string {
 export function isBundledTestSchemaUrl(url: string): boolean {
   return ensureTrailingSlash(url) === ensureTrailingSlash(bundledTestSchemaUrl())
 }
+
+/** Prefix an in-app path (`/audits/x?y=1`) with the deploy base path (e.g. GitHub Pages sub-path). */
+export function appPath(path: string): string {
+  const base = import.meta.env.BASE_URL.replace(/\/+$/, '')
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
+}
