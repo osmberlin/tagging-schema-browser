@@ -231,7 +231,31 @@ export function diffPresetWithSchema(
   const rawOnly = diffRawPresetById(presetId, baseline, current).filter(
     (d) => !denormalizedLabels.has(d.label),
   )
-  return [...denormalized, ...rawOnly]
+  return annotateUniversalFieldRemovals([...denormalized, ...rawOnly], current, currentPreset)
+}
+
+/**
+ * Universal fields are implicitly shown in every preset's "More fields" by iD,
+ * so removing one from `fields` does not hide it from editors.
+ */
+function annotateUniversalFieldRemovals(
+  diffs: DiffEntry[],
+  current: SchemaData,
+  currentPreset: DenormalizedPreset,
+): DiffEntry[] {
+  return diffs.map((diff) => {
+    if (diff.label !== 'Fields' || !diff.orderedListChanges) return diff
+    const universal = diff.orderedListChanges.removed.filter(
+      (id) => current.fields[id]?.universal && !currentPreset.moreFields.includes(id),
+    )
+    if (universal.length === 0) return diff
+    return {
+      ...diff,
+      notes: universal.map(
+        (id) => `“${id}” is a universal field and stays available via More fields.`,
+      ),
+    }
+  })
 }
 
 /** Compare preset datasets keyed by id. Prefer schema-aware diffs when both sides are loaded. */

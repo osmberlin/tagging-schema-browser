@@ -27,6 +27,8 @@ export type DiffEntry = {
   listChanges?: ListChanges
   orderedListChanges?: OrderedListChanges
   recordChanges?: RecordChanges
+  /** Extra explanatory notes shown below the diff value. */
+  notes?: string[]
 }
 
 export function formatScalar(value: unknown): string {
