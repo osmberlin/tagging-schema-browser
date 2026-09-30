@@ -78,11 +78,14 @@ function DecisionButtons({
   value,
   onChange,
   label,
+  locked = false,
 }: {
   options: FieldDecision[]
   value: FieldDecision | undefined
   onChange: (value: FieldDecision | undefined) => void
   label: string
+  /** Issue URL is too long: only the active option (to clear it) stays clickable. */
+  locked?: boolean
 }) {
   return (
     <div
@@ -97,10 +100,15 @@ function DecisionButtons({
             key={option}
             type="button"
             aria-pressed={active}
-            title={FIELD_DECISION_HELP[option]}
+            disabled={locked && !active}
+            title={
+              locked && !active
+                ? 'Issue is too long — clear a decision first, or review the rest in a follow-up issue.'
+                : FIELD_DECISION_HELP[option]
+            }
             onClick={() => onChange(active ? undefined : option)}
             className={cn(
-              'px-2.5 py-1 whitespace-nowrap transition-colors not-first:border-l not-first:border-slate-300',
+              'px-2.5 py-1 whitespace-nowrap transition-colors not-first:border-l not-first:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40',
               active ? DECISION_ACTIVE_CLASS[option] : 'bg-white text-slate-700 hover:bg-slate-100',
             )}
           >
@@ -143,9 +151,11 @@ function EntryFields({
   entry,
   decisions,
   setDecisions,
+  locked,
 }: {
   entry: AuditEntry
   decisions: Decisions
+  locked: boolean
   setDecisions: (updates: Decisions) => void
 }) {
   const keyOf = (field: AuditField) => fieldDecisionKey(entry.entryId, field.fieldId)
@@ -169,6 +179,7 @@ function EntryFields({
               {fields.length > 1 ? (
                 <DecisionButtons
                   label={`Decision for all fields of ${entry.entryId}`}
+                  locked={locked}
                   options={options}
                   value={allSame ? first : undefined}
                   onChange={(value) =>
@@ -183,6 +194,7 @@ function EntryFields({
                   <FieldLink field={field} />
                   <DecisionButtons
                     label={`Decision for ${field.fieldId}`}
+                    locked={locked}
                     options={options}
                     value={decisions[keyOf(field)]}
                     onChange={(value) => setDecisions({ [keyOf(field)]: value })}
@@ -404,6 +416,7 @@ export function AuditDetailPage() {
                                 entry={entry}
                                 decisions={decisions}
                                 setDecisions={setDecisions}
+                                locked={issueError !== undefined}
                               />
                             </div>
                           ))}
@@ -430,8 +443,8 @@ export function AuditDetailPage() {
                       className="text-amber-300"
                       data-testid="audit-issue-too-long"
                     >
-                      {issueError} Clear some decisions to enable submitting, then review the rest
-                      in a follow-up issue.
+                      {issueError} New decisions are disabled. Clear some decisions to enable
+                      submitting, then review the rest in a follow-up issue.
                     </span>
                   ) : null}
                   <button
