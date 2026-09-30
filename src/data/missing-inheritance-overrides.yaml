@@ -466,3 +466,52 @@ presets:
       parentId: education
       missedFieldIds:
         - building_area
+  historic/memorial/stolperstein-EU:
+    moreFields:
+      parentId: historic/memorial
+      missedFieldIds:
+        - gnis/feature_id-US
+  landuse/flowerbed:
+    fields:
+      parentId: landuse
+      missedFieldIds:
+        - name
+  landuse/railway:
+    fields:
+      parentId: landuse
+      missedFieldIds:
+        - name
+  leisure/pitch/table_soccer:
+    fields:
+      parentId: leisure/pitch
+      missedFieldIds:
+        - surface_sport_pitch
+  leisure/pitch/table_tennis:
+    fields:
+      parentId: leisure/pitch
+      missedFieldIds:
+        - surface_sport_pitch
+  man_made/bunker_silo:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/chimney:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/crane:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/dovecote:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
