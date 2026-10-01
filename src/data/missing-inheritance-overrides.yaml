@@ -691,3 +691,46 @@ presets:
       parentId: natural/water
       missedFieldIds:
         - name
+  highway/path/crossing/unmarked:
+    fields:
+      parentId: highway/path/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+  highway/path/informal:
+    moreFields:
+      parentId: highway/path
+      missedFieldIds:
+        - oneway
+  highway/speed_display:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/traffic_mirror:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/traffic_sign:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/turning_circle:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  leisure/firepit:
+    fields:
+      parentId: leisure
+      missedFieldIds:
+        - name
+  leisure/hot_tub:
+    fields:
+      parentId: leisure
+      missedFieldIds:
+        - name
