@@ -570,6 +570,7 @@ presets:
       parentId: playground
       missedFieldIds:
         - playground/theme
+        - height
   playground/swing:
     fields:
       parentId: playground
@@ -633,6 +634,104 @@ presets:
   highway/escape:
     fields:
       parentId: highway
+      missedFieldIds:
+        - name
+  leisure/picnic_table:
+    fields:
+      parentId: leisure
+      missedFieldIds:
+        - name
+  leisure/pitch/athletics:
+    fields:
+      parentId: leisure/pitch
+      missedFieldIds:
+        - name
+  man_made/flare:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/fuel_pump:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/gantry:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/surveillance/camera:
+    moreFields:
+      parentId: man_made/surveillance
+      missedFieldIds:
+        - material
+  man_made/tunnel:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/wastewater_plant:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/water_well:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/windpump:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  natural/water/river:
+    fields:
+      parentId: natural/water
+      missedFieldIds:
+        - name
+  highway/path/crossing/unmarked:
+    fields:
+      parentId: highway/path/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+  highway/path/informal:
+    moreFields:
+      parentId: highway/path
+      missedFieldIds:
+        - oneway
+  highway/speed_display:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/traffic_mirror:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/traffic_sign:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/turning_circle:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  leisure/firepit:
+    fields:
+      parentId: leisure
+      missedFieldIds:
+        - name
+  leisure/hot_tub:
+    fields:
+      parentId: leisure
       missedFieldIds:
         - name
   historic/aircraft:
