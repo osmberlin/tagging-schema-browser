@@ -635,3 +635,48 @@ presets:
       parentId: highway
       missedFieldIds:
         - name
+  historic/aircraft:
+    moreFields:
+      parentId: historic
+      missedFieldIds:
+        - gnis/feature_id-US
+  historic/cannon:
+    moreFields:
+      parentId: historic
+      missedFieldIds:
+        - gnis/feature_id-US
+  natural/scrub:
+    moreFields:
+      parentId: natural
+      missedFieldIds:
+        - gnis/feature_id-US
+  natural/shrub:
+    moreFields:
+      parentId: natural
+      missedFieldIds:
+        - gnis/feature_id-US
+  natural/tree_row:
+    moreFields:
+      parentId: natural
+      missedFieldIds:
+        - gnis/feature_id-US
+  natural/tree_stump:
+    moreFields:
+      parentId: natural
+      missedFieldIds:
+        - gnis/feature_id-US
+  natural/tree:
+    moreFields:
+      parentId: natural
+      missedFieldIds:
+        - gnis/feature_id-US
+  natural/wood_point:
+    moreFields:
+      parentId: natural
+      missedFieldIds:
+        - gnis/feature_id-US
+  natural/wood:
+    moreFields:
+      parentId: natural
+      missedFieldIds:
+        - gnis/feature_id-US
