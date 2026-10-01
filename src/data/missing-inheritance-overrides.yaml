@@ -426,6 +426,7 @@ presets:
       parentId: type/route
       missedFieldIds:
         - network/type
+        - network
   type/route/ferry:
     fields:
       parentId: type/route
@@ -441,6 +442,7 @@ presets:
       parentId: type/route
       missedFieldIds:
         - network/type
+        - network
   type/route/piste:
     fields:
       parentId: type/route
@@ -779,3 +781,48 @@ presets:
       parentId: natural
       missedFieldIds:
         - gnis/feature_id-US
+  highway/footway/crossing/informal:
+    fields:
+      parentId: highway/footway/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+        - crossing/island
+        - crossing_raised
+    moreFields:
+      parentId: highway/footway/crossing
+      missedFieldIds:
+        - flashing_lights
+  highway/footway/crossing/unmarked:
+    fields:
+      parentId: highway/footway/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+  highway/footway/informal:
+    fields:
+      parentId: highway/footway
+      missedFieldIds:
+        - tunnel/name
+    moreFields:
+      parentId: highway/footway
+      missedFieldIds:
+        - tactile_paving
+  highway/path/crossing/informal:
+    fields:
+      parentId: highway/path/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+        - crossing/island
+        - crossing_raised
+    moreFields:
+      parentId: highway/path/crossing
+      missedFieldIds:
+        - flashing_lights
