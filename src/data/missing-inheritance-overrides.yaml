@@ -466,6 +466,11 @@ presets:
       parentId: education
       missedFieldIds:
         - building_area
+    moreFields:
+      parentId: education
+      missedFieldIds:
+        - branch_brand
+        - brand
   historic/memorial/stolperstein-EU:
     moreFields:
       parentId: historic/memorial
@@ -573,5 +578,60 @@ presets:
   waterway/milestone:
     fields:
       parentId: waterway
+      missedFieldIds:
+        - name
+  area/footway:
+    fields:
+      parentId: area
+      missedFieldIds:
+        - name
+  education/school:
+    moreFields:
+      parentId: education
+      missedFieldIds:
+        - branch_brand
+        - brand
+        - opening_hours
+        - payment_multi
+  highway/crossing/informal:
+    fields:
+      parentId: highway/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+        - crossing/island
+  highway/crossing/unmarked:
+    fields:
+      parentId: highway/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+  highway/cyclist_waiting_aid:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/elevator_line:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/elevator:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/emergency_access_point:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/escape:
+    fields:
+      parentId: highway
       missedFieldIds:
         - name
