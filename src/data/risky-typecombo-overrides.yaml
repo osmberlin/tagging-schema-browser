@@ -49,3 +49,6 @@ presets:
   power/plant/source/wind:
     fieldIds:
       - plant/output/electricity
+  power/plant/source/waste:
+    fieldIds:
+      - plant/output/electricity
