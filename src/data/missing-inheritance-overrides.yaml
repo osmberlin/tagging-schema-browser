@@ -466,3 +466,63 @@ presets:
       parentId: education
       missedFieldIds:
         - building_area
+  man_made/flagpole:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/monitoring_station:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/observatory:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/planter:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/pumping_station:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/satellite_dish:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/ski_jump:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  man_made/utility_pole:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  man_made/water_tap:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
+  playground/map:
+    fields:
+      parentId: playground
+      missedFieldIds:
+        - playground/theme
+  playground/swing:
+    fields:
+      parentId: playground
+      missedFieldIds:
+        - playground/theme
+  waterway/milestone:
+    fields:
+      parentId: waterway
+      missedFieldIds:
+        - name
