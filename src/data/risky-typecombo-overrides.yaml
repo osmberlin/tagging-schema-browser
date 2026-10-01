@@ -43,3 +43,9 @@ presets:
   power/plant/source/nuclear:
     fieldIds:
       - plant/output/electricity
+  highway/traffic_sign:
+    fieldIds:
+      - traffic_sign
+  power/plant/source/wind:
+    fieldIds:
+      - plant/output/electricity
