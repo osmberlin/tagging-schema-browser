@@ -1,4 +1,7 @@
-import { presetIdFromRef } from '@/components/PagePresets/presetFieldInheritance'
+import {
+  presetIdFromRef,
+  resolvePresetFieldList,
+} from '@/components/PagePresets/presetFieldInheritance'
 import { INTERIM_DATA_URL } from '@/utils/constants'
 import { schemaRepoPath } from '@/utils/githubFileUrl'
 import { isPrPreviewDataUrl, prNumberFromDataUrl } from '@/utils/prPreviewUrl'
@@ -9,8 +12,40 @@ const FETCH_TIMEOUT_MS = 4000
 const BUILD_INHERITABLE_TYPES = new Set(['multiCombo', 'semiCombo', 'manyCombo', 'check'])
 const FIELD_LIST_KEYS = ['fields', 'moreFields'] as const
 
+export type FieldListKey = (typeof FIELD_LIST_KEYS)[number]
+
 /** `fields` / `moreFields` as written in `data/presets/<id>.json` (with `{preset}` refs). */
-export type AuthoredFieldLists = { fields?: string[]; moreFields?: string[] }
+export type AuthoredFieldLists = Partial<Record<FieldListKey, string[]>>
+
+/** Why the schema build did not copy a referenced field onto the referencing preset. */
+export type FieldOmission =
+  | { kind: 'presetTag'; hostPresetId: string; tagKey: string; tagValue: string }
+  | {
+      kind: 'sameKey'
+      hostPresetId: string
+      fieldListKey: FieldListKey
+      blockingFieldId: string
+      tagKey: string
+    }
+
+/** One field a `{preset}` reference offers, and whether the build kept it. */
+export type ReferencedField = { fieldId: string; omission?: FieldOmission }
+
+export type AuthoredListEntry =
+  | { kind: 'field'; fieldId: string }
+  | { kind: 'presetRef'; presetRef: string; presetId: string; fields: ReferencedField[] }
+
+/** Authored field lists of one preset, each `{preset}` reference with what it expands to. */
+export type AuthoredPresetSource = Partial<Record<FieldListKey, AuthoredListEntry[]>>
+
+export function formatFieldOmission(fieldId: string, omission: FieldOmission): string {
+  if (omission.kind === 'presetTag') {
+    return `${omission.hostPresetId} tag fixes ${omission.tagKey}=${omission.tagValue}`
+  }
+  const where = `${omission.hostPresetId} (${omission.fieldListKey}`
+  if (omission.blockingFieldId === fieldId) return `${fieldId} already on ${where})`
+  return `${fieldId} blocked by ${omission.blockingFieldId} on ${where}, same tag key \`${omission.tagKey}\`)`
+}
 
 function ensureSlash(url: string): string {
   return url.endsWith('/') ? url : `${url}/`
@@ -21,7 +56,7 @@ function ensureSlash(url: string): string {
  * - Unreleased (GitHub Pages) publishes only `dist`, built from `main` → raw GitHub `main`.
  * - PR preview is built from the PR merge ref; `head` is the fallback.
  * - Everything else (npm release on jsDelivr, a local checkout) ships `data/` next to `dist/`.
- * The result is only a candidate: `validateAuthoredFieldLists` decides whether it is used.
+ * The result is only a candidate: `buildAuthoredPresetSource` decides whether it is used.
  */
 export function authoredPresetSourceUrls(
   dataUrl: string,
@@ -67,50 +102,8 @@ function parseAuthoredFieldLists(json: unknown): AuthoredFieldLists | null {
   return lists
 }
 
-/**
- * Expand authored lists the way the id-tagging-schema build does
- * (`dereferenceUntranslatedContent` in `scripts/lib/references.ts`), using the already
- * expanded dist lists of the referenced presets.
- */
-export function expandAuthoredFieldLists(
-  distPreset: RawPreset,
-  authored: AuthoredFieldLists,
-  rawPresets: RawPresets,
-  allFields: RawFields,
-): AuthoredFieldLists | null {
-  const working: AuthoredFieldLists = {
-    ...(authored.fields ? { fields: [...authored.fields] } : {}),
-    ...(authored.moreFields ? { moreFields: [...authored.moreFields] } : {}),
-  }
-  const tags = distPreset.tags ?? {}
-
-  const shouldInherit = (fieldId: string): boolean => {
-    const field = allFields[fieldId]
-    if (!field?.key) return true
-    if (tags[field.key] && !BUILD_INHERITABLE_TYPES.has(field.type ?? '')) return false
-    return !FIELD_LIST_KEYS.some((key) =>
-      working[key]?.some((originalField) => allFields[originalField]?.key === field.key),
-    )
-  }
-
-  for (const key of FIELD_LIST_KEYS) {
-    const list = working[key]
-    if (!list) continue
-    for (let i = 0; i < list.length; i++) {
-      const refId = presetIdFromRef(list[i]!)
-      if (!refId) continue
-      const referenced = rawPresets[refId]
-      if (!referenced) return null
-      const referencedList = referenced[key]
-      list.splice(
-        i--,
-        1,
-        ...(Array.isArray(referencedList) ? referencedList : []).filter(shouldInherit),
-      )
-    }
-  }
-
-  return working
+function usesPresetRefs(list: string[] | undefined): boolean {
+  return Array.isArray(list) && list.some((item) => presetIdFromRef(item) !== null)
 }
 
 function sameList(left: string[] | undefined, right: string[] | undefined): boolean {
@@ -119,20 +112,90 @@ function sameList(left: string[] | undefined, right: string[] | undefined): bool
 }
 
 /**
- * True when the authored lists expand to exactly the lists of the loaded dist preset.
- * This is what rules out a source file from another commit than the dist was built from.
+ * Expand authored lists the way the id-tagging-schema build does
+ * (`dereferenceUntranslatedContent` in `scripts/lib/references.ts`) and record, per `{preset}`
+ * reference, which fields it contributed and which the build dropped.
+ *
+ * Returns null unless the expansion equals the lists of the loaded dist preset. That check is
+ * what rules out a source file from another commit than the dist was built from.
  */
-export function validateAuthoredFieldLists(
-  distPreset: RawPreset,
+export function buildAuthoredPresetSource(
+  presetId: string,
   authored: AuthoredFieldLists,
   rawPresets: RawPresets,
   allFields: RawFields,
-): boolean {
-  const expanded = expandAuthoredFieldLists(distPreset, authored, rawPresets, allFields)
-  if (!expanded) return false
-  return FIELD_LIST_KEYS.every((key) =>
-    sameList(expanded[key], Array.isArray(distPreset[key]) ? distPreset[key] : undefined),
-  )
+): AuthoredPresetSource | null {
+  const distPreset = rawPresets[presetId]
+  if (!distPreset) return null
+
+  const tags = distPreset.tags ?? {}
+  const working: AuthoredFieldLists = {}
+  for (const key of FIELD_LIST_KEYS) {
+    if (authored[key]) working[key] = [...authored[key]]
+  }
+
+  const omissionFor = (fieldId: string): FieldOmission | undefined => {
+    const field = allFields[fieldId]
+    const tagKey = field?.key
+    if (!tagKey) return undefined
+    if (tags[tagKey] && !BUILD_INHERITABLE_TYPES.has(field.type ?? '')) {
+      return { kind: 'presetTag', hostPresetId: presetId, tagKey, tagValue: tags[tagKey] }
+    }
+    for (const fieldListKey of FIELD_LIST_KEYS) {
+      const blockingFieldId = working[fieldListKey]?.find((id) => allFields[id]?.key === tagKey)
+      if (blockingFieldId) {
+        return { kind: 'sameKey', hostPresetId: presetId, fieldListKey, blockingFieldId, tagKey }
+      }
+    }
+    return undefined
+  }
+
+  const source: AuthoredPresetSource = {}
+  for (const key of FIELD_LIST_KEYS) {
+    const list = working[key]
+    if (!list) continue
+    const entries: AuthoredListEntry[] = []
+    let index = 0
+    for (const item of authored[key] ?? []) {
+      const refId = presetIdFromRef(item)
+      if (!refId) {
+        entries.push({ kind: 'field', fieldId: item })
+        index++
+        continue
+      }
+      const referenced = rawPresets[refId]
+      if (!referenced) return null
+      const fields = referencedFieldIds(refId, referenced, key, rawPresets, allFields).map(
+        (fieldId) => ({ fieldId, omission: omissionFor(fieldId) }),
+      )
+      const kept = fields.filter((field) => !field.omission).map((field) => field.fieldId)
+      list.splice(index, 1, ...kept)
+      index += kept.length
+      entries.push({ kind: 'presetRef', presetRef: item, presetId: refId, fields })
+    }
+    source[key] = entries
+  }
+
+  const matchesDist = FIELD_LIST_KEYS.every((key) => {
+    const distList = distPreset[key]
+    if (usesPresetRefs(distList)) return sameList(authored[key], distList)
+    return sameList(working[key], Array.isArray(distList) ? distList : undefined)
+  })
+  return matchesDist ? source : null
+}
+
+/** Fields a referenced preset offers. v7 dist lists are already expanded by the build. */
+function referencedFieldIds(
+  presetId: string,
+  preset: RawPreset,
+  key: FieldListKey,
+  rawPresets: RawPresets,
+  allFields: RawFields,
+): string[] {
+  const list = preset[key]
+  if (!Array.isArray(list)) return []
+  if (!usesPresetRefs(list)) return list
+  return resolvePresetFieldList(presetId, preset, key, rawPresets, allFields)
 }
 
 type FetchLike = (url: string, init?: { signal?: AbortSignal }) => Promise<Response>
@@ -147,9 +210,9 @@ type LoadParams = {
 }
 
 /** `unavailable` (network error / timeout) is not cached, so a later visit retries. */
-type LoadOutcome = { lists: AuthoredFieldLists | null; unavailable: boolean }
+type LoadOutcome = { source: AuthoredPresetSource | null; unavailable: boolean }
 
-const cache = new Map<string, Promise<AuthoredFieldLists | null>>()
+const cache = new Map<string, Promise<AuthoredPresetSource | null>>()
 
 function cacheKey(dataUrl: string, presetId: string): string {
   return `${ensureSlash(dataUrl.trim())}\0${presetId}`
@@ -158,7 +221,13 @@ function cacheKey(dataUrl: string, presetId: string): string {
 async function fetchValidated(params: LoadParams): Promise<LoadOutcome> {
   const { dataUrl, presetId, rawPresets, allFields } = params
   const distPreset = rawPresets[presetId]
-  if (!distPreset) return { lists: null, unavailable: false }
+  if (!distPreset) return { source: null, unavailable: false }
+
+  // A dist that still carries `{preset}` refs (not expanded by the build) is its own source.
+  if (FIELD_LIST_KEYS.some((key) => usesPresetRefs(distPreset[key]))) {
+    const source = buildAuthoredPresetSource(presetId, distPreset, rawPresets, allFields)
+    return { source, unavailable: false }
+  }
 
   const fetchImpl = params.fetchImpl ?? fetch
   const urls = authoredPresetSourceUrls(dataUrl, presetId, {
@@ -179,28 +248,27 @@ async function fetchValidated(params: LoadParams): Promise<LoadOutcome> {
       continue
     }
     const authored = parseAuthoredFieldLists(json)
-    if (authored && validateAuthoredFieldLists(distPreset, authored, rawPresets, allFields)) {
-      return { lists: authored, unavailable: false }
-    }
+    const source = authored && buildAuthoredPresetSource(presetId, authored, rawPresets, allFields)
+    if (source) return { source, unavailable: false }
   }
 
-  return { lists: null, unavailable }
+  return { source: null, unavailable }
 }
 
 /**
- * Authored `fields` / `moreFields` for one preset of the loaded dist, or null when no source
- * file could be fetched and verified (callers then fall back to the reconstruction heuristic).
+ * Authored field lists for one preset of the loaded dist, or null when no source file could be
+ * fetched and verified (the source tree then shows the expanded dist lists).
  * Cached per (dataUrl, presetId).
  */
-export function loadAuthoredFieldLists(params: LoadParams): Promise<AuthoredFieldLists | null> {
+export function loadAuthoredPresetSource(params: LoadParams): Promise<AuthoredPresetSource | null> {
   const key = cacheKey(params.dataUrl, params.presetId)
   const cached = cache.get(key)
   if (cached) return cached
 
   const pending = fetchValidated(params).then(
-    ({ lists, unavailable }) => {
+    ({ source, unavailable }) => {
       if (unavailable) cache.delete(key)
-      return lists
+      return source
     },
     () => {
       cache.delete(key)
@@ -211,6 +279,6 @@ export function loadAuthoredFieldLists(params: LoadParams): Promise<AuthoredFiel
   return pending
 }
 
-export function clearAuthoredFieldListsCache(): void {
+export function clearAuthoredPresetSourceCache(): void {
   cache.clear()
 }

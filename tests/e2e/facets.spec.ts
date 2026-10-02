@@ -270,11 +270,14 @@ test('preset ref in fields shows inherited fields not parent metadata', async ({
   await expect(page.getByText('"geometry"')).toHaveCount(1)
 })
 
-test('dist-expanded slash-parent fields collapse to preset ref in source tree', async ({
+test('source tree shows authored preset refs when the source file matches the dist', async ({
   page,
 }) => {
+  await page.route('**/data/presets/traffic_sign/variable_message.json', (route) =>
+    route.fulfill({ json: { fields: ['{traffic_sign}', 'direction_vertex'] } }),
+  )
   await page.goto('/preset/traffic_sign/variable_message?dataUrl=/test-schema')
-  await expect(page.getByRole('button', { name: /"\{traffic_sign\}"/ })).toBeVisible()
+  await expect(page.getByTestId('source-lists-mode')).toHaveAttribute('data-mode', 'authored')
   await expect(page.getByText('data/presets/traffic_sign.json')).toBeVisible()
   await expect(page.getByText('data/fields/direction_vertex.json')).toBeVisible()
   await page.getByRole('button', { name: /"\{traffic_sign\}"/ }).click()
@@ -284,12 +287,24 @@ test('dist-expanded slash-parent fields collapse to preset ref in source tree', 
       'omitted: traffic_sign/variable_message tag fixes traffic_sign=variable_message',
     ),
   ).toBeVisible()
-  await expect(page.getByText('data/fields/direction_point.json')).toBeVisible()
   await expect(
     page.getByText(
       'omitted: direction_point blocked by direction_vertex on traffic_sign/variable_message (fields, same tag key `direction`)',
     ),
-  ).toHaveCount(0)
+  ).toBeVisible()
+})
+
+test('source tree shows the expanded dist lists when the source file does not match', async ({
+  page,
+}) => {
+  await page.route('**/data/presets/traffic_sign/variable_message.json', (route) =>
+    route.fulfill({ json: { fields: ['{traffic_sign}'] } }),
+  )
+  await page.goto('/preset/traffic_sign/variable_message?dataUrl=/test-schema')
+  await expect(page.getByTestId('source-lists-mode')).toHaveAttribute('data-mode', 'expanded')
+  await expect(page.getByText('data/fields/traffic_sign/direction.json')).toBeVisible()
+  await expect(page.getByText('data/fields/direction_vertex.json')).toBeVisible()
+  await expect(page.getByRole('button', { name: /"\{traffic_sign\}"/ })).toHaveCount(0)
 })
 
 test('preset ref in moreFields inherits moreFields from parent preset', async ({ page }) => {
