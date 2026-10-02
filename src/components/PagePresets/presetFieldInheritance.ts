@@ -720,6 +720,27 @@ function collapseDistExpandedPresetRefs(
   return result
 }
 
+const presetsWithAuthoredFieldLists = new WeakSet<RawPreset>()
+
+/**
+ * Copy of `rawPresets` where `presetId` carries its authored `fields` / `moreFields`
+ * (verified against the dist, see `authoredPresetSource.ts`). `displayPresetFieldList`
+ * returns those lists as written instead of reconstructing `{preset}` refs.
+ */
+export function withAuthoredFieldLists(
+  rawPresets: RawPresets,
+  presetId: string,
+  authored: { fields?: string[]; moreFields?: string[] },
+): RawPresets {
+  const preset = rawPresets[presetId]
+  if (!preset) return rawPresets
+
+  const { fields: _fields, moreFields: _moreFields, ...rest } = preset
+  const authoredPreset: RawPreset = { ...rest, ...authored }
+  presetsWithAuthoredFieldLists.add(authoredPreset)
+  return { ...rawPresets, [presetId]: authoredPreset }
+}
+
 /**
  * Collapse dist-expanded slash-parent field prefixes back to `{ancestor}` refs for
  * source-tree display (e.g. `traffic_sign/variable_message` shows `{traffic_sign}`).
@@ -736,6 +757,7 @@ export function displayPresetFieldList(
   if (listUsesPresetRefs(list)) return list
 
   const preset = rawPresets[presetId]
+  if (preset && presetsWithAuthoredFieldLists.has(preset)) return list
   const preferPresetIds =
     fieldListKey === 'moreFields' && preset
       ? displayPresetFieldList(
