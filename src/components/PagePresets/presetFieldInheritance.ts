@@ -517,6 +517,15 @@ function isSlashAncestor(ancestorId: string, presetId: string): boolean {
   return presetId === ancestorId || presetId.startsWith(`${ancestorId}/`)
 }
 
+/**
+ * Dist output expands `{preset}` refs, so a ref can only be guessed back from a matching field
+ * prefix. Short prefixes match unrelated presets by coincidence (`roller_coaster/support` has
+ * `moreFields: ['colour']`, which made every `type/route/*` list show `{roller_coaster/support}`).
+ * Unrelated presets must therefore match at least this many fields; slash ancestors, templates and
+ * presets already referenced in `fields` are not affected.
+ */
+const MIN_PARTIAL_COLLAPSE_LENGTH = 4
+
 /** Whether dist collapse may map onto `candidateId` for host `excludePresetId`. */
 function isAllowedCollapseCandidate(
   candidateId: string,
@@ -525,6 +534,7 @@ function isAllowedCollapseCandidate(
   isExact: boolean,
   partialMatches: Array<{ presetId: string; prefixLength: number }> = [],
   exactPrefixLength = 0,
+  prefixLength = Number.POSITIVE_INFINITY,
 ): boolean {
   if (candidateId.startsWith('@templates/')) return true
   if (preferPresetIds.includes(candidateId)) return true
@@ -540,7 +550,7 @@ function isAllowedCollapseCandidate(
   }
   // Partial prefix collapse (e.g. amenity/coworking_space → {office/coworking}) — never exact
   // match onto an unrelated preset with the same dist-expanded list (e.g. traffic_sign → highway/traffic_sign).
-  if (!isExact) return true
+  if (!isExact) return prefixLength >= MIN_PARTIAL_COLLAPSE_LENGTH
   return false
 }
 
@@ -585,7 +595,15 @@ function findDistExpandedPresetRefPrefix(
   const allowedPartials = candidates.filter(
     (candidate) =>
       !candidate.isExact &&
-      isAllowedCollapseCandidate(candidate.presetId, excludePresetId, preferPresetIds, false),
+      isAllowedCollapseCandidate(
+        candidate.presetId,
+        excludePresetId,
+        preferPresetIds,
+        false,
+        [],
+        0,
+        candidate.prefixLength,
+      ),
   )
 
   const matches = candidates.filter((candidate) =>
@@ -595,6 +613,7 @@ function findDistExpandedPresetRefPrefix(
       preferPresetIds,
       candidate.isExact,
       allowedPartials,
+      candidate.prefixLength,
       candidate.prefixLength,
     ),
   )
