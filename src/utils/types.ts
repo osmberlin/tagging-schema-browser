@@ -12,6 +12,7 @@ export type { PresetIconMismatchRef, PresetIconMismatchRow } from '@/utils/iconM
 
 export type RawPresets = Record<string, RawPreset>
 export type RawPreset = {
+  name?: string
   icon?: string
   /** Remote bitmap (or any image URL); shown in the preview like iD when third-party images are enabled. */
   imageURL?: string
@@ -28,6 +29,10 @@ export type RawPreset = {
   matchScore?: number
   searchable?: boolean
   suggestion?: boolean
+  locationSet?: { include?: string[]; exclude?: string[] }
+  locationSetCrossReference?: string
+  relation?: string
+  relationCrossReference?: string
 }
 
 export type RawFieldTranslation = {

@@ -23,6 +23,10 @@ import { IconFacetSidebar } from '@/components/PageIcons/IconFacetSidebar'
 import { IconSearchBar } from '@/components/PageIcons/IconSearchBar'
 import { IconsPageProvider } from '@/components/PageIcons/IconsPageContext'
 import { iconFacetDefaults, iconFacetSchema } from '@/components/PageIcons/useIconFacetState'
+import {
+  presetBuilderSearchDefaults,
+  presetBuilderSearchSchema,
+} from '@/components/PagePresetBuilder/presetBuilderSearch'
 import { FacetSidebar } from '@/components/PagePresets/FacetSidebar'
 import { PagePresets } from '@/components/PagePresets/PagePresets'
 import { PresetDetailPage } from '@/components/PagePresets/PresetDetailPage'
@@ -73,6 +77,12 @@ const LazyPageFields = lazy(() =>
 const LazyPageComparison = lazy(() =>
   import('@/components/PageComparison/PageComparison').then((m) => ({
     default: m.PageComparison,
+  })),
+)
+
+const LazyPagePresetBuilder = lazy(() =>
+  import('@/components/PagePresetBuilder/PagePresetBuilder').then((m) => ({
+    default: m.PagePresetBuilder,
   })),
 )
 
@@ -198,7 +208,7 @@ function RootContent() {
       if (persistedReference !== 'release') return
       void navigate({
         to: '.',
-        search: (prev) => ({ ...prev, reference: 'release' }),
+        search: (prev) => ({ ...prev, reference: 'release' as const }) as never,
         replace: true,
       })
     },
@@ -230,6 +240,7 @@ function RootContent() {
     ) : null
   const isDetailPage =
     location.pathname.startsWith('/preset/') || location.pathname.startsWith('/field/')
+  const isBuilderPage = location.pathname === '/preset-builder'
   const sidebar =
     location.pathname === '/icons' ? (
       <IconFacetSidebar />
@@ -239,6 +250,11 @@ function RootContent() {
       <TranslationsSidebar />
     ) : location.pathname === '/' ? (
       <FacetSidebar />
+    ) : isBuilderPage ? (
+      <p className="mt-4 px-2 text-sm text-slate-500">
+        Edits are saved to the URL when you leave a field. Share or bookmark the page to continue
+        later.
+      </p>
     ) : isDetailPage ? null : (
       <p className="mt-4 px-2 text-sm text-slate-500">
         Open <strong>Presets</strong>, <strong>Icons</strong>, or <strong>Fields</strong> to use
@@ -322,6 +338,19 @@ const translationsRoute = createRoute({
   component: () => (
     <Suspense fallback={<RouteChunkFallback label="Loading translations…" />}>
       <LazyPageTranslations />
+    </Suspense>
+  ),
+})
+
+const presetBuilderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/preset-builder',
+  head: documentTitleHead('Preset builder'),
+  validateSearch: presetBuilderSearchSchema,
+  search: { middlewares: [stripSearchParams(presetBuilderSearchDefaults)] },
+  component: () => (
+    <Suspense fallback={<p className="text-sm text-slate-500">Loading preset builder...</p>}>
+      <LazyPagePresetBuilder />
     </Suspense>
   ),
 })
@@ -413,6 +442,7 @@ const previewLoadingRefreshRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  presetBuilderRoute,
   iconsRoute,
   fieldsRoute,
   translationsRoute,
