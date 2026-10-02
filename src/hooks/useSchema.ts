@@ -73,5 +73,6 @@ export function useSchema() {
     fields: data?.fields ?? {},
     fieldTranslations: data?.fieldTranslations ?? {},
     supportedSchemaMajor: SUPPORTED_SCHEMA_MAJOR,
+    discarded: data?.discarded ?? {},
   }
 }
