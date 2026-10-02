@@ -473,6 +473,8 @@ presets:
       missedFieldIds:
         - branch_brand
         - brand
+        - building/levels_building
+        - height_building
   historic/memorial/stolperstein-EU:
     moreFields:
       parentId: historic/memorial
@@ -600,6 +602,8 @@ presets:
         - brand
         - opening_hours
         - payment_multi
+        - building/levels_building
+        - height_building
   highway/crossing/informal:
     fields:
       parentId: highway/crossing
@@ -609,6 +613,8 @@ presets:
         - crossing/markings-DE-AT-CH
         - crossing/markings-PL
         - crossing/island
+        - crossing_raised
+        - tactile_paving
   highway/crossing/unmarked:
     fields:
       parentId: highway/crossing
@@ -852,5 +858,29 @@ presets:
   highway/steps/conveying:
     fields:
       parentId: highway/steps
+      missedFieldIds:
+        - name
+  amenity/clock/sundial:
+    fields:
+      parentId: amenity/clock
+      missedFieldIds:
+        - date
+        - faces
+  building/carport:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+  highway/cycleway/crossing/unmarked:
+    fields:
+      parentId: highway/cycleway/crossing
+      missedFieldIds:
+        - crossing/markings
+        - crossing/markings-BG
+        - crossing/markings-DE-AT-CH
+        - crossing/markings-PL
+  highway/milestone:
+    fields:
+      parentId: highway
       missedFieldIds:
         - name
