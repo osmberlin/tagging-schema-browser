@@ -854,3 +854,8 @@ presets:
       parentId: highway/steps
       missedFieldIds:
         - name
+  waterway/water_point:
+    fields:
+      parentId: waterway
+      missedFieldIds:
+        - name
