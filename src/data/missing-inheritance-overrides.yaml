@@ -826,3 +826,13 @@ presets:
       parentId: highway/path/crossing
       missedFieldIds:
         - flashing_lights
+  amenity/charging_station/charging_station_bicycle_designated:
+    fields:
+      parentId: amenity/charging_station
+      missedFieldIds:
+        - ref/EU/EVSE-EU
+  amenity/charging_station/charging_station_bicycle:
+    fields:
+      parentId: amenity/charging_station
+      missedFieldIds:
+        - ref/EU/EVSE-EU
