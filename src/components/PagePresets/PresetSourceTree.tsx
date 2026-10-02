@@ -1,7 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Fragment, type ReactNode, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
+import { loadAuthoredFieldLists } from '@/components/PagePresets/authoredPresetSource'
 import {
   buildPresetRefFieldExpansion,
   displayPresetFieldList,
@@ -9,6 +11,7 @@ import {
   getAuthoredExplicitFieldIds,
   presetIdFromRef,
   type PresetRefFieldExpansionNode,
+  withAuthoredFieldLists,
 } from '@/components/PagePresets/presetFieldInheritance'
 import {
   type KeySortMode,
@@ -452,7 +455,8 @@ function RefDisclosure({
   sortMode?: KeySortMode
 }) {
   const [open, setOpen] = useState(false)
-  const { fields, rawPresets } = useSchema()
+  const { fields } = useSchema()
+  const rawPresets = host.rawPresets
   const fieldListKey = parentKey === 'fields' || parentKey === 'moreFields' ? parentKey : undefined
   const inheritPresetFields = refInfo.kind === 'preset' && fieldListKey
   const resolvedInheritanceHost = resolveInheritanceHostContext(host, inheritanceHost, rawPresets)
@@ -1135,6 +1139,47 @@ function JsonObjectEntry({
   )
 }
 
+type SourceListsMode = 'checking' | 'authored' | 'reconstructed'
+
+const SOURCE_LISTS_MODE: Record<SourceListsMode, { label: string; title: string; tone: string }> = {
+  checking: {
+    label: 'checking source file…',
+    title: 'Looking for the source file of this preset to show its {preset} references as written.',
+    tone: 'text-slate-500 ring-slate-200',
+  },
+  authored: {
+    label: 'authored source',
+    title:
+      'fields / moreFields of this preset are shown as written in its source file. The file was checked to expand to exactly the loaded schema. Lists inside an expanded {preset} reference are still reconstructed.',
+    tone: 'text-emerald-800 ring-emerald-200 bg-emerald-50',
+  },
+  reconstructed: {
+    label: 'reconstructed',
+    title:
+      'No source file matching the loaded schema could be loaded, so {preset} references in fields / moreFields are worked back out from the expanded lists. They can differ from the source file.',
+    tone: 'text-amber-800 ring-amber-200 bg-amber-50',
+  },
+}
+
+function SourceListsModeBadge({ mode }: { mode: SourceListsMode }) {
+  const { label, title, tone } = SOURCE_LISTS_MODE[mode]
+  return (
+    <div className="mb-2 font-sans">
+      <span
+        data-testid="source-lists-mode"
+        data-mode={mode}
+        title={title}
+        className={cn(
+          'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset',
+          tone,
+        )}
+      >
+        {'{preset}'} references: {label}
+      </span>
+    </div>
+  )
+}
+
 export function PresetSourceTree({
   presetId,
   raw,
@@ -1142,7 +1187,28 @@ export function PresetSourceTree({
   presets: _presets,
   sourceKind = 'preset',
 }: PresetSourceTreeProps) {
-  const { dataUrl, rawPresets } = useSchema()
+  const { dataUrl, rawPresets: distRawPresets, fields } = useSchema()
+  const hasFieldLists =
+    sourceKind === 'preset' && (Array.isArray(raw.fields) || Array.isArray(raw.moreFields))
+  const authoredQuery = useQuery({
+    queryKey: ['authoredPresetFieldLists', dataUrl, presetId],
+    queryFn: () =>
+      loadAuthoredFieldLists({ dataUrl, presetId, rawPresets: distRawPresets, allFields: fields }),
+    enabled: hasFieldLists && Boolean(dataUrl) && Boolean(distRawPresets[presetId]),
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  })
+  const authored = hasFieldLists ? (authoredQuery.data ?? null) : null
+  const sourceListsMode: SourceListsMode | null = !hasFieldLists
+    ? null
+    : authored
+      ? 'authored'
+      : authoredQuery.isPending && authoredQuery.fetchStatus !== 'idle'
+        ? 'checking'
+        : 'reconstructed'
+  const rawPresets = authored
+    ? withAuthoredFieldLists(distRawPresets, presetId, authored)
+    : distRawPresets
   const displayRaw =
     sourceKind === 'preset'
       ? {
@@ -1152,7 +1218,7 @@ export function PresetSourceTree({
                 fields: displayPresetFieldList(
                   presetId,
                   'fields',
-                  raw.fields as string[],
+                  authored ? authored.fields : (raw.fields as string[]),
                   rawPresets,
                 ),
               }
@@ -1162,7 +1228,7 @@ export function PresetSourceTree({
                 moreFields: displayPresetFieldList(
                   presetId,
                   'moreFields',
-                  raw.moreFields as string[],
+                  authored ? authored.moreFields : (raw.moreFields as string[]),
                   rawPresets,
                 ),
               }
@@ -1189,6 +1255,7 @@ export function PresetSourceTree({
         'font-mono text-xs leading-relaxed text-slate-800',
       )}
     >
+      {sourceListsMode ? <SourceListsModeBadge mode={sourceListsMode} /> : null}
       <JsonNode
         value={displayRaw}
         level={0}
