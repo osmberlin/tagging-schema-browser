@@ -88,5 +88,10 @@
     "not dead",
     "not op_mini all",
     "not kaios > 0"
+  ],
+  "trustedDependencies": [
+    "@tanstack/react-form",
+    "@tanstack/react-router",
+    "eslint-plugin-compat"
   ]
 }
