@@ -220,6 +220,20 @@ export function PrimaryNav({
     return () => observer.disconnect()
   }, [measureIndicator])
 
+  useLayoutEffect(
+    function keepActiveItemVisibleInScrollableNav() {
+      const el = itemRefs.current.get(activeKey)
+      if (!el) return
+      const scroller = navRef.current?.parentElement
+      if (!scroller || scroller.scrollWidth <= scroller.clientWidth) return
+      scroller.scrollTo({
+        left: el.offsetLeft - (scroller.clientWidth - el.offsetWidth) / 2,
+        behavior: 'instant',
+      })
+    },
+    [activeKey],
+  )
+
   const transition = reducedMotion ? { duration: 0 } : springTransition
 
   return (
