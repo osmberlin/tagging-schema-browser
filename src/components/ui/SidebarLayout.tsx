@@ -56,7 +56,7 @@ function HelpButton({ onClick }: { onClick: () => void }) {
       <button
         type="button"
         onClick={onClick}
-        className="flex h-10 items-center rounded-lg px-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+        className="hidden h-10 items-center rounded-lg px-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:flex"
         aria-label="Keyboard shortcuts"
       >
         <Kbd>?</Kbd>
@@ -216,7 +216,10 @@ export function SidebarLayout({
             </div>
           </div>
 
-          <PrimaryNav className="shrink-0" />
+          {/* Own scrollable row below `lg`: the tabs are wider than a phone. */}
+          <div className="order-last -mx-4 min-w-0 basis-full [scrollbar-width:none] overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:order-none lg:mx-0 lg:basis-auto lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
+            <PrimaryNav className="w-max" />
+          </div>
 
           <nav aria-label="Settings" className="ml-auto flex shrink-0 items-center gap-2">
             <UtilityNavLinks onHelp={() => setHelpOpen(true)} />
