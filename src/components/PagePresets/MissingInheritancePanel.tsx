@@ -38,6 +38,7 @@ function FieldListSection({
 }) {
   const title = fieldListTitle(fieldListKey)
   const listStatus = resolveMissingInheritanceListStatus(section, listOverride)
+  const documentedFieldIds = new Set(listOverride?.missedFieldIds)
   return (
     <div className="space-y-2 text-sm text-slate-700">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -58,7 +59,12 @@ function FieldListSection({
       <p>Field ids not inherited from the parent list:</p>
       <ul className="list-inside list-disc font-mono text-sm">
         {section.missedFieldIds.map((fieldId) => (
-          <li key={fieldId}>{fieldId}</li>
+          <li key={fieldId}>
+            {fieldId}
+            {documentedFieldIds.has(fieldId) ? (
+              <span className="ml-2 font-sans text-xs text-slate-500">(OK to skip)</span>
+            ) : null}
+          </li>
         ))}
       </ul>
       {section.explicitPresetRefs.length > 0 ? (
