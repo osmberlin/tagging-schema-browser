@@ -528,6 +528,10 @@ presets:
       missedFieldIds:
         - name
   man_made/monitoring_station:
+    fields:
+      parentId: man_made
+      missedFieldIds:
+        - name
     moreFields:
       parentId: man_made
       missedFieldIds:
@@ -767,6 +771,10 @@ presets:
       missedFieldIds:
         - gnis/feature_id-US
   natural/tree:
+    fields:
+      parentId: natural
+      missedFieldIds:
+        - name
     moreFields:
       parentId: natural
       missedFieldIds:
@@ -836,3 +844,13 @@ presets:
       parentId: amenity/charging_station
       missedFieldIds:
         - ref/EU/EVSE-EU
+  highway/crossing:
+    fields:
+      parentId: highway
+      missedFieldIds:
+        - name
+  highway/steps/conveying:
+    fields:
+      parentId: highway/steps
+      missedFieldIds:
+        - name
