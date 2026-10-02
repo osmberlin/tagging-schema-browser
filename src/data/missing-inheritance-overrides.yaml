@@ -860,17 +860,17 @@ presets:
       parentId: highway/steps
       missedFieldIds:
         - name
+  waterway/water_point:
+    fields:
+      parentId: waterway
+      missedFieldIds:
+        - name
   amenity/clock/sundial:
     fields:
       parentId: amenity/clock
       missedFieldIds:
         - date
         - faces
-  building/carport:
-    fields:
-      parentId: building
-      missedFieldIds:
-        - name
   highway/cycleway/crossing/unmarked:
     fields:
       parentId: highway/cycleway/crossing
