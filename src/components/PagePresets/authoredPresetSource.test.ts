@@ -1,15 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   authoredPresetSourceUrls,
-  clearAuthoredFieldListsCache,
-  expandAuthoredFieldLists,
-  loadAuthoredFieldLists,
-  validateAuthoredFieldLists,
+  buildAuthoredPresetSource,
+  clearAuthoredPresetSourceCache,
+  formatFieldOmission,
+  loadAuthoredPresetSource,
 } from '@/components/PagePresets/authoredPresetSource'
-import {
-  displayPresetFieldList,
-  withAuthoredFieldLists,
-} from '@/components/PagePresets/presetFieldInheritance'
 import { INTERIM_DATA_URL, RELEASE_DATA_URL } from '@/utils/constants'
 import type { RawFields, RawPresets } from '@/utils/types'
 
@@ -95,17 +91,39 @@ describe('authoredPresetSourceUrls', () => {
   })
 })
 
-describe('validateAuthoredFieldLists', () => {
-  it('expands refs like the schema build and accepts a matching source', () => {
-    expect(
-      expandAuthoredFieldLists(rawPresets['amenity/cafe']!, cafeAuthored, rawPresets, allFields),
-    ).toEqual({
-      fields: ['name', 'cuisine', 'building', 'levels', 'height'],
-      moreFields: ['colour', 'distance'],
+function listItems(
+  source: ReturnType<typeof buildAuthoredPresetSource>,
+  key: 'fields' | 'moreFields',
+) {
+  return source?.[key]?.map((entry) => (entry.kind === 'field' ? entry.fieldId : entry.presetRef))
+}
+
+describe('buildAuthoredPresetSource', () => {
+  it('keeps the authored lists and records what each reference expands to', () => {
+    const source = buildAuthoredPresetSource('amenity/cafe', cafeAuthored, rawPresets, allFields)
+
+    expect(listItems(source, 'fields')).toEqual(cafeAuthored.fields)
+    expect(listItems(source, 'moreFields')).toEqual(cafeAuthored.moreFields)
+    expect(source?.fields?.[2]).toEqual({
+      kind: 'presetRef',
+      presetRef: '{building}',
+      presetId: 'building',
+      fields: [
+        {
+          fieldId: 'name',
+          omission: {
+            kind: 'sameKey',
+            hostPresetId: 'amenity/cafe',
+            fieldListKey: 'fields',
+            blockingFieldId: 'name',
+            tagKey: 'name',
+          },
+        },
+        { fieldId: 'building', omission: undefined },
+        { fieldId: 'levels', omission: undefined },
+        { fieldId: 'height', omission: undefined },
+      ],
     })
-    expect(
-      validateAuthoredFieldLists(rawPresets['amenity/cafe']!, cafeAuthored, rawPresets, allFields),
-    ).toBe(true)
   })
 
   it('drops referenced fields whose key is fixed by a preset tag', () => {
@@ -113,49 +131,69 @@ describe('validateAuthoredFieldLists', () => {
       ...rawPresets,
       'building/house': { tags: { building: 'house' }, fields: ['name', 'levels', 'height'] },
     }
+    const source = buildAuthoredPresetSource(
+      'building/house',
+      { fields: ['{building}'] },
+      presets,
+      allFields,
+    )
+    const ref = source?.fields?.[0]
+    const omitted = ref?.kind === 'presetRef' ? ref.fields.find((field) => field.omission) : null
+
+    expect(omitted?.fieldId).toBe('building')
+    expect(formatFieldOmission('building', omitted!.omission!)).toBe(
+      'building/house tag fixes building=house',
+    )
+  })
+
+  it('explains a field blocked by another field with the same tag key', () => {
     expect(
-      validateAuthoredFieldLists(
-        presets['building/house']!,
-        { fields: ['{building}'] },
-        presets,
-        allFields,
-      ),
-    ).toBe(true)
+      formatFieldOmission('direction_point', {
+        kind: 'sameKey',
+        hostPresetId: 'traffic_sign/variable_message',
+        fieldListKey: 'fields',
+        blockingFieldId: 'direction_vertex',
+        tagKey: 'direction',
+      }),
+    ).toBe(
+      'direction_point blocked by direction_vertex on traffic_sign/variable_message (fields, same tag key `direction`)',
+    )
   })
 
   it('rejects a source whose expansion differs from the dist', () => {
-    const dist = rawPresets['amenity/cafe']!
-    expect(
-      validateAuthoredFieldLists(
-        dist,
-        { ...cafeAuthored, fields: ['name', '{building}'] },
-        rawPresets,
-        allFields,
-      ),
-    ).toBe(false)
-    expect(
-      validateAuthoredFieldLists(dist, { fields: cafeAuthored.fields }, rawPresets, allFields),
-    ).toBe(false)
-    expect(
-      validateAuthoredFieldLists(
-        dist,
-        { ...cafeAuthored, fields: ['name', 'cuisine', '{unknown/preset}'] },
-        rawPresets,
-        allFields,
-      ),
-    ).toBe(false)
+    const build = (authored: { fields?: string[]; moreFields?: string[] }) =>
+      buildAuthoredPresetSource('amenity/cafe', authored, rawPresets, allFields)
+
+    expect(build({ ...cafeAuthored, fields: ['name', '{building}'] })).toBeNull()
+    expect(build({ fields: cafeAuthored.fields })).toBeNull()
+    expect(build({ ...cafeAuthored, fields: ['name', 'cuisine', '{unknown/preset}'] })).toBeNull()
+  })
+
+  it('never invents a reference the source does not have', () => {
+    const presets: RawPresets = {
+      ...rawPresets,
+      'type/route/road': { tags: { route: 'road' }, moreFields: ['colour', 'distance'] },
+    }
+    const source = buildAuthoredPresetSource(
+      'type/route/road',
+      { moreFields: ['colour', 'distance'] },
+      presets,
+      allFields,
+    )
+    expect(listItems(source, 'moreFields')).toEqual(['colour', 'distance'])
   })
 })
 
-describe('loadAuthoredFieldLists', () => {
+describe('loadAuthoredPresetSource', () => {
   const dataUrl = 'https://example.com/schema/dist/'
   const params = { dataUrl, presetId: 'amenity/cafe', rawPresets, allFields }
 
-  beforeEach(() => clearAuthoredFieldListsCache())
+  beforeEach(() => clearAuthoredPresetSourceCache())
 
   it('returns the authored lists when they match the dist', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ name: 'Cafe', ...cafeAuthored }))
-    await expect(loadAuthoredFieldLists({ ...params, fetchImpl })).resolves.toEqual(cafeAuthored)
+    const source = await loadAuthoredPresetSource({ ...params, fetchImpl })
+    expect(listItems(source, 'fields')).toEqual(cafeAuthored.fields)
     expect(fetchImpl.mock.calls[0]![0]).toBe(
       'https://example.com/schema/data/presets/amenity/cafe.json',
     )
@@ -171,8 +209,8 @@ describe('loadAuthoredFieldLists', () => {
       },
     ]
     for (const fetchImpl of cases) {
-      clearAuthoredFieldListsCache()
-      await expect(loadAuthoredFieldLists({ ...params, fetchImpl })).resolves.toBeNull()
+      clearAuthoredPresetSourceCache()
+      await expect(loadAuthoredPresetSource({ ...params, fetchImpl })).resolves.toBeNull()
     }
   })
 
@@ -181,7 +219,25 @@ describe('loadAuthoredFieldLists', () => {
       new Promise<Response>((_resolve, reject) => {
         init?.signal?.addEventListener('abort', () => reject(init.signal!.reason))
       })
-    await expect(loadAuthoredFieldLists({ ...params, fetchImpl, timeoutMs: 5 })).resolves.toBeNull()
+    await expect(
+      loadAuthoredPresetSource({ ...params, fetchImpl, timeoutMs: 5 }),
+    ).resolves.toBeNull()
+  })
+
+  it('uses a dist that still carries references as its own source, without fetching', async () => {
+    const presets: RawPresets = {
+      ...rawPresets,
+      'building/house': { tags: { building: 'house' }, fields: ['{building}'] },
+    }
+    const fetchImpl = vi.fn(async () => jsonResponse({}))
+    const source = await loadAuthoredPresetSource({
+      ...params,
+      presetId: 'building/house',
+      rawPresets: presets,
+      fetchImpl,
+    })
+    expect(listItems(source, 'fields')).toEqual(['{building}'])
+    expect(fetchImpl).not.toHaveBeenCalled()
   })
 
   it('tries the next candidate when the first does not match', async () => {
@@ -189,55 +245,38 @@ describe('loadAuthoredFieldLists', () => {
       url.includes('/merge/') ? jsonResponse({ fields: ['name'] }) : jsonResponse(cafeAuthored),
     )
     await expect(
-      loadAuthoredFieldLists({
+      loadAuthoredPresetSource({
         ...params,
         dataUrl: 'https://pr-12--ideditor-presets-preview.netlify.app/dist/',
         fetchImpl,
       }),
-    ).resolves.toEqual(cafeAuthored)
+    ).resolves.not.toBeNull()
     expect(fetchImpl.mock.calls.at(-1)![0]).toContain('/refs/pull/12/head/')
   })
 
   it('caches per dataUrl and preset, but retries after a network error', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(cafeAuthored))
-    await loadAuthoredFieldLists({ ...params, fetchImpl })
-    await loadAuthoredFieldLists({
+    await loadAuthoredPresetSource({ ...params, fetchImpl })
+    await loadAuthoredPresetSource({
       ...params,
       dataUrl: 'https://example.com/schema/dist',
       fetchImpl,
     })
     expect(fetchImpl).toHaveBeenCalledTimes(1)
 
-    await loadAuthoredFieldLists({ ...params, presetId: 'building', fetchImpl })
-    await loadAuthoredFieldLists({
+    await loadAuthoredPresetSource({ ...params, presetId: 'building', fetchImpl })
+    await loadAuthoredPresetSource({
       ...params,
       dataUrl: 'https://example.com/other/dist/',
       fetchImpl,
     })
     expect(fetchImpl).toHaveBeenCalledTimes(4)
 
-    clearAuthoredFieldListsCache()
+    clearAuthoredPresetSourceCache()
     const failing = vi.fn(async () => {
       throw new TypeError('Failed to fetch')
     })
-    await expect(loadAuthoredFieldLists({ ...params, fetchImpl: failing })).resolves.toBeNull()
-    await expect(loadAuthoredFieldLists({ ...params, fetchImpl })).resolves.toEqual(cafeAuthored)
-  })
-})
-
-describe('withAuthoredFieldLists', () => {
-  it('shows authored lists as written, without reconstructing refs', () => {
-    const routePresets: RawPresets = {
-      ...rawPresets,
-      'type/route/road': { tags: { route: 'road' }, moreFields: ['colour', 'distance'] },
-    }
-    const authored = { moreFields: ['colour', 'distance'] }
-    const overlay = withAuthoredFieldLists(routePresets, 'type/route/road', authored)
-
-    expect(
-      displayPresetFieldList('type/route/road', 'moreFields', authored.moreFields, overlay),
-    ).toEqual(['colour', 'distance'])
-    expect(overlay['type/route/road']).not.toBe(routePresets['type/route/road'])
-    expect(routePresets['type/route/road']!.moreFields).toEqual(['colour', 'distance'])
+    await expect(loadAuthoredPresetSource({ ...params, fetchImpl: failing })).resolves.toBeNull()
+    await expect(loadAuthoredPresetSource({ ...params, fetchImpl })).resolves.not.toBeNull()
   })
 })
