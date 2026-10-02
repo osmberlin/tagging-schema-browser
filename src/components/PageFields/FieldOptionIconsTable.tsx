@@ -124,6 +124,14 @@ export function FieldOptionIconsTable({
                   <AreaIcon area="presets" className="h-3 w-3" />
                   {row.childPreset.name}
                 </button>
+                {row.childPreset.viaAddTags ? (
+                  <p
+                    className={cn('mt-0.5 text-xs', dark ? 'text-slate-400' : 'text-slate-500')}
+                    title="This preset writes the option via addTags; the presets under the parent only add a more specific tag."
+                  >
+                    generic preset, via addTags
+                  </p>
+                ) : null}
               </td>
               <td className="px-4 py-2">
                 <div className="flex items-center gap-2">
