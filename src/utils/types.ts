@@ -84,6 +84,8 @@ export type DenormalizedPreset = {
   iconPrefix?: string
   geometry: string[]
   tags: Record<string, string>
+  /** Tags written when the preset is applied; may include tags that are not matched on. */
+  addTags?: Record<string, string>
   tagString: string
   primaryTagKey?: string
   primaryTagValue?: string
@@ -108,6 +110,15 @@ export type DenormalizedPreset = {
   isTemplate: boolean
 }
 
+/** Child preset linked to a field option. */
+export type PresetOptionChild = {
+  id: string
+  name: string
+  icon?: string
+  /** Matched because the preset writes the option via `addTags`, not because it matches on it. */
+  viaAddTags?: boolean
+}
+
 export type FieldOptionMismatchRow = {
   optionValue: string
   optionIcon?: string
@@ -116,12 +127,17 @@ export type FieldOptionMismatchRow = {
   /** Option has no icon while the linked child preset has one (and the field uses icons). */
   iconMissing: boolean
   parentPreset: { id: string; name: string }
-  childPreset: { id: string; name: string; icon?: string }
+  childPreset: PresetOptionChild
+}
+
+/** `parent\0fieldKey\0optionValue` → child preset for a field option, see `buildChildPresetIndex`. */
+export type ChildPresetIndex = {
+  get(lookupKey: string): DenormalizedPreset | undefined
 }
 
 /** Precomputed lookups built once per loaded schema — keeps detail navigation off hot paths. */
 export type SchemaIndices = {
-  childPresetIndex: Map<string, DenormalizedPreset>
+  childPresetIndex: ChildPresetIndex
   presetsByPrimaryField: Map<string, DenormalizedPreset[]>
   presetsByMoreField: Map<string, DenormalizedPreset[]>
   fieldOptionMismatchRows: Map<string, FieldOptionMismatchRow[]>
