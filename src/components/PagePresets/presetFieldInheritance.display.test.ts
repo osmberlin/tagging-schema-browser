@@ -162,13 +162,13 @@ describe('displayPresetFieldList', () => {
       'highway/mini_roundabout': {
         tags: { highway: 'mini_roundabout' },
         geometry: ['vertex'],
-        fields: ['direction_clock'],
+        fields: ['name', 'operator', 'ref', 'direction_clock'],
         moreFields: ['direction_clock'],
       },
       'highway/turning_circle': {
         tags: { highway: 'turning_circle' },
         geometry: ['vertex'],
-        fields: ['direction_clock', 'direction_vertex'],
+        fields: ['name', 'operator', 'ref', 'direction_clock', 'direction_vertex'],
       },
     }
     const fields: RawFields = {
@@ -186,6 +186,9 @@ describe('displayPresetFieldList', () => {
         fields,
       ),
     ).toEqual([
+      { applied: true, fieldId: 'name' },
+      { applied: true, fieldId: 'operator' },
+      { applied: true, fieldId: 'ref' },
       {
         applied: false,
         fieldId: 'direction_clock',
@@ -200,6 +203,32 @@ describe('displayPresetFieldList', () => {
           'direction_clock blocked by direction_vertex on highway/turning_circle (fields, same tag key `direction`)',
       },
     ])
+  })
+
+  it('does not map a short field prefix onto an unrelated preset', () => {
+    const rawPresets: RawPresets = {
+      'roller_coaster/support': {
+        tags: { roller_coaster: 'support' },
+        geometry: ['line'],
+        fields: ['height', 'layer', 'material'],
+        moreFields: ['colour'],
+      },
+      'type/route/road': {
+        tags: { type: 'route', route: 'road' },
+        geometry: ['relation'],
+        fields: ['name'],
+        moreFields: ['colour', 'distance', 'roundtrip'],
+      },
+    }
+
+    expect(
+      displayPresetFieldList(
+        'type/route/road',
+        'moreFields',
+        rawPresets['type/route/road']!.moreFields,
+        rawPresets,
+      ),
+    ).toEqual(['colour', 'distance', 'roundtrip'])
   })
 
   it('keeps lists that already use preset refs', () => {
