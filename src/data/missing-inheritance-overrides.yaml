@@ -663,6 +663,10 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
   man_made/fuel_pump:
     fields:
       parentId: man_made
@@ -693,6 +697,10 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
   man_made/windpump:
     fields:
       parentId: man_made
@@ -840,6 +848,7 @@ presets:
       parentId: highway/path/crossing
       missedFieldIds:
         - flashing_lights
+        - segregated
   amenity/charging_station/charging_station_bicycle_designated:
     fields:
       parentId: amenity/charging_station
@@ -884,3 +893,13 @@ presets:
       parentId: highway
       missedFieldIds:
         - name
+  man_made/footwear_decontamination-AU-NZ:
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
+  natural/wetland/swamp:
+    fields:
+      parentId: natural/wetland
+      missedFieldIds:
+        - salt
