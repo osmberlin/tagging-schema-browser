@@ -7,7 +7,6 @@ import { PresetIconBox } from '@/components/PagePresets/PresetIconBox'
 import { PresetIconMismatchPanel } from '@/components/PagePresets/PresetIconMismatchPanel'
 import { PresetTranslationTable } from '@/components/PagePresets/PresetTranslationTable'
 import { RiskyTypeComboPanel } from '@/components/PagePresets/RiskyTypeComboPanel'
-import { SourceTreeHeuristicNote } from '@/components/PagePresets/SourceTreeHeuristicNote'
 import { presetSearchDefaults } from '@/components/PagePresets/useSearchState'
 import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/presetSwitchSearch'
 import { AreaIcon } from '@/components/ui/areaIcons'
@@ -270,7 +269,6 @@ function PresetDetailContent({
         }
         defaultOpen
       >
-        <SourceTreeHeuristicNote />
         <LazyPresetSourceTree presetId={preset.id} raw={raw} preset={preset} presets={presets} />
       </DetailDisclosure>
 
