@@ -844,11 +844,6 @@ presets:
       parentId: amenity/charging_station
       missedFieldIds:
         - ref/EU/EVSE-EU
-  building/carport:
-    fields:
-      parentId: building
-      missedFieldIds:
-        - name
   highway/crossing:
     fields:
       parentId: highway
