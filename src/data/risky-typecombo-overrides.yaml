@@ -52,3 +52,6 @@ presets:
   power/plant/source/solar/photovoltaic:
     fieldIds:
       - plant/output/electricity
+  power/plant/source/waste:
+    fieldIds:
+      - plant/output/electricity
