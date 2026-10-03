@@ -1,15 +1,17 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Fragment, type ReactNode, useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
 import { iconFacetDefaults } from '@/components/PageIcons/useIconFacetState'
 import {
-  buildPresetRefFieldExpansion,
-  displayPresetFieldList,
-  formatFieldInheritanceOmission,
-  getAuthoredExplicitFieldIds,
-  presetIdFromRef,
-  type PresetRefFieldExpansionNode,
-} from '@/components/PagePresets/presetFieldInheritance'
+  type AuthoredListEntry,
+  type AuthoredPresetSource,
+  type FieldListKey,
+  type FieldOmission,
+  formatFieldOmission,
+  loadAuthoredPresetSource,
+} from '@/components/PagePresets/authoredPresetSource'
+import { presetIdFromRef } from '@/components/PagePresets/presetFieldInheritance'
 import {
   type KeySortMode,
   sortObjectEntries,
@@ -29,7 +31,7 @@ import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { osmWikiKeyUrl, osmWikiTagUrl } from '@/utils/osmWikiUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
 import { cn } from '@/utils/tw'
-import type { DenormalizedPreset, RawPreset, RawPresets } from '@/utils/types'
+import type { DenormalizedPreset, RawPresets } from '@/utils/types'
 import { presetSearchDefaults } from './useSearchState'
 
 const REF_REGEX = /^\{(.+)\}$/
@@ -44,7 +46,7 @@ function presetSearchable(rawPresets: RawPresets, id: string): boolean {
   return rawPresets[id]?.searchable !== false
 }
 
-function refInFieldList(value: string, rawPresets: RawPresets): RefInfo | null {
+function refInFieldList(value: string, rawPresets: RawPresets): RefInfo {
   const m = value.match(REF_REGEX)
   if (m) {
     const id = m[1]
@@ -262,36 +264,29 @@ export type PresetSourceTreeProps = {
 }
 
 type HostPresetContext = {
-  /** Preset whose source JSON is being rendered (the inheritance host for top-level refs). */
+  /** Preset whose source JSON is being rendered. */
   hostPresetId: string
-  hostPreset: RawPreset
-  hostOriginalFields: string[]
-  hostOriginalMoreFields: string[]
   rawPresets: RawPresets
+  /** Verified authored field lists of the host preset; null shows the expanded dist lists. */
+  source: AuthoredPresetSource | null
   /** When rendering a field's source JSON, the field id being viewed. */
   sourceFieldId?: string
 }
 
-type InheritanceHostContext = {
-  presetId: string
-  preset: RawPreset
-  originalFields: string[]
-  originalMoreFields: string[]
-}
+type PresetRefEntry = Extract<AuthoredListEntry, { kind: 'presetRef' }>
 
-function inheritanceHostFromPresetId(
-  presetId: string,
-  rawPresets: RawPresets,
-): InheritanceHostContext | null {
-  const preset = rawPresets[presetId]
-  if (!preset) return null
+/** Verdicts of every preset a referenced field passes through, innermost first. */
+type OmissionChain = ReadonlyArray<ReadonlyMap<string, FieldOmission | undefined>>
 
-  return {
-    presetId,
-    preset,
-    originalFields: getAuthoredExplicitFieldIds(presetId, 'fields', rawPresets),
-    originalMoreFields: getAuthoredExplicitFieldIds(presetId, 'moreFields', rawPresets),
-  }
+function useAuthoredPresetSource(presetId: string, enabled: boolean) {
+  const { dataUrl, rawPresets, fields } = useSchema()
+  return useQuery({
+    queryKey: ['authoredPresetSource', dataUrl, presetId],
+    queryFn: () => loadAuthoredPresetSource({ dataUrl, presetId, rawPresets, allFields: fields }),
+    enabled: enabled && Boolean(dataUrl) && Boolean(rawPresets[presetId]),
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  })
 }
 
 /** Inherited name / terms / aliases when `name` references another preset. */
@@ -419,15 +414,6 @@ function NameRefDisclosure({
   )
 }
 
-function resolveInheritanceHostContext(
-  host: HostPresetContext,
-  inheritanceHost: InheritanceHostContext | undefined,
-  rawPresets: RawPresets,
-): InheritanceHostContext | null {
-  if (inheritanceHost) return inheritanceHost
-  return inheritanceHostFromPresetId(host.hostPresetId, rawPresets)
-}
-
 function RefDisclosure({
   label,
   refInfo,
@@ -436,8 +422,9 @@ function RefDisclosure({
   trailingComma,
   parentKey,
   host,
-  inheritanceHost,
-  expansionNodes,
+  refEntry,
+  omissionChain = [],
+  ancestorPresetIds,
   sortMode = 'alpha',
 }: {
   label: string
@@ -447,26 +434,21 @@ function RefDisclosure({
   trailingComma?: boolean
   parentKey?: string
   host: HostPresetContext
-  inheritanceHost?: InheritanceHostContext
-  expansionNodes?: PresetRefFieldExpansionNode[]
+  refEntry?: PresetRefEntry
+  omissionChain?: OmissionChain
+  ancestorPresetIds?: string[]
   sortMode?: KeySortMode
 }) {
   const [open, setOpen] = useState(false)
   const { fields, rawPresets } = useSchema()
   const fieldListKey = parentKey === 'fields' || parentKey === 'moreFields' ? parentKey : undefined
   const inheritPresetFields = refInfo.kind === 'preset' && fieldListKey
-  const resolvedInheritanceHost = resolveInheritanceHostContext(host, inheritanceHost, rawPresets)
-  const resolvedExpansionNodes =
-    expansionNodes ??
-    (inheritPresetFields && fieldListKey && resolvedInheritanceHost
-      ? buildPresetRefFieldExpansion(
-          resolvedInheritanceHost.presetId,
-          label,
-          fieldListKey,
-          rawPresets,
-          fields,
-          new Set(),
-          host.hostPresetId,
+  const resolvedRefEntry =
+    refEntry ??
+    (inheritPresetFields
+      ? host.source?.[fieldListKey]?.find(
+          (entry): entry is PresetRefEntry =>
+            entry.kind === 'presetRef' && entry.presetRef === label,
         )
       : undefined)
   const expandedRaw =
@@ -533,14 +515,16 @@ function RefDisclosure({
       </JsonLine>
       {open ? (
         inheritPresetFields ? (
-          resolvedExpansionNodes ? (
-            <PresetRefExpansionTree
-              nodes={resolvedExpansionNodes}
+          resolvedRefEntry ? (
+            <ReferencedFieldsTree
+              refEntry={resolvedRefEntry}
               fieldListKey={fieldListKey}
               level={level + 1}
               dataUrl={dataUrl}
               trailingComma={trailingComma}
               host={host}
+              omissionChain={omissionChain}
+              ancestorPresetIds={ancestorPresetIds ?? [host.hostPresetId]}
             />
           ) : (
             <JsonLine level={level + 1} trailingComma={trailingComma}>
@@ -579,7 +563,7 @@ function OmittedInheritedFieldLine({
   host,
 }: {
   fieldId: string
-  omission: NonNullable<Extract<PresetRefFieldExpansionNode, { kind: 'field' }>['omission']>
+  omission: FieldOmission
   level: number
   dataUrl: string
   trailingComma?: boolean
@@ -588,7 +572,7 @@ function OmittedInheritedFieldLine({
   const refInfo = refInFieldList(fieldId, host.rawPresets)
   if (!refInfo) return null
 
-  const reason = formatFieldInheritanceOmission(fieldId, omission)
+  const reason = formatFieldOmission(fieldId, omission)
 
   return (
     <JsonLine level={level} trailingComma={trailingComma}>
@@ -614,23 +598,39 @@ function OmittedInheritedFieldLine({
   )
 }
 
-/** Render a pre-built preset-ref inheritance expansion tree. */
-function PresetRefExpansionTree({
-  nodes,
+/**
+ * Fields behind an opened `{preset}` reference. The referenced preset's own source file groups
+ * them by its nested references; until (or unless) it loads, they are listed flat.
+ */
+function ReferencedFieldsTree({
+  refEntry,
   fieldListKey,
   level,
   dataUrl,
   trailingComma,
   host,
+  omissionChain,
+  ancestorPresetIds,
 }: {
-  nodes: PresetRefFieldExpansionNode[]
-  fieldListKey: 'fields' | 'moreFields'
+  refEntry: PresetRefEntry
+  fieldListKey: FieldListKey
   level: number
   dataUrl: string
   trailingComma?: boolean
   host: HostPresetContext
+  omissionChain: OmissionChain
+  ancestorPresetIds: string[]
 }) {
-  if (nodes.length === 0) {
+  const referencedSource = useAuthoredPresetSource(refEntry.presetId, true).data
+  const entries: AuthoredListEntry[] =
+    referencedSource?.[fieldListKey] ??
+    refEntry.fields.map((field) => ({ kind: 'field', fieldId: field.fieldId }))
+  const chain: OmissionChain = [
+    new Map(refEntry.fields.map((field) => [field.fieldId, field.omission])),
+    ...omissionChain,
+  ]
+
+  if (entries.length === 0) {
     return (
       <JsonLine level={level} trailingComma={trailingComma}>
         <span className="text-slate-400 italic">{'/* no fields on referenced preset */'}</span>
@@ -640,21 +640,18 @@ function PresetRefExpansionTree({
 
   return (
     <>
-      {nodes.map((node, index) => {
-        const entryTrailingComma = index < nodes.length - 1 ? true : trailingComma
+      {entries.map((entry, index) => {
+        const entryTrailingComma = index < entries.length - 1 ? true : trailingComma
 
-        if (node.kind === 'presetRef') {
-          const refInfo = refInFieldList(node.presetRef, host.rawPresets)
-          if (!refInfo) return null
-
-          if (node.cyclic) {
+        if (entry.kind === 'presetRef') {
+          if (ancestorPresetIds.includes(entry.presetId) || entry.presetId === refEntry.presetId) {
             return (
               <JsonLine
-                key={`${fieldListKey}-${node.presetRef}-cyclic`}
+                key={`${fieldListKey}-${entry.presetRef}-cyclic`}
                 level={level}
                 trailingComma={entryTrailingComma}
               >
-                <span className="text-slate-400 line-through">"{node.presetRef}"</span>
+                <span className="text-slate-400 line-through">"{entry.presetRef}"</span>
                 <span className="text-[10px] text-amber-700">
                   {'/* cyclic preset ref — already expanded above */'}
                 </span>
@@ -664,41 +661,42 @@ function PresetRefExpansionTree({
 
           return (
             <RefDisclosure
-              key={`${fieldListKey}-${node.presetRef}`}
-              label={node.presetRef}
-              refInfo={refInfo}
+              key={`${fieldListKey}-${entry.presetRef}`}
+              label={entry.presetRef}
+              refInfo={refInFieldList(entry.presetRef, host.rawPresets)}
               level={level}
               dataUrl={dataUrl}
               trailingComma={entryTrailingComma}
               parentKey={fieldListKey}
               host={host}
-              expansionNodes={node.children}
+              refEntry={entry}
+              omissionChain={chain}
+              ancestorPresetIds={[...ancestorPresetIds, refEntry.presetId]}
             />
           )
         }
 
-        if (node.applied) {
+        const omission = chain.map((verdicts) => verdicts.get(entry.fieldId)).find(Boolean)
+        if (omission) {
           return (
-            <JsonNode
-              key={`${fieldListKey}-${node.fieldId}`}
-              value={node.fieldId}
+            <OmittedInheritedFieldLine
+              key={`${fieldListKey}-${entry.fieldId}-omitted`}
+              fieldId={entry.fieldId}
+              omission={omission}
               level={level}
-              parentKey={fieldListKey}
               dataUrl={dataUrl}
               trailingComma={entryTrailingComma}
               host={host}
             />
           )
         }
-
-        if (!node.omission) return null
 
         return (
-          <OmittedInheritedFieldLine
-            key={`${fieldListKey}-${node.fieldId}-omitted`}
-            fieldId={node.fieldId}
-            omission={node.omission}
+          <JsonNode
+            key={`${fieldListKey}-${entry.fieldId}`}
+            value={entry.fieldId}
             level={level}
+            parentKey={fieldListKey}
             dataUrl={dataUrl}
             trailingComma={entryTrailingComma}
             host={host}
@@ -1122,6 +1120,38 @@ function JsonObjectEntry({
   )
 }
 
+type SourceListsMode = 'checking' | 'authored' | 'expanded'
+
+/** Says where `fields` / `moreFields` come from: the source file, or the built dist lists. */
+function SourceListsNote({ mode }: { mode: SourceListsMode }) {
+  return (
+    <p
+      data-testid="source-lists-mode"
+      data-mode={mode}
+      className="mb-2 max-w-3xl font-sans text-[11px] text-slate-500"
+    >
+      {mode === 'authored' ? (
+        <>
+          <code>fields</code> and <code>moreFields</code> are shown as written in the source file,
+          with their <code>{'{preset}'}</code> references.
+        </>
+      ) : mode === 'checking' ? (
+        'Loading the source file…'
+      ) : (
+        <>
+          The source file for this schema version could not be loaded, so <code>fields</code> and{' '}
+          <code>moreFields</code> show the built lists. The build has already replaced every{' '}
+          <code>{'{preset}'}</code> reference with its fields; the GitHub file has them as written.
+        </>
+      )}
+    </p>
+  )
+}
+
+function authoredListItems(entries: AuthoredListEntry[]): string[] {
+  return entries.map((entry) => (entry.kind === 'field' ? entry.fieldId : entry.presetRef))
+}
+
 export function PresetSourceTree({
   presetId,
   raw,
@@ -1130,42 +1160,28 @@ export function PresetSourceTree({
   sourceKind = 'preset',
 }: PresetSourceTreeProps) {
   const { dataUrl, rawPresets } = useSchema()
-  const displayRaw =
-    sourceKind === 'preset'
-      ? {
-          ...raw,
-          ...(Array.isArray(raw.fields)
-            ? {
-                fields: displayPresetFieldList(
-                  presetId,
-                  'fields',
-                  raw.fields as string[],
-                  rawPresets,
-                ),
-              }
-            : {}),
-          ...(Array.isArray(raw.moreFields)
-            ? {
-                moreFields: displayPresetFieldList(
-                  presetId,
-                  'moreFields',
-                  raw.moreFields as string[],
-                  rawPresets,
-                ),
-              }
-            : {}),
-        }
-      : raw
+  const hasFieldLists =
+    sourceKind === 'preset' && (Array.isArray(raw.fields) || Array.isArray(raw.moreFields))
+  const sourceQuery = useAuthoredPresetSource(presetId, hasFieldLists)
+  const source = hasFieldLists ? (sourceQuery.data ?? null) : null
+  const sourceListsMode: SourceListsMode | null = !hasFieldLists
+    ? null
+    : source
+      ? 'authored'
+      : sourceQuery.isFetching
+        ? 'checking'
+        : 'expanded'
+  const displayRaw = source
+    ? {
+        ...raw,
+        ...(source.fields ? { fields: authoredListItems(source.fields) } : {}),
+        ...(source.moreFields ? { moreFields: authoredListItems(source.moreFields) } : {}),
+      }
+    : raw
   const host: HostPresetContext = {
     hostPresetId: presetId,
-    hostPreset: raw as RawPreset,
-    hostOriginalFields: Array.isArray(displayRaw.fields)
-      ? (displayRaw.fields as string[]).filter((f) => typeof f === 'string')
-      : [],
-    hostOriginalMoreFields: Array.isArray(displayRaw.moreFields)
-      ? (displayRaw.moreFields as string[]).filter((f) => typeof f === 'string')
-      : [],
     rawPresets,
+    source,
     sourceFieldId: sourceKind === 'field' ? presetId : undefined,
   }
 
@@ -1176,6 +1192,7 @@ export function PresetSourceTree({
         'font-mono text-xs leading-relaxed text-slate-800',
       )}
     >
+      {sourceListsMode ? <SourceListsNote mode={sourceListsMode} /> : null}
       <JsonNode
         value={displayRaw}
         level={0}
