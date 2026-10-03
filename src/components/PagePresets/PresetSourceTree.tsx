@@ -26,7 +26,7 @@ import { areaAccent, areaSourceLinkClass } from '@/theme/areaAccent'
 import { externalAccent } from '@/theme/externalAccent'
 import { isFieldCrossRefKey, resolveFieldRefDisplay } from '@/utils/fieldRefDisplay'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
-import { osmWikiKeyUrl, osmWikiTagUrl } from '@/utils/osmWikiUrl'
+import { osmWikiKeyUrl, osmWikiTagUrl, osmWikiUrlForTag } from '@/utils/osmWikiUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset, RawPreset, RawPresets } from '@/utils/types'
@@ -1086,11 +1086,24 @@ function JsonObjectEntry({
         </JsonLine>
       )
     }
+    // `reference` is typed on the loaded preset; no need to re-parse the JSON value.
+    const wikiRef =
+      keyName === 'reference' && !parentKey && jsonRootKind === 'preset'
+        ? host.hostPreset.reference
+        : undefined
     return (
       <Fragment>
         <JsonLine level={level}>
           <JsonKey name={keyName} />
           <span className="text-slate-500">: {'{'}</span>
+          {wikiRef ? (
+            <SourceActionGroup>
+              <WikiLink
+                href={osmWikiUrlForTag(wikiRef.key, wikiRef.value)}
+                title={`OSM Wiki: ${wikiRef.value ? `${wikiRef.key}=${wikiRef.value}` : wikiRef.key}`}
+              />
+            </SourceActionGroup>
+          ) : null}
         </JsonLine>
         {entries.map(([key, child], i) => (
           <JsonObjectEntry
