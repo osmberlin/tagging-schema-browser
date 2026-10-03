@@ -579,6 +579,10 @@ presets:
       missedFieldIds:
         - playground/theme
         - height
+    moreFields:
+      parentId: playground
+      missedFieldIds:
+        - material
   playground/swing:
     fields:
       parentId: playground
@@ -762,11 +766,19 @@ presets:
       missedFieldIds:
         - gnis/feature_id-US
   natural/shrub:
+    fields:
+      parentId: natural
+      missedFieldIds:
+        - name
     moreFields:
       parentId: natural
       missedFieldIds:
         - gnis/feature_id-US
   natural/tree_row:
+    fields:
+      parentId: natural
+      missedFieldIds:
+        - name
     moreFields:
       parentId: natural
       missedFieldIds:
