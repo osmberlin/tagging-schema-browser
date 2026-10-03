@@ -463,6 +463,11 @@ presets:
       parentId: education
       missedFieldIds:
         - building_area
+    moreFields:
+      parentId: education
+      missedFieldIds:
+        - building/levels_building
+        - height_building
   education/university:
     fields:
       parentId: education
@@ -476,6 +481,10 @@ presets:
         - building/levels_building
         - height_building
   historic/memorial/stolperstein-EU:
+    fields:
+      parentId: historic/memorial
+      missedFieldIds:
+        - material
     moreFields:
       parentId: historic/memorial
       missedFieldIds:
@@ -910,3 +919,13 @@ presets:
       parentId: man_made
       missedFieldIds:
         - material
+  historic/wreck:
+    fields:
+      parentId: historic
+      missedFieldIds:
+        - inscription
+  waterway/canal/lock:
+    fields:
+      parentId: waterway/canal
+      missedFieldIds:
+        - usage_waterway
