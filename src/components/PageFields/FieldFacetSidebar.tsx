@@ -76,7 +76,25 @@ export function FieldFacetSidebar() {
             count={meta.unusedCount}
             onClick={() => setState({ f_usage: 'unused' })}
           />
+          <FacetButton
+            active={state.f_usage === 'universal'}
+            label="Universal, not in presets"
+            count={meta.universalUnusedCount}
+            onClick={() => setState({ f_usage: 'universal' })}
+          />
         </ul>
+        {state.f_usage === 'universal' ? (
+          <p className="mt-2 text-xs text-slate-500">
+            Not listed in any preset&apos;s <code>fields</code> or <code>moreFields</code>, but
+            marked <code>universal</code>: iD shows them in every preset&apos;s more fields.
+          </p>
+        ) : null}
+        {state.f_usage === 'unused' ? (
+          <p className="mt-2 text-xs text-slate-500">
+            Not used by any preset and not <code>universal</code>. Universal fields have their own
+            entry below.
+          </p>
+        ) : null}
       </SidebarSection>
 
       <SidebarSection title="Icon consistency" area="icons">

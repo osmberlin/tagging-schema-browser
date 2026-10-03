@@ -64,3 +64,39 @@ describe('applyFieldFacets f_optionIcon', () => {
     expect(filtered.map((field) => field.id)).toEqual(['used'])
   })
 })
+
+describe('applyFieldFacets f_usage', () => {
+  const field = (id: string, usageCount: number, universal: boolean): FieldViewModel => ({
+    id,
+    key: id,
+    type: 'text',
+    label: id,
+    geometry: [],
+    universal,
+    usageCount,
+    primaryCount: usageCount,
+    moreCount: 0,
+    presets: [],
+    iconMismatchCount: 0,
+    optionIconNames: [],
+    riskyUsageCount: 0,
+  })
+  const fields = [field('used', 2, false), field('orphan', 0, false), field('name', 0, true)]
+  const state = {
+    f_q: '',
+    f_type: 'all',
+    f_iconMismatch: 'all' as const,
+    f_sort: 'name' as const,
+    f_optionIcon: '',
+  }
+
+  it('unused leaves out universal fields', () => {
+    const result = applyFieldFacets(fields, { ...state, f_usage: 'unused' })
+    expect(result.map((f) => f.id)).toEqual(['orphan'])
+  })
+
+  it('universal lists universal fields that no preset uses directly', () => {
+    const result = applyFieldFacets(fields, { ...state, f_usage: 'universal' })
+    expect(result.map((f) => f.id)).toEqual(['name'])
+  })
+})
