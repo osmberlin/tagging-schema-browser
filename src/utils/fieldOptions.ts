@@ -1,12 +1,19 @@
 import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import {
+  impliesPreset,
+  isBetterChildPreset,
+  writesOptionViaAddTags,
+} from '@/utils/childPresetMatch'
+import {
   fieldOptionTitle,
   hasFieldOptionTranslation,
   type FieldOptionTranslation,
 } from '@/utils/fieldOptionTranslation'
 import { isOptionIconMismatch, isOptionIconMissing } from '@/utils/iconMismatch'
 import type {
+  ChildPresetIndex,
   DenormalizedPreset,
+  PresetOptionChild,
   FieldOptionMismatchRow,
   FieldTranslations,
   RawField,
@@ -114,17 +121,25 @@ export function findChildPresetForOption(
   fieldKey: string,
   optionValue: string,
   presets: DenormalizedPreset[],
-  childPresetIndex?: Map<string, DenormalizedPreset>,
+  childPresetIndex?: ChildPresetIndex,
 ): DenormalizedPreset | undefined {
   if (childPresetIndex) {
     return childPresetIndex.get(`${preset.id}\0${fieldKey}\0${optionValue}`)
   }
   const prefix = `${preset.id}/`
-  const candidates = presets.filter(
-    (p) => p.id.startsWith(prefix) && p.tags[fieldKey] === optionValue,
-  )
-  candidates.sort((a, b) => b.id.length - a.id.length)
-  return candidates[0]
+  let best: DenormalizedPreset | undefined
+  for (const candidate of presets) {
+    if (candidate.id.startsWith(prefix) && candidate.tags[fieldKey] === optionValue) {
+      if (isBetterChildPreset(candidate, best)) best = candidate
+    }
+  }
+  if (!best) return undefined
+  for (const candidate of presets) {
+    if (candidate.id === preset.id || candidate.id.startsWith(prefix)) continue
+    if (!writesOptionViaAddTags(candidate, fieldKey, optionValue)) continue
+    if (isBetterChildPreset(candidate, best) && impliesPreset(best, candidate)) best = candidate
+  }
+  return best
 }
 
 export type PresetOptionRow = {
@@ -136,7 +151,7 @@ export type PresetOptionRow = {
   /** Field option icon differs from the linked child preset icon. */
   iconMismatch: boolean
   labelEn: string
-  childPreset?: { id: string; name: string; icon?: string }
+  childPreset?: PresetOptionChild
   childPresetIcon?: string
 }
 
@@ -149,6 +164,19 @@ export type PresetFieldSection = {
   options: PresetOptionRow[]
 }
 
+export function toOptionChild(
+  child: DenormalizedPreset,
+  fieldKey: string,
+  optionValue: string,
+): PresetOptionChild {
+  return {
+    id: child.id,
+    name: child.name,
+    icon: child.icon,
+    ...(writesOptionViaAddTags(child, fieldKey, optionValue) ? { viaAddTags: true } : {}),
+  }
+}
+
 function buildOptionRowsForField(
   preset: DenormalizedPreset,
   fieldId: string,
@@ -156,7 +184,7 @@ function buildOptionRowsForField(
   fieldTranslations: FieldTranslations,
   allPresets: DenormalizedPreset[],
   allFields: RawFields,
-  childPresetIndex?: Map<string, DenormalizedPreset>,
+  childPresetIndex?: ChildPresetIndex,
 ): PresetOptionRow[] {
   if (!field) return []
   const options = getFieldOptionValues(field, fieldTranslations, fieldId)
@@ -179,7 +207,7 @@ function buildOptionRowsForField(
       iconBroken: icon ? isIconSvgConfirmedMissing(icon) : false,
       iconMismatch: isOptionIconMismatch(icon, childPresetIcon),
       labelEn: fieldOptionTitle(strings[opt]) ?? opt,
-      childPreset: child ? { id: child.id, name: child.name, icon: childPresetIcon } : undefined,
+      childPreset: child ? toOptionChild(child, fieldKey, opt) : undefined,
       childPresetIcon,
     })
   }
@@ -192,7 +220,7 @@ export function getPresetFieldSections(
   fields: RawFields,
   fieldTranslations: FieldTranslations,
   allPresets: DenormalizedPreset[],
-  childPresetIndex?: Map<string, DenormalizedPreset>,
+  childPresetIndex?: ChildPresetIndex,
 ): PresetFieldSection[] {
   const primarySet = new Set(preset.fields)
   const moreSet = new Set(preset.moreFields)

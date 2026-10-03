@@ -1,9 +1,15 @@
 import {
+  impliesPreset,
+  isBetterChildPreset,
+  writesOptionViaAddTags,
+} from '@/utils/childPresetMatch'
+import {
   collectOptionIconUsages,
   getFieldOptionValues,
   getPresetFieldSections,
   listFieldOptionIconNames,
   resolveFieldIcons,
+  toOptionChild,
 } from '@/utils/fieldOptions'
 import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
 import { sortFieldTypes } from '@/utils/fieldTypes'
@@ -13,6 +19,7 @@ import {
   type PresetIconMismatchRef,
 } from '@/utils/iconMismatch'
 import type {
+  ChildPresetIndex,
   DenormalizedPreset,
   FieldOptionMismatchRow,
   FieldRiskyTypeComboUsage,
@@ -32,12 +39,26 @@ export function childPresetLookupKey(
   return `${parentPresetId}\0${fieldKey}\0${optionValue}`
 }
 
-/** Longest descendant id wins — matches `findChildPresetForOption` prefix scan. */
-export function buildChildPresetIndex(
-  presets: DenormalizedPreset[],
-): Map<string, DenormalizedPreset> {
-  const index = new Map<string, DenormalizedPreset>()
+/**
+ * Child preset lookup keyed by {@link childPresetLookupKey}.
+ *
+ * Candidates are descendant presets (by slash id) whose `tags` contain the option. If there is
+ * one, a preset elsewhere that only *writes* the option via `addTags` (`amenity/dentist` adds
+ * `healthcare=dentist`) may replace it when it is more generic and implied by the descendant. Writers never create a pairing on
+ * their own, which would flag unrelated presets. The most generic candidate wins, see
+ * `isBetterChildPreset`.
+ */
+export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPresetIndex {
+  const descendants = new Map<string, DenormalizedPreset>()
+  const writers = new Map<string, DenormalizedPreset>()
   for (const child of presets) {
+    for (const [fieldKey, optionValue] of Object.entries(child.addTags ?? {})) {
+      if (typeof optionValue !== 'string' || !writesOptionViaAddTags(child, fieldKey, optionValue))
+        continue
+      const key = `${fieldKey}\0${optionValue}`
+      if (isBetterChildPreset(child, writers.get(key))) writers.set(key, child)
+    }
+
     const parts = child.id.split('/')
     if (parts.length < 2) continue
     for (const [fieldKey, optionValue] of Object.entries(child.tags)) {
@@ -45,14 +66,24 @@ export function buildChildPresetIndex(
       for (let depth = 1; depth < parts.length; depth++) {
         const parentId = parts.slice(0, depth).join('/')
         const key = childPresetLookupKey(parentId, fieldKey, optionValue)
-        const existing = index.get(key)
-        if (!existing || child.id.length > existing.id.length) {
-          index.set(key, child)
-        }
+        if (isBetterChildPreset(child, descendants.get(key))) descendants.set(key, child)
       }
     }
   }
-  return index
+
+  return {
+    get(lookupKey) {
+      const descendant = descendants.get(lookupKey)
+      if (!descendant) return undefined
+      const [parentId, fieldKey, optionValue] = lookupKey.split('\0')
+      const writer = writers.get(`${fieldKey}\0${optionValue}`)
+      if (!writer || writer.id === parentId || writer.id.startsWith(`${parentId}/`))
+        return descendant
+      return isBetterChildPreset(writer, descendant) && impliesPreset(descendant, writer)
+        ? writer
+        : descendant
+    },
+  }
 }
 
 export function buildFieldPresetIndex(presets: DenormalizedPreset[]): {
@@ -129,7 +160,7 @@ function buildOptionRowsForField(
   fieldId: string,
   field: RawField | undefined,
   fieldTranslations: FieldTranslations,
-  childPresetIndex: Map<string, DenormalizedPreset>,
+  childPresetIndex: ChildPresetIndex,
   allFields: RawFields,
 ): FieldOptionMismatchRow[] {
   if (!field) return []
@@ -153,7 +184,7 @@ function buildOptionRowsForField(
       iconMismatch: isOptionIconMismatch(icon, childPresetIcon),
       iconMissing: isOptionIconMissing(icon, childPresetIcon, Object.keys(icons).length > 0),
       parentPreset: { id: preset.id, name: preset.name },
-      childPreset: { id: child.id, name: child.name, icon: childPresetIcon },
+      childPreset: toOptionChild(child, fieldKey, opt),
     })
   }
   return rows
@@ -163,7 +194,7 @@ export function buildFieldOptionMismatchIndex(
   presets: DenormalizedPreset[],
   fields: RawFields,
   fieldTranslations: FieldTranslations,
-  childPresetIndex: Map<string, DenormalizedPreset>,
+  childPresetIndex: ChildPresetIndex,
 ): Map<string, FieldOptionMismatchRow[]> {
   const index = new Map<string, FieldOptionMismatchRow[]>()
 
@@ -241,7 +272,7 @@ export function buildPresetIconMismatchIndices(
   presets: DenormalizedPreset[],
   fields: RawFields,
   fieldTranslations: FieldTranslations,
-  childPresetIndex: Map<string, DenormalizedPreset>,
+  childPresetIndex: ChildPresetIndex,
 ): {
   parentIconMismatchRowsByPresetId: Map<string, PresetIconMismatchRow[]>
   childIconMismatchRefsByPresetId: Map<string, PresetIconMismatchRef[]>
