@@ -148,6 +148,7 @@ export function denormalize(
       geometry?: string[]
       tags?: Record<string, string>
       matchScore?: number
+      reference?: { key: string; value?: string }
       searchable?: boolean
     }
     const name = getPresetName(id, r, translations, presets)
@@ -198,6 +199,7 @@ export function denormalize(
       fields: resolvedFields,
       moreFields: resolvedMore,
       matchScore: r.matchScore ?? 1,
+      reference: r.reference,
       hasIcon: Boolean(icon || imageURL),
       iconMismatch: false,
       missingFieldInheritance,

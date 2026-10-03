@@ -92,6 +92,8 @@ export type DenormalizedPreset = {
   fields: string[]
   moreFields: string[]
   matchScore: number
+  /** OSM Wiki reference from the preset's `reference` property. */
+  reference?: { key: string; value?: string }
   hasIcon: boolean
   /** Preset icon disagrees with a linked field option icon (parent or child). */
   iconMismatch: boolean

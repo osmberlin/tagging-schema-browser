@@ -26,6 +26,7 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
+import { osmWikiUrlForTag } from '@/utils/osmWikiUrl'
 import { cn } from '@/utils/tw'
 
 /** Keep data source + locale when linking to preset/field detail pages. */
@@ -221,8 +222,16 @@ function EntryFields({
   )
 }
 
-/** Preset name (link) with its id below; used for both the preset and its parent. */
+/** Preset name (link) with its id below, plus a wiki link opening in a new tab; used for the preset and its parent. */
 function PresetCell({ presetId, presetName }: { presetId: string; presetName: string }) {
+  const { presetsById } = useSchema()
+  const preset = presetsById.get(presetId)
+  const wikiRef =
+    preset?.reference ??
+    (preset?.primaryTagKey
+      ? { key: preset.primaryTagKey, value: preset.primaryTagValue }
+      : undefined)
+
   return (
     <>
       <Link
@@ -234,6 +243,17 @@ function PresetCell({ presetId, presetName }: { presetId: string; presetName: st
         <Truncated text={presetName} />
       </Link>
       <Truncated text={presetId} fromStart className="font-mono text-xs text-slate-500" />
+      {wikiRef ? (
+        <a
+          href={osmWikiUrlForTag(wikiRef.key, wikiRef.value)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-sky-700 underline decoration-sky-200 underline-offset-2 hover:text-sky-800"
+          title={`OSM Wiki: ${wikiRef.value ? `${wikiRef.key}=${wikiRef.value}` : wikiRef.key}`}
+        >
+          Wiki ↗
+        </a>
+      ) : null}
     </>
   )
 }
