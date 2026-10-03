@@ -55,3 +55,9 @@ presets:
   power/plant/source/waste:
     fieldIds:
       - plant/output/electricity
+  highway/footway/conveying:
+    fieldIds:
+      - conveying
+  highway/steps/conveying:
+    fieldIds:
+      - conveying
