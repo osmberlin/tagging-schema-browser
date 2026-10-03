@@ -26,7 +26,7 @@ import { areaAccent, areaSourceLinkClass } from '@/theme/areaAccent'
 import { externalAccent } from '@/theme/externalAccent'
 import { isFieldCrossRefKey, resolveFieldRefDisplay } from '@/utils/fieldRefDisplay'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
-import { osmWikiKeyUrl, osmWikiTagUrl } from '@/utils/osmWikiUrl'
+import { osmWikiKeyUrl, osmWikiTagUrl, osmWikiUrlForTag } from '@/utils/osmWikiUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset, RawPreset, RawPresets } from '@/utils/types'
@@ -78,6 +78,14 @@ function GithubLink({ href, label = 'GitHub' }: { href: string; label?: string }
       {label} ↗
     </a>
   )
+}
+
+/** Preset `reference` object: `{ key, value? }` pointing at an OSM Wiki key or tag page. */
+function parseWikiReference(value: unknown): { key: string; value?: string } | undefined {
+  if (typeof value !== 'object' || value === null) return undefined
+  const { key, value: tagValue } = value as { key?: unknown; value?: unknown }
+  if (typeof key !== 'string' || key === '') return undefined
+  return { key, value: typeof tagValue === 'string' ? tagValue : undefined }
 }
 
 function WikiLink({
@@ -1086,11 +1094,20 @@ function JsonObjectEntry({
         </JsonLine>
       )
     }
+    const wikiRef = keyName === 'reference' ? parseWikiReference(value) : undefined
     return (
       <Fragment>
         <JsonLine level={level}>
           <JsonKey name={keyName} />
           <span className="text-slate-500">: {'{'}</span>
+          {wikiRef ? (
+            <SourceActionGroup>
+              <WikiLink
+                href={osmWikiUrlForTag(wikiRef.key, wikiRef.value)}
+                title={`OSM Wiki: ${wikiRef.value ? `${wikiRef.key}=${wikiRef.value}` : wikiRef.key}`}
+              />
+            </SourceActionGroup>
+          ) : null}
         </JsonLine>
         {entries.map(([key, child], i) => (
           <JsonObjectEntry
