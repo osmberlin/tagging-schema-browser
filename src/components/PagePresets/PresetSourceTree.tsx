@@ -80,14 +80,6 @@ function GithubLink({ href, label = 'GitHub' }: { href: string; label?: string }
   )
 }
 
-/** Preset `reference` object: `{ key, value? }` pointing at an OSM Wiki key or tag page. */
-function parseWikiReference(value: unknown): { key: string; value?: string } | undefined {
-  if (typeof value !== 'object' || value === null) return undefined
-  const { key, value: tagValue } = value as { key?: unknown; value?: unknown }
-  if (typeof key !== 'string' || key === '') return undefined
-  return { key, value: typeof tagValue === 'string' ? tagValue : undefined }
-}
-
 function WikiLink({
   href,
   label = 'Wiki',
@@ -1094,7 +1086,11 @@ function JsonObjectEntry({
         </JsonLine>
       )
     }
-    const wikiRef = keyName === 'reference' ? parseWikiReference(value) : undefined
+    // `reference` is typed on the loaded preset; no need to re-parse the JSON value.
+    const wikiRef =
+      keyName === 'reference' && !parentKey && jsonRootKind === 'preset'
+        ? host.hostPreset.reference
+        : undefined
     return (
       <Fragment>
         <JsonLine level={level}>
