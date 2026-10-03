@@ -3,7 +3,7 @@ import type { FieldViewModel } from '@/utils/types'
 export type FieldFacetFilterState = {
   f_q: string
   f_type: string
-  f_usage: 'all' | 'used' | 'unused'
+  f_usage: 'all' | 'used' | 'unused' | 'universal'
   f_iconMismatch: 'all' | 'mismatch' | 'missing'
   f_sort: 'name' | 'label' | 'usage_desc' | 'usage_asc'
   f_optionIcon: string
@@ -16,7 +16,12 @@ export function applyFieldFacets(
   let filtered = fields
 
   if (state.f_usage === 'used') filtered = filtered.filter((field) => field.usageCount > 0)
-  if (state.f_usage === 'unused') filtered = filtered.filter((field) => field.usageCount === 0)
+  if (state.f_usage === 'unused') {
+    filtered = filtered.filter((field) => field.usageCount === 0 && !field.universal)
+  }
+  if (state.f_usage === 'universal') {
+    filtered = filtered.filter((field) => field.usageCount === 0 && field.universal)
+  }
 
   if (state.f_type !== 'all') {
     filtered = filtered.filter((field) => field.type === state.f_type)

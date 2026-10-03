@@ -9,7 +9,7 @@ export { applyFieldFacets } from '@/components/PageFields/fieldFacetFilter'
 export const fieldFacetSchema = z.object({
   f_q: z.string().catch(''),
   f_type: z.string().catch('all'),
-  f_usage: z.enum(['all', 'used', 'unused']).catch('all'),
+  f_usage: z.enum(['all', 'used', 'unused', 'universal']).catch('all'),
   f_iconMismatch: z.enum(['all', 'mismatch', 'missing']).catch('all'),
   f_sort: z.enum(['name', 'label', 'usage_desc', 'usage_asc']).catch('usage_desc'),
   f_optionIcon: z.string().catch(''),
@@ -36,18 +36,20 @@ export function useFieldFacetMeta(fields: FieldViewModel[]) {
     const typeCounts = new Map<string, number>()
     let usedCount = 0
     let unusedCount = 0
+    let universalUnusedCount = 0
     let mismatchCount = 0
     let missingCount = 0
 
     for (const field of fields) {
       typeCounts.set(field.type, (typeCounts.get(field.type) ?? 0) + 1)
       if (field.usageCount > 0) usedCount += 1
+      else if (field.universal) universalUnusedCount += 1
       else unusedCount += 1
       if (field.iconMismatchCount > 0) mismatchCount += 1
       if (field.iconMissingCount > 0) missingCount += 1
     }
 
-    return { typeCounts, usedCount, unusedCount, mismatchCount, missingCount }
+    return { typeCounts, usedCount, unusedCount, universalUnusedCount, mismatchCount, missingCount }
   }, [fields])
 }
 
