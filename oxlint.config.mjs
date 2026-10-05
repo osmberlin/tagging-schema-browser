@@ -4,12 +4,11 @@ import reactHooksJs from 'oxlint-config-react-hooks-js/configs/recommended-lates
 // oxlint 1.86 split `react/react-compiler` into one native rule per category, named like the
 // eslint-plugin-react-hooks rules. Enable the native twin of every compiler rule the JS plugin runs.
 const WITHOUT_NATIVE_TWIN = new Set(['config', 'gating'])
-const reactCompilerRules = Object.fromEntries(
-  Object.entries(reactHooksJs.rules)
-    .map(([name, level]) => [name.replace(/^react-hooks-js\//, ''), level])
-    .filter(([name]) => !WITHOUT_NATIVE_TWIN.has(name))
-    .map(([name, level]) => [`react/${name}`, level]),
-)
+const reactCompilerRules = {}
+for (const [name, level] of Object.entries(reactHooksJs.rules)) {
+  const rule = name.replace(/^react-hooks-js\//, '')
+  if (!WITHOUT_NATIVE_TWIN.has(rule)) reactCompilerRules['react/' + rule] = level
+}
 
 export default defineConfig({
   plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'react'],
