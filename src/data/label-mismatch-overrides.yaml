@@ -464,6 +464,14 @@ fields:
       preset: leisure/pitch/handball
       optionLabel: "Team Handball"
       presetName: "Team Handball Court"
+    - option: "skateboard"
+      preset: leisure/pitch/skateboard
+      optionLabel: "Skateboard"
+      presetName: "Skate Park"
+    - option: "swimming"
+      preset: leisure/sports_centre/swimming
+      optionLabel: "Swimming"
+      presetName: "Swimming Pool Facility"
   athletics_pitch:
     - option: "long_jump"
       preset: leisure/pitch/athletics/long_jump
@@ -532,3 +540,75 @@ fields:
       preset: shop/supermarket/organic
       optionLabel: "Only"
       presetName: "Organic Supermarket"
+  sport/sport_racing_nonmotor:
+    - option: "running"
+      preset: leisure/track/running
+      optionLabel: "Running"
+      presetName: "Running Track"
+    - option: "cycling"
+      preset: leisure/track/cycling
+      optionLabel: "Cycling"
+      presetName: "Cycling Track"
+    - option: "athletics"
+      preset: leisure/track/athletics
+      optionLabel: "Track & Field"
+      presetName: "Track & Field Runway"
+  athletics_track:
+    - option: "javelin_throw"
+      preset: leisure/track/athletics/javelin_throw
+      optionLabel: "Javelin"
+      presetName: "Javelin Runway"
+    - option: "long_jump"
+      preset: leisure/track/athletics/long_jump
+      optionLabel: "Long Jump"
+      presetName: "Long Jump Runway"
+    - option: "pole_vault"
+      preset: leisure/track/athletics/pole_vault
+      optionLabel: "Pole Vault"
+      presetName: "Pole Vault Runway"
+    - option: "running"
+      preset: leisure/track/athletics/running
+      optionLabel: "Running"
+      presetName: "Running Track"
+    - option: "steeplechase"
+      preset: leisure/track/athletics/steeplechase
+      optionLabel: "Steeplechase"
+      presetName: "Steeplechase Runway"
+    - option: "triple_jump"
+      preset: leisure/track/athletics/triple_jump
+      optionLabel: "Triple Jump"
+      presetName: "Triple Jump Runway"
+  plant/source:
+    - option: "wind"
+      preset: power/plant/source/wind
+      optionLabel: "Wind"
+      presetName: "Wind Farm"
+    - option: "hydro"
+      preset: power/plant/source/hydro
+      optionLabel: "Hydropower"
+      presetName: "Hydroelectric Power Station"
+    - option: "coal"
+      preset: power/plant/source/coal
+      optionLabel: "Coal"
+      presetName: "Coal-Fired Power Plant"
+    - option: "gas"
+      preset: power/plant/source/gas
+      optionLabel: "Natural Gas"
+      presetName: "Gas-Fired Power Plant"
+  clothes:
+    - option: "underwear"
+      preset: shop/clothes/underwear
+      optionLabel: "Underwear"
+      presetName: "Underwear Store"
+    - option: "wedding"
+      preset: shop/clothes/wedding
+      optionLabel: "Wedding Clothing"
+      presetName: "Wedding Clothes Store"
+    - option: "workwear"
+      preset: shop/clothes/workwear
+      optionLabel: "Workwear"
+      presetName: "Workwear Store"
+    - option: "suits"
+      preset: shop/clothes/suits
+      optionLabel: "Suits"
+      presetName: "Suits Store"
