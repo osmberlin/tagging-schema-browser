@@ -132,6 +132,22 @@ fields:
       preset: amenity/doctors/urology
       optionLabel: "Urology"
       presetName: "Urologist"
+    - option: "chiropractic"
+      preset: healthcare/alternative/chiropractic
+      optionLabel: "Chiropractic"
+      presetName: "Chiropractor"
+    - option: "homeopathy"
+      preset: healthcare/alternative/homeopathy
+      optionLabel: "Homeopathy"
+      presetName: "Homeopath"
+    - option: "naturopathy"
+      preset: healthcare/alternative/naturopathy
+      optionLabel: "Naturopathy"
+      presetName: "Naturopath"
+    - option: "osteopathy"
+      preset: healthcare/alternative/osteopathy
+      optionLabel: "Osteopathy"
+      presetName: "Osteopath"
   cuisine:
     - option: "pizza"
       preset: amenity/fast_food/pizza
@@ -326,3 +342,138 @@ fields:
       preset: amenity/place_of_worship/sikh
       optionLabel: "Sikh"
       presetName: "Sikh Temple"
+  vending:
+    - option: "parking_tickets"
+      preset: amenity/vending_machine/parking_tickets
+      optionLabel: "Parking Tickets"
+      presetName: "Parking Ticket Vending Machine"
+    - option: "excrement_bags"
+      preset: amenity/vending_machine/excrement_bags
+      optionLabel: "Excrement Bags"
+      presetName: "Excrement Bag Dispenser"
+    - option: "drinks"
+      preset: amenity/vending_machine/drinks
+      optionLabel: "Drinks"
+      presetName: "Drink Vending Machine"
+    - option: "cigarettes"
+      preset: amenity/vending_machine/cigarettes
+      optionLabel: "Cigarettes"
+      presetName: "Cigarette Vending Machine"
+    - option: "food"
+      preset: amenity/vending_machine/food
+      optionLabel: "Food"
+      presetName: "Food Vending Machine"
+    - option: "coffee"
+      preset: amenity/vending_machine/coffee
+      optionLabel: "Coffee"
+      presetName: "Coffee Vending Machine"
+    - option: "water"
+      preset: amenity/vending_machine/water
+      optionLabel: "Drinking Water"
+      presetName: "Drinking Water Vending Machine"
+    - option: "bottle_return"
+      preset: amenity/vending_machine/bottle_return
+      optionLabel: "Bottle Return"
+      presetName: "Bottle Return Machine"
+    - option: "bread"
+      preset: amenity/vending_machine/bread
+      optionLabel: "Bread"
+      presetName: "Bread Vending Machine"
+    - option: "pizza"
+      preset: amenity/vending_machine/pizza
+      optionLabel: "Pizza"
+      presetName: "Pizza Vending Machine"
+    - option: "ice_cream"
+      preset: amenity/vending_machine/ice_cream
+      optionLabel: "Ice Cream"
+      presetName: "Ice Cream Vending Machine"
+    - option: "eggs"
+      preset: amenity/vending_machine/eggs
+      optionLabel: "Eggs"
+      presetName: "Egg Vending Machine"
+    - option: "electronics"
+      preset: amenity/vending_machine/electronics
+      optionLabel: "Electronics"
+      presetName: "Electronics Vending Machine"
+  sport:
+    - option: "soccer"
+      preset: leisure/pitch/soccer
+      optionLabel: "Soccer"
+      presetName: "Soccer Field"
+    - option: "tennis"
+      preset: leisure/pitch/tennis
+      optionLabel: "Tennis"
+      presetName: "Tennis Court"
+    - option: "basketball"
+      preset: leisure/pitch/basketball
+      optionLabel: "Basketball"
+      presetName: "Basketball Court"
+    - option: "baseball"
+      preset: leisure/pitch/baseball
+      optionLabel: "Baseball"
+      presetName: "Baseball Field"
+    - option: "athletics"
+      preset: leisure/pitch/athletics
+      optionLabel: "Track & Field"
+      presetName: "Track & Field Pitch"
+    - option: "beachvolleyball"
+      preset: leisure/pitch/beachvolleyball
+      optionLabel: "Beach Volleyball"
+      presetName: "Beach Volleyball Court"
+    - option: "volleyball"
+      preset: leisure/pitch/volleyball
+      optionLabel: "Volleyball"
+      presetName: "Volleyball Court"
+    - option: "pickleball"
+      preset: leisure/pitch/pickleball
+      optionLabel: "Pickleball"
+      presetName: "Pickleball Court"
+    - option: "shooting"
+      preset: leisure/pitch/shooting
+      optionLabel: "Shooting"
+      presetName: "Shooting Range"
+    - option: "american_football"
+      preset: leisure/pitch/american_football
+      optionLabel: "American Football"
+      presetName: "American Football Field"
+    - option: "futsal"
+      preset: leisure/pitch/futsal
+      optionLabel: "Futsal"
+      presetName: "Futsal Court"
+    - option: "cricket"
+      preset: leisure/pitch/cricket
+      optionLabel: "Cricket"
+      presetName: "Cricket Field"
+    - option: "padel"
+      preset: leisure/pitch/padel
+      optionLabel: "Padel"
+      presetName: "Padel Court"
+    - option: "netball"
+      preset: leisure/pitch/netball
+      optionLabel: "Netball"
+      presetName: "Netball Court"
+    - option: "softball"
+      preset: leisure/pitch/softball
+      optionLabel: "Softball"
+      presetName: "Softball Field"
+    - option: "rugby_union"
+      preset: leisure/pitch/rugby_union
+      optionLabel: "Rugby Union"
+      presetName: "Rugby Union Field"
+    - option: "handball"
+      preset: leisure/pitch/handball
+      optionLabel: "Team Handball"
+      presetName: "Team Handball Court"
+  athletics_pitch:
+    - option: "long_jump"
+      preset: leisure/pitch/athletics/long_jump
+      optionLabel: "Long Jump"
+      presetName: "Long Jump Pit"
+    - option: "pole_vault"
+      preset: leisure/pitch/athletics/pole_vault
+      optionLabel: "Pole Vault"
+      presetName: "Pole Vault Pit"
+    - option: "triple_jump"
+      preset: leisure/pitch/athletics/triple_jump
+      optionLabel: "Triple Jump"
+      presetName: "Triple Jump Pit"
