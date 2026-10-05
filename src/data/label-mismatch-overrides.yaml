@@ -11,6 +11,337 @@
 # CI validates against the published npm release dist (see validate-label-mismatch-overrides).
 version: 1
 fields:
+  healthcare/speciality:
+    - option: "abortion"
+      preset: amenity/clinic/abortion
+      optionLabel: "Abortion"
+      presetName: "Abortion Clinic"
+    - option: "fertility"
+      preset: amenity/clinic/fertility
+      optionLabel: "Fertility"
+      presetName: "Fertility Clinic"
+    - option: "allergology"
+      preset: amenity/doctors/allergology
+      optionLabel: "Allergy & Asthma"
+      presetName: "Allergologist"
+    - option: "cardiology"
+      preset: amenity/doctors/cardiology
+      optionLabel: "Cardiology"
+      presetName: "Cardiologist"
+    - option: "child_psychiatry"
+      preset: amenity/doctors/child_psychiatry
+      optionLabel: "Child & Adolescent Psychiatry"
+      presetName: "Child and Adolescent Psychiatrist"
+    - option: "dermatology"
+      preset: amenity/doctors/dermatology
+      optionLabel: "Dermatology"
+      presetName: "Dermatologist"
+    - option: "gastroenterology"
+      preset: amenity/doctors/gastroenterology
+      optionLabel: "Gastroenterology"
+      presetName: "Gastroenterologist"
+    - option: "general"
+      preset: amenity/doctors/general
+      optionLabel: "General Practice"
+      presetName: "Primary Care Physician"
+    - option: "gynaecology"
+      preset: amenity/doctors/gynaecology
+      optionLabel: "Obstetrics & Gynecology"
+      presetName: "Obstetrician / Gynecologist"
+    - option: "haematology"
+      preset: amenity/doctors/haematology
+      optionLabel: "Hematology"
+      presetName: "Hematologist"
+    - option: "internal"
+      preset: amenity/doctors/internal
+      optionLabel: "Internal Medicine"
+      presetName: "Internist"
+    - option: "nephrology"
+      preset: amenity/doctors/nephrology
+      optionLabel: "Nephrology"
+      presetName: "Nephrologist"
+    - option: "neurology"
+      preset: amenity/doctors/neurology
+      optionLabel: "Neurology"
+      presetName: "Neurologist"
+    - option: "neurosurgery"
+      preset: amenity/doctors/neurosurgery
+      optionLabel: "Neurosurgery"
+      presetName: "Neurosurgeon"
+    - option: "oncology"
+      preset: amenity/doctors/oncology
+      optionLabel: "Oncology"
+      presetName: "Oncologist"
+    - option: "ophthalmology"
+      preset: amenity/doctors/ophthalmology
+      optionLabel: "Ophthalmology"
+      presetName: "Ophthalmologist"
+    - option: "orthopaedics"
+      preset: amenity/doctors/orthopaedics
+      optionLabel: "Orthopedic Surgery"
+      presetName: "Orthopedic Surgeon"
+    - option: "otolaryngology"
+      preset: amenity/doctors/otolaryngology
+      optionLabel: "Ear, Nose & Throat"
+      presetName: "Otolaryngologist"
+    - option: "paediatrics"
+      preset: amenity/doctors/paediatrics
+      optionLabel: "Pediatrics"
+      presetName: "Pediatrician"
+    - option: "pathology"
+      preset: amenity/doctors/pathology
+      optionLabel: "Pathology"
+      presetName: "Pathologist"
+    - option: "plastic_surgery"
+      preset: amenity/doctors/plastic_surgery
+      optionLabel: "Plastic Surgery"
+      presetName: "Plastic Surgeon"
+    - option: "podiatry"
+      preset: amenity/doctors/podiatry
+      optionLabel: "Podiatry"
+      presetName: "Podiatrist"
+    - option: "proctology"
+      preset: amenity/doctors/proctology
+      optionLabel: "Colorectal Surgery"
+      presetName: "Colorectal Surgeon"
+    - option: "psychiatry"
+      preset: amenity/doctors/psychiatrist
+      optionLabel: "Psychiatry"
+      presetName: "Psychiatrist"
+    - option: "pulmonology"
+      preset: amenity/doctors/pulmonology
+      optionLabel: "Pulmonology"
+      presetName: "Pulmonologist"
+    - option: "radiology"
+      preset: amenity/doctors/radiology
+      optionLabel: "Radiology"
+      presetName: "Radiologist"
+    - option: "rheumatology"
+      preset: amenity/doctors/rheumatology
+      optionLabel: "Rheumatology"
+      presetName: "Rheumatologist"
+    - option: "surgery"
+      preset: amenity/doctors/surgery
+      optionLabel: "General Surgery"
+      presetName: "General Surgeon"
+    - option: "trauma"
+      preset: amenity/doctors/trauma
+      optionLabel: "Trauma Surgery"
+      presetName: "Trauma Surgeon"
+    - option: "urology"
+      preset: amenity/doctors/urology
+      optionLabel: "Urology"
+      presetName: "Urologist"
+    - option: "chiropractic"
+      preset: healthcare/alternative/chiropractic
+      optionLabel: "Chiropractic"
+      presetName: "Chiropractor"
+    - option: "homeopathy"
+      preset: healthcare/alternative/homeopathy
+      optionLabel: "Homeopathy"
+      presetName: "Homeopath"
+    - option: "naturopathy"
+      preset: healthcare/alternative/naturopathy
+      optionLabel: "Naturopathy"
+      presetName: "Naturopath"
+    - option: "osteopathy"
+      preset: healthcare/alternative/osteopathy
+      optionLabel: "Osteopathy"
+      presetName: "Osteopath"
+  cuisine:
+    - option: "pizza"
+      preset: amenity/fast_food/pizza
+      optionLabel: "Pizza"
+      presetName: "Pizza Fast Food"
+    - option: "burger"
+      preset: amenity/fast_food/burger
+      optionLabel: "Burger"
+      presetName: "Burger Fast Food"
+    - option: "sandwich"
+      preset: amenity/fast_food/sandwich
+      optionLabel: "Sandwich"
+      presetName: "Sandwich Fast Food"
+    - option: "chinese"
+      preset: amenity/fast_food/chinese
+      optionLabel: "Chinese"
+      presetName: "Chinese Fast Food"
+    - option: "chicken"
+      preset: amenity/fast_food/chicken
+      optionLabel: "Chicken"
+      presetName: "Chicken Fast Food"
+    - option: "kebab"
+      preset: amenity/fast_food/kebab
+      optionLabel: "Kebab"
+      presetName: "Kebab Fast Food"
+    - option: "mexican"
+      preset: amenity/fast_food/mexican
+      optionLabel: "Mexican"
+      presetName: "Mexican Fast Food"
+    - option: "ice_cream"
+      preset: amenity/fast_food/ice_cream
+      optionLabel: "Ice Cream"
+      presetName: "Ice Cream Fast Food"
+    - option: "indian"
+      preset: amenity/fast_food/indian
+      optionLabel: "Indian"
+      presetName: "Indian Fast Food"
+    - option: "sushi"
+      preset: amenity/fast_food/sushi
+      optionLabel: "Sushi"
+      presetName: "Sushi Fast Food"
+    - option: "fish_and_chips"
+      preset: amenity/fast_food/fish_and_chips
+      optionLabel: "Fish and Chips"
+      presetName: "Fish & Chips Fast Food"
+    - option: "donut"
+      preset: amenity/fast_food/donut
+      optionLabel: "Donut"
+      presetName: "Donut Fast Food"
+    - option: "juice"
+      preset: amenity/fast_food/juice
+      optionLabel: "Juice"
+      presetName: "Juice Fast Food"
+    - option: "hot_dog"
+      preset: amenity/fast_food/hot_dog
+      optionLabel: "Hot Dog"
+      presetName: "Hot Dog Fast Food"
+    - option: "wings"
+      preset: amenity/fast_food/wings
+      optionLabel: "Chicken Wings"
+      presetName: "Chicken Wings Fast Food"
+    - option: "bagel"
+      preset: amenity/fast_food/bagel
+      optionLabel: "Bagel"
+      presetName: "Bagel Fast Food"
+    - option: "pizza"
+      preset: amenity/restaurant/pizza
+      optionLabel: "Pizza"
+      presetName: "Pizza Restaurant"
+    - option: "italian"
+      preset: amenity/restaurant/italian
+      optionLabel: "Italian"
+      presetName: "Italian Restaurant"
+    - option: "chinese"
+      preset: amenity/restaurant/chinese
+      optionLabel: "Chinese"
+      presetName: "Chinese Restaurant"
+    - option: "japanese"
+      preset: amenity/restaurant/japanese
+      optionLabel: "Japanese"
+      presetName: "Japanese Restaurant"
+    - option: "mexican"
+      preset: amenity/restaurant/mexican
+      optionLabel: "Mexican"
+      presetName: "Mexican Restaurant"
+    - option: "american"
+      preset: amenity/restaurant/american
+      optionLabel: "American"
+      presetName: "American Restaurant"
+    - option: "asian"
+      preset: amenity/restaurant/asian
+      optionLabel: "Asian"
+      presetName: "Asian Restaurant"
+    - option: "indian"
+      preset: amenity/restaurant/indian
+      optionLabel: "Indian"
+      presetName: "Indian Restaurant"
+    - option: "sushi"
+      preset: amenity/restaurant/sushi
+      optionLabel: "Sushi"
+      presetName: "Sushi Restaurant"
+    - option: "seafood"
+      preset: amenity/restaurant/seafood
+      optionLabel: "Seafood"
+      presetName: "Seafood Restaurant"
+    - option: "thai"
+      preset: amenity/restaurant/thai
+      optionLabel: "Thai"
+      presetName: "Thai Restaurant"
+    - option: "french"
+      preset: amenity/restaurant/french
+      optionLabel: "French"
+      presetName: "French Restaurant"
+    - option: "german"
+      preset: amenity/restaurant/german
+      optionLabel: "German"
+      presetName: "German Restaurant"
+    - option: "greek"
+      preset: amenity/restaurant/greek
+      optionLabel: "Greek"
+      presetName: "Greek Restaurant"
+    - option: "korean"
+      preset: amenity/restaurant/korean
+      optionLabel: "Korean"
+      presetName: "Korean Restaurant"
+    - option: "barbecue"
+      preset: amenity/restaurant/barbecue
+      optionLabel: "Barbecue"
+      presetName: "Barbecue Restaurant"
+    - option: "noodle"
+      preset: amenity/restaurant/noodle
+      optionLabel: "Noodle"
+      presetName: "Noodle Restaurant"
+    - option: "vietnamese"
+      preset: amenity/restaurant/vietnamese
+      optionLabel: "Vietnamese"
+      presetName: "Vietnamese Restaurant"
+    - option: "turkish"
+      preset: amenity/restaurant/turkish
+      optionLabel: "Turkish"
+      presetName: "Turkish Restaurant"
+    - option: "ramen"
+      preset: amenity/restaurant/ramen
+      optionLabel: "Ramen"
+      presetName: "Ramen Restaurant"
+    - option: "spanish"
+      preset: amenity/restaurant/spanish
+      optionLabel: "Spanish"
+      presetName: "Spanish Restaurant"
+    - option: "hotpot"
+      preset: amenity/restaurant/hotpot
+      optionLabel: "Hot Pot"
+      presetName: "Hot Pot Restaurant"
+    - option: "georgian"
+      preset: amenity/restaurant/georgian
+      optionLabel: "Georgian"
+      presetName: "Georgian Restaurant"
+    - option: "ukrainian"
+      preset: amenity/restaurant/ukrainian
+      optionLabel: "Ukrainian"
+      presetName: "Ukrainian Restaurant"
+  religion_place_of_worship:
+    - option: "christian"
+      preset: amenity/place_of_worship/christian
+      optionLabel: "Christian"
+      presetName: "Christian Church"
+    - option: "muslim"
+      preset: amenity/place_of_worship/muslim
+      optionLabel: "Muslim"
+      presetName: "Muslim Mosque"
+    - option: "buddhist"
+      preset: amenity/place_of_worship/buddhist
+      optionLabel: "Buddhist"
+      presetName: "Buddhist Temple"
+    - option: "hindu"
+      preset: amenity/place_of_worship/hindu
+      optionLabel: "Hindu"
+      presetName: "Hindu Temple"
+    - option: "shinto"
+      preset: amenity/place_of_worship/shinto
+      optionLabel: "Shinto"
+      presetName: "Shinto Shrine"
+    - option: "jewish"
+      preset: amenity/place_of_worship/jewish
+      optionLabel: "Jewish"
+      presetName: "Jewish Synagogue"
+    - option: "taoist"
+      preset: amenity/place_of_worship/taoist
+      optionLabel: "Taoist"
+      presetName: "Taoist Temple"
+    - option: "sikh"
+      preset: amenity/place_of_worship/sikh
+      optionLabel: "Sikh"
+      presetName: "Sikh Temple"
   vending:
     - option: "parking_tickets"
       preset: amenity/vending_machine/parking_tickets
@@ -68,23 +399,6 @@ fields:
       preset: amenity/vending_machine/electronics
       optionLabel: "Electronics"
       presetName: "Electronics Vending Machine"
-  healthcare/speciality:
-    - option: "chiropractic"
-      preset: healthcare/alternative/chiropractic
-      optionLabel: "Chiropractic"
-      presetName: "Chiropractor"
-    - option: "homeopathy"
-      preset: healthcare/alternative/homeopathy
-      optionLabel: "Homeopathy"
-      presetName: "Homeopath"
-    - option: "naturopathy"
-      preset: healthcare/alternative/naturopathy
-      optionLabel: "Naturopathy"
-      presetName: "Naturopath"
-    - option: "osteopathy"
-      preset: healthcare/alternative/osteopathy
-      optionLabel: "Osteopathy"
-      presetName: "Osteopath"
   sport:
     - option: "soccer"
       preset: leisure/pitch/soccer
