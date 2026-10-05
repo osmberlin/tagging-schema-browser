@@ -41,3 +41,25 @@ export function impliesPreset(
   const written = specialized.addTags ?? specialized.tags
   return Object.entries(generic.tags).every(([key, value]) => written[key] === value)
 }
+
+/**
+ * Whether choosing `fieldKey=optionValue` on a feature of `parent` is all it takes to match
+ * `child`. False when the option is the parent's own tag (`religion=christian` on the Christian
+ * church is no step towards `…/jehovahs_witness`) and when the child needs a further tag the
+ * parent does not write (`denomination=…`, `social_facility:for=senior`). An option that replaces
+ * the parent's value counts (`sport=karting` on a `sport=motor` raceway).
+ */
+export function optionLeadsToPreset(
+  parent: Pick<DenormalizedPreset, 'tags' | 'addTags'>,
+  child: Pick<DenormalizedPreset, 'tags'>,
+  fieldKey: string,
+  optionValue: string,
+): boolean {
+  if (parent.tags[fieldKey] === optionValue) return false
+
+  const written = { ...parent.tags, ...parent.addTags }
+  return Object.entries(child.tags).every(([key, value]) => {
+    if (key === fieldKey) return value === optionValue
+    return value === '*' ? written[key] !== undefined : written[key] === value
+  })
+}

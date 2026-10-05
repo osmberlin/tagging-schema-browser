@@ -1,6 +1,7 @@
 import {
   impliesPreset,
   isBetterChildPreset,
+  optionLeadsToPreset,
   writesOptionViaAddTags,
 } from '@/utils/childPresetMatch'
 import {
@@ -48,14 +49,19 @@ export function childPresetLookupKey(
 /**
  * Child preset lookup keyed by {@link childPresetLookupKey}.
  *
- * Candidates are descendant presets (by slash id) whose `tags` contain the option. If there is
+ * Candidates are descendant presets (by slash id) whose `tags` contain the option and that the
+ * option alone leads to, see `optionLeadsToPreset`. If there is
  * one, a preset elsewhere that only *writes* the option via `addTags` (`amenity/dentist` adds
  * `healthcare=dentist`) may replace it when it is more generic and implied by the descendant. Writers never create a pairing on
  * their own, which would flag unrelated presets. The most generic candidate wins, see
  * `isBetterChildPreset`.
  */
 export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPresetIndex {
+  const presetsById = new Map(presets.map((preset) => [preset.id, preset]))
+  /** Descendants the option alone leads to. */
   const descendants = new Map<string, DenormalizedPreset>()
+  /** Any descendant tagged with the option; only decides whether an `addTags` writer applies. */
+  const tagged = new Map<string, DenormalizedPreset>()
   const writers = new Map<string, DenormalizedPreset>()
   for (const child of presets) {
     for (const [fieldKey, optionValue] of Object.entries(child.addTags ?? {})) {
@@ -72,6 +78,9 @@ export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPrese
       for (let depth = 1; depth < parts.length; depth++) {
         const parentId = parts.slice(0, depth).join('/')
         const key = childPresetLookupKey(parentId, fieldKey, optionValue)
+        if (isBetterChildPreset(child, tagged.get(key))) tagged.set(key, child)
+        const parent = presetsById.get(parentId)
+        if (!parent || !optionLeadsToPreset(parent, child, fieldKey, optionValue)) continue
         if (isBetterChildPreset(child, descendants.get(key))) descendants.set(key, child)
       }
     }
@@ -80,12 +89,13 @@ export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPrese
   return {
     get(lookupKey) {
       const descendant = descendants.get(lookupKey)
-      if (!descendant) return undefined
+      const anyTagged = tagged.get(lookupKey)
+      if (!anyTagged) return undefined
       const [parentId, fieldKey, optionValue] = lookupKey.split('\0')
       const writer = writers.get(`${fieldKey}\0${optionValue}`)
       if (!writer || writer.id === parentId || writer.id.startsWith(`${parentId}/`))
         return descendant
-      return isBetterChildPreset(writer, descendant) && impliesPreset(descendant, writer)
+      return isBetterChildPreset(writer, anyTagged) && impliesPreset(anyTagged, writer)
         ? writer
         : descendant
     },

@@ -2,6 +2,7 @@ import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import {
   impliesPreset,
   isBetterChildPreset,
+  optionLeadsToPreset,
   writesOptionViaAddTags,
 } from '@/utils/childPresetMatch'
 import {
@@ -129,16 +130,21 @@ export function findChildPresetForOption(
   }
   const prefix = `${preset.id}/`
   let best: DenormalizedPreset | undefined
+  let anyTagged: DenormalizedPreset | undefined
   for (const candidate of presets) {
-    if (candidate.id.startsWith(prefix) && candidate.tags[fieldKey] === optionValue) {
-      if (isBetterChildPreset(candidate, best)) best = candidate
-    }
+    if (!candidate.id.startsWith(prefix) || candidate.tags[fieldKey] !== optionValue) continue
+    if (isBetterChildPreset(candidate, anyTagged)) anyTagged = candidate
+    if (!optionLeadsToPreset(preset, candidate, fieldKey, optionValue)) continue
+    if (isBetterChildPreset(candidate, best)) best = candidate
   }
-  if (!best) return undefined
+  if (!anyTagged) return undefined
   for (const candidate of presets) {
     if (candidate.id === preset.id || candidate.id.startsWith(prefix)) continue
     if (!writesOptionViaAddTags(candidate, fieldKey, optionValue)) continue
-    if (isBetterChildPreset(candidate, best) && impliesPreset(best, candidate)) best = candidate
+    if (isBetterChildPreset(candidate, anyTagged) && impliesPreset(anyTagged, candidate)) {
+      best = candidate
+      anyTagged = candidate
+    }
   }
   return best
 }
