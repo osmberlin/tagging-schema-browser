@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { auditPageHref } from '@/components/PageAudits/auditPageHref'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
-import { LabelDiff } from '@/components/ui/LabelDiff'
+import { LabelDiff, LabelMismatchKindPill } from '@/components/ui/LabelDiff'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
 import { useSchema } from '@/hooks/useSchema'
 import { schemaIssueStyles } from '@/theme/schemaIssue'
@@ -36,15 +36,18 @@ function PairRow({ pair, currentPresetId }: { pair: LabelMismatchPair; currentPr
     <li className="grid gap-x-4 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
       <div className="min-w-0">
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-slate-50">
-          <span title="Field option label">
+          <span>
+            <span className="text-xs text-slate-400">Option </span>
             <LabelDiff parts={diff.left} tone="dark" />
           </span>
           <span className="text-amber-300" aria-label="differs from">
             ≠
           </span>
-          <span title="Preset name">
+          <span>
+            <span className="text-xs text-slate-400">Preset </span>
             <LabelDiff parts={diff.right} tone="dark" />
           </span>
+          <LabelMismatchKindPill kind={pair.kind} tone="dark" />
         </p>
         <p className="font-mono text-xs break-all text-slate-400">
           {pair.fieldId} · {pair.optionValue} → {pair.childPresetId}
@@ -77,19 +80,6 @@ function PairRow({ pair, currentPresetId }: { pair: LabelMismatchPair; currentPr
     </li>
   )
 }
-
-const GROUPS = [
-  {
-    kind: 'differs',
-    title: 'Different wording',
-    help: 'Worth a look: the two labels name the same thing in different words.',
-  },
-  {
-    kind: 'extends',
-    title: 'One label extends the other',
-    help: 'Usually wanted: the preset name repeats the feature type.',
-  },
-] as const
 
 /**
  * Field options whose label differs from the name of the preset they lead to. Pairs already
@@ -127,31 +117,19 @@ export function LabelMismatchDisclosure({
       bodyClassName="not-prose space-y-4"
     >
       <div data-testid="label-mismatch-panel" className="space-y-4">
-        {GROUPS.map(({ kind, title, help }) => {
-          const group = open.filter((pair) => pair.kind === kind)
-          if (group.length === 0) return null
-          return (
-            <div key={kind} className="space-y-1.5">
-              <p className="text-sm text-slate-300">
-                <span className="font-medium text-slate-100">
-                  {title} ({group.length})
-                </span>{' '}
-                — {help}
-              </p>
-              <ul
-                className={cn('divide-y divide-slate-700', schemaIssueStyles.disclosureBodyInset)}
-              >
-                {group.map((pair) => (
-                  <PairRow
-                    key={`${pair.fieldId}|${pair.optionValue}|${pair.childPresetId}`}
-                    pair={pair}
-                    currentPresetId={currentPresetId}
-                  />
-                ))}
-              </ul>
-            </div>
-          )
-        })}
+        <p className="text-sm text-slate-300">
+          Some options of a field have a preset of their own that iD switches to. Each line shows
+          the English option label and the English name of that preset.
+        </p>
+        <ul className={cn('divide-y divide-slate-700', schemaIssueStyles.disclosureBodyInset)}>
+          {open.map((pair) => (
+            <PairRow
+              key={`${pair.fieldId}|${pair.optionValue}|${pair.childPresetId}`}
+              pair={pair}
+              currentPresetId={currentPresetId}
+            />
+          ))}
+        </ul>
         <p className="text-sm text-slate-300">
           {reviewedCount > 0
             ? `${reviewedCount} more ${reviewedCount === 1 ? 'pair is' : 'pairs are'} documented as intentional. `

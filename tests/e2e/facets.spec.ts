@@ -103,8 +103,8 @@ test('preset detail lists field options labelled differently than their child pr
   await section.getByRole('button', { name: /Option ≠ preset name/ }).click()
 
   const panel = page.getByTestId('label-mismatch-panel')
-  await expect(panel.getByText('Different wording (1)')).toBeVisible()
-  await expect(panel.getByText('One label extends the other (1)')).toBeVisible()
+  await expect(panel.getByText('different wording')).toHaveCount(1)
+  await expect(panel.getByText('adds words')).toHaveCount(1)
   await expect(
     panel.getByText('playground/type · cushion → leisure/playground/cushion'),
   ).toBeVisible()
@@ -136,8 +136,13 @@ test('label mismatch audit collects decisions for a GitHub issue', async ({ page
 
   await expect(page.getByRole('heading', { name: /Audit: Option ≠ preset name/ })).toBeVisible()
   const row = page.getByRole('row').filter({ hasText: 'leisure/playground' })
-  await expect(row.getByText('Different wording')).toBeVisible()
-  await expect(row.getByText('cushion → leisure/playground/cushion')).toBeVisible()
+  await expect(row.getByText('Option in the field')).toBeVisible()
+  await expect(row.getByText('different wording')).toBeVisible()
+  await expect(row.getByText('playground=cushion')).toBeVisible()
+  await expect(row.getByRole('link', { name: 'Bouncy Pillow' })).toHaveAttribute(
+    'href',
+    /\/field\/playground\/type/,
+  )
   await expect(page.getByTestId('audit-create-issue')).toBeDisabled()
 
   await row
