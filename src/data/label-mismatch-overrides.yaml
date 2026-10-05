@@ -477,3 +477,58 @@ fields:
       preset: leisure/pitch/athletics/triple_jump
       optionLabel: "Triple Jump"
       presetName: "Triple Jump Pit"
+  content_bulk:
+    - option: "crop"
+      preset: man_made/silo/crop
+      optionLabel: "Crop"
+      presetName: "Crop Silo"
+  content:
+    - option: "water"
+      preset: man_made/storage_tank/water
+      optionLabel: "Water"
+      presetName: "Water Tank"
+  leaf_type_singular:
+    - option: "broadleaved"
+      preset: natural/tree/broadleaved
+      optionLabel: "Broadleaved"
+      presetName: "Broadleaved Tree"
+    - option: "needleleaved"
+      preset: natural/tree/needleleaved
+      optionLabel: "Needleleaved"
+      presetName: "Needleleaved Tree"
+  leaf_cycle_singular:
+    - option: "evergreen"
+      preset: natural/tree/broadleaved/evergreen
+      optionLabel: "Evergreen"
+      presetName: "Broadleaved Tree (evergreen)"
+    - option: "deciduous"
+      preset: natural/tree/broadleaved/deciduous
+      optionLabel: "Deciduous"
+      presetName: "Broadleaved Tree (deciduous)"
+    - option: "evergreen"
+      preset: natural/tree/needleleaved/evergreen
+      optionLabel: "Evergreen"
+      presetName: "Needleleaved Tree (evergreen)"
+    - option: "deciduous"
+      preset: natural/tree/needleleaved/deciduous
+      optionLabel: "Deciduous"
+      presetName: "Needleleaved Tree (deciduous)"
+  plant/method/solar:
+    - option: "photovoltaic"
+      preset: power/plant/source/solar/photovoltaic
+      optionLabel: "Photovoltaic"
+      presetName: "Solar Farm"
+  second_hand:
+    - option: "only"
+      preset: shop/car/second_hand
+      optionLabel: "Only"
+      presetName: "Used Car Dealership"
+    - option: "only"
+      preset: shop/clothes/second_hand
+      optionLabel: "Only"
+      presetName: "Secondhand Clothing Store"
+  organic:
+    - option: "only"
+      preset: shop/supermarket/organic
+      optionLabel: "Only"
+      presetName: "Organic Supermarket"
