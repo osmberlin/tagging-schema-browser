@@ -10,4 +10,125 @@
 #
 # CI validates against the published npm release dist (see validate-label-mismatch-overrides).
 version: 1
-fields: {}
+fields:
+  healthcare/speciality:
+    - option: "abortion"
+      preset: amenity/clinic/abortion
+      optionLabel: "Abortion"
+      presetName: "Abortion Clinic"
+    - option: "fertility"
+      preset: amenity/clinic/fertility
+      optionLabel: "Fertility"
+      presetName: "Fertility Clinic"
+    - option: "allergology"
+      preset: amenity/doctors/allergology
+      optionLabel: "Allergy & Asthma"
+      presetName: "Allergologist"
+    - option: "cardiology"
+      preset: amenity/doctors/cardiology
+      optionLabel: "Cardiology"
+      presetName: "Cardiologist"
+    - option: "child_psychiatry"
+      preset: amenity/doctors/child_psychiatry
+      optionLabel: "Child & Adolescent Psychiatry"
+      presetName: "Child and Adolescent Psychiatrist"
+    - option: "dermatology"
+      preset: amenity/doctors/dermatology
+      optionLabel: "Dermatology"
+      presetName: "Dermatologist"
+    - option: "gastroenterology"
+      preset: amenity/doctors/gastroenterology
+      optionLabel: "Gastroenterology"
+      presetName: "Gastroenterologist"
+    - option: "general"
+      preset: amenity/doctors/general
+      optionLabel: "General Practice"
+      presetName: "Primary Care Physician"
+    - option: "gynaecology"
+      preset: amenity/doctors/gynaecology
+      optionLabel: "Obstetrics & Gynecology"
+      presetName: "Obstetrician / Gynecologist"
+    - option: "haematology"
+      preset: amenity/doctors/haematology
+      optionLabel: "Hematology"
+      presetName: "Hematologist"
+    - option: "internal"
+      preset: amenity/doctors/internal
+      optionLabel: "Internal Medicine"
+      presetName: "Internist"
+    - option: "nephrology"
+      preset: amenity/doctors/nephrology
+      optionLabel: "Nephrology"
+      presetName: "Nephrologist"
+    - option: "neurology"
+      preset: amenity/doctors/neurology
+      optionLabel: "Neurology"
+      presetName: "Neurologist"
+    - option: "neurosurgery"
+      preset: amenity/doctors/neurosurgery
+      optionLabel: "Neurosurgery"
+      presetName: "Neurosurgeon"
+    - option: "oncology"
+      preset: amenity/doctors/oncology
+      optionLabel: "Oncology"
+      presetName: "Oncologist"
+    - option: "ophthalmology"
+      preset: amenity/doctors/ophthalmology
+      optionLabel: "Ophthalmology"
+      presetName: "Ophthalmologist"
+    - option: "orthopaedics"
+      preset: amenity/doctors/orthopaedics
+      optionLabel: "Orthopedic Surgery"
+      presetName: "Orthopedic Surgeon"
+    - option: "otolaryngology"
+      preset: amenity/doctors/otolaryngology
+      optionLabel: "Ear, Nose & Throat"
+      presetName: "Otolaryngologist"
+    - option: "paediatrics"
+      preset: amenity/doctors/paediatrics
+      optionLabel: "Pediatrics"
+      presetName: "Pediatrician"
+    - option: "pathology"
+      preset: amenity/doctors/pathology
+      optionLabel: "Pathology"
+      presetName: "Pathologist"
+    - option: "plastic_surgery"
+      preset: amenity/doctors/plastic_surgery
+      optionLabel: "Plastic Surgery"
+      presetName: "Plastic Surgeon"
+    - option: "podiatry"
+      preset: amenity/doctors/podiatry
+      optionLabel: "Podiatry"
+      presetName: "Podiatrist"
+    - option: "proctology"
+      preset: amenity/doctors/proctology
+      optionLabel: "Colorectal Surgery"
+      presetName: "Colorectal Surgeon"
+    - option: "psychiatry"
+      preset: amenity/doctors/psychiatrist
+      optionLabel: "Psychiatry"
+      presetName: "Psychiatrist"
+    - option: "pulmonology"
+      preset: amenity/doctors/pulmonology
+      optionLabel: "Pulmonology"
+      presetName: "Pulmonologist"
+    - option: "radiology"
+      preset: amenity/doctors/radiology
+      optionLabel: "Radiology"
+      presetName: "Radiologist"
+    - option: "rheumatology"
+      preset: amenity/doctors/rheumatology
+      optionLabel: "Rheumatology"
+      presetName: "Rheumatologist"
+    - option: "surgery"
+      preset: amenity/doctors/surgery
+      optionLabel: "General Surgery"
+      presetName: "General Surgeon"
+    - option: "trauma"
+      preset: amenity/doctors/trauma
+      optionLabel: "Trauma Surgery"
+      presetName: "Trauma Surgeon"
+    - option: "urology"
+      preset: amenity/doctors/urology
+      optionLabel: "Urology"
+      presetName: "Urologist"

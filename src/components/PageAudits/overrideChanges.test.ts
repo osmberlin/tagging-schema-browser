@@ -229,9 +229,7 @@ describe('overrideChanges', () => {
       const yaml = serializeLabelMismatchYaml(header, fields)
       expect(yaml.startsWith(header)).toBe(true)
       expect(Bun.YAML.parse(yaml)).toEqual({ version: 1, fields })
-      expect(serializeLabelMismatchYaml(header, {})).toBe(
-        readFileSync('src/data/label-mismatch-overrides.yaml', 'utf8'),
-      )
+      expect(serializeLabelMismatchYaml(header, {})).toBe(`${header}version: 1\nfields: {}\n`)
     })
   })
 })
