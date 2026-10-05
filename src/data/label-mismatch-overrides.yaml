@@ -10,4 +10,138 @@
 #
 # CI validates against the published npm release dist (see validate-label-mismatch-overrides).
 version: 1
-fields: {}
+fields:
+  religion_place_of_worship:
+    - option: "christian"
+      preset: amenity/place_of_worship/christian
+      optionLabel: "Christian"
+      presetName: "Christian Church"
+    - option: "muslim"
+      preset: amenity/place_of_worship/muslim
+      optionLabel: "Muslim"
+      presetName: "Muslim Mosque"
+    - option: "buddhist"
+      preset: amenity/place_of_worship/buddhist
+      optionLabel: "Buddhist"
+      presetName: "Buddhist Temple"
+    - option: "hindu"
+      preset: amenity/place_of_worship/hindu
+      optionLabel: "Hindu"
+      presetName: "Hindu Temple"
+    - option: "shinto"
+      preset: amenity/place_of_worship/shinto
+      optionLabel: "Shinto"
+      presetName: "Shinto Shrine"
+    - option: "jewish"
+      preset: amenity/place_of_worship/jewish
+      optionLabel: "Jewish"
+      presetName: "Jewish Synagogue"
+    - option: "taoist"
+      preset: amenity/place_of_worship/taoist
+      optionLabel: "Taoist"
+      presetName: "Taoist Temple"
+    - option: "sikh"
+      preset: amenity/place_of_worship/sikh
+      optionLabel: "Sikh"
+      presetName: "Sikh Temple"
+    - option: "multifaith"
+      preset: amenity/place_of_worship/multifaith
+      optionLabel: "Multifaith"
+      presetName: "Multifaith Place of Worship"
+  cuisine:
+    - option: "pizza"
+      preset: amenity/restaurant/pizza
+      optionLabel: "Pizza"
+      presetName: "Pizza Restaurant"
+    - option: "italian"
+      preset: amenity/restaurant/italian
+      optionLabel: "Italian"
+      presetName: "Italian Restaurant"
+    - option: "chinese"
+      preset: amenity/restaurant/chinese
+      optionLabel: "Chinese"
+      presetName: "Chinese Restaurant"
+    - option: "japanese"
+      preset: amenity/restaurant/japanese
+      optionLabel: "Japanese"
+      presetName: "Japanese Restaurant"
+    - option: "mexican"
+      preset: amenity/restaurant/mexican
+      optionLabel: "Mexican"
+      presetName: "Mexican Restaurant"
+    - option: "american"
+      preset: amenity/restaurant/american
+      optionLabel: "American"
+      presetName: "American Restaurant"
+    - option: "asian"
+      preset: amenity/restaurant/asian
+      optionLabel: "Asian"
+      presetName: "Asian Restaurant"
+    - option: "indian"
+      preset: amenity/restaurant/indian
+      optionLabel: "Indian"
+      presetName: "Indian Restaurant"
+    - option: "sushi"
+      preset: amenity/restaurant/sushi
+      optionLabel: "Sushi"
+      presetName: "Sushi Restaurant"
+    - option: "seafood"
+      preset: amenity/restaurant/seafood
+      optionLabel: "Seafood"
+      presetName: "Seafood Restaurant"
+    - option: "thai"
+      preset: amenity/restaurant/thai
+      optionLabel: "Thai"
+      presetName: "Thai Restaurant"
+    - option: "french"
+      preset: amenity/restaurant/french
+      optionLabel: "French"
+      presetName: "French Restaurant"
+    - option: "german"
+      preset: amenity/restaurant/german
+      optionLabel: "German"
+      presetName: "German Restaurant"
+    - option: "greek"
+      preset: amenity/restaurant/greek
+      optionLabel: "Greek"
+      presetName: "Greek Restaurant"
+    - option: "korean"
+      preset: amenity/restaurant/korean
+      optionLabel: "Korean"
+      presetName: "Korean Restaurant"
+    - option: "barbecue"
+      preset: amenity/restaurant/barbecue
+      optionLabel: "Barbecue"
+      presetName: "Barbecue Restaurant"
+    - option: "noodle"
+      preset: amenity/restaurant/noodle
+      optionLabel: "Noodle"
+      presetName: "Noodle Restaurant"
+    - option: "vietnamese"
+      preset: amenity/restaurant/vietnamese
+      optionLabel: "Vietnamese"
+      presetName: "Vietnamese Restaurant"
+    - option: "turkish"
+      preset: amenity/restaurant/turkish
+      optionLabel: "Turkish"
+      presetName: "Turkish Restaurant"
+    - option: "ramen"
+      preset: amenity/restaurant/ramen
+      optionLabel: "Ramen"
+      presetName: "Ramen Restaurant"
+    - option: "spanish"
+      preset: amenity/restaurant/spanish
+      optionLabel: "Spanish"
+      presetName: "Spanish Restaurant"
+    - option: "hotpot"
+      preset: amenity/restaurant/hotpot
+      optionLabel: "Hot Pot"
+      presetName: "Hot Pot Restaurant"
+    - option: "georgian"
+      preset: amenity/restaurant/georgian
+      optionLabel: "Georgian"
+      presetName: "Georgian Restaurant"
+    - option: "ukrainian"
+      preset: amenity/restaurant/ukrainian
+      optionLabel: "Ukrainian"
+      presetName: "Ukrainian Restaurant"
