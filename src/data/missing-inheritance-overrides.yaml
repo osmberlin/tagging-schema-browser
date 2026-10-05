@@ -875,11 +875,19 @@ presets:
       parentId: amenity/charging_station
       missedFieldIds:
         - ref/EU/EVSE-EU
+    moreFields:
+      parentId: amenity/charging_station
+      missedFieldIds:
+        - network
   amenity/charging_station/charging_station_bicycle:
     fields:
       parentId: amenity/charging_station
       missedFieldIds:
         - ref/EU/EVSE-EU
+    moreFields:
+      parentId: amenity/charging_station
+      missedFieldIds:
+        - network
   highway/crossing:
     fields:
       parentId: highway
