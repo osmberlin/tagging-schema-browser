@@ -132,3 +132,68 @@ fields:
       preset: amenity/doctors/urology
       optionLabel: "Urology"
       presetName: "Urologist"
+  cuisine:
+    - option: "pizza"
+      preset: amenity/fast_food/pizza
+      optionLabel: "Pizza"
+      presetName: "Pizza Fast Food"
+    - option: "burger"
+      preset: amenity/fast_food/burger
+      optionLabel: "Burger"
+      presetName: "Burger Fast Food"
+    - option: "sandwich"
+      preset: amenity/fast_food/sandwich
+      optionLabel: "Sandwich"
+      presetName: "Sandwich Fast Food"
+    - option: "chinese"
+      preset: amenity/fast_food/chinese
+      optionLabel: "Chinese"
+      presetName: "Chinese Fast Food"
+    - option: "chicken"
+      preset: amenity/fast_food/chicken
+      optionLabel: "Chicken"
+      presetName: "Chicken Fast Food"
+    - option: "kebab"
+      preset: amenity/fast_food/kebab
+      optionLabel: "Kebab"
+      presetName: "Kebab Fast Food"
+    - option: "mexican"
+      preset: amenity/fast_food/mexican
+      optionLabel: "Mexican"
+      presetName: "Mexican Fast Food"
+    - option: "ice_cream"
+      preset: amenity/fast_food/ice_cream
+      optionLabel: "Ice Cream"
+      presetName: "Ice Cream Fast Food"
+    - option: "indian"
+      preset: amenity/fast_food/indian
+      optionLabel: "Indian"
+      presetName: "Indian Fast Food"
+    - option: "sushi"
+      preset: amenity/fast_food/sushi
+      optionLabel: "Sushi"
+      presetName: "Sushi Fast Food"
+    - option: "fish_and_chips"
+      preset: amenity/fast_food/fish_and_chips
+      optionLabel: "Fish and Chips"
+      presetName: "Fish & Chips Fast Food"
+    - option: "donut"
+      preset: amenity/fast_food/donut
+      optionLabel: "Donut"
+      presetName: "Donut Fast Food"
+    - option: "juice"
+      preset: amenity/fast_food/juice
+      optionLabel: "Juice"
+      presetName: "Juice Fast Food"
+    - option: "hot_dog"
+      preset: amenity/fast_food/hot_dog
+      optionLabel: "Hot Dog"
+      presetName: "Hot Dog Fast Food"
+    - option: "wings"
+      preset: amenity/fast_food/wings
+      optionLabel: "Chicken Wings"
+      presetName: "Chicken Wings Fast Food"
+    - option: "bagel"
+      preset: amenity/fast_food/bagel
+      optionLabel: "Bagel"
+      presetName: "Bagel Fast Food"
