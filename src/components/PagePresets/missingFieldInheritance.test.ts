@@ -187,6 +187,81 @@ describe('missingFieldInheritance', () => {
     })
   })
 
+  it('ignores universal fields missing from moreFields but reports them for fields', () => {
+    const presets = {
+      'amenity/parking': {
+        tags: { amenity: 'parking' },
+        geometry: ['point'],
+        fields: ['name', 'wheelchair'],
+        moreFields: ['level', 'wheelchair', 'capacity'],
+      },
+      'amenity/parking/underground': {
+        tags: { amenity: 'parking', parking: 'underground' },
+        geometry: ['point'],
+        fields: ['name'],
+        moreFields: ['layer'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      wheelchair: { key: 'wheelchair', type: 'radio', universal: true },
+      level: { key: 'level', type: 'text', universal: true },
+      capacity: { key: 'capacity', type: 'number' },
+      layer: { key: 'layer', type: 'number' },
+    }
+
+    expect(
+      detectMissingFieldInheritance(
+        'amenity/parking/underground',
+        presets['amenity/parking/underground'],
+        presets,
+        fields,
+      ),
+    ).toEqual({
+      fields: {
+        parentId: 'amenity/parking',
+        missedFieldIds: ['wheelchair'],
+        explicitPresetRefs: [],
+      },
+      moreFields: {
+        parentId: 'amenity/parking',
+        missedFieldIds: ['capacity'],
+        explicitPresetRefs: [],
+      },
+    })
+  })
+
+  it('reports no moreFields entry when only universal fields are missing', () => {
+    const presets = {
+      'amenity/parking': {
+        tags: { amenity: 'parking' },
+        geometry: ['point'],
+        fields: ['name'],
+        moreFields: ['level'],
+      },
+      'amenity/parking/underground': {
+        tags: { amenity: 'parking', parking: 'underground' },
+        geometry: ['point'],
+        fields: ['{amenity/parking}'],
+        moreFields: ['layer'],
+      },
+    }
+    const fields = {
+      name: { key: 'name', type: 'text' },
+      level: { key: 'level', type: 'text', universal: true },
+      layer: { key: 'layer', type: 'number' },
+    }
+
+    expect(
+      detectMissingFieldInheritance(
+        'amenity/parking/underground',
+        presets['amenity/parking/underground'],
+        presets,
+        fields,
+      ),
+    ).toBeNull()
+  })
+
   it('classifies override status from snapshot', () => {
     const current = {
       fields: {
