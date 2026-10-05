@@ -136,7 +136,7 @@ test('label mismatch audit collects decisions for a GitHub issue', async ({ page
 
   await expect(page.getByRole('heading', { name: /Audit: Option ≠ preset name/ })).toBeVisible()
   const row = page.getByRole('row').filter({ hasText: 'leisure/playground' })
-  await expect(row.getByText('Option in the field')).toBeVisible()
+  await expect(row.getByText('Option of “Equipment”')).toBeVisible()
   await expect(row.getByText('different wording')).toBeVisible()
   await expect(row.getByText('playground=cushion')).toBeVisible()
   await expect(row.getByRole('link', { name: 'Bouncy Pillow' })).toHaveAttribute(

@@ -29,6 +29,7 @@ function PresetLink({ presetId, children }: { presetId: string; children: React.
 }
 
 function PairRow({ pair, currentPresetId }: { pair: LabelMismatchPair; currentPresetId?: string }) {
+  const { fieldTranslations } = useSchema()
   const diff = diffLabelWords(pair.optionLabel, pair.childPresetName)
   const parent = pair.parentPresets[0]!
 
@@ -37,7 +38,9 @@ function PairRow({ pair, currentPresetId }: { pair: LabelMismatchPair; currentPr
       <div className="min-w-0">
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-slate-50">
           <span>
-            <span className="text-xs text-slate-400">Option </span>
+            <span className="text-xs text-slate-400">
+              Option of “{fieldTranslations[pair.fieldId]?.label ?? pair.fieldId}”{' '}
+            </span>
             <LabelDiff parts={diff.left} tone="dark" />
           </span>
           <span className="text-amber-300" aria-label="differs from">

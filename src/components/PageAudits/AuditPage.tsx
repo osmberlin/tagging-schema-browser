@@ -29,6 +29,7 @@ import { LabelDiff, LabelMismatchKindPill } from '@/components/ui/LabelDiff'
 import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
+import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
 import { diffLabelWords } from '@/utils/labelMismatch'
 import { osmWikiUrlForTag } from '@/utils/osmWikiUrl'
 import { cn } from '@/utils/tw'
@@ -170,6 +171,8 @@ function LabelPairLine({
   pair: AuditLabelPair
   matches?: boolean
 }) {
+  const { fieldTranslations } = useSchema()
+  const fieldLabel = fieldTranslations[fieldId]?.label
   const openDisclosure = useOpenLabelDisclosure()
   const diff = diffLabelWords(pair.optionLabel, pair.childPresetName)
   const nameClass = 'underline decoration-slate-300 underline-offset-2 hover:text-sky-700'
@@ -177,6 +180,7 @@ function LabelPairLine({
     <div className="min-w-0 flex-1">
       <div className={cn(labelColumnsClass, 'text-sm text-slate-900')}>
         <div className="min-w-0">
+          {fieldLabel ? <span className="text-slate-500">{fieldLabel}: </span> : null}
           <Link
             to="/field/$"
             params={{ _splat: fieldId }}
@@ -226,31 +230,58 @@ function LabelPairLine({
   )
 }
 
-/** Which field of the preset the lines below belong to, and what the two columns are. */
+/**
+ * The field as a mapper meets it in iD: its label on top, the input below (placeholder, or the
+ * first options when there is none). An option label only makes sense read under that label.
+ */
 function LabelEntryHeader({ entry }: { entry: AuditEntry }) {
-  const { fieldTranslations } = useSchema()
+  const { fields, fieldTranslations } = useSchema()
   const openDisclosure = useOpenLabelDisclosure()
   const fieldId = entry.optionFieldId!
-  const fieldLabel = fieldTranslations[fieldId]?.label
+  const field = fields[fieldId]
+  const strings = fieldTranslations[fieldId]
+  const optionLabels = Object.values(strings?.options ?? {})
+    .map((option) => fieldOptionTitle(option))
+    .filter((label): label is string => Boolean(label))
+  const preview = optionLabels.slice(0, 4).join(', ')
+
   return (
     <div className="space-y-2">
-      <p className="text-sm text-slate-700">
-        Field{' '}
-        <Link
-          to="/field/$"
-          params={{ _splat: fieldId }}
-          search={keepDataSource}
-          onClick={() => openDisclosure('field', fieldId)}
-          className={linkClass}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div
+          className="w-64 max-w-full overflow-hidden rounded border border-slate-300 text-sm"
+          title="How iD shows this field: label on top, input below"
         >
-          {fieldLabel ? `“${fieldLabel}” ` : null}
-          <span className="font-mono text-xs">{fieldId}</span>
-        </Link>{' '}
-        of this preset
-      </p>
+          <div className="bg-slate-100 px-2 py-1 font-semibold text-slate-900">
+            {strings?.label ?? fieldId}
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-slate-300 bg-white px-2 py-1 text-slate-400">
+            <span className="truncate">
+              {strings?.placeholder ?? (preview ? `${preview}…` : 'Unknown')}
+            </span>
+            <span aria-hidden>▾</span>
+          </div>
+        </div>
+        <p className="text-xs text-slate-500">
+          Field{' '}
+          <Link
+            to="/field/$"
+            params={{ _splat: fieldId }}
+            search={keepDataSource}
+            onClick={() => openDisclosure('field', fieldId)}
+            className={cn('font-mono', linkClass)}
+          >
+            {fieldId}
+          </Link>{' '}
+          of this preset
+          <br />
+          type <span className="font-mono">{field?.type ?? 'unknown'}</span>
+          {strings?.placeholder ? null : ', no placeholder'}
+        </p>
+      </div>
       <div className="flex gap-3 text-[11px] font-medium tracking-wide text-slate-500 uppercase">
         <div className={labelColumnsClass}>
-          <span>Option in the field</span>
+          <span>Option of “{strings?.label ?? fieldId}”</span>
           <span />
           <span>Preset the option leads to</span>
           <span />
@@ -564,13 +595,15 @@ export function AuditDetailPage() {
           </p>
           {slug === 'label-mismatch' ? (
             <p className="mt-2">
-              A field like “Cuisine” on the Restaurant preset offers options (“Pizza”). Some options
-              have a preset of their own (“Pizza Restaurant”) that iD switches to. Each line shows
-              the option label on the left and the name of that preset on the right, both in English
-              as shipped in the schema; the words that differ are marked. “One label extends the
-              other” is mostly wanted (the preset name repeats the feature type), “Different
-              wording” is where renames drift apart. Decisions are stored with both labels, so a
-              pair returns here when one of them is renamed.
+              A field like “Cuisines” on the Restaurant preset offers options (“Pizza”). The box
+              above each list shows the field the way iD does, label first, because an option is
+              always read under that label (“Sells Used: Only”). Some options have a preset of their
+              own (“Pizza Restaurant”) that iD switches to. Each line shows the option label on the
+              left and the name of that preset on the right, both in English as shipped in the
+              schema; the words that differ are marked. “One label extends the other” is mostly
+              wanted (the preset name repeats the feature type), “Different wording” is where
+              renames drift apart. Decisions are stored with both labels, so a pair returns here
+              when one of them is renamed.
             </p>
           ) : null}
           <ul className="mt-2 list-inside list-disc">
