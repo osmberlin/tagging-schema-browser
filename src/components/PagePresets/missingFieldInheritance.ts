@@ -54,7 +54,8 @@ function explicitPresetRefs(explicitList: string[]): string[] {
 /**
  * When a preset defines an explicit `fields` or `moreFields` array but does not
  * reference its slash parent (`{shop}` on `shop/pasta`), list field ids that the
- * parent resolves but this preset does not.
+ * parent resolves but this preset does not. Universal fields are not reported
+ * for `moreFields`.
  */
 export function detectMissingFieldInheritance(
   presetId: string,
@@ -98,6 +99,9 @@ export function detectMissingFieldInheritance(
       .filter((fieldId) =>
         shouldInheritField(preset, fieldId, hostOriginalFields, hostOriginalMoreFields, allFields),
       )
+      // Universal fields are always offered by iD's "add field" list, so not
+      // inheriting them in `moreFields` changes nothing. In `fields` it still does.
+      .filter((fieldId) => fieldListKey !== 'moreFields' || !allFields[fieldId]?.universal)
     if (missedFieldIds.length === 0) continue
 
     result[fieldListKey] = {
