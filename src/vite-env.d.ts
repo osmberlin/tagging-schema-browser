@@ -10,6 +10,7 @@ declare module '*.yaml' {
   const content: {
     version: number
     presets?: Record<string, unknown>
+    fields?: Record<string, unknown>
   }
   export default content
 }

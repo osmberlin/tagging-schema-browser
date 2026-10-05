@@ -21,7 +21,8 @@
     "test-run": "vitest run",
     "validate-inheritance-overrides": "bun scripts/validate-inheritance-overrides.ts",
     "validate-risky-typecombo-overrides": "bun scripts/validate-risky-typecombo-overrides.ts",
-    "check": "bun run type-check && bun run lint-check && bun run format-check && bun run test-run && bun run validate-inheritance-overrides && bun run validate-risky-typecombo-overrides",
+    "validate-label-mismatch-overrides": "bun scripts/validate-label-mismatch-overrides.ts",
+    "check": "bun run type-check && bun run lint-check && bun run format-check && bun run test-run && bun run validate-inheritance-overrides && bun run validate-risky-typecombo-overrides && bun run validate-label-mismatch-overrides",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install --with-deps chromium"
   },

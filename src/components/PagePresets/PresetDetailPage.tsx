@@ -12,6 +12,7 @@ import { presetSwitchSearchDefaults } from '@/components/PagePresetSwitch/preset
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
+import { LabelMismatchDisclosure } from '@/components/ui/LabelMismatchDisclosure'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { useComparison } from '@/hooks/useComparison'
 import { useLocale } from '@/hooks/useLocale'
@@ -104,6 +105,9 @@ function PresetDetailContent({
   const { result: comparison } = useComparison()
   const changeStatus = comparison?.presets.statusById.get(preset.id)
   const modified = comparison?.presets.modified.find((m) => m.current.id === preset.id)
+
+  const labelMismatchPairs = indices.labelMismatchPairsByPresetId.get(preset.id) ?? []
+  const openLabelMismatchCount = labelMismatchPairs.filter((pair) => !pair.reviewed).length
 
   const filePath = schemaRepoPath('preset', preset.id, { searchable: preset.searchable })
   const githubUrl = githubFileUrl(dataUrl, filePath)
@@ -211,6 +215,12 @@ function PresetDetailContent({
         childRefs={indices.childIconMismatchRefsByPresetId.get(preset.id) ?? []}
       />
 
+      <LabelMismatchDisclosure
+        disclosureId={`preset-label-mismatch:${preset.id}`}
+        pairs={labelMismatchPairs}
+        currentPresetId={preset.id}
+      />
+
       <MissingInheritancePanel
         preset={preset}
         dataUrl={customDataUrl ?? ''}
@@ -295,6 +305,14 @@ function PresetDetailContent({
                 ))}
               </ul>
             )}
+            {openLabelMismatchCount > 0 ? (
+              <p className="mt-3 text-sm text-violet-700" data-testid="label-mismatch-change-note">
+                Check the labels: with this change, {openLabelMismatchCount} field option
+                {openLabelMismatchCount === 1 ? ' is' : 's are'} labelled differently than the
+                preset {openLabelMismatchCount === 1 ? 'it leads' : 'they lead'} to. See “Option ≠
+                preset name” at the top of this page.
+              </p>
+            ) : null}
           </div>
         </DetailDisclosure>
       ) : null}

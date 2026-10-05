@@ -18,6 +18,12 @@ import {
   isOptionIconMissing,
   type PresetIconMismatchRef,
 } from '@/utils/iconMismatch'
+import {
+  classifyLabelMismatch,
+  collectLabelMismatchPairs,
+  type LabelMismatchOverrides,
+  type LabelMismatchPair,
+} from '@/utils/labelMismatch'
 import type {
   ChildPresetIndex,
   DenormalizedPreset,
@@ -183,6 +189,8 @@ function buildOptionRowsForField(
       labelEn: fieldOptionTitle(strings[opt]) ?? opt,
       iconMismatch: isOptionIconMismatch(icon, childPresetIcon),
       iconMissing: isOptionIconMissing(icon, childPresetIcon, Object.keys(icons).length > 0),
+      // An option without its own string falls back to the value; that is not a label to compare.
+      labelMismatch: classifyLabelMismatch(fieldOptionTitle(strings[opt]), child.name),
       parentPreset: { id: preset.id, name: preset.name },
       childPreset: toOptionChild(child, fieldKey, opt),
     })
@@ -309,6 +317,24 @@ export function buildPresetIconMismatchIndices(
   return { parentIconMismatchRowsByPresetId, childIconMismatchRefsByPresetId }
 }
 
+function groupLabelMismatchPairs(pairs: Map<string, LabelMismatchPair>): {
+  labelMismatchPairsByPresetId: Map<string, LabelMismatchPair[]>
+  labelMismatchPairsByFieldId: Map<string, LabelMismatchPair[]>
+} {
+  const byPresetId = new Map<string, LabelMismatchPair[]>()
+  const byFieldId = new Map<string, LabelMismatchPair[]>()
+  const append = (index: Map<string, LabelMismatchPair[]>, id: string, pair: LabelMismatchPair) =>
+    index.set(id, [...(index.get(id) ?? []), pair])
+
+  for (const pair of pairs.values()) {
+    append(byFieldId, pair.fieldId, pair)
+    for (const presetId of new Set([pair.childPresetId, ...pair.parentPresets.map((p) => p.id)])) {
+      append(byPresetId, presetId, pair)
+    }
+  }
+  return { labelMismatchPairsByPresetId: byPresetId, labelMismatchPairsByFieldId: byFieldId }
+}
+
 export function buildFieldCatalog(
   fields: RawFields,
   fieldTranslations: FieldTranslations,
@@ -355,6 +381,7 @@ export function buildSchemaIndices(
   presets: DenormalizedPreset[],
   fields: RawFields,
   fieldTranslations: FieldTranslations,
+  labelMismatchOverrides: LabelMismatchOverrides = { version: 1, fields: {} },
 ): SchemaIndices {
   const childPresetIndex = buildChildPresetIndex(presets)
   const { primary, more } = buildFieldPresetIndex(presets)
@@ -367,6 +394,10 @@ export function buildSchemaIndices(
   const { parentIconMismatchRowsByPresetId, childIconMismatchRefsByPresetId } =
     buildPresetIconMismatchIndices(presets, fields, fieldTranslations, childPresetIndex)
   const fieldRiskyPresetUsages = buildFieldRiskyPresetUsages(primary, more)
+  const labelMismatchPairs = collectLabelMismatchPairs(
+    fieldOptionMismatchRows,
+    labelMismatchOverrides,
+  )
   const { fieldCatalog, fieldTypes } = buildFieldCatalog(
     fields,
     fieldTranslations,
@@ -382,6 +413,8 @@ export function buildSchemaIndices(
     fieldOptionMismatchRows,
     parentIconMismatchRowsByPresetId,
     childIconMismatchRefsByPresetId,
+    labelMismatchPairs,
+    ...groupLabelMismatchPairs(labelMismatchPairs),
     presetsByCategoryId: buildPresetsByCategoryId(presets),
     presetsByIcon: buildPresetsByIcon(presets),
     optionIconUsagesByIcon: collectOptionIconUsages(fields, presets, fieldTranslations),

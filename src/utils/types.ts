@@ -5,6 +5,7 @@ import type {
 import type { RiskyTypeCombo, RiskyTypeComboStatus } from '@/components/PagePresets/riskyTypeCombo'
 import type { FieldOptionTranslation } from '@/utils/fieldOptionTranslation'
 import type { PresetIconMismatchRef, PresetIconMismatchRow } from '@/utils/iconMismatch'
+import type { LabelMismatchKind, LabelMismatchPair } from '@/utils/labelMismatch'
 import type { PrerequisiteTag } from '@/utils/prerequisiteTag'
 import type { SchemaBuildInfo } from '@/utils/schemaBuildVersion'
 
@@ -126,6 +127,8 @@ export type FieldOptionMismatchRow = {
   iconMismatch: boolean
   /** Option has no icon while the linked child preset has one (and the field uses icons). */
   iconMissing: boolean
+  /** Option label reads differently than the linked child preset name, see `classifyLabelMismatch`. */
+  labelMismatch: LabelMismatchKind | null
   parentPreset: { id: string; name: string }
   childPreset: PresetOptionChild
 }
@@ -145,6 +148,11 @@ export type SchemaIndices = {
   parentIconMismatchRowsByPresetId: Map<string, PresetIconMismatchRow[]>
   /** Parent presets whose field option icon mismatches this child preset id. */
   childIconMismatchRefsByPresetId: Map<string, PresetIconMismatchRef[]>
+  /** Option ↔ child-preset pairs with different labels, keyed by `labelMismatchKey`. */
+  labelMismatchPairs: Map<string, LabelMismatchPair>
+  /** The same pairs per preset id, both for the parent preset and the child preset. */
+  labelMismatchPairsByPresetId: Map<string, LabelMismatchPair[]>
+  labelMismatchPairsByFieldId: Map<string, LabelMismatchPair[]>
   presetsByCategoryId: Map<string, DenormalizedPreset[]>
   presetsByIcon: Map<string, DenormalizedPreset[]>
   /** Option icon name → field option usages — built once for icon source links. */

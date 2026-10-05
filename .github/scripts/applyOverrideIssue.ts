@@ -6,9 +6,11 @@
  */
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs'
 import {
+  applyLabelMismatchChanges,
   applyMissingInheritanceChanges,
   applyRiskyTypeComboChanges,
   parseOverrideChangeBlock,
+  serializeLabelMismatchYaml,
   serializeMissingInheritanceYaml,
   serializeRiskyTypeComboYaml,
   yamlHeader,
@@ -17,6 +19,7 @@ import {
 const FILES = {
   'missing-inheritance': 'src/data/missing-inheritance-overrides.yaml',
   'risky-typecombo': 'src/data/risky-typecombo-overrides.yaml',
+  'label-mismatch': 'src/data/label-mismatch-overrides.yaml',
 } as const
 
 const title = process.env.ISSUE_TITLE ?? ''
@@ -27,16 +30,25 @@ if (!title.startsWith(`[${changeSet.kind}]`)) {
 
 const file = FILES[changeSet.kind]
 const content = readFileSync(file, 'utf8')
-const presets = (Bun.YAML.parse(content) as { presets?: Record<string, never> }).presets ?? {}
+const parsed = Bun.YAML.parse(content) as {
+  presets?: Record<string, never>
+  fields?: Record<string, never>
+}
+const presets = parsed.presets ?? {}
 const header = yamlHeader(content)
 
 const next =
-  changeSet.kind === 'missing-inheritance'
-    ? serializeMissingInheritanceYaml(
+  changeSet.kind === 'label-mismatch'
+    ? serializeLabelMismatchYaml(
         header,
-        applyMissingInheritanceChanges(presets, changeSet.changes),
+        applyLabelMismatchChanges(parsed.fields ?? {}, changeSet.changes),
       )
-    : serializeRiskyTypeComboYaml(header, applyRiskyTypeComboChanges(presets, changeSet.changes))
+    : changeSet.kind === 'missing-inheritance'
+      ? serializeMissingInheritanceYaml(
+          header,
+          applyMissingInheritanceChanges(presets, changeSet.changes),
+        )
+      : serializeRiskyTypeComboYaml(header, applyRiskyTypeComboChanges(presets, changeSet.changes))
 
 writeFileSync(file, next)
 console.log(`Applied ${changeSet.changes.length} change(s) to ${file}`)

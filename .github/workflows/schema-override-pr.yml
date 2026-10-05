@@ -36,7 +36,8 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' || (
         (startsWith(github.event.issue.title, '[missing-inheritance]') ||
-         startsWith(github.event.issue.title, '[risky-typecombo]')) &&
+         startsWith(github.event.issue.title, '[risky-typecombo]') ||
+         startsWith(github.event.issue.title, '[label-mismatch]')) &&
         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
       )
     runs-on: ubuntu-latest

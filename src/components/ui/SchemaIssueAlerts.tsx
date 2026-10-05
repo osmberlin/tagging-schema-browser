@@ -151,3 +151,29 @@ export function FieldRiskyTypeComboAlert({
     </SchemaIssueAlert>
   )
 }
+
+export function LabelMismatchAlert({
+  count,
+  dataUrl = '',
+  locale = '',
+}: {
+  count: number
+  dataUrl?: string
+  locale?: string
+}) {
+  if (count <= 0) return null
+
+  return (
+    <SchemaIssueAlert variant="warning" title="Option ≠ preset name">
+      <strong>{count}</strong> field {count === 1 ? 'option is' : 'options are'} labelled
+      differently than the preset {count === 1 ? 'it leads' : 'they lead'} to and need review —{' '}
+      <a
+        href={auditPageHref({ slug: 'label-mismatch', dataUrl, locale })}
+        className={schemaIssueStyles.alertLink}
+      >
+        open audit page
+      </a>
+      .
+    </SchemaIssueAlert>
+  )
+}

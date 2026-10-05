@@ -87,9 +87,65 @@ test('fields list links risky typeCombo banner to audit page', async ({ page }) 
   await loadTestSchema(page)
   await page.goto('/fields?dataUrl=/test-schema')
 
-  await expect(page.getByText(/typeCombo field(s)? look(s)? like a property/i)).toBeVisible()
-  await page.getByRole('link', { name: 'open audit page' }).click()
+  const alert = page.getByRole('paragraph').filter({ hasText: /look(s)? like a property/i })
+  await expect(alert).toBeVisible()
+  await alert.getByRole('link', { name: 'open audit page' }).click()
   await expect(page).toHaveURL(/\/audits\/risky-typecombo/)
+})
+
+test('preset detail lists field options labelled differently than their child preset', async ({
+  page,
+}) => {
+  await page.goto('/preset/leisure/playground?dataUrl=/test-schema')
+
+  const section = page.getByLabel('Option ≠ preset name')
+  await expect(section.getByText(/2 field options are labelled differently/)).toBeVisible()
+  await section.getByRole('button', { name: /Option ≠ preset name/ }).click()
+
+  const panel = page.getByTestId('label-mismatch-panel')
+  await expect(panel.getByText('Different wording (1)')).toBeVisible()
+  await expect(panel.getByText('One label extends the other (1)')).toBeVisible()
+  await expect(
+    panel.getByText('playground/type · cushion → leisure/playground/cushion'),
+  ).toBeVisible()
+  await expect(panel.getByRole('link', { name: 'Preset', exact: true })).toHaveCount(2)
+  await expect(panel.getByRole('link', { name: 'Review on the audit page →' })).toHaveAttribute(
+    'href',
+    /\/audits\/label-mismatch\?.*selected=leisure%2Fplayground%3Aplayground%2Ftype/,
+  )
+})
+
+test('child preset and field detail show the same label mismatch', async ({ page }) => {
+  await page.goto('/preset/leisure/playground/cushion?dataUrl=/test-schema')
+  const presetSection = page.getByLabel('Option ≠ preset name')
+  await expect(presetSection.getByText(/1 field option is labelled differently/)).toBeVisible()
+  await presetSection.getByRole('button', { name: /Option ≠ preset name/ }).click()
+  await expect(presetSection.getByRole('link', { name: 'Parent preset' })).toBeVisible()
+
+  await page.goto('/field/playground/type?dataUrl=/test-schema')
+  const fieldSection = page.getByLabel('Option ≠ preset name')
+  await expect(fieldSection.getByText(/2 field options are labelled differently/)).toBeVisible()
+})
+
+test('label mismatch audit collects decisions for a GitHub issue', async ({ page }) => {
+  await page.goto('/fields?dataUrl=/test-schema')
+  const alert = page.getByRole('paragraph').filter({ hasText: /labelled differently/i })
+  await expect(alert).toContainText('2 field options')
+  await alert.getByRole('link', { name: 'open audit page' }).click()
+  await expect(page).toHaveURL(/\/audits\/label-mismatch/)
+
+  await expect(page.getByRole('heading', { name: /Audit: Option ≠ preset name/ })).toBeVisible()
+  const row = page.getByRole('row').filter({ hasText: 'leisure/playground' })
+  await expect(row.getByText('Different wording')).toBeVisible()
+  await expect(row.getByText('cushion → leisure/playground/cushion')).toBeVisible()
+  await expect(page.getByTestId('audit-create-issue')).toBeDisabled()
+
+  await row
+    .getByRole('group', { name: 'Decision for cushion|leisure/playground/cushion' })
+    .getByRole('button', { name: 'OK to skip' })
+    .click()
+  await expect(page.getByText('1 OK to skip')).toBeVisible()
+  await expect(page.getByTestId('audit-create-issue')).toBeEnabled()
 })
 
 test('field detail links risky typeCombo usage to audit page', async ({ page }) => {

@@ -10,6 +10,7 @@ import {
   type FieldOptionTranslation,
 } from '@/utils/fieldOptionTranslation'
 import { isOptionIconMismatch, isOptionIconMissing } from '@/utils/iconMismatch'
+import { classifyLabelMismatch } from '@/utils/labelMismatch'
 import type {
   ChildPresetIndex,
   DenormalizedPreset,
@@ -285,6 +286,10 @@ export function getFieldOptionMismatchRows(
         labelEn: row.labelEn,
         iconMismatch: row.iconMismatch,
         iconMissing: isOptionIconMissing(row.icon, row.childPreset.icon, fieldHasIcons),
+        labelMismatch: classifyLabelMismatch(
+          fieldOptionTitle(fieldTranslations[fieldId]?.options?.[row.optionValue]),
+          row.childPreset.name,
+        ),
         parentPreset: { id: preset.id, name: preset.name },
         childPreset: row.childPreset,
       })

@@ -9,6 +9,7 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { AreaLink } from '@/components/ui/AreaLink'
 import { CountPill } from '@/components/ui/CountPill'
 import { DetailDisclosure } from '@/components/ui/DetailDisclosure'
+import { LabelMismatchDisclosure } from '@/components/ui/LabelMismatchDisclosure'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
 import { RelatedBlock } from '@/components/ui/RelatedBlock'
 import { SchemaIssueDisclosure } from '@/components/ui/SchemaIssue'
@@ -19,6 +20,7 @@ import { areaAccent, areaInlineCodeClass } from '@/theme/areaAccent'
 import { externalActionPillClass } from '@/theme/externalAccent'
 import { fieldTypeHint } from '@/utils/fieldTypes'
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
+import type { LabelMismatchPair } from '@/utils/labelMismatch'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
 import { cn } from '@/utils/tw'
 import type {
@@ -87,6 +89,7 @@ export function FieldDetailPage() {
       dataUrl={dataUrl ?? ''}
       optionRows={data.indices.fieldOptionMismatchRows.get(fieldId) ?? []}
       riskyPresetUsages={data.indices.fieldRiskyPresetUsages.get(fieldId) ?? []}
+      labelMismatchPairs={data.indices.labelMismatchPairsByFieldId.get(fieldId) ?? []}
     />
   )
 }
@@ -100,6 +103,7 @@ function FieldDetailContent({
   dataUrl,
   optionRows,
   riskyPresetUsages,
+  labelMismatchPairs,
 }: {
   fieldId: string
   raw: Record<string, unknown>
@@ -109,6 +113,7 @@ function FieldDetailContent({
   dataUrl: string
   optionRows: FieldOptionMismatchRow[]
   riskyPresetUsages: FieldRiskyTypeComboUsage[]
+  labelMismatchPairs: LabelMismatchPair[]
 }) {
   const setPreset = useSetPreset()
   const { loading: localeLoading, error: localeError, locale, fieldLocaleMap } = useLocale()
@@ -211,6 +216,11 @@ function FieldDetailContent({
         fieldType={type}
         usages={riskyPresetUsages}
         dataUrl={dataUrl}
+      />
+
+      <LabelMismatchDisclosure
+        disclosureId={`field-label-mismatch:${fieldId}`}
+        pairs={labelMismatchPairs}
       />
 
       {mismatchCount > 0 ? (

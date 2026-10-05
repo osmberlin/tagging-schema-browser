@@ -14,6 +14,7 @@ import {
   auditEntriesForSlug,
   type AuditEntry,
   type AuditField,
+  type AuditLabelPair,
 } from '@/components/PageAudits/auditEntries'
 import {
   AuditSchemaLoadingPanel,
@@ -24,8 +25,10 @@ import { tryBuildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/bui
 import { fieldListTitle } from '@/components/PageAudits/fieldListTitle'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
+import { LabelDiff } from '@/components/ui/LabelDiff'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
+import { diffLabelWords, LABEL_MISMATCH_KINDS } from '@/utils/labelMismatch'
 import { osmWikiUrlForTag } from '@/utils/osmWikiUrl'
 import { cn } from '@/utils/tw'
 
@@ -142,10 +145,86 @@ function FieldLink({ field }: { field: AuditField }) {
   )
 }
 
+/** Option label and preset name side by side, the words that differ marked. */
+function LabelPairLine({ pair }: { pair: AuditLabelPair }) {
+  const diff = diffLabelWords(pair.optionLabel, pair.childPresetName)
+  return (
+    <div className="min-w-0 flex-1">
+      <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-slate-900">
+        <span title="Field option label">
+          <LabelDiff parts={diff.left} />
+        </span>
+        <span className="text-slate-400" aria-label="differs from">
+          ≠
+        </span>
+        <Link
+          to="/preset/$"
+          params={{ _splat: pair.childPresetId }}
+          search={keepDataSource}
+          title={`Preset name of ${pair.childPresetId}`}
+          className="underline decoration-slate-300 underline-offset-2 hover:text-sky-700"
+        >
+          <LabelDiff parts={diff.right} />
+        </Link>
+      </p>
+      <Truncated
+        text={`${pair.optionValue} → ${pair.childPresetId}`}
+        fromStart
+        className="font-mono text-xs text-slate-500"
+      />
+      {pair.previous ? (
+        <p className="text-xs text-amber-700">
+          Renamed since the last review (“{pair.previous.optionLabel}” ≠ “{pair.previous.presetName}
+          ”).
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+type FieldGroup = { key: string; title: string; state: AuditFieldState; fields: AuditField[] }
+
+const LABEL_GROUP_TITLES = {
+  differs: 'Different wording',
+  extends: 'One label extends the other',
+} as const
+
 function fieldGroupTitle(entry: AuditEntry, state: AuditFieldState): string {
-  if (state === 'stale') return 'Outdated override entries (no longer detected)'
+  if (state === 'stale') {
+    return entry.kind === 'label-mismatch'
+      ? 'Outdated override entries (labels match now, or the option lost its preset)'
+      : 'Outdated override entries (no longer detected)'
+  }
   if (entry.kind === 'risky-typecombo') return 'typeCombo fields that can write key=yes'
   return `${fieldListTitle(entry.listKey!)} of the parent that are not inherited`
+}
+
+/** Items of one entry, split into the groups that get their own header and "All" buttons. */
+function fieldGroups(entry: AuditEntry): FieldGroup[] {
+  const byState = (state: AuditFieldState) => entry.fields.filter((field) => field.state === state)
+  const stale: FieldGroup = {
+    key: 'stale',
+    title: fieldGroupTitle(entry, 'stale'),
+    state: 'stale',
+    fields: byState('stale'),
+  }
+  const open: FieldGroup[] =
+    entry.kind === 'label-mismatch'
+      ? LABEL_MISMATCH_KINDS.map((kind) => ({
+          key: kind,
+          title: LABEL_GROUP_TITLES[kind],
+          state: 'missing',
+          fields: byState('missing').filter((field) => field.labelPair?.kind === kind),
+        }))
+      : [
+          {
+            key: 'missing',
+            title: fieldGroupTitle(entry, 'missing'),
+            state: 'missing',
+            fields: byState('missing'),
+          },
+        ]
+  return [...open, stale].filter((group) => group.fields.length > 0)
 }
 
 function EntryFields({
@@ -160,26 +239,35 @@ function EntryFields({
   setDecisions: (updates: Decisions) => void
 }) {
   const keyOf = (field: AuditField) => fieldDecisionKey(entry.entryId, field.fieldId)
-  const groups = (['missing', 'stale'] as const)
-    .map((state) => ({ state, fields: entry.fields.filter((field) => field.state === state) }))
-    .filter((group) => group.fields.length > 0)
+  const groups = fieldGroups(entry)
 
   return (
     <div className="space-y-4">
-      {groups.map(({ state, fields }) => {
+      {entry.optionFieldId ? (
+        <p className="text-xs text-slate-500">
+          Options of field{' '}
+          <Link
+            to="/field/$"
+            params={{ _splat: entry.optionFieldId }}
+            search={keepDataSource}
+            className={cn('font-mono', linkClass)}
+          >
+            {entry.optionFieldId}
+          </Link>
+        </p>
+      ) : null}
+      {groups.map(({ key, title, state, fields }) => {
         const options = FIELD_DECISIONS_BY_STATE[state]
         const first = decisions[keyOf(fields[0]!)]
         const allSame = fields.every((field) => decisions[keyOf(field)] === first)
         return (
-          <div key={state} className="space-y-1">
+          <div key={key} className="space-y-1">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-1">
-              <p className="min-w-0 flex-1 text-xs font-semibold text-slate-600">
-                {fieldGroupTitle(entry, state)}
-              </p>
+              <p className="min-w-0 flex-1 text-xs font-semibold text-slate-600">{title}</p>
               {fields.length > 1 ? <span className="text-xs text-slate-500">All:</span> : null}
               {fields.length > 1 ? (
                 <DecisionButtons
-                  label={`Decision for all fields of ${entry.entryId}`}
+                  label={`Decision for all of “${title}” in ${entry.entryId}`}
                   locked={locked}
                   options={options}
                   value={allSame ? first : undefined}
@@ -192,7 +280,11 @@ function EntryFields({
             <ul className="space-y-1">
               {fields.map((field) => (
                 <li key={field.fieldId} className="flex items-center gap-3">
-                  <FieldLink field={field} />
+                  {field.labelPair ? (
+                    <LabelPairLine pair={field.labelPair} />
+                  ) : (
+                    <FieldLink field={field} />
+                  )}
                   <DecisionButtons
                     label={`Decision for ${field.fieldId}`}
                     locked={locked}
@@ -303,7 +395,7 @@ export function AuditDetailPage() {
   const { presets, data, dataUrl, reference, loading } = useSchema()
 
   const entries = useMemo(
-    () => (slug && data ? auditEntriesForSlug(slug, presets) : []),
+    () => (slug && data ? auditEntriesForSlug(slug, presets, data.indices.labelMismatchPairs) : []),
     [slug, data, presets],
   )
 
@@ -364,6 +456,14 @@ export function AuditDetailPage() {
             issue” opens one issue with all decisions; submitting it runs a workflow that updates{' '}
             <code>{meta.overrideFile}</code> and opens a PR.
           </p>
+          {slug === 'label-mismatch' ? (
+            <p className="mt-2">
+              Each line pairs a field option with the preset it leads to; the words that differ are
+              marked. “One label extends the other” is mostly wanted (the preset name repeats the
+              feature type), “Different wording” is where renames drift apart. Decisions are stored
+              with both labels, so a pair returns here when one of them is renamed.
+            </p>
+          ) : null}
           <ul className="mt-2 list-inside list-disc">
             {(Object.keys(FIELD_DECISION_HELP) as FieldDecision[]).map((decision) => (
               <li key={decision}>
@@ -420,7 +520,9 @@ export function AuditDetailPage() {
                       <tr>
                         <th className="w-[22%] px-3 py-2">Preset</th>
                         {hasParentColumn ? <th className="w-[16%] px-3 py-2">Parent</th> : null}
-                        <th className="px-3 py-2">Fields</th>
+                        <th className="px-3 py-2">
+                          {slug === 'label-mismatch' ? 'Option label ≠ preset name' : 'Fields'}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

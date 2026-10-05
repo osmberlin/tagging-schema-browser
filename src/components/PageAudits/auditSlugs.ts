@@ -1,4 +1,4 @@
-export const AUDIT_SLUGS = ['missing-inheritance', 'risky-typecombo'] as const
+export const AUDIT_SLUGS = ['missing-inheritance', 'risky-typecombo', 'label-mismatch'] as const
 
 export type AuditSlug = (typeof AUDIT_SLUGS)[number]
 
@@ -28,5 +28,12 @@ export const AUDIT_META: Record<
       'Presets where a property typeCombo can silently add =yes tags when a mapper backs out of the dropdown.',
     area: 'fields',
     overrideFile: 'src/data/risky-typecombo-overrides.yaml',
+  },
+  'label-mismatch': {
+    title: 'Option ≠ preset name',
+    description:
+      'Field options whose English label differs from the name of the preset the option leads to (e.g. option “Dancing School”, preset “Dance School”). Many differences are wanted, like “Pizza” and “Pizza Restaurant”; the audit records those so that later renames stand out.',
+    area: 'fields',
+    overrideFile: 'src/data/label-mismatch-overrides.yaml',
   },
 }

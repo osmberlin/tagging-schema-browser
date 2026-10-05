@@ -18,7 +18,10 @@ export function AuditsIndexPage() {
   const counts = useMemo(() => {
     if (!data) return null
     return Object.fromEntries(
-      AUDIT_SLUGS.map((slug) => [slug, auditEntriesForSlug(slug, presets).length]),
+      AUDIT_SLUGS.map((slug) => [
+        slug,
+        auditEntriesForSlug(slug, presets, data.indices.labelMismatchPairs).length,
+      ]),
     ) as Record<(typeof AUDIT_SLUGS)[number], number>
   }, [data, presets])
 
@@ -47,7 +50,7 @@ export function AuditsIndexPage() {
 
       <AuditSchemaRefreshBanner />
 
-      <ul className="grid gap-4 sm:grid-cols-2">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {AUDIT_SLUGS.map((slug) => {
           const meta = AUDIT_META[slug]
           const count = counts?.[slug] ?? 0

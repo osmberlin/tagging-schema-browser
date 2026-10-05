@@ -77,4 +77,65 @@ describe('buildBatchSchemaOverrideIssueUrl', () => {
       tryBuildBatchSchemaOverrideIssueUrl({ ...args, entries: many.slice(0, 1) }),
     ).toHaveProperty('url')
   })
+
+  it('builds a label-mismatch issue with the reviewed labels in the change block', () => {
+    const labelEntry: AuditEntry = {
+      kind: 'label-mismatch',
+      entryId: 'amenity/restaurant:cuisine',
+      presetId: 'amenity/restaurant',
+      presetName: 'Restaurant',
+      optionFieldId: 'cuisine',
+      fields: [
+        {
+          fieldId: 'pizza|amenity/restaurant/pizza',
+          state: 'missing',
+          labelPair: {
+            optionValue: 'pizza',
+            childPresetId: 'amenity/restaurant/pizza',
+            optionLabel: 'Pizza',
+            childPresetName: 'Pizza Restaurant',
+            kind: 'extends',
+          },
+        },
+        {
+          fieldId: 'steak_house|amenity/restaurant/steakhouse',
+          state: 'missing',
+          labelPair: {
+            optionValue: 'steak_house',
+            childPresetId: 'amenity/restaurant/steakhouse',
+            optionLabel: 'Steak House',
+            childPresetName: 'Steakhouse',
+            kind: 'differs',
+          },
+        },
+      ],
+      documentedFieldIds: [],
+      explicitPresetRefs: [],
+    }
+    const params = new URL(
+      buildBatchSchemaOverrideIssueUrl({
+        slug: 'label-mismatch',
+        entries: [labelEntry],
+        decisions: {
+          'amenity/restaurant:cuisine::pizza|amenity/restaurant/pizza': 'intentional',
+          'amenity/restaurant:cuisine::steak_house|amenity/restaurant/steakhouse': 'needs_work',
+        },
+        dataUrl: '',
+      }),
+    ).searchParams
+    expect(params.get('title')).toBe('[label-mismatch] audit review (2 options)')
+    const body = params.get('body')!
+    expect(body).toContain('`cuisine` option `steak_house` “Steak House” ≠ [Steakhouse](')
+    expect(parseOverrideChangeBlock(body)).toEqual({
+      version: 1,
+      kind: 'label-mismatch',
+      changes: [
+        {
+          fieldId: 'cuisine',
+          add: [['pizza', 'amenity/restaurant/pizza', 'Pizza', 'Pizza Restaurant']],
+          remove: [],
+        },
+      ],
+    })
+  })
 })
