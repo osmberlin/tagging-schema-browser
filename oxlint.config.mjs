@@ -1,6 +1,15 @@
 import { defineConfig } from 'oxlint'
 import reactHooksJs from 'oxlint-config-react-hooks-js/configs/recommended-latest.json' with { type: 'json' }
 
+// oxlint 1.86 split `react/react-compiler` into one native rule per category, named like the
+// eslint-plugin-react-hooks rules. Enable the native twin of every compiler rule the JS plugin runs.
+const WITHOUT_NATIVE_TWIN = new Set(['config', 'gating'])
+const reactCompilerRules = {}
+for (const [name, level] of Object.entries(reactHooksJs.rules)) {
+  const rule = name.replace(/^react-hooks-js\//, '')
+  if (!WITHOUT_NATIVE_TWIN.has(rule)) reactCompilerRules['react/' + rule] = level
+}
+
 export default defineConfig({
   plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'react'],
   options: { typeAware: true },
@@ -35,7 +44,7 @@ export default defineConfig({
       jsPlugins: [{ name: 'react-hooks-js', specifier: 'eslint-plugin-react-hooks' }],
       rules: {
         ...reactHooksJs.rules,
-        'react/react-compiler': 'error',
+        ...reactCompilerRules,
       },
     },
     {
@@ -45,10 +54,17 @@ export default defineConfig({
       },
     },
     {
+      // Measures the DOM (ResizeObserver): the first width has to be set from the effect.
+      files: ['src/hooks/useContainerWidth.ts'],
+      rules: {
+        'react/set-state-in-effect': 'off',
+      },
+    },
+    {
       files: ['src/components/ui/Tooltip.tsx'],
       rules: {
         // Floating UI assigns positioning refs during render (supported library pattern).
-        'react/react-compiler': 'off',
+        'react/refs': 'off',
         'react-hooks-js/refs': 'off',
       },
     },
@@ -62,7 +78,8 @@ export default defineConfig({
         'src/components/ui/VirtualizedScrollList.tsx',
       ],
       rules: {
-        'react/react-compiler': 'off',
+        'react/incompatible-library': 'off',
+        'react/refs': 'off',
         'react-hooks-js/incompatible-library': 'off',
         'react-hooks-js/refs': 'off',
       },

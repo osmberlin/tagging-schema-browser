@@ -3,7 +3,11 @@ import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
 import { DownloadButton } from '@/components/ui/DownloadButton'
 import { SchemaLoadingPanel } from '@/components/ui/LoadingSpinner'
-import { FieldIconMismatchAlert, FieldRiskyTypeComboAlert } from '@/components/ui/SchemaIssueAlerts'
+import {
+  FieldIconMismatchAlert,
+  FieldRiskyTypeComboAlert,
+  LabelMismatchAlert,
+} from '@/components/ui/SchemaIssueAlerts'
 import { SortSelect } from '@/components/ui/SortSelect'
 import { VirtualizedGrid } from '@/components/ui/VirtualizedGrid'
 import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
@@ -41,6 +45,9 @@ export function PageFields() {
   const riskyTypeComboFieldCount = fields.filter(
     (field) => field.type === 'typeCombo' && field.riskyUsageCount > 0,
   ).length
+  const openLabelMismatchCount = data
+    ? [...data.indices.labelMismatchPairs.values()].filter((pair) => !pair.reviewed).length
+    : 0
   const activeIssueFilter = activeFieldIssueFilter(facetState)
   const { setActiveIssueFocus } = useSchemaIssueDisclosureActions()
 
@@ -120,6 +127,7 @@ export function PageFields() {
         />
       ) : null}
       <FieldRiskyTypeComboAlert count={riskyTypeComboFieldCount} dataUrl={dataUrl ?? ''} />
+      <LabelMismatchAlert count={openLabelMismatchCount} dataUrl={dataUrl ?? ''} />
       {filtered.length > 0 ? (
         <VirtualizedGrid
           items={filtered}

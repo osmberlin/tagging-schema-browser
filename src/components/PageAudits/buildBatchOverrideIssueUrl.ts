@@ -2,13 +2,18 @@ import type { FieldDecision } from '@/components/PageAudits/auditDecisions'
 import type { AuditEntry } from '@/components/PageAudits/auditEntries'
 import {
   auditPageAbsoluteHref,
+  fieldDetailAbsoluteHref,
   presetDetailAbsoluteHref,
 } from '@/components/PageAudits/auditPageHref'
 import { AUDIT_META, type AuditSlug } from '@/components/PageAudits/auditSlugs'
 import {
   collectAuditDecisions,
+  collectLabelMismatchDecisions,
   formatOverrideChangeBlock,
+  type LabelMismatchChange,
+  type NeedsWorkEntry,
   type OverrideChange,
+  type OverrideChangeSet,
 } from '@/components/PageAudits/overrideChanges'
 import { GITHUB_REPO_URL } from '@/utils/constants'
 
@@ -27,6 +32,71 @@ function changeLine(change: OverrideChange, dataUrl: string): string {
   return `- [\`${changeLabel(change)}\`](${presetDetailAbsoluteHref(change.presetId, dataUrl)}) — ${parts.join('; ')}`
 }
 
+function codeList(ids: string[]): string {
+  return ids.map((id) => `\`${id}\``).join(', ')
+}
+
+function labelChangeLine(change: LabelMismatchChange, dataUrl: string): string {
+  const parts = [
+    change.add.length > 0 ? `OK to skip: ${codeList(change.add.map(([option]) => option))}` : '',
+    change.remove.length > 0 ? `remove: ${codeList(change.remove.map(([option]) => option))}` : '',
+  ].filter(Boolean)
+  return `- [\`${change.fieldId}\`](${fieldDetailAbsoluteHref(change.fieldId, dataUrl)}) — ${parts.join('; ')}`
+}
+
+function labelNeedsWorkLines({ entry, fieldIds }: NeedsWorkEntry, dataUrl: string): string[] {
+  return entry.fields
+    .filter((item) => fieldIds.includes(item.fieldId) && item.labelPair)
+    .map(({ labelPair }) => {
+      const pair = labelPair!
+      return `- \`${entry.optionFieldId}\` option \`${pair.optionValue}\` “${pair.optionLabel}” ≠ [${pair.childPresetName}](${presetDetailAbsoluteHref(pair.childPresetId, dataUrl)}) (\`${pair.childPresetId}\`)`
+    })
+}
+
+/** Decisions of one audit page as issue sections: what changes in the override, what is upstream work. */
+function issueSections(
+  slug: AuditSlug,
+  entries: AuditEntry[],
+  decisions: Record<string, FieldDecision | undefined>,
+  dataUrl: string,
+): {
+  changeSet: OverrideChangeSet | null
+  changeLines: string[]
+  upstreamLines: string[]
+  subject: string
+} {
+  const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`
+
+  if (slug === 'label-mismatch') {
+    const { changes, needsWork } = collectLabelMismatchDecisions(entries, decisions)
+    const upstreamLines = needsWork.flatMap((item) => labelNeedsWorkLines(item, dataUrl))
+    const optionCount =
+      changes.reduce((sum, change) => sum + change.add.length + change.remove.length, 0) +
+      upstreamLines.length
+    return {
+      changeSet: changes.length > 0 ? { version: 1, kind: slug, changes } : null,
+      changeLines: changes.map((change) => labelChangeLine(change, dataUrl)),
+      upstreamLines,
+      subject: plural(optionCount, 'option'),
+    }
+  }
+
+  const { changes, needsWork } = collectAuditDecisions(entries, decisions)
+  const presetCount = new Set([
+    ...changes.map((change) => change.presetId),
+    ...needsWork.map(({ entry }) => entry.presetId),
+  ]).size
+  return {
+    changeSet: changes.length > 0 ? { version: 1, kind: slug, changes } : null,
+    changeLines: changes.map((change) => changeLine(change, dataUrl)),
+    upstreamLines: needsWork.map(
+      ({ entry, fieldIds }) =>
+        `- [\`${changeLabel(entry)}\`](${presetDetailAbsoluteHref(entry.presetId, dataUrl)}) — ${codeList(fieldIds)}`,
+    ),
+    subject: plural(presetCount, 'preset'),
+  }
+}
+
 export function buildBatchSchemaOverrideIssueUrl({
   slug,
   entries,
@@ -40,20 +110,21 @@ export function buildBatchSchemaOverrideIssueUrl({
   dataUrl: string
   reference?: 'release' | 'interim'
 }): string {
-  const { changes, needsWork } = collectAuditDecisions(entries, decisions)
-  if (changes.length === 0 && needsWork.length === 0) {
+  const { changeSet, changeLines, upstreamLines, subject } = issueSections(
+    slug,
+    entries,
+    decisions,
+    dataUrl,
+  )
+  if (changeLines.length === 0 && upstreamLines.length === 0) {
     throw new Error('Decide at least one field to include in the issue.')
   }
 
-  const presetCount = new Set([
-    ...changes.map((change) => change.presetId),
-    ...needsWork.map(({ entry }) => entry.presetId),
-  ]).size
-  const title = `[${slug}] audit review (${presetCount} preset${presetCount === 1 ? '' : 's'})`
+  const title = `[${slug}] audit review (${subject})`
 
   const body = [
     `Decisions from the Tagging Schema Browser **${AUDIT_META[slug].title}** audit.`,
-    changes.length > 0
+    changeSet
       ? `Submitting this issue runs the **Schema override PR** workflow, which applies the block below to \`${AUDIT_META[slug].overrideFile}\` and opens a PR.`
       : 'Nothing to change in the override file — tracking only.',
     '',
@@ -61,25 +132,15 @@ export function buildBatchSchemaOverrideIssueUrl({
     // Backticks keep GitHub from auto-linking the schema dist folder (it is not a browsable page).
     `Schema: \`${dataUrl.trim() || reference || 'release'}\``,
     '',
-    ...(changes.length > 0
-      ? ['## Override changes', '', ...changes.map((change) => changeLine(change, dataUrl)), '']
+    ...(changeSet ? ['## Override changes', '', ...changeLines, ''] : []),
+    ...(upstreamLines.length > 0
+      ? ['## Fix upstream in id-tagging-schema', '', ...upstreamLines, '']
       : []),
-    ...(needsWork.length > 0
-      ? [
-          '## Fix upstream in id-tagging-schema',
-          '',
-          ...needsWork.map(
-            ({ entry, fieldIds }) =>
-              `- [\`${changeLabel(entry)}\`](${presetDetailAbsoluteHref(entry.presetId, dataUrl)}) — ${fieldIds.map((id) => `\`${id}\``).join(', ')}`,
-          ),
-          '',
-        ]
-      : []),
-    ...(changes.length > 0
+    ...(changeSet
       ? [
           '<details><summary>Machine-readable changes (do not edit unless you know what you do)</summary>',
           '',
-          formatOverrideChangeBlock({ version: 1, kind: slug, changes }),
+          formatOverrideChangeBlock(changeSet),
           '',
           '</details>',
         ]

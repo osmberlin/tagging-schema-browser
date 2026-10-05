@@ -37,3 +37,12 @@ export function presetDetailAbsoluteHref(presetId: string, dataUrl: string): str
   if (typeof window === 'undefined') return path
   return `${window.location.origin}${path}`
 }
+
+export function fieldDetailAbsoluteHref(fieldId: string, dataUrl: string): string {
+  const params = new URLSearchParams()
+  if (dataUrl.trim()) params.set('dataUrl', dataUrl)
+  const query = params.toString()
+  const path = appPath(`/field/${fieldId}${query ? `?${query}` : ''}`)
+  if (typeof window === 'undefined') return path
+  return `${window.location.origin}${path}`
+}

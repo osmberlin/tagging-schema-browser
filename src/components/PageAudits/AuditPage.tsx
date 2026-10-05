@@ -14,6 +14,7 @@ import {
   auditEntriesForSlug,
   type AuditEntry,
   type AuditField,
+  type AuditLabelPair,
 } from '@/components/PageAudits/auditEntries'
 import {
   AuditSchemaLoadingPanel,
@@ -24,8 +25,12 @@ import { tryBuildBatchSchemaOverrideIssueUrl } from '@/components/PageAudits/bui
 import { fieldListTitle } from '@/components/PageAudits/fieldListTitle'
 import { AreaIcon } from '@/components/ui/areaIcons'
 import { CountPill } from '@/components/ui/CountPill'
+import { LabelDiff, LabelMismatchKindPill } from '@/components/ui/LabelDiff'
+import { useSchemaIssueDisclosureActions } from '@/features/schema-issue/schema-issue-disclosure-store'
 import { useSchema } from '@/hooks/useSchema'
 import { areaAccent } from '@/theme/areaAccent'
+import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
+import { diffLabelWords } from '@/utils/labelMismatch'
 import { osmWikiUrlForTag } from '@/utils/osmWikiUrl'
 import { cn } from '@/utils/tw'
 
@@ -142,10 +147,229 @@ function FieldLink({ field }: { field: AuditField }) {
   )
 }
 
+/** Opens the "Option ≠ preset name" disclosure on the page a link leads to. */
+function useOpenLabelDisclosure() {
+  const { setOpen } = useSchemaIssueDisclosureActions()
+  return (kind: 'field' | 'preset', id: string) => setOpen(`${kind}-label-mismatch:${id}`, true)
+}
+
+const labelColumnsClass =
+  'grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_1rem_minmax(0,1fr)_7.5rem] gap-x-2'
+
+/**
+ * One option of the field (left) and the preset that option leads to (right), each linking to
+ * its own page. `diff` marks the words that differ; without it the two labels read the same.
+ */
+function LabelPairLine({
+  fieldId,
+  fieldKey,
+  pair,
+  matches = false,
+}: {
+  fieldId: string
+  fieldKey: string
+  pair: AuditLabelPair
+  matches?: boolean
+}) {
+  const { fieldTranslations } = useSchema()
+  const fieldLabel = fieldTranslations[fieldId]?.label
+  const openDisclosure = useOpenLabelDisclosure()
+  const diff = diffLabelWords(pair.optionLabel, pair.childPresetName)
+  const nameClass = 'underline decoration-slate-300 underline-offset-2 hover:text-sky-700'
+  return (
+    <div className="min-w-0 flex-1">
+      <div className={cn(labelColumnsClass, 'text-sm text-slate-900')}>
+        <div className="min-w-0">
+          {fieldLabel ? <span className="text-slate-500">{fieldLabel}: </span> : null}
+          <Link
+            to="/field/$"
+            params={{ _splat: fieldId }}
+            search={keepDataSource}
+            onClick={() => openDisclosure('field', fieldId)}
+            title={`Option label, from the strings of field ${fieldId}`}
+            className={nameClass}
+          >
+            {matches ? pair.optionLabel : <LabelDiff parts={diff.left} />}
+          </Link>
+          <Truncated
+            text={`${fieldKey}=${pair.optionValue}`}
+            className="font-mono text-xs text-slate-500"
+          />
+        </div>
+        <span className="text-slate-400" aria-label={matches ? 'same as' : 'differs from'}>
+          {matches ? '=' : '≠'}
+        </span>
+        <div className="min-w-0">
+          <Link
+            to="/preset/$"
+            params={{ _splat: pair.childPresetId }}
+            search={keepDataSource}
+            onClick={() => openDisclosure('preset', pair.childPresetId)}
+            title={`Preset name of ${pair.childPresetId}`}
+            className={nameClass}
+          >
+            {matches ? pair.childPresetName : <LabelDiff parts={diff.right} />}
+          </Link>
+          <Truncated
+            text={pair.childPresetId}
+            fromStart
+            className="font-mono text-xs text-slate-500"
+          />
+        </div>
+        <span className="flex items-center justify-end">
+          {pair.kind && !matches ? <LabelMismatchKindPill kind={pair.kind} /> : null}
+        </span>
+      </div>
+      {pair.previous ? (
+        <p className="text-xs text-amber-700">
+          Renamed since the last review (“{pair.previous.optionLabel}” ≠ “{pair.previous.presetName}
+          ”).
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+/**
+ * The field as a mapper meets it in iD: its label on top, the input below (placeholder, or the
+ * first options when there is none). An option label only makes sense read under that label.
+ */
+function LabelFieldPreview({ entry }: { entry: AuditEntry }) {
+  const { fields, fieldTranslations } = useSchema()
+  const openDisclosure = useOpenLabelDisclosure()
+  const fieldId = entry.optionFieldId!
+  const field = fields[fieldId]
+  const strings = fieldTranslations[fieldId]
+  const optionLabels = Object.values(strings?.options ?? {})
+    .map((option) => fieldOptionTitle(option))
+    .filter((label): label is string => Boolean(label))
+  const preview = optionLabels.slice(0, 4).join(', ')
+
+  return (
+    <div className="mt-3 space-y-1">
+      <div
+        className="overflow-hidden rounded border border-slate-300 text-sm"
+        title="How iD shows this field: label on top, input below"
+      >
+        <div className="bg-slate-100 px-2 py-1 font-semibold text-slate-900">
+          {strings?.label ?? fieldId}
+        </div>
+        <div className="flex items-center justify-between gap-2 border-t border-slate-300 bg-white px-2 py-1 text-slate-400">
+          <span className="truncate">
+            {strings?.placeholder ?? (preview ? `${preview}…` : 'Unknown')}
+          </span>
+          <span aria-hidden>▾</span>
+        </div>
+      </div>
+      <p className="text-xs text-slate-500">
+        Field{' '}
+        <Link
+          to="/field/$"
+          params={{ _splat: fieldId }}
+          search={keepDataSource}
+          onClick={() => openDisclosure('field', fieldId)}
+          className={cn('font-mono', linkClass)}
+        >
+          {fieldId}
+        </Link>
+        , type <span className="font-mono">{field?.type ?? 'unknown'}</span>
+        {strings?.placeholder ? null : ', no placeholder'}
+      </p>
+    </div>
+  )
+}
+
+/** Captions for the two sides of each line; the last column lines up with the category pills. */
+function LabelColumnCaptions({ fieldId, all }: { fieldId: string; all: boolean }) {
+  const { fieldTranslations } = useSchema()
+  return (
+    <div
+      className={cn(
+        labelColumnsClass,
+        'text-[11px] font-medium tracking-wide text-slate-500 uppercase',
+      )}
+    >
+      <span>Option of “{fieldTranslations[fieldId]?.label ?? fieldId}”</span>
+      <span />
+      <span>Preset the option leads to</span>
+      <span className="text-right text-xs font-normal tracking-normal normal-case">
+        {all ? 'All:' : null}
+      </span>
+    </div>
+  )
+}
+
+/** The remaining options of the field that lead to a preset: same label, or already accepted. */
+function LabelEntryOtherOptions({ entry, fieldKey }: { entry: AuditEntry; fieldKey: string }) {
+  const { data } = useSchema()
+  const fieldId = entry.optionFieldId!
+  const open = new Set(entry.fields.map((field) => field.labelPair?.optionValue))
+  const rows = (data?.indices.fieldOptionMismatchRows.get(fieldId) ?? []).filter(
+    (row) => row.parentPreset.id === entry.presetId && !open.has(row.optionValue),
+  )
+  if (rows.length === 0) return null
+
+  const accepted = rows.filter((row) => row.labelMismatch).length
+  const same = rows.length - accepted
+  const summary = [
+    same > 0 ? `${same} with the same label` : '',
+    accepted > 0 ? `${accepted} accepted as OK to skip` : '',
+  ]
+    .filter(Boolean)
+    .join(', ')
+
+  return (
+    <details className="text-xs text-slate-500">
+      <summary className="cursor-pointer hover:text-slate-900">
+        Other options of this field that lead to a preset: {summary}
+      </summary>
+      <ul className="mt-2 space-y-1">
+        {rows.map((row) => (
+          <li key={row.optionValue} className="flex items-center gap-3">
+            <LabelPairLine
+              fieldId={fieldId}
+              fieldKey={fieldKey}
+              matches={!row.labelMismatch}
+              pair={{
+                optionValue: row.optionValue,
+                childPresetId: row.childPreset.id,
+                optionLabel: row.labelEn,
+                childPresetName: row.childPreset.name,
+              }}
+            />
+            <span className="w-40 shrink-0 text-right">
+              {row.labelMismatch ? 'OK to skip (accepted)' : 'same label'}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
+type FieldGroup = { key: string; title: string; state: AuditFieldState; fields: AuditField[] }
+
 function fieldGroupTitle(entry: AuditEntry, state: AuditFieldState): string {
-  if (state === 'stale') return 'Outdated override entries (no longer detected)'
+  if (state === 'stale') {
+    return entry.kind === 'label-mismatch'
+      ? 'Outdated override entries (labels match now, or the option lost its preset)'
+      : 'Outdated override entries (no longer detected)'
+  }
   if (entry.kind === 'risky-typecombo') return 'typeCombo fields that can write key=yes'
+  if (entry.kind === 'label-mismatch') return 'options labelled differently'
   return `${fieldListTitle(entry.listKey!)} of the parent that are not inherited`
+}
+
+/** Items of one entry: what needs a decision, then outdated override entries. */
+function fieldGroups(entry: AuditEntry): FieldGroup[] {
+  return (['missing', 'stale'] as const)
+    .map((state) => ({
+      key: state,
+      title: fieldGroupTitle(entry, state),
+      state,
+      fields: entry.fields.filter((field) => field.state === state),
+    }))
+    .filter((group) => group.fields.length > 0)
 }
 
 function EntryFields({
@@ -160,39 +384,55 @@ function EntryFields({
   setDecisions: (updates: Decisions) => void
 }) {
   const keyOf = (field: AuditField) => fieldDecisionKey(entry.entryId, field.fieldId)
-  const groups = (['missing', 'stale'] as const)
-    .map((state) => ({ state, fields: entry.fields.filter((field) => field.state === state) }))
-    .filter((group) => group.fields.length > 0)
+  const groups = fieldGroups(entry)
+  const { fields: schemaFields } = useSchema()
+  const optionFieldKey = schemaFields[entry.optionFieldId ?? '']?.key ?? entry.optionFieldId ?? ''
 
   return (
     <div className="space-y-4">
-      {groups.map(({ state, fields }) => {
+      {groups.map(({ key, title, state, fields }) => {
         const options = FIELD_DECISIONS_BY_STATE[state]
         const first = decisions[keyOf(fields[0]!)]
         const allSame = fields.every((field) => decisions[keyOf(field)] === first)
+        const captions = entry.kind === 'label-mismatch' && state === 'missing'
         return (
-          <div key={state} className="space-y-1">
+          <div key={key} className="space-y-1">
             <div className="flex items-center gap-3 border-b border-slate-100 pb-1">
-              <p className="min-w-0 flex-1 text-xs font-semibold text-slate-600">
-                {fieldGroupTitle(entry, state)}
-              </p>
-              {fields.length > 1 ? <span className="text-xs text-slate-500">All:</span> : null}
-              {fields.length > 1 ? (
-                <DecisionButtons
-                  label={`Decision for all fields of ${entry.entryId}`}
-                  locked={locked}
-                  options={options}
-                  value={allSame ? first : undefined}
-                  onChange={(value) =>
-                    setDecisions(Object.fromEntries(fields.map((field) => [keyOf(field), value])))
-                  }
-                />
+              {captions ? (
+                <LabelColumnCaptions fieldId={entry.optionFieldId!} all={fields.length > 1} />
+              ) : (
+                <p className="min-w-0 flex-1 text-xs font-semibold text-slate-600">{title}</p>
+              )}
+              {fields.length > 1 && !captions ? (
+                <span className="text-xs text-slate-500">All:</span>
+              ) : null}
+              {fields.length > 1 || captions ? (
+                // A single line needs no "All" buttons, but they keep the captions aligned.
+                <span className={cn('shrink-0', fields.length === 1 && 'invisible')}>
+                  <DecisionButtons
+                    label={`Decision for all of “${title}” in ${entry.entryId}`}
+                    locked={locked}
+                    options={options}
+                    value={allSame ? first : undefined}
+                    onChange={(value) =>
+                      setDecisions(Object.fromEntries(fields.map((field) => [keyOf(field), value])))
+                    }
+                  />
+                </span>
               ) : null}
             </div>
             <ul className="space-y-1">
               {fields.map((field) => (
                 <li key={field.fieldId} className="flex items-center gap-3">
-                  <FieldLink field={field} />
+                  {field.labelPair ? (
+                    <LabelPairLine
+                      fieldId={entry.optionFieldId!}
+                      fieldKey={optionFieldKey}
+                      pair={field.labelPair}
+                    />
+                  ) : (
+                    <FieldLink field={field} />
+                  )}
                   <DecisionButtons
                     label={`Decision for ${field.fieldId}`}
                     locked={locked}
@@ -206,7 +446,9 @@ function EntryFields({
           </div>
         )
       })}
-      {entry.documentedFieldIds.length > 0 ? (
+      {entry.optionFieldId ? (
+        <LabelEntryOtherOptions entry={entry} fieldKey={optionFieldKey} />
+      ) : entry.documentedFieldIds.length > 0 ? (
         <p className="text-xs text-slate-500">
           Already OK to skip:{' '}
           <span className="font-mono">{entry.documentedFieldIds.join(', ')}</span>
@@ -285,6 +527,7 @@ function AuditRow({
     >
       <td className="px-3 py-3">
         <PresetCell presetId={first.presetId} presetName={first.presetName} />
+        {first.optionFieldId ? <LabelFieldPreview entry={first} /> : null}
       </td>
       {first.kind === 'missing-inheritance' ? (
         <td className="px-3 py-3">
@@ -303,14 +546,15 @@ export function AuditDetailPage() {
   const { presets, data, dataUrl, reference, loading } = useSchema()
 
   const entries = useMemo(
-    () => (slug && data ? auditEntriesForSlug(slug, presets) : []),
+    () => (slug && data ? auditEntriesForSlug(slug, presets, data.indices.labelMismatchPairs) : []),
     [slug, data, presets],
   )
 
   const rows = useMemo(() => {
     const byKey = new Map<string, AuditEntry[]>()
     for (const entry of entries) {
-      const key = `${entry.presetId}|${entry.parentId ?? ''}`
+      // Label mismatch: one row per field, its preview sits next to the preset.
+      const key = `${entry.presetId}|${entry.parentId ?? ''}|${entry.optionFieldId ?? ''}`
       byKey.set(key, [...(byKey.get(key) ?? []), entry])
     }
     return [...byKey.entries()]
@@ -364,6 +608,19 @@ export function AuditDetailPage() {
             issue” opens one issue with all decisions; submitting it runs a workflow that updates{' '}
             <code>{meta.overrideFile}</code> and opens a PR.
           </p>
+          {slug === 'label-mismatch' ? (
+            <p className="mt-2">
+              A field like “Cuisines” on the Restaurant preset offers options (“Pizza”). The box
+              next to each list shows the field the way iD does, label first, because an option is
+              always read under that label (“Sells Used: Only”). Some options have a preset of their
+              own (“Pizza Restaurant”) that iD switches to. Each line shows the option label on the
+              left and the name of that preset on the right, both in English as shipped in the
+              schema; the words that differ are marked. “One label extends the other” is mostly
+              wanted (the preset name repeats the feature type), “Different wording” is where
+              renames drift apart. Decisions are stored with both labels, so a pair returns here
+              when one of them is renamed.
+            </p>
+          ) : null}
           <ul className="mt-2 list-inside list-disc">
             {(Object.keys(FIELD_DECISION_HELP) as FieldDecision[]).map((decision) => (
               <li key={decision}>
@@ -418,9 +675,15 @@ export function AuditDetailPage() {
                   <table className="w-full min-w-[40rem] table-fixed text-left text-sm">
                     <thead className="bg-slate-50 text-xs font-medium tracking-wide text-slate-500 uppercase">
                       <tr>
-                        <th className="w-[22%] px-3 py-2">Preset</th>
+                        <th className="w-[22%] px-3 py-2">
+                          {slug === 'label-mismatch' ? 'Preset and its field' : 'Preset'}
+                        </th>
                         {hasParentColumn ? <th className="w-[16%] px-3 py-2">Parent</th> : null}
-                        <th className="px-3 py-2">Fields</th>
+                        <th className="px-3 py-2">
+                          {slug === 'label-mismatch'
+                            ? 'Field options that lead to a differently named preset'
+                            : 'Fields'}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>

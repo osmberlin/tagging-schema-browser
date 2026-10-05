@@ -1,0 +1,13 @@
+# Field option labels that intentionally differ from the name of the preset the option leads to.
+#
+# Add an entry when both strings are fine as they are, e.g. the cuisine option "Pizza" and the
+# preset "Pizza Restaurant". `optionLabel` and `presetName` are a snapshot of the English strings
+# at review time: when either one is renamed upstream the pair shows up for review again, and CI
+# fails until the entry is updated or removed.
+#
+# Entries are written by the audit page (/audits/label-mismatch) through the
+# "Schema override PR" workflow.
+#
+# CI validates against the published npm release dist (see validate-label-mismatch-overrides).
+version: 1
+fields: {}

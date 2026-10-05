@@ -6,6 +6,7 @@ import {
 import { type RawSchemaPayload, loadSchemaData } from '@/components/PagePresets/dataLoader'
 import { denormalize } from '@/components/PagePresets/denormalize'
 import { refreshPresetSearchIndex } from '@/components/PagePresets/presetSearch'
+import { labelMismatchOverrides } from '@/data/labelMismatchOverrides'
 import {
   detectSchemaBuildInfo,
   isSchemaBuildSupported,
@@ -54,7 +55,7 @@ export function processRawSchemaPayload(
   return {
     presets,
     presetsById,
-    indices: buildSchemaIndices(presets, raw.fields, fieldTranslations),
+    indices: buildSchemaIndices(presets, raw.fields, fieldTranslations, labelMismatchOverrides),
     rawPresets: raw.presets,
     categories: raw.categories,
     categoryNames,
