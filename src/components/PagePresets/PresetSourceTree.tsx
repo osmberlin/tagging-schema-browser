@@ -1087,7 +1087,7 @@ function JsonObjectEntry({
     // `reference` is typed on the loaded preset; no need to re-parse the JSON value.
     const wikiRef =
       keyName === 'reference' && !parentKey && jsonRootKind === 'preset'
-        ? host.hostPreset.reference
+        ? host.rawPresets[host.hostPresetId]?.reference
         : undefined
     return (
       <Fragment>
