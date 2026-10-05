@@ -326,7 +326,3 @@ fields:
       preset: amenity/place_of_worship/sikh
       optionLabel: "Sikh"
       presetName: "Sikh Temple"
-    - option: "multifaith"
-      preset: amenity/place_of_worship/multifaith
-      optionLabel: "Multifaith"
-      presetName: "Multifaith Place of Worship"
