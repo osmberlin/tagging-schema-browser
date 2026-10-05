@@ -147,6 +147,7 @@ export function denormalize(
       moreFields?: string[]
       geometry?: string[]
       tags?: Record<string, string>
+      addTags?: Record<string, string>
       matchScore?: number
       reference?: { key: string; value?: string }
       searchable?: boolean
@@ -191,6 +192,7 @@ export function denormalize(
       iconPrefix: iconPrefix(icon, imageURL),
       geometry,
       tags,
+      addTags: r.addTags,
       tagString: tagsToSearchString(tags),
       primaryTagKey,
       primaryTagValue,

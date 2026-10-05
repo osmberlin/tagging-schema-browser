@@ -161,6 +161,17 @@ function MismatchRowPanel({
         ) : null}
       </dl>
 
+      {row.childPreset?.viaAddTags ? (
+        <p className="text-sm text-slate-300">
+          <span className="font-mono">{row.childPreset.id}</span> is the generic preset for{' '}
+          <span className="font-mono">
+            {section.fieldKey}={row.optionValue}
+          </span>
+          : it writes that tag via <code>addTags</code>, while the presets under the parent only add
+          a more specific tag on top.
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap gap-2 text-sm">
         <AreaLink
           area="fields"

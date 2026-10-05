@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getFieldOptionMismatchRows } from '@/utils/fieldOptions'
+import { findChildPresetForOption, getFieldOptionMismatchRows } from '@/utils/fieldOptions'
 import {
   computeFieldIconMismatchCounts,
   getChildPresetIconMismatchRefs,
@@ -56,6 +56,87 @@ describe('schemaIndices', () => {
     const index = buildChildPresetIndex(presets)
     const key = childPresetLookupKey('highway', 'highway', 'mini_roundabout')
     expect(index.get(key)?.id).toBe('highway/mini_roundabout/extra')
+  })
+
+  describe('child preset matching', () => {
+    function preset(
+      id: string,
+      tags: Record<string, string>,
+      addTags?: Record<string, string>,
+    ): DenormalizedPreset {
+      return { ...stubPreset(id), tags, addTags }
+    }
+
+    function pick(presets: DenormalizedPreset[], parentId: string, key: string, value: string) {
+      const parent = presets.find((candidate) => candidate.id === parentId)!
+      const viaIndex = buildChildPresetIndex(presets).get(
+        childPresetLookupKey(parentId, key, value),
+      )
+      const viaScan = findChildPresetForOption(parent, key, value, presets)
+      expect(viaIndex?.id).toBe(viaScan?.id)
+      return viaIndex?.id
+    }
+
+    it('prefers the generic preset over a more specific descendant', () => {
+      const presets = [
+        preset('healthcare', { healthcare: '*' }),
+        preset('healthcare/alternative', { healthcare: 'alternative' }),
+        preset('healthcare/alternative/tcm', {
+          healthcare: 'alternative',
+          'healthcare:speciality': 'tcm',
+        }),
+      ]
+      expect(pick(presets, 'healthcare', 'healthcare', 'alternative')).toBe(
+        'healthcare/alternative',
+      )
+    })
+
+    it('lets a preset outside the parent that writes the option replace an implied specialization', () => {
+      const presets = [
+        preset('healthcare', { healthcare: '*' }),
+        preset(
+          'healthcare/dentist/orthodontics',
+          { healthcare: 'dentist', 'healthcare:speciality': 'orthodontics' },
+          { healthcare: 'dentist', amenity: 'dentist', 'healthcare:speciality': 'orthodontics' },
+        ),
+        preset(
+          'amenity/dentist',
+          { amenity: 'dentist' },
+          { amenity: 'dentist', healthcare: 'dentist' },
+        ),
+      ]
+      expect(pick(presets, 'healthcare', 'healthcare', 'dentist')).toBe('amenity/dentist')
+    })
+
+    it('does not use a writer when the specialization does not imply it', () => {
+      const presets = [
+        preset('amenity/doctors', { amenity: 'doctors' }),
+        preset('amenity/doctors/nephrology', {
+          amenity: 'doctors',
+          'healthcare:speciality': 'nephrology',
+        }),
+        preset(
+          'amenity/clinic/dialysis',
+          { amenity: 'clinic', healthcare: 'dialysis' },
+          { amenity: 'clinic', 'healthcare:speciality': 'nephrology' },
+        ),
+      ]
+      expect(pick(presets, 'amenity/doctors', 'healthcare:speciality', 'nephrology')).toBe(
+        'amenity/doctors/nephrology',
+      )
+    })
+
+    it('never pairs an option with a writer when no descendant matches', () => {
+      const presets = [
+        preset('healthcare', { healthcare: '*' }),
+        preset(
+          'amenity/clinic',
+          { amenity: 'clinic' },
+          { amenity: 'clinic', healthcare: 'clinic' },
+        ),
+      ]
+      expect(pick(presets, 'healthcare', 'healthcare', 'clinic')).toBeUndefined()
+    })
   })
 
   it('buildFieldPresetIndex splits primary and more field usage', () => {
