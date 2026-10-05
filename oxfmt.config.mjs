@@ -28,5 +28,7 @@ export default defineConfig({
     'playwright-report/**',
     'test-results/**',
     'src/routeTree.gen.ts',
+    // Written by the "Schema override PR" workflow with JSON-quoted strings.
+    'src/data/label-mismatch-overrides.yaml',
   ],
 })
