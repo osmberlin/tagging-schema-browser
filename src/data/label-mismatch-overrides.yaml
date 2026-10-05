@@ -367,10 +367,6 @@ fields:
       preset: amenity/vending_machine/coffee
       optionLabel: "Coffee"
       presetName: "Coffee Vending Machine"
-    - option: "sweets"
-      preset: amenity/vending_machine/sweets
-      optionLabel: "Candy"
-      presetName: "Candy Vending Machine"
     - option: "water"
       preset: amenity/vending_machine/water
       optionLabel: "Drinking Water"
