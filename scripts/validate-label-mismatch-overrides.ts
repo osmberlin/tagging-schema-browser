@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { denormalize } from '../src/components/PagePresets/denormalize.ts'
-import { RELEASE_DATA_URL } from '../src/utils/constants.ts'
+import { INTERIM_DATA_URL } from '../src/utils/constants.ts'
 import {
   collectLabelMismatchPairs,
   labelMismatchKey,
@@ -76,10 +76,10 @@ function parseArgs(argv: string[]): { schemaUrl?: string; schemaDir?: string } {
 
 const { schemaUrl, schemaDir } = parseArgs(process.argv.slice(2))
 const overrides = loadOverrides()
-const schemaSource = schemaDir ?? schemaUrl ?? RELEASE_DATA_URL
+const schemaSource = schemaDir ?? schemaUrl ?? INTERIM_DATA_URL
 const schema = schemaDir
   ? loadSchemaFromDir(schemaDir)
-  : await loadSchemaFromUrl(schemaUrl ?? RELEASE_DATA_URL)
+  : await loadSchemaFromUrl(schemaUrl ?? INTERIM_DATA_URL)
 
 const presets = denormalize(schema.presets, schema.translations, schema.categories, schema.fields)
 const fieldTranslations =

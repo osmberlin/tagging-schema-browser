@@ -4,7 +4,7 @@
 # write `key=yes` in iD. Record `fieldIds` as a snapshot — CI fails when live
 # detection no longer matches (stale override).
 #
-# CI validates against the published npm release dist (see validate-risky-typecombo-overrides).
+# CI validates against the unreleased dist (id-tagging-schema `main`), like the audit page (see validate-risky-typecombo-overrides).
 version: 1
 presets:
   power/generator:

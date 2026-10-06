@@ -11,7 +11,7 @@ import {
   resolveRiskyTypeComboStatus,
   type RiskyTypeComboOverrides,
 } from '../src/components/PagePresets/riskyTypeCombo.ts'
-import { RELEASE_DATA_URL } from '../src/utils/constants.ts'
+import { INTERIM_DATA_URL } from '../src/utils/constants.ts'
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 type SchemaFiles = {
@@ -77,10 +77,10 @@ function parseArgs(argv: string[]): { schemaUrl?: string; schemaDir?: string } {
 
 const { schemaUrl, schemaDir } = parseArgs(process.argv.slice(2))
 const overrides = loadOverrides()
-const schemaSource = schemaDir ?? schemaUrl ?? RELEASE_DATA_URL
+const schemaSource = schemaDir ?? schemaUrl ?? INTERIM_DATA_URL
 const schema = schemaDir
   ? loadSchemaFromDir(schemaDir)
-  : await loadSchemaFromUrl(schemaUrl ?? RELEASE_DATA_URL)
+  : await loadSchemaFromUrl(schemaUrl ?? INTERIM_DATA_URL)
 
 const stale: string[] = []
 const unknownOverrides: string[] = []
