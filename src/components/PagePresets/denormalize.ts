@@ -13,6 +13,7 @@ import { riskyTypeComboOverrides } from '@/data/riskyTypeComboOverrides'
 import { annotatePresetIconMismatches } from '@/utils/iconMismatch'
 import { normalizeAliases, normalizeTerms } from '@/utils/presetStrings'
 import { isTemplatePreset } from '@/utils/presetTemplate'
+import { schemaRefTarget } from '@/utils/schemaRef'
 import type {
   DenormalizedPreset,
   RawCategories,
@@ -20,8 +21,6 @@ import type {
   RawPresets,
   RawTranslations,
 } from '@/utils/types'
-
-const REF_REGEX = /^\{(.*)\}$/
 
 function getPresetName(
   presetId: string,
@@ -32,13 +31,10 @@ function getPresetName(
   const t = translations.en?.presets?.presets?.[presetId]?.name
   if (t) return t
   const ref = raw.originalName ?? (raw as { name?: string }).name
-  if (ref && REF_REGEX.test(ref)) {
-    const m = ref.match(REF_REGEX)
-    if (m) {
-      const resolved = allPresets[m[1]]
-      if (resolved)
-        return getPresetName(m[1], resolved as RawPresetRecord, translations, allPresets)
-    }
+  const refId = schemaRefTarget(ref)
+  if (refId) {
+    const resolved = allPresets[refId]
+    if (resolved) return getPresetName(refId, resolved as RawPresetRecord, translations, allPresets)
   }
   return (ref as string) ?? presetId
 }
@@ -67,12 +63,10 @@ function getTerms(
   if (Array.isArray(value)) return normalizeTerms(value)
 
   const str = (value ?? '').trim()
-  if (REF_REGEX.test(str)) {
-    const m = str.match(REF_REGEX)
-    if (m) {
-      const resolved = allPresets[m[1]] as RawPresetRecord | undefined
-      if (resolved) return getTerms(m[1], resolved, translations, allPresets)
-    }
+  const refId = schemaRefTarget(str)
+  if (refId) {
+    const resolved = allPresets[refId] as RawPresetRecord | undefined
+    if (resolved) return getTerms(refId, resolved, translations, allPresets)
   }
   return normalizeTerms(str)
 }
@@ -99,12 +93,10 @@ function getAliases(
   if (Array.isArray(value)) return normalizeAliases(value)
 
   const str = (value ?? '').trim()
-  if (REF_REGEX.test(str)) {
-    const m = str.match(REF_REGEX)
-    if (m) {
-      const resolved = allPresets[m[1]] as RawPresetRecord | undefined
-      if (resolved) return getAliases(m[1], resolved, translations, allPresets)
-    }
+  const refId = schemaRefTarget(str)
+  if (refId) {
+    const resolved = allPresets[refId] as RawPresetRecord | undefined
+    if (resolved) return getAliases(refId, resolved, translations, allPresets)
   }
   return normalizeAliases(str)
 }

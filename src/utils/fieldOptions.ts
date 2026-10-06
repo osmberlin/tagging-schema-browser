@@ -12,6 +12,7 @@ import {
 } from '@/utils/fieldOptionTranslation'
 import { isOptionIconMismatch, isOptionIconMissing } from '@/utils/iconMismatch'
 import { classifyLabelMismatch } from '@/utils/labelMismatch'
+import { schemaRefTarget } from '@/utils/schemaRef'
 import type {
   ChildPresetIndex,
   DenormalizedPreset,
@@ -22,13 +23,11 @@ import type {
   RawFields,
 } from '@/utils/types'
 
-const REF_REGEX = /^\{(.*)\}$/
-
 export function resolveFieldIcons(field: RawField, allFields: RawFields): Record<string, string> {
   if (field.iconsCrossReference) {
-    const m = field.iconsCrossReference.match(REF_REGEX)
-    if (m?.[1]) {
-      const refField = allFields[m[1]]
+    const refId = schemaRefTarget(field.iconsCrossReference)
+    if (refId) {
+      const refField = allFields[refId]
       if (refField) return resolveFieldIcons(refField, allFields)
     }
   }

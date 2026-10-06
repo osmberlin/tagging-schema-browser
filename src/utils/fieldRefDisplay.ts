@@ -1,3 +1,4 @@
+import { isSchemaRef } from '@/utils/schemaRef'
 import type { FieldTranslations, RawFields } from '@/utils/types'
 
 export type FieldRefDisplay = {
@@ -15,7 +16,7 @@ const FIELD_CROSS_REF_KEYS = new Set([
 ])
 
 function isReference(value: unknown): value is string {
-  return typeof value === 'string' && /^\{.+\}$/.test(value)
+  return isSchemaRef(value)
 }
 
 export function isFieldCrossRefKey(keyName: string): boolean {

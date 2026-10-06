@@ -30,11 +30,10 @@ import { isFieldCrossRefKey, resolveFieldRefDisplay } from '@/utils/fieldRefDisp
 import { githubFileUrl, schemaRepoPath } from '@/utils/githubFileUrl'
 import { osmWikiKeyUrl, osmWikiTagUrl, osmWikiUrlForTag } from '@/utils/osmWikiUrl'
 import { formatPrerequisiteTag, parsePrerequisiteTag } from '@/utils/prerequisiteTag'
+import { schemaRefTarget } from '@/utils/schemaRef'
 import { cn } from '@/utils/tw'
 import type { DenormalizedPreset, RawPresets } from '@/utils/types'
 import { presetSearchDefaults } from './useSearchState'
-
-const REF_REGEX = /^\{(.+)\}$/
 
 type RefInfo = {
   kind: 'field' | 'preset'
@@ -47,9 +46,8 @@ function presetSearchable(rawPresets: RawPresets, id: string): boolean {
 }
 
 function refInFieldList(value: string, rawPresets: RawPresets): RefInfo {
-  const m = value.match(REF_REGEX)
-  if (m) {
-    const id = m[1]
+  const id = schemaRefTarget(value)
+  if (id) {
     return {
       kind: 'preset',
       id,
