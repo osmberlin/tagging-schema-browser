@@ -937,3 +937,13 @@ presets:
       parentId: waterway/canal
       missedFieldIds:
         - usage_waterway
+  building/carport:
+    fields:
+      parentId: building
+      missedFieldIds:
+        - name
+  natural/wetland/swamp:
+    fields:
+      parentId: natural/wetland
+      missedFieldIds:
+        - salt

@@ -346,6 +346,10 @@ fields:
       preset: amenity/place_of_worship/sikh
       optionLabel: "Sikh"
       presetName: "Sikh Temple"
+    - option: "multifaith"
+      preset: amenity/place_of_worship/multifaith
+      optionLabel: "Multifaith"
+      presetName: "Multifaith Place of Worship"
   vending:
     - option: "parking_tickets"
       preset: amenity/vending_machine/parking_tickets
@@ -407,6 +411,10 @@ fields:
       preset: amenity/vending_machine/condoms
       optionLabel: "Condoms"
       presetName: "Condom Vending Machine"
+    - option: "sweets"
+      preset: amenity/vending_machine/sweets
+      optionLabel: "Candy"
+      presetName: "Candy Vending Machine"
   sport:
     - option: "soccer"
       preset: leisure/pitch/soccer
