@@ -399,10 +399,6 @@ fields:
       preset: amenity/vending_machine/electronics
       optionLabel: "Electronics"
       presetName: "Electronics Vending Machine"
-    - option: "sweets"
-      preset: amenity/vending_machine/sweets
-      optionLabel: "Candy"
-      presetName: "Candy Vending Machine"
     - option: "newspapers"
       preset: amenity/vending_machine/newspapers
       optionLabel: "Newspapers"
@@ -411,6 +407,10 @@ fields:
       preset: amenity/vending_machine/condoms
       optionLabel: "Condoms"
       presetName: "Condom Vending Machine"
+    - option: "sweets"
+      preset: amenity/vending_machine/sweets
+      optionLabel: "Candy"
+      presetName: "Candy Vending Machine"
   sport:
     - option: "soccer"
       preset: leisure/pitch/soccer
