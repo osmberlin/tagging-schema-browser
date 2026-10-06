@@ -309,6 +309,10 @@ fields:
       preset: amenity/restaurant/ukrainian
       optionLabel: "Ukrainian"
       presetName: "Ukrainian Restaurant"
+    - option: "bubble_tea"
+      preset: amenity/cafe/bubble_tea
+      optionLabel: "Bubble Tea"
+      presetName: "Bubble Tea Cafe"
   religion_place_of_worship:
     - option: "christian"
       preset: amenity/place_of_worship/christian
@@ -395,6 +399,14 @@ fields:
       preset: amenity/vending_machine/electronics
       optionLabel: "Electronics"
       presetName: "Electronics Vending Machine"
+    - option: "newspapers"
+      preset: amenity/vending_machine/newspapers
+      optionLabel: "Newspapers"
+      presetName: "Newspaper Vending Machine"
+    - option: "condoms"
+      preset: amenity/vending_machine/condoms
+      optionLabel: "Condoms"
+      presetName: "Condom Vending Machine"
   sport:
     - option: "soccer"
       preset: leisure/pitch/soccer
@@ -472,6 +484,10 @@ fields:
       preset: leisure/sports_centre/swimming
       optionLabel: "Swimming"
       presetName: "Swimming Pool Facility"
+    - option: "shooting"
+      preset: leisure/sports_centre/shooting
+      optionLabel: "Shooting"
+      presetName: "Shooting Range Facility"
   athletics_pitch:
     - option: "long_jump"
       preset: leisure/pitch/athletics/long_jump
@@ -485,6 +501,10 @@ fields:
       preset: leisure/pitch/athletics/triple_jump
       optionLabel: "Triple Jump"
       presetName: "Triple Jump Pit"
+    - option: "discus_throw"
+      preset: leisure/pitch/athletics/discus_throw
+      optionLabel: "Discus"
+      presetName: "Discus Ring / Sector"
   content_bulk:
     - option: "crop"
       preset: man_made/silo/crop
@@ -612,3 +632,17 @@ fields:
       preset: shop/clothes/suits
       optionLabel: "Suits"
       presetName: "Suits Store"
+  fire_hydrant/type:
+    - option: "underground"
+      preset: emergency/fire_hydrant/underground
+      optionLabel: "Underground"
+      presetName: "Underground Fire Hydrant"
+  generator/source:
+    - option: "wind"
+      preset: power/generator/source/wind
+      optionLabel: "Wind"
+      presetName: "Wind Turbine"
+    - option: "hydro"
+      preset: power/generator/source/hydro
+      optionLabel: "Hydropower"
+      presetName: "Water Turbine"
