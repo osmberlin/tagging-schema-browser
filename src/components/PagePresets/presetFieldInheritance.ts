@@ -1,3 +1,4 @@
+import { schemaRefTarget } from '@/utils/schemaRef'
 import type { RawField, RawFields, RawPreset, RawPresets } from '@/utils/types'
 
 const INHERITABLE_TYPES = new Set(['multiCombo', 'semiCombo', 'manyCombo', 'check'])
@@ -5,8 +6,7 @@ const GENERIC_TAG_VALUES = new Set(['yes', '*'])
 
 /** Preset id from a `{path/to/preset}` template reference. */
 export function presetIdFromRef(ref: string): string | null {
-  const match = /^\{([^}]+)\}$/.exec(ref)
-  return match ? match[1] : null
+  return schemaRefTarget(ref)
 }
 
 function fieldKey(fieldId: string, allFields: RawFields): string {

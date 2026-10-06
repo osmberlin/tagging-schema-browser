@@ -1,4 +1,5 @@
 import { isBundledTestSchemaUrl } from '@/utils/constants'
+import { isSchemaRef } from '@/utils/schemaRef'
 import type { RawFields, RawPresets, RawTranslations } from '@/utils/types'
 
 export const SUPPORTED_SCHEMA_MAJOR = 7
@@ -37,7 +38,7 @@ export function predictSchemaBuildFromUrl(dataUrl: string): SchemaBuildInfo | nu
 }
 
 function isReference(value: unknown): value is string {
-  return typeof value === 'string' && /^\{.+\}$/.test(value)
+  return isSchemaRef(value)
 }
 
 /** True when dist JSON still contains references stripped by schema-builder v7. */
