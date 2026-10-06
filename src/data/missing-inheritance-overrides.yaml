@@ -21,7 +21,7 @@
 # overall status remains unreviewed until every detected list is documented.
 # Extra keys with no live detection are stale.
 #
-# CI validates against the published npm release dist (see validate-inheritance-overrides).
+# CI validates against the unreleased dist (id-tagging-schema `main`), like the audit page (see validate-inheritance-overrides).
 #
 # Example from id-tagging-schema: tourism/information/terminal.json lists only
 # `operator` in fields (not `{tourism/information}`) while moreFields inherits

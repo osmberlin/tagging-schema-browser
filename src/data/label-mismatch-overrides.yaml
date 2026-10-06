@@ -8,7 +8,7 @@
 # Entries are written by the audit page (/audits/label-mismatch) through the
 # "Schema override PR" workflow.
 #
-# CI validates against the published npm release dist (see validate-label-mismatch-overrides).
+# CI validates against the unreleased dist (id-tagging-schema `main`), like the audit page (see validate-label-mismatch-overrides).
 version: 1
 fields:
   healthcare/speciality:
