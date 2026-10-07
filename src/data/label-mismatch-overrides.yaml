@@ -496,6 +496,18 @@ fields:
       preset: leisure/sports_centre/shooting
       optionLabel: "Shooting"
       presetName: "Shooting Range Facility"
+    - option: "yoga"
+      preset: leisure/fitness_centre/yoga
+      optionLabel: "Yoga"
+      presetName: "Yoga Studio"
+    - option: "badminton"
+      preset: leisure/pitch/badminton
+      optionLabel: "Badminton"
+      presetName: "Badminton Court"
+    - option: "chess"
+      preset: leisure/pitch/chess
+      optionLabel: "Chess"
+      presetName: "Giant Chess Board"
   athletics_pitch:
     - option: "long_jump"
       preset: leisure/pitch/athletics/long_jump
@@ -513,6 +525,14 @@ fields:
       preset: leisure/pitch/athletics/discus_throw
       optionLabel: "Discus"
       presetName: "Discus Ring / Sector"
+    - option: "high_jump"
+      preset: leisure/pitch/athletics/high_jump
+      optionLabel: "High Jump"
+      presetName: "High Jump Area"
+    - option: "javelin_throw"
+      preset: leisure/pitch/athletics/javelin_throw
+      optionLabel: "Javelin"
+      presetName: "Javelin Sector"
   content_bulk:
     - option: "crop"
       preset: man_made/silo/crop
@@ -654,3 +674,8 @@ fields:
       preset: power/generator/source/hydro
       optionLabel: "Hydropower"
       presetName: "Water Turbine"
+  generator/method:
+    - option: "photovoltaic"
+      preset: power/generator/method/photovoltaic
+      optionLabel: "Photovoltaic"
+      presetName: "Solar Panel"
