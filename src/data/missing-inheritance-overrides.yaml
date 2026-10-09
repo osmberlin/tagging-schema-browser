@@ -514,6 +514,10 @@ presets:
       parentId: man_made
       missedFieldIds:
         - name
+    moreFields:
+      parentId: man_made
+      missedFieldIds:
+        - material
   man_made/chimney:
     fields:
       parentId: man_made
@@ -733,10 +737,16 @@ presets:
         - crossing/markings-DE-AT-CH
         - crossing/markings-PL
   highway/path/informal:
+    fields:
+      parentId: highway/path
+      missedFieldIds:
+        - tunnel/name
     moreFields:
       parentId: highway/path
       missedFieldIds:
         - oneway
+        - bridge/name
+        - bridge/ref
   highway/speed_display:
     fields:
       parentId: highway
@@ -855,6 +865,9 @@ presets:
       parentId: highway/footway
       missedFieldIds:
         - tactile_paving
+        - bridge/name
+        - bridge/ref
+        - oneway
   highway/path/crossing/informal:
     fields:
       parentId: highway/path/crossing
@@ -870,6 +883,7 @@ presets:
       missedFieldIds:
         - flashing_lights
         - segregated
+        - oneway
   amenity/charging_station/charging_station_bicycle_designated:
     fields:
       parentId: amenity/charging_station
@@ -947,3 +961,13 @@ presets:
       parentId: natural/wetland
       missedFieldIds:
         - salt
+  highway/footway/crossing:
+    moreFields:
+      parentId: highway/footway
+      missedFieldIds:
+        - informal
+  highway/path/crossing:
+    moreFields:
+      parentId: highway/path
+      missedFieldIds:
+        - informal
