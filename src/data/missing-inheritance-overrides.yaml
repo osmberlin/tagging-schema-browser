@@ -398,6 +398,8 @@ presets:
       missedFieldIds:
         - opening_hours
         - payment_multi
+        - operator
+        - website
   tourism/information/board:
     fields:
       parentId: tourism/information
