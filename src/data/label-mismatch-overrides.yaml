@@ -415,6 +415,10 @@ fields:
       preset: amenity/vending_machine/sweets
       optionLabel: "Candy"
       presetName: "Candy Vending Machine"
+    - option: "flowers"
+      preset: amenity/vending_machine/flowers
+      optionLabel: "Flowers"
+      presetName: "Flower Vending Machine"
   sport:
     - option: "soccer"
       preset: leisure/pitch/soccer
@@ -679,3 +683,16 @@ fields:
       preset: power/generator/method/photovoltaic
       optionLabel: "Photovoltaic"
       presetName: "Solar Panel"
+  taxi_vehicle:
+    - option: "motorcycle"
+      preset: amenity/taxi/motorcycle_taxi
+      optionLabel: "Motorcycle"
+      presetName: "Motorcycle Taxi Stand"
+    - option: "auto_rickshaw"
+      preset: amenity/taxi/auto_rickshaw
+      optionLabel: "Auto Rickshaw"
+      presetName: "Auto Rickshaw Stand"
+    - option: "cycle_rickshaw"
+      preset: amenity/taxi/cycle_rickshaw
+      optionLabel: "Cycle Rickshaw"
+      presetName: "Cycle Rickshaw Stand"
