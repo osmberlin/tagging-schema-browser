@@ -973,3 +973,9 @@ presets:
       parentId: highway/path
       missedFieldIds:
         - informal
+  amenity/vending_machine/fuel:
+    fields:
+      parentId: amenity/vending_machine
+      missedFieldIds:
+        - payment_multi
+        - currency_multi
