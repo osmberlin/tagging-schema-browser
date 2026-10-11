@@ -973,6 +973,11 @@ presets:
       parentId: highway/path
       missedFieldIds:
         - informal
+  amenity/vending_machine/bottle_return:
+    fields:
+      parentId: amenity/vending_machine
+      missedFieldIds:
+        - ref
   amenity/vending_machine/fuel:
     fields:
       parentId: amenity/vending_machine
