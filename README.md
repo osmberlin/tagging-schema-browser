@@ -43,9 +43,9 @@ bun run check         # type-check + lint + format + unit tests (pre-commit gate
 bun run test:e2e      # playwright (install browsers first — see below)
 ```
 
-**Playwright browsers** are not installed by `bun install`. Run `bun run test:e2e:install` once per machine (or rely on Cursor Cloud's `.cursor/environment.json` setup).
+**Playwright browsers** are not installed by `bun install`. Run `bun run test:e2e:install` once per machine.
 
-**Cloud agents:** use `bun install --frozen-lockfile` only — plain `bun install` can break Vite 8's pinned `rolldown` dependency. See [`.cursor/CLOUD.md`](.cursor/CLOUD.md).
+Use `bun install --frozen-lockfile` only — plain `bun install` can break Vite 8's pinned `rolldown` dependency. See [`AGENTS.md`](AGENTS.md).
 
 Tech stack: React 19, Vite 8 (Rolldown), TanStack Router (Zod-validated search params), Tailwind CSS v4, itemsjs (faceted search), Fontsource (self-hosted Inter + Lexend).
 

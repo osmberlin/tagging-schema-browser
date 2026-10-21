@@ -1,4 +1,6 @@
-# Cursor Cloud specific instructions
+# AGENTS.md
+
+Rules for AI agents and contributors working in this repo. Setup and commands are in [README.md](README.md#develop).
 
 ## Dependency install
 
@@ -8,7 +10,7 @@ Always install dependencies with the lockfile:
 bun install --frozen-lockfile
 ```
 
-Do **not** run plain `bun install` in cloud agents. Without the lockfile, Bun can hoist a newer nested `rolldown` under `vite` than the one Vite 8 expects, which breaks dev/build with:
+Do **not** run plain `bun install`. Without the lockfile, Bun can hoist a newer nested `rolldown` under `vite` than the one Vite 8 expects, which breaks dev/build with:
 
 ```text
 Export named 'viteWasmFallbackPlugin' not found in module 'rolldown/experimental'
@@ -20,26 +22,18 @@ If Vite fails to start, reinstall cleanly:
 rm -rf node_modules && bun install --frozen-lockfile
 ```
 
-The cloud environment (`.cursor/environment.json`) runs this install automatically on agent startup.
-
-## Verification before finishing work
+## Before you finish
 
 ```bash
 bun run check     # type-check + lint + format + unit tests + override validation
-bun run test:e2e  # Playwright (browsers installed by environment setup)
+bun run test:e2e  # Playwright
 ```
 
 `check` is the default pre-commit gate. Run `test:e2e` for UI/routing changes.
 
 ## E2E / Playwright
 
-`bun install` does **not** download browser binaries. The cloud environment installs Chromium via:
-
-```bash
-bunx playwright install --with-deps chromium
-```
-
-If e2e fails immediately with `Executable doesn't exist` under `~/.cache/ms-playwright/`, run:
+`bun install` does **not** download browser binaries. If e2e fails immediately with `Executable doesn't exist` under `~/.cache/ms-playwright/`, run:
 
 ```bash
 bun run test:e2e:install
@@ -57,12 +51,10 @@ When creating or posting on GitHub (`gh pr create`, `gh issue comment`, etc.):
 Start **every** PR description, issue body, and comment with:
 
 ```
-Written by :robot: <model-name>:
+Written by :robot: <model-name> <version> <effort-level>:
 ```
 
-Use **your actual model name** (the one shown in Cursor), not a generic label. Example: `Written by :robot: Cursor Composer 2.5:`
-
-No exceptions.
+Use **your actual model name, version and effort level**, not a generic label. Example: `Written by :robot: Claude Opus 5.5 high:`
 
 ### 2. PR descriptions — link the issue first
 
@@ -77,7 +69,7 @@ Then the PR summary (what changed, test plan). `Closes` auto-closes the issue on
 **Example PR body** (model name is illustrative — use yours):
 
 ```
-Written by :robot: Cursor Composer 2.5:
+Written by :robot: <model-name> <version> <effort-level>:
 
 Closes #42
 
@@ -93,9 +85,3 @@ Closes #42
 - **PR body** = full description (summary, test plan, context).
 - **Issue comments** = short status only — e.g. "Opened PR #99" with a link. Do **not** paste or paraphrase the PR body.
 - Readers should get details once, from the PR.
-
-## Agent orchestration
-
-This repo includes Fable/Composer orchestration for Cursor IDE (`.cursor/agents/`, `@orchestrator-worker` rule). Cloud agents do not need to run `init-cursor.sh` — those files are committed.
-
-For large multi-step tasks, delegate discovery and implementation rather than doing everything inline; run `bun run check` before declaring done. See [docs/agent-orchestration-cursor.md](../docs/agent-orchestration-cursor.md).
