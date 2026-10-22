@@ -984,3 +984,8 @@ presets:
       missedFieldIds:
         - payment_multi
         - currency_multi
+  tourism/information:
+    fields:
+      parentId: tourism
+      missedFieldIds:
+        - name
