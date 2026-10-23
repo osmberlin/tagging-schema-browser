@@ -984,6 +984,12 @@ presets:
       missedFieldIds:
         - payment_multi
         - currency_multi
+  advertising/sign:
+    moreFields:
+      parentId: advertising
+      missedFieldIds:
+        - height
+        - ref
   amenity/taxi/auto_rickshaw:
     moreFields:
       parentId: amenity/taxi
