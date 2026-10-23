@@ -137,6 +137,33 @@ describe('schemaIndices', () => {
       ]
       expect(pick(presets, 'healthcare', 'healthcare', 'clinic')).toBeUndefined()
     })
+
+    describe('generic parent outside the id path', () => {
+      const presets = [
+        preset('piste/piste', { 'piste:type': '*' }),
+        preset('piste/downhill', { 'piste:type': 'downhill' }),
+        preset('piste/nordic', { 'piste:type': 'nordic' }),
+        preset('piste/downhill/halfpipe', { 'piste:type': 'downhill', man_made: 'halfpipe' }),
+        preset('piste/snowpark', { 'piste:type': 'snow_park', landuse: 'winter_sports' }),
+        preset('landuse/winter_sports/piste', { 'piste:type': '*', landuse: 'winter_sports' }),
+      ]
+
+      it('links siblings matched by the parent tag (piste:type=*)', () => {
+        expect(pick(presets, 'piste/piste', 'piste:type', 'nordic')).toBe('piste/nordic')
+        expect(pick(presets, 'piste/piste', 'piste:type', 'downhill')).toBe('piste/downhill')
+      })
+
+      it('does not link a sibling that needs a further tag', () => {
+        expect(pick(presets, 'piste/piste', 'piste:type', 'snow_park')).toBeUndefined()
+      })
+
+      it('links a more specific generic parent only to children with all its tags', () => {
+        expect(pick(presets, 'landuse/winter_sports/piste', 'piste:type', 'snow_park')).toBe(
+          'piste/snowpark',
+        )
+        expect(pick(presets, 'landuse/winter_sports/piste', 'piste:type', 'nordic')).toBeUndefined()
+      })
+    })
   })
 
   it('buildFieldPresetIndex splits primary and more field usage', () => {
@@ -179,6 +206,47 @@ describe('schemaIndices', () => {
     const runtime = getFieldOptionMismatchRows('highway', fields, fieldTranslations, presets)
 
     expect(precomputed).toEqual(runtime)
+  })
+
+  it('lists option rows for a field on a generic parent outside the id path', () => {
+    const presets = [
+      {
+        ...stubPreset('piste/piste', ['piste/type']),
+        tags: { 'piste:type': '*' },
+        name: 'Piste',
+      },
+      {
+        ...stubPreset('piste/nordic'),
+        tags: { 'piste:type': 'nordic' },
+        name: 'Cross-Country Ski Trail',
+      },
+      {
+        ...stubPreset('piste/hike'),
+        tags: { 'piste:type': 'hike' },
+        name: 'Snowshoeing / Winter Hiking Trail',
+      },
+    ] as DenormalizedPreset[]
+    const fields = {
+      'piste/type': { key: 'piste:type', type: 'typeCombo', options: ['nordic', 'hike'] },
+    }
+    const fieldTranslations = {
+      'piste/type': {
+        label: 'Type',
+        options: { nordic: { title: 'Nordic' }, hike: { title: 'Hike' } },
+      },
+    }
+
+    const indices = buildSchemaIndices(presets, fields, fieldTranslations)
+    const rows = indices.fieldOptionMismatchRows.get('piste/type') ?? []
+    expect(rows.map((row) => [row.optionValue, row.childPreset.id, row.labelMismatch])).toEqual([
+      ['nordic', 'piste/nordic', 'differs'],
+      ['hike', 'piste/hike', 'differs'],
+    ])
+    expect(rows).toEqual(
+      getFieldOptionMismatchRows('piste/type', fields, fieldTranslations, presets),
+    )
+    const pairs = indices.labelMismatchPairsByFieldId.get('piste/type') ?? []
+    expect(pairs.map((pair) => pair.optionValue).sort()).toEqual(['hike', 'nordic'])
   })
 
   it('field catalog matches legacy field search scan', () => {
