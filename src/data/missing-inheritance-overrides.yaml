@@ -984,3 +984,9 @@ presets:
       missedFieldIds:
         - payment_multi
         - currency_multi
+  advertising/sign:
+    moreFields:
+      parentId: advertising
+      missedFieldIds:
+        - height
+        - ref
