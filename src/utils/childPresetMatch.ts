@@ -63,3 +63,21 @@ export function optionLeadsToPreset(
     return value === '*' ? written[key] !== undefined : written[key] === value
   })
 }
+
+/**
+ * Whether `parent` is a generic preset of `child` by tags, wherever its id sits: it matches on
+ * `fieldKey=*` and on nothing the child lacks (`piste/piste` with `piste:type=*` for
+ * `piste/nordic`). Covers parents whose id is not a path prefix of the child.
+ */
+export function isTagParentPreset(
+  parent: Pick<DenormalizedPreset, 'id' | 'tags'>,
+  child: Pick<DenormalizedPreset, 'id' | 'tags'>,
+  fieldKey: string,
+): boolean {
+  if (parent.id === child.id || parent.tags[fieldKey] !== '*') return false
+  const childValue = child.tags[fieldKey]
+  if (childValue === undefined || childValue === '*') return false
+  return Object.entries(parent.tags).every(([key, value]) =>
+    value === '*' ? child.tags[key] !== undefined : child.tags[key] === value,
+  )
+}
