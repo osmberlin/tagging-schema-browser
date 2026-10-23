@@ -72,8 +72,8 @@ function Truncated({
       className={cn('block truncate', fromStart && 'text-left [direction:rtl]', className)}
       title={text}
     >
-      {/* LRM marks keep punctuation in place inside the rtl box. */}
-      {fromStart ? `\u200E${text}\u200E` : text}
+      {/* <bdi dir="ltr"> keep punctuation in place inside the rtl box. */}
+      {fromStart ? <bdi dir="ltr">{text}</bdi> : text}
     </span>
   )
 }
