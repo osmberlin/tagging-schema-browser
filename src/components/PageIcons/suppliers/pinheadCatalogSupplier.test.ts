@@ -25,7 +25,7 @@ describe('resolvePinheadId', () => {
     expect(resolvePinheadId('old_removed', available, upgrades)).toBeNull()
   })
 
-  it('works without an upgrade map (older Pinhead packages ship none)', () => {
+  it('returns null for renamed ids when the upgrade map is empty', () => {
     expect(resolvePinheadId('bagel_seeded', available, {})).toBeNull()
   })
 })
