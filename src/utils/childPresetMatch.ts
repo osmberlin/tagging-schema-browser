@@ -20,6 +20,26 @@ export function isBetterChildPreset(
   return candidate.id.length > existing.id.length
 }
 
+/**
+ * Whether `parent` is a generic form of `child` outside the slash-id hierarchy: it matches on a
+ * wildcard where the child has a concrete value, and on nothing the child lacks (`piste/piste`
+ * with `piste:type=*` covers its sibling `piste/downhill`).
+ */
+export function coversPresetGenerically(
+  parent: Pick<DenormalizedPreset, 'id' | 'tags'>,
+  child: Pick<DenormalizedPreset, 'id' | 'tags'>,
+): boolean {
+  if (parent.id === child.id) return false
+  const parentTags = Object.entries(parent.tags)
+  const hasCoveredWildcard = parentTags.some(
+    ([key, value]) => value === '*' && child.tags[key] !== undefined && child.tags[key] !== '*',
+  )
+  if (!hasCoveredWildcard) return false
+  return parentTags.every(([key, value]) =>
+    value === '*' ? child.tags[key] !== undefined : child.tags[key] === value,
+  )
+}
+
 /** Preset that writes `key=value` via `addTags` without matching on it (`amenity/dentist`). */
 export function writesOptionViaAddTags(
   preset: DenormalizedPreset,

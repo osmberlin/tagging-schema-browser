@@ -1,5 +1,6 @@
 import { isIconSvgConfirmedMissing } from '@/components/PageIcons/iconRegistry'
 import {
+  coversPresetGenerically,
   impliesPreset,
   isBetterChildPreset,
   optionLeadsToPreset,
@@ -131,7 +132,8 @@ export function findChildPresetForOption(
   let best: DenormalizedPreset | undefined
   let anyTagged: DenormalizedPreset | undefined
   for (const candidate of presets) {
-    if (!candidate.id.startsWith(prefix) || candidate.tags[fieldKey] !== optionValue) continue
+    if (candidate.tags[fieldKey] !== optionValue) continue
+    if (!candidate.id.startsWith(prefix) && !coversPresetGenerically(preset, candidate)) continue
     if (isBetterChildPreset(candidate, anyTagged)) anyTagged = candidate
     if (!optionLeadsToPreset(preset, candidate, fieldKey, optionValue)) continue
     if (isBetterChildPreset(candidate, best)) best = candidate

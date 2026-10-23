@@ -137,6 +137,43 @@ describe('schemaIndices', () => {
       ]
       expect(pick(presets, 'healthcare', 'healthcare', 'clinic')).toBeUndefined()
     })
+
+    it('links a sibling child to a parent whose wildcard tag covers it', () => {
+      const presets = [
+        preset('piste/piste', { 'piste:type': '*' }),
+        preset('piste/downhill', { 'piste:type': 'downhill' }),
+        preset('piste/downhill/halfpipe', {
+          'piste:type': 'downhill',
+          man_made: 'piste:halfpipe',
+        }),
+        preset('piste/nordic', { 'piste:type': 'nordic' }),
+        preset('piste/take_off', { 'piste:takeoff': 'yes' }),
+      ]
+      expect(pick(presets, 'piste/piste', 'piste:type', 'downhill')).toBe('piste/downhill')
+      expect(pick(presets, 'piste/piste', 'piste:type', 'nordic')).toBe('piste/nordic')
+      expect(pick(presets, 'piste/piste', 'piste:type', 'sled')).toBeUndefined()
+    })
+
+    it('does not link a child that lacks another tag of the wildcard parent', () => {
+      const presets = [
+        preset('leisure/pitch', { leisure: 'pitch', sport: '*' }),
+        preset('sport/tennis', { sport: 'tennis' }),
+      ]
+      expect(pick(presets, 'leisure/pitch', 'sport', 'tennis')).toBeUndefined()
+    })
+
+    it('links a covered sibling for an option on a key other than the wildcard', () => {
+      const presets = [
+        preset('piste/piste', { 'piste:type': '*' }),
+        preset(
+          'piste/classic',
+          { 'piste:type': 'nordic', 'piste:grooming': 'classic' },
+          { 'piste:type': 'nordic', 'piste:grooming': 'classic', amenity: 'x' },
+        ),
+        preset('amenity/x', { amenity: 'x' }, { amenity: 'x', 'piste:grooming': 'classic' }),
+      ]
+      expect(pick(presets, 'piste/piste', 'piste:grooming', 'classic')).toBe('amenity/x')
+    })
   })
 
   it('buildFieldPresetIndex splits primary and more field usage', () => {

@@ -1,4 +1,5 @@
 import {
+  coversPresetGenerically,
   impliesPreset,
   isBetterChildPreset,
   optionLeadsToPreset,
@@ -49,7 +50,8 @@ export function childPresetLookupKey(
 /**
  * Child preset lookup keyed by {@link childPresetLookupKey}.
  *
- * Candidates are descendant presets (by slash id) whose `tags` contain the option and that the
+ * Candidates are descendant presets (by slash id), or presets the parent covers through a wildcard
+ * tag (see `coversPresetGenerically`), whose `tags` contain the option and that the
  * option alone leads to, see `optionLeadsToPreset`. If there is
  * one, a preset elsewhere that only *writes* the option via `addTags` (`amenity/dentist` adds
  * `healthcare=dentist`) may replace it when it is more generic and implied by the descendant. Writers never create a pairing on
@@ -63,6 +65,30 @@ export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPrese
   /** Any descendant tagged with the option; only decides whether an `addTags` writer applies. */
   const tagged = new Map<string, DenormalizedPreset>()
   const writers = new Map<string, DenormalizedPreset>()
+  /** Presets with a wildcard tag, by that tag's key. */
+  const wildcardParents = new Map<string, DenormalizedPreset[]>()
+  for (const preset of presets) {
+    for (const [key, value] of Object.entries(preset.tags)) {
+      if (value !== '*') continue
+      const list = wildcardParents.get(key) ?? []
+      list.push(preset)
+      wildcardParents.set(key, list)
+    }
+  }
+
+  function addCandidate(
+    parent: DenormalizedPreset | undefined,
+    parentId: string,
+    child: DenormalizedPreset,
+    fieldKey: string,
+    optionValue: string,
+  ) {
+    const key = childPresetLookupKey(parentId, fieldKey, optionValue)
+    if (isBetterChildPreset(child, tagged.get(key))) tagged.set(key, child)
+    if (!parent || !optionLeadsToPreset(parent, child, fieldKey, optionValue)) return
+    if (isBetterChildPreset(child, descendants.get(key))) descendants.set(key, child)
+  }
+
   for (const child of presets) {
     for (const [fieldKey, optionValue] of Object.entries(child.addTags ?? {})) {
       if (typeof optionValue !== 'string' || !writesOptionViaAddTags(child, fieldKey, optionValue))
@@ -72,16 +98,22 @@ export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPrese
     }
 
     const parts = child.id.split('/')
-    if (parts.length < 2) continue
+    const ancestorIds = parts.slice(1).map((_, depth) => parts.slice(0, depth + 1).join('/'))
+    /** Presets outside the id hierarchy that cover the child through a wildcard on any key. */
+    const coveringParents = new Set<DenormalizedPreset>()
+    for (const key of Object.keys(child.tags)) {
+      for (const parent of wildcardParents.get(key) ?? []) {
+        if (ancestorIds.includes(parent.id) || !coversPresetGenerically(parent, child)) continue
+        coveringParents.add(parent)
+      }
+    }
     for (const [fieldKey, optionValue] of Object.entries(child.tags)) {
       if (typeof optionValue !== 'string') continue
-      for (let depth = 1; depth < parts.length; depth++) {
-        const parentId = parts.slice(0, depth).join('/')
-        const key = childPresetLookupKey(parentId, fieldKey, optionValue)
-        if (isBetterChildPreset(child, tagged.get(key))) tagged.set(key, child)
-        const parent = presetsById.get(parentId)
-        if (!parent || !optionLeadsToPreset(parent, child, fieldKey, optionValue)) continue
-        if (isBetterChildPreset(child, descendants.get(key))) descendants.set(key, child)
+      for (const parentId of ancestorIds) {
+        addCandidate(presetsById.get(parentId), parentId, child, fieldKey, optionValue)
+      }
+      for (const parent of coveringParents) {
+        addCandidate(parent, parent.id, child, fieldKey, optionValue)
       }
     }
   }
