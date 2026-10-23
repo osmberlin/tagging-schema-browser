@@ -21,7 +21,7 @@
         "@tanstack/react-query": "^5.104.2",
         "@tanstack/react-router": "^1.170.44",
         "@tanstack/react-virtual": "^3.14.19",
-        "@waysidemapping/pinhead": "^15.25.0",
+        "@waysidemapping/pinhead": "^16.26.0",
         "itemsjs": "^2.4.4",
         "motion": "^12.42.0",
         "react": "^19.3.0",
@@ -457,7 +457,7 @@
 
     "@vitest/utils": ["@vitest/utils@4.1.11", "", { "dependencies": { "@vitest/pretty-format": "4.1.11", "convert-source-map": "^2.0.0", "tinyrainbow": "^3.1.0" } }, "sha512-zTCVGpyFsGWBhllOyKlTw/vnr6D9qxsfSDyfbyZmTyjHw5N/VuvzHpHoQjm2ZJzn4RJgx5w4r7V0er69CmLgPQ=="],
 
-    "@waysidemapping/pinhead": ["@waysidemapping/pinhead@15.25.0", "", {}, "sha512-iI9jxqgIPDBcS3m16oCHdxTsJiqyBDmDaPQoi/F4EOxPVaYPCpSYptGA4EAgd92GyL8rqHtOtgHOZDaTxvzwxQ=="],
+    "@waysidemapping/pinhead": ["@waysidemapping/pinhead@16.26.0", "", {}, "sha512-motDYFTnPUh6iDB+TUYLEBuUvAVPK8il7XK5xjD4KFmLzV2uzavgREEZ+kBCIFdZBl2vj1Kw44LrVblf/j+YPw=="],
 
     "acorn": ["acorn@8.17.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg=="],
 

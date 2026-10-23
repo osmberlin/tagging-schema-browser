@@ -43,7 +43,7 @@
     "@tanstack/react-query": "^5.104.2",
     "@tanstack/react-router": "^1.170.44",
     "@tanstack/react-virtual": "^3.14.19",
-    "@waysidemapping/pinhead": "^15.25.0",
+    "@waysidemapping/pinhead": "^16.26.0",
     "itemsjs": "^2.4.4",
     "motion": "^12.42.0",
     "react": "^19.3.0",
