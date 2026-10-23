@@ -16,6 +16,13 @@ updates:
       timezone: Europe/Berlin
     cooldown:
       default-days: 5
+      # Icon libraries skip the cooldown (same list as minimumReleaseAgeExcludes in bunfig.toml).
+      exclude:
+        - '@waysidemapping/pinhead'
+        - '@mapbox/maki'
+        - '@rapideditor/temaki'
+        - '@enzet/roentgen'
+        - '@fortawesome/*'
     open-pull-requests-limit: 1
     exclude-paths:
       - .cursor/**
@@ -40,6 +47,7 @@ updates:
         applies-to: version-updates
         patterns:
           - '@enzet/roentgen'
+          - '@waysidemapping/pinhead'
           - '@mapbox/maki'
           - '@rapideditor/temaki'
           - '@fortawesome/*'
