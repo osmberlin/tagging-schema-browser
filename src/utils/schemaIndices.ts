@@ -65,7 +65,7 @@ export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPrese
   const descendants = new Map<string, DenormalizedPreset>()
   /** Any descendant tagged with the option; only decides whether an `addTags` writer applies. */
   const tagged = new Map<string, DenormalizedPreset>()
-  const writers = new Map<string, DenormalizedPreset>()
+  const writers = new Map<string, DenormalizedPreset[]>()
   const wildcardPresetsByKey = new Map<string, DenormalizedPreset[]>()
   for (const preset of presets) {
     for (const [key, value] of Object.entries(preset.tags)) {
@@ -92,7 +92,9 @@ export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPrese
       if (typeof optionValue !== 'string' || !writesOptionViaAddTags(child, fieldKey, optionValue))
         continue
       const key = `${fieldKey}\0${optionValue}`
-      if (isBetterChildPreset(child, writers.get(key))) writers.set(key, child)
+      const list = writers.get(key) ?? []
+      list.push(child)
+      writers.set(key, list)
     }
 
     const parts = child.id.split('/')
@@ -116,12 +118,18 @@ export function buildChildPresetIndex(presets: DenormalizedPreset[]): ChildPrese
       const anyTagged = tagged.get(lookupKey)
       if (!anyTagged) return undefined
       const [parentId, fieldKey, optionValue] = lookupKey.split('\0')
-      const writer = writers.get(`${fieldKey}\0${optionValue}`)
-      if (!writer || writer.id === parentId || writer.id.startsWith(`${parentId}/`))
-        return descendant
-      return isBetterChildPreset(writer, anyTagged) && impliesPreset(anyTagged, writer)
-        ? writer
-        : descendant
+      // Same walk as `findChildPresetForOption`: writers under the parent are skipped, the rest
+      // are checked in preset order, so one skipped writer does not hide another that qualifies.
+      let best = descendant
+      let current = anyTagged
+      for (const writer of writers.get(`${fieldKey}\0${optionValue}`) ?? []) {
+        if (writer.id === parentId || writer.id.startsWith(`${parentId}/`)) continue
+        if (isBetterChildPreset(writer, current) && impliesPreset(current, writer)) {
+          best = writer
+          current = writer
+        }
+      }
+      return best
     },
   }
 }

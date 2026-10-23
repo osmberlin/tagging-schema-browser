@@ -108,6 +108,28 @@ describe('schemaIndices', () => {
       expect(pick(presets, 'healthcare', 'healthcare', 'dentist')).toBe('amenity/dentist')
     })
 
+    it('keeps checking writers outside the parent after skipping one under its prefix', () => {
+      const presets = [
+        preset('healthcare', { healthcare: '*' }),
+        preset(
+          'healthcare/dentist/orthodontics',
+          { healthcare: 'dentist', 'healthcare:speciality': 'orthodontics' },
+          { amenity: 'dentist' },
+        ),
+        preset(
+          'healthcare/dentist_addon',
+          { 'healthcare:addon': 'yes' },
+          { healthcare: 'dentist' },
+        ),
+        preset(
+          'amenity/dentist',
+          { amenity: 'dentist' },
+          { amenity: 'dentist', healthcare: 'dentist' },
+        ),
+      ]
+      expect(pick(presets, 'healthcare', 'healthcare', 'dentist')).toBe('amenity/dentist')
+    })
+
     it('does not use a writer when the specialization does not imply it', () => {
       const presets = [
         preset('amenity/doctors', { amenity: 'doctors' }),
