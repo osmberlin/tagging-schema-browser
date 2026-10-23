@@ -1008,3 +1008,28 @@ presets:
       missedFieldIds:
         - branch_brand
         - brand
+  barrier/bus_trap:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/cycle_barrier:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/gate:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/motorcycle_barrier:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
+  barrier/toll_booth:
+    moreFields:
+      parentId: barrier
+      missedFieldIds:
+        - level
