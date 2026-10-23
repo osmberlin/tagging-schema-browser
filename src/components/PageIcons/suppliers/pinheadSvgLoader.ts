@@ -1,3 +1,4 @@
+import pinheadUpgrades from '@waysidemapping/pinhead/dist/id_upgrades.json'
 import type { IconRegistryEntry } from '@/utils/types'
 import { pinheadIdFromIconName, resolvePinheadId } from './pinheadCatalogSupplier'
 
@@ -5,15 +6,6 @@ const pinheadSvgLoaders = import.meta.glob<string>(
   '/node_modules/@waysidemapping/pinhead/dist/icons/*.svg',
   { eager: false, import: 'default', query: '?raw' },
 )
-
-// Glob instead of import: Pinhead < 16 ships no id_upgrades.json.
-const pinheadUpgrades: Record<string, string> =
-  Object.values(
-    import.meta.glob<Record<string, string>>(
-      '/node_modules/@waysidemapping/pinhead/dist/id_upgrades.json',
-      { eager: true, import: 'default' },
-    ),
-  )[0] ?? {}
 
 const loaderById = new Map<string, () => Promise<string>>()
 for (const [path, loader] of Object.entries(pinheadSvgLoaders)) {
