@@ -45,7 +45,7 @@
     "@tanstack/react-virtual": "^3.14.19",
     "@waysidemapping/pinhead": "^16.26.0",
     "itemsjs": "^2.4.4",
-    "motion": "^12.42.0",
+    "motion": "^14.5.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.0.0",
