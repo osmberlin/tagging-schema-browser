@@ -11,6 +11,19 @@ export function iconFacetCountsNeedFullCatalog(i_usage: string, i_supplier: stri
   return i_supplier === 'all' && iconBrowseNeedsFullCatalog(i_usage)
 }
 
+/**
+ * Usage count used for sorting: when the usage facet narrows to presets or options,
+ * sort by that kind only; otherwise by total usage.
+ */
+export function iconSortUsageCount(
+  icon: Pick<IconViewModel, 'presetUsageCount' | 'optionUsageCount' | 'usageCount'>,
+  i_usage: string,
+): number {
+  if (i_usage === 'presets') return icon.presetUsageCount
+  if (i_usage === 'options') return icon.optionUsageCount
+  return icon.usageCount
+}
+
 export function buildIconFacetMeta(icons: IconViewModel[]) {
   const supplierCounts = new Map<string, number>()
   let withSvg = 0

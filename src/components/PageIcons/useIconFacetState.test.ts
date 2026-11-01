@@ -4,6 +4,7 @@ import {
   buildIconFacetMeta,
   iconBrowseNeedsFullCatalog,
   iconFacetCountsNeedFullCatalog,
+  iconSortUsageCount,
 } from './iconFacetMeta'
 
 function icon(name: string, presetUsageCount: number, optionUsageCount = 0): IconViewModel {
@@ -51,5 +52,22 @@ describe('buildIconFacetMeta', () => {
     expect(meta.unusedCount).toBe(2)
     expect(meta.anyCount).toBe(1)
     expect(meta.anyCount + meta.unusedCount).toBe(icons.length)
+  })
+})
+
+describe('iconSortUsageCount', () => {
+  const a = icon('maki-a', 1, 5)
+
+  it('uses preset usages when filtered to presets', () => {
+    expect(iconSortUsageCount(a, 'presets')).toBe(1)
+  })
+
+  it('uses option usages when filtered to options', () => {
+    expect(iconSortUsageCount(a, 'options')).toBe(5)
+  })
+
+  it('uses total usages otherwise', () => {
+    expect(iconSortUsageCount(a, 'any')).toBe(6)
+    expect(iconSortUsageCount(a, 'all')).toBe(6)
   })
 })

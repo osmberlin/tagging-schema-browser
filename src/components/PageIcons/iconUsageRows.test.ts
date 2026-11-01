@@ -109,4 +109,30 @@ describe('flattenIconUsages', () => {
       'maki-cafe',
     ])
   })
+
+  it('sorts usage rows by preset usage count when filtered to presets', () => {
+    const icons = [
+      iconView('maki-cafe', {
+        presets: [preset('amenity/cafe', 'Cafe', 'maki-cafe')],
+        optionUsages: [
+          { fieldId: 'cuisine', fieldKey: 'cuisine', optionValue: 'coffee_shop' },
+          { fieldId: 'cuisine', fieldKey: 'cuisine', optionValue: 'tea' },
+        ],
+      }),
+      iconView('maki-bar', {
+        presets: [
+          preset('amenity/bar', 'Bar', 'maki-bar'),
+          preset('amenity/pub', 'Pub', 'maki-bar'),
+        ],
+      }),
+    ]
+    const rows = flattenIconUsages(icons, {}, {})
+
+    expect(
+      sortIconUsageRows(rows, icons, 'usage_desc', 'presets').map((row) => row.iconName)[0],
+    ).toBe('maki-bar')
+    expect(sortIconUsageRows(rows, icons, 'usage_desc').map((row) => row.iconName)[0]).toBe(
+      'maki-cafe',
+    )
+  })
 })

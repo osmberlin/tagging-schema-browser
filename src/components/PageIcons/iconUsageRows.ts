@@ -1,3 +1,4 @@
+import { iconSortUsageCount } from '@/components/PageIcons/iconFacetMeta'
 import { fieldOptionTitle } from '@/utils/fieldOptionTranslation'
 import type { FieldTranslations, IconViewModel, RawFields } from '@/utils/types'
 
@@ -75,8 +76,9 @@ export function sortIconUsageRows(
   rows: IconUsageRow[],
   icons: IconViewModel[],
   sort: 'name' | 'usage_desc' | 'usage_asc',
+  usage = 'any',
 ): IconUsageRow[] {
-  const usageByIcon = new Map(icons.map((icon) => [icon.name, icon.usageCount]))
+  const usageByIcon = new Map(icons.map((icon) => [icon.name, iconSortUsageCount(icon, usage)]))
   const sorted = [...rows]
 
   if (sort === 'usage_desc') {

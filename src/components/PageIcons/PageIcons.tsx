@@ -41,8 +41,8 @@ export function PageIcons() {
   const usageRows = useMemo(() => {
     if (!data || i_view !== 'usages') return []
     const rows = flattenIconUsages(filtered, data.fields, data.fieldTranslations)
-    return sortIconUsageRows(rows, filtered, i_sort)
-  }, [data, filtered, i_sort, i_view])
+    return sortIconUsageRows(rows, filtered, i_sort, i_usage)
+  }, [data, filtered, i_sort, i_usage, i_view])
   const exportData = useMemo(() => exportIcons(filtered), [filtered])
 
   if (!dataUrl && !data) {

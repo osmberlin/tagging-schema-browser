@@ -1,7 +1,7 @@
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useCallback, useMemo } from 'react'
 import { z } from 'zod'
-import { buildIconFacetMeta } from '@/components/PageIcons/iconFacetMeta'
+import { buildIconFacetMeta, iconSortUsageCount } from '@/components/PageIcons/iconFacetMeta'
 import { isIconSvgMissingOrPending } from '@/components/PageIcons/iconRegistry'
 import type { IconViewModel } from '@/utils/types'
 
@@ -66,10 +66,11 @@ export function applyIconFacets(icons: IconViewModel[], state: IconFacetState): 
   }
 
   const sorted = [...filtered]
+  const count = (icon: IconViewModel) => iconSortUsageCount(icon, state.i_usage)
   if (state.i_sort === 'usage_desc')
-    sorted.sort((a, b) => b.usageCount - a.usageCount || a.name.localeCompare(b.name))
+    sorted.sort((a, b) => count(b) - count(a) || a.name.localeCompare(b.name))
   else if (state.i_sort === 'usage_asc')
-    sorted.sort((a, b) => a.usageCount - b.usageCount || a.name.localeCompare(b.name))
+    sorted.sort((a, b) => count(a) - count(b) || a.name.localeCompare(b.name))
   else sorted.sort((a, b) => a.name.localeCompare(b.name))
 
   return sorted
