@@ -1,5 +1,5 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
-import { useHotkey, useHotkeySequence } from '@tanstack/react-hotkeys'
+import { useHotkey } from '@tanstack/react-hotkeys'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { fieldFacetDefaults } from '@/components/PageFields/useFieldFacetState'
@@ -96,7 +96,7 @@ export function SidebarLayout({
   useHotkey('Mod+K', focusSearch)
   useHotkey('/', focusSearch)
   useHotkey({ key: '?', shift: true }, () => setHelpOpen(true))
-  useHotkeySequence(['G', 'P'], () =>
+  useHotkey(['G', 'P'], () =>
     navigate({
       to: '/',
       search: (prev) => ({
@@ -106,7 +106,7 @@ export function SidebarLayout({
       }),
     }),
   )
-  useHotkeySequence(['G', 'I'], () =>
+  useHotkey(['G', 'I'], () =>
     navigate({
       to: '/icons',
       search: (prev) => ({
@@ -116,7 +116,7 @@ export function SidebarLayout({
       }),
     }),
   )
-  useHotkeySequence(['G', 'F'], () =>
+  useHotkey(['G', 'F'], () =>
     navigate({
       to: '/fields',
       search: (prev) => ({
@@ -126,7 +126,7 @@ export function SidebarLayout({
       }),
     }),
   )
-  useHotkeySequence(['G', 'T'], () =>
+  useHotkey(['G', 'T'], () =>
     navigate({
       to: '/translations',
       search: (prev) => ({
@@ -136,7 +136,7 @@ export function SidebarLayout({
       }),
     }),
   )
-  useHotkeySequence(['G', 'S'], () =>
+  useHotkey(['G', 'S'], () =>
     navigate({
       to: '/preset-switch',
       search: (prev) => ({
@@ -146,7 +146,7 @@ export function SidebarLayout({
       }),
     }),
   )
-  useHotkeySequence(['G', 'A'], () =>
+  useHotkey(['G', 'A'], () =>
     navigate({
       to: '/about',
       search: (prev) => ({ dataUrl: prev.dataUrl ?? '', locale: prev.locale ?? '' }),
