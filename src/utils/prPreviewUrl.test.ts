@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { INTERIM_DATA_URL } from './constants'
 import { isPrPreviewDataUrl, prNumberFromDataUrl, prPreviewDataUrl } from './prPreviewUrl'
 
 describe('isPrPreviewDataUrl', () => {
@@ -13,9 +14,7 @@ describe('isPrPreviewDataUrl', () => {
     expect(
       isPrPreviewDataUrl('https://cdn.jsdelivr.net/npm/@openstreetmap/id-tagging-schema@7/dist/'),
     ).toBe(false)
-    expect(isPrPreviewDataUrl('https://openstreetmap.github.io/id-tagging-schema/dist/')).toBe(
-      false,
-    )
+    expect(isPrPreviewDataUrl(INTERIM_DATA_URL)).toBe(false)
     expect(isPrPreviewDataUrl('https://example.com/dist/')).toBe(false)
     expect(isPrPreviewDataUrl('')).toBe(false)
   })
