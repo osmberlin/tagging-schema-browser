@@ -53,7 +53,7 @@ function ensureSlash(url: string): string {
 
 /**
  * Where the authored `data/presets/<id>.json` for the loaded dist may live, best guess first.
- * - Unreleased (GitHub Pages) publishes only `dist`, built from `main` → raw GitHub `main`.
+ * - Unreleased (the upstream `interim` branch) publishes only `dist`, built from `main` → raw GitHub `main`.
  * - PR preview is built from the PR merge ref; `head` is the fallback.
  * - Everything else (npm release on jsDelivr, a local checkout) ships `data/` next to `dist/`.
  * The result is only a candidate: `buildAuthoredPresetSource` decides whether it is used.
