@@ -10,10 +10,17 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write # dispatch deploy-pages.yml after merging
+
+# One run per PR; a new push (e.g. a Dependabot rebase) cancels the run waiting on the old head.
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: >-
       github.event.pull_request.user.login == 'dependabot[bot]' ||
       github.event.pull_request.user.login == 'app/dependabot'
@@ -50,26 +57,51 @@ jobs:
         if: steps.qualify.outputs.eligible != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           gh pr comment "$PR_NUMBER" --body '🤖 **Dependabot auto-merge skipped** — this bump needs manual review (semver-major or ungrouped update). See [.agents/skills/review-dependabot/SKILL.md](https://github.com/osmberlin/tagging-schema-browser/blob/main/.agents/skills/review-dependabot/SKILL.md).'
 
-      - name: Wait for CI, then rebase-merge
-        if: steps.qualify.outputs.eligible == 'true'
-        uses: pascalgn/automerge-action@v0.16.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_METHOD: rebase
-          MERGE_COMMIT_MESSAGE: pull-request-title
-          MERGE_DELETE_BRANCH: true
-          MERGE_LABELS: ''
-          MERGE_REQUIRED_APPROVALS: 0
-          MERGE_FORKS: false
-
-      - name: Comment when auto-merge is queued
+      # The repo has no required status checks, so merge only once every other check on this PR
+      # has succeeded. This job's own check ("auto-merge") is excluded, or it would wait on itself.
+      - name: Wait for all checks, then rebase-merge
         if: steps.qualify.outputs.eligible == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SELF_CHECK: auto-merge
+          REQUIRED_CHECK: Check # must be registered before we trust an otherwise empty list
         run: |
-          gh pr comment "$PR_NUMBER" --body '🤖 **Dependabot auto-merge enabled** — this PR will rebase-merge once required checks pass (patch/minor group or security bump).'
+          deadline=$((SECONDS + 1500))
+          while true; do
+            # shellcheck disable=SC2016 # env.* is jq, not shell
+            state=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+              [.statusCheckRollup[] | select((.name // .context) != env.SELF_CHECK)] as $c
+              | if any($c[]; (.conclusion // .state) | IN("FAILURE","ERROR","CANCELLED","TIMED_OUT","ACTION_REQUIRED","STARTUP_FAILURE","STALE")) then "fail"
+                elif ($c | any(.[]; .name == env.REQUIRED_CHECK))
+                  and ($c | all(.[]; (.conclusion // .state) | IN("SUCCESS","NEUTRAL","SKIPPED"))) then "pass"
+                else "pending" end')
+            echo "Checks: $state"
+            [ "$state" = pass ] && break
+            if [ "$state" = fail ]; then
+              echo "::error::A check failed; not merging PR #$PR_NUMBER."
+              gh pr comment "$PR_NUMBER" --body '🤖 **Dependabot auto-merge stopped** — a check failed, so this PR was not merged.'
+              exit 1
+            fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::error::Checks did not finish in time; not merging PR #$PR_NUMBER."
+              exit 1
+            fi
+            sleep 20
+          done
+          gh pr merge "$PR_NUMBER" --rebase --delete-branch --match-head-commit "$HEAD_SHA"
+
+      # Pushes made with GITHUB_TOKEN do not trigger `push` workflows, so deploy explicitly.
+      - name: Deploy to GitHub Pages
+        if: steps.qualify.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy-pages.yml --ref main

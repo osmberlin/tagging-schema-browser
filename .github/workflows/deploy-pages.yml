@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Dispatched by Dependabot auto-merge: GITHUB_TOKEN merges do not trigger `push`.
+  workflow_dispatch:
 
 permissions:
   contents: read
